@@ -4,7 +4,7 @@ import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
-import { Button, EmptyState, IconButton, Photo, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Button, Row, EmptyState, IconButton, Photo, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 
@@ -30,7 +30,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -116,13 +116,32 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               </span>
             )}
           </p>
-          {from && (
-            <button className="pid-available" onClick={() => own && openSheet({ name: 'availability' })} disabled={!own}>
+          {from && !own && (
+            <button className="pid-available" disabled>
               <span className="status-dot is-on" />
               {availableLabel(from)}
             </button>
           )}
         </header>
+
+        {own && (
+          <div className="group work-status">
+            <Row
+              icon={<span className={`status-dot ${availability.open ? 'is-on' : ''}`} />}
+              label={
+                scenario.newUser ? (
+                  <span className="accent">Add when you're available</span>
+                ) : (
+                  <span className="work-status-text">
+                    <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
+                    {availability.open && <span className="meta">{availability.scope}</span>}
+                  </span>
+                )
+              }
+              onPress={() => openSheet({ name: 'availability' })}
+            />
+          </div>
+        )}
 
         <div className="profile-actions">
           {own ? (

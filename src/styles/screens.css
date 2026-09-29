@@ -1752,3 +1752,12 @@
 .cards-roles .section-head {
   margin-bottom: 14px;
 }
+
+.work-status {
+  margin-top: 20px;
+}
+
+.work-status-text {
+  display: flex;
+  flex-direction: column;
+}

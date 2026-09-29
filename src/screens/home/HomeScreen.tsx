@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Bell, CheckCircle2, Clapperboard, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Bell, CheckCircle2, Clapperboard, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Opportunity } from '../../data/types';
@@ -66,8 +66,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
         ) : (
           <div className="hero hero--empty">
             <p className="item-title">No roles match your dates this week</p>
-            <Button variant="secondary" size="s" onClick={() => openSheet({ name: 'availability' })}>
-              Change availability
+            <Button variant="secondary" size="s" onClick={() => store.setTab('profile')}>
+              Update your availability
             </Button>
           </div>
         )}
@@ -152,10 +152,6 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
           <Logo />
         </span>
         <span className="flex" />
-        <IconButton label="Matching: availability and location" className="icon-btn--float" onClick={() => openSheet({ name: 'availability' })}>
-          <SlidersHorizontal size={19} />
-          {scenario.newUser && <span className="dot" />}
-        </IconButton>
         <IconButton label="Notifications" className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
           <Bell size={19} />
           {unread && <span className="dot" />}
