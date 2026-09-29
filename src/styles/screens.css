@@ -1743,3 +1743,12 @@
 .home-logo .logo img {
   height: 26px;
 }
+
+/* Home layout B: solid header, large cards */
+.cards-top {
+  height: calc(var(--status-bar) + 58px);
+}
+
+.cards-roles .section-head {
+  margin-bottom: 14px;
+}

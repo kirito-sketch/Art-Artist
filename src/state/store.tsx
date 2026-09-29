@@ -104,6 +104,8 @@ function useStoreValue() {
   const [userPortfolio, setUserPortfolio] = useState<Media[]>([]);
   const [publishing, setPublishing] = useState<Publishing | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
+  const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('slides');
   /** Screens currently showing a full-bleed photo under the status bar, keyed by screen. */
   const [heroUnderStatus, setHeroUnderStatus] = useState<Record<string, boolean>>({});
   const setHero = useCallback((key: string, on: boolean) => {
@@ -354,6 +356,8 @@ function useStoreValue() {
     viewer,
     switchViewer,
     heroUnderStatus,
+    homeLayout,
+    setHomeLayout,
     setHero,
     scenario,
     setScenario,

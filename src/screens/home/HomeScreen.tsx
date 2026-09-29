@@ -10,7 +10,7 @@ import { spring, stagger } from '../../ui/motion';
 import { Avatar, Button, IconButton, Photo, PressCard, Row, SectionHeader, Skeleton } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { NetworkRow } from './NetworkActivity';
-import { Byline, SaveButton, useSentLabel } from './OpportunityCard';
+import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
 import { PostCard } from './PostCard';
 
 const NETWORK_LIMIT = 4;
@@ -23,7 +23,7 @@ const HERO_HEIGHT = 600;
  */
 export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => void }) {
   const store = useStore();
-  const { viewer, scenario, openSheet, notifications, reloadKey, push, setHero } = store;
+  const { viewer, scenario, openSheet, notifications, reloadKey, push, setHero, homeLayout } = store;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(0);
   const loading = scenario.loading;
@@ -31,7 +31,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
   const events = networkFor(viewer, scenario);
   const posts = postsFor(viewer, scenario, store.following, store.userPosts);
   const unread = notifications.some((n) => n.unread);
-  const hasHero = !loading && !scenario.forYouError && opps.length > 0;
+  const cards = homeLayout === 'cards';
+  const hasHero = !cards && !loading && !scenario.forYouError && opps.length > 0;
   const solid = !hasHero || scrollY > 40;
 
   useEffect(() => {
@@ -46,8 +47,10 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
 
   return (
     <>
-      <div className="screen screen--hero" ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
-        {loading ? (
+      <div className="screen screen--hero" ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+        {cards ? (
+          <div className="cards-top" />
+        ) : loading ? (
           <div className="hero hero--empty">
             <Skeleton w="100%" h="100%" r={0} />
           </div>
@@ -72,6 +75,38 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
         <div className={`home-sheet ${hasHero ? '' : 'home-sheet--flat'}`}>
           <OfflineBanner />
           <PublishBar />
+
+          {cards && (
+            <section className="cards-roles">
+              <SectionHeader title="Roles for you" action={opps.length ? 'See all' : undefined} onAction={() => goDiscover('roles')} />
+              {loading ? (
+                <div className="carousel carousel--roles">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="carousel-item">
+                      <Skeleton h={420} r={28} />
+                    </div>
+                  ))}
+                </div>
+              ) : scenario.forYouError ? (
+                <div className="inline-error inline-error--flush">
+                  <p>Couldn't load your roles.</p>
+                  <Button variant="secondary" size="s" onClick={() => store.setScenario({ forYouError: false })}>
+                    Retry
+                  </Button>
+                </div>
+              ) : opps.length ? (
+                <div className="carousel carousel--roles">
+                  {opps.map((o, i) => (
+                    <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
+                      <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <p className="meta">No roles match your dates this week.</p>
+              )}
+            </section>
+          )}
 
           {hasHero && (
             <div className="group">

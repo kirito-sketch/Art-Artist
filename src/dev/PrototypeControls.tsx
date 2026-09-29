@@ -3,7 +3,7 @@ import { Toggle } from '../ui/primitives';
 
 /** Evaluation panel outside the phone. Not part of the product. */
 export function PrototypeControls() {
-  const { viewer, switchViewer, scenario, setScenario } = useStore();
+  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout } = useStore();
   const rows: { key: keyof typeof scenario; label: string }[] = [
     { key: 'newUser', label: 'New user' },
     { key: 'loading', label: 'Slow network' },
@@ -20,6 +20,15 @@ export function PrototypeControls() {
         </button>
         <button className={viewer.id === 'tara' ? 'is-on' : ''} onClick={() => switchViewer('tara')}>
           Tara · Actor
+        </button>
+      </div>
+      <p className="proto-h">Home layout</p>
+      <div className="proto-seg">
+        <button className={homeLayout === 'slides' ? 'is-on' : ''} onClick={() => setHomeLayout('slides')}>
+          A · Full-screen slides
+        </button>
+        <button className={homeLayout === 'cards' ? 'is-on' : ''} onClick={() => setHomeLayout('cards')}>
+          B · Large cards
         </button>
       </div>
       <p className="proto-h">Scenarios</p>
