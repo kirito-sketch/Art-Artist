@@ -110,7 +110,7 @@ export function OpportunityScreen({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="detail-body osheet" style={tint ? { background: `linear-gradient(to bottom, rgba(${tint}, 0.14), rgba(255, 255, 255, 0) 360px), #ffffff` } : undefined}>
+        <div className="detail-body osheet" style={tint ? { background: `linear-gradient(to bottom, rgba(${tint}, 0.14), rgba(255, 255, 255, 0) 360px), var(--surface)` } : undefined}>
           <p className="kicker">
             {kindLabel[o.kind]} · {o.projectType.split(' · ')[0]}
           </p>

@@ -135,7 +135,7 @@ function Phone() {
   const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : 'dark';
 
   return (
-    <div className="phone" data-viewer={viewer.id}>
+    <div className="phone" data-viewer={viewer.id} data-look={store.look}>
       <div className="phone-screen">
         <StatusBar tone={statusTone} />
         {/* Tabs stay mounted so scroll position survives switching. */}

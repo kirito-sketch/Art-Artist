@@ -4,6 +4,8 @@ import type { Conversation, Interest, Media, Notification, Opportunity, Post, Vi
 
 /* ------------------------------------------------------------ navigation */
 
+export type Look = 'minimal' | 'glass' | 'bold' | 'doodle';
+
 export type Tab = 'home' | 'discover' | 'inbox' | 'profile';
 
 export type Route =
@@ -106,6 +108,8 @@ function useStoreValue() {
   const [reloadKey, setReloadKey] = useState(0);
   /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
   const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('slides');
+  /** Prototype comparison: visual direction applied across the whole app. */
+  const [look, setLook] = useState<Look>('minimal');
   /** Screens currently showing a full-bleed photo under the status bar, keyed by screen. */
   const [heroUnderStatus, setHeroUnderStatus] = useState<Record<string, boolean>>({});
   const setHero = useCallback((key: string, on: boolean) => {
@@ -358,6 +362,8 @@ function useStoreValue() {
     heroUnderStatus,
     homeLayout,
     setHomeLayout,
+    look,
+    setLook,
     setHero,
     scenario,
     setScenario,

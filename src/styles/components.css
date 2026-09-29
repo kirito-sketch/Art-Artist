@@ -14,6 +14,8 @@
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.03em;
+  font-family: var(--display);
+  text-transform: var(--title-case);
 }
 
 .item-title {
@@ -134,8 +136,8 @@
   color: var(--text);
 }
 .btn--light {
-  background: #fff;
-  color: var(--text);
+  background: var(--float-bg);
+  color: var(--float-fg);
 }
 .btn--outline {
   background: var(--bg);
@@ -398,7 +400,7 @@
 .avatar--org {
   border-radius: 24%;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .avatar-dot {
@@ -426,8 +428,8 @@
   height: 28px;
   padding: 0 12px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--text);
+  background: var(--float-bg);
+  color: var(--float-fg);
   font-size: var(--t-5);
   font-weight: 600;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
@@ -460,8 +462,9 @@
   right: 8px;
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--float-bg);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  color: var(--float-fg);
 }
 
 .byline {
@@ -692,7 +695,7 @@
 
 .status-bar--dark {
   color: var(--text);
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .status-bar--light {
@@ -740,7 +743,7 @@
   gap: 6px;
   padding: 7px 10px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--bar-bg);
   backdrop-filter: blur(20px) saturate(1.6);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   box-shadow: var(--shadow-float), inset 0 0 0 1px rgba(0, 0, 0, 0.04);
@@ -801,7 +804,7 @@
   place-items: center;
   background: var(--accent);
   box-shadow: 0 6px 16px rgba(196, 65, 46, 0.35);
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .sheet-layer {
@@ -825,7 +828,7 @@
   display: flex;
   flex-direction: column;
   border-radius: 32px 32px 0 0;
-  background: var(--bg);
+  background: var(--surface);
   padding-bottom: 34px;
 }
 
@@ -902,7 +905,7 @@
   padding: 12px 18px;
   border-radius: var(--r-m);
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-size: var(--t-4);
   font-weight: 500;
   box-shadow: var(--shadow-float);

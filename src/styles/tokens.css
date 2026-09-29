@@ -27,6 +27,15 @@
   --available: #1e9e5a;
   --danger: #d83a2e;
   --primary: #111111;
+  --on-primary: #ffffff;
+
+  /* Surfaces the looks restyle */
+  --surface: #ffffff;             /* sheets, footers, page cards */
+  --float-bg: rgba(255, 255, 255, 0.95); /* controls floating on photos */
+  --float-fg: #111111;
+  --bar-bg: rgba(255, 255, 255, 0.9);    /* tab bar, solid headers */
+  --display: var(--font);         /* display face for big titles */
+  --title-case: none;
 
   /* Type: SF on Apple devices, Inter elsewhere. Five sizes, nothing below 13. */
   --font: -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter Variable', 'Inter', system-ui, sans-serif;

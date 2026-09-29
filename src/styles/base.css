@@ -133,7 +133,7 @@ img {
 .route-layer {
   position: absolute;
   inset: 0;
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .route-layer {
