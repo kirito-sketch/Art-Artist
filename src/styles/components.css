@@ -64,6 +64,10 @@
   font-weight: 600;
 }
 
+.link--accent {
+  color: var(--accent);
+}
+
 .link--muted {
   color: var(--text);
   font-weight: 400;

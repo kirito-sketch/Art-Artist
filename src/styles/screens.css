@@ -255,10 +255,6 @@
 
 /* featured match */
 
-.feature-wrap {
-  padding: 0 var(--gutter);
-}
-
 .feature {
   position: relative;
   height: 460px;
@@ -315,12 +311,33 @@
   color: #fff;
 }
 
-.carousel--more {
-  margin-top: 20px;
+.section--first {
+  padding-top: 8px;
 }
 
-.carousel--more .carousel-item {
-  width: 240px;
+.section-head--stacked {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.section-head--stacked .availability {
+  margin-top: 4px;
+}
+
+.carousel--roles {
+  margin: 0 calc(-1 * var(--gutter));
+}
+
+.carousel--roles .carousel-item {
+  width: 318px;
+}
+
+.carousel--roles .feature {
+  height: 420px;
+}
+
+.inline-error--flush {
+  margin: 0;
 }
 
 /* ======================================================== opportunity */
@@ -1493,4 +1510,8 @@
 
 .detail-body.osheet {
   padding-top: 32px;
+}
+
+.section-head--stacked > .link {
+  margin-top: 6px;
 }

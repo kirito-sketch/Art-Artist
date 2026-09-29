@@ -3,12 +3,12 @@ import { Bell, CheckCircle2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import * as seed from '../../data/seed';
 import { useStore } from '../../state/store';
-import { availableLabel, forYou, networkFor, person, postsFor } from '../../state/selectors';
+import { forYou, networkFor, person, postsFor } from '../../state/selectors';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { stagger } from '../../ui/motion';
 import { Avatar, Button, IconButton, PressCard, SectionHeader, Skeleton } from '../../ui/primitives';
 import { NetworkRow } from './NetworkActivity';
-import { FeaturedCard, OpportunityCard } from './OpportunityCard';
+import { FeaturedCard } from './OpportunityCard';
 import { Logo } from '../../ui/Logo';
 import { PostCard } from './PostCard';
 
@@ -44,66 +44,59 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
         </IconButton>
       </header>
 
-      <div className="title-block">
-        <div className="title-row">
-          <h1 className="large-title">For you</h1>
-          {!loading && !scenario.forYouError && opps.length > 0 && (
+      <OfflineBanner />
+      <PublishBar />
+
+      <section className="section section--first">
+        <div className="section-head section-head--stacked">
+          <div>
+            <h2>Open roles</h2>
+            <button className="availability" onClick={() => openSheet({ name: 'availability' })}>
+              {scenario.newUser ? (
+                <span className="link link--accent">Add your availability for better matches</span>
+              ) : (
+                <>
+                  <span className={`status-dot ${availability.open ? 'is-on' : ''}`} />
+                  {availability.open ? `For you, ${availability.from === 'Now' ? 'available now' : `free from ${availability.from}`}` : 'You are not taking work'}
+                  <span className="link">Edit</span>
+                </>
+              )}
+            </button>
+          </div>
+          {!loading && !scenario.forYouError && opps.length > 1 && (
             <button className="link" onClick={() => goDiscover('roles')}>
               See all
             </button>
           )}
         </div>
-        <button className="availability" onClick={() => openSheet({ name: 'availability' })}>
-          {scenario.newUser ? (
-            <span className="link">Add your availability</span>
-          ) : (
-            <>
-              <span className={`status-dot ${availability.open ? 'is-on' : ''}`} />
-              {availability.open ? availableLabel(availability.from) : 'Not taking work'}
-              <span className="link">Edit</span>
-            </>
-          )}
-        </button>
-      </div>
 
-      <OfflineBanner />
-      <PublishBar />
-
-      {loading ? (
-        <div className="carousel">
-          {[0, 1].map((i) => (
-            <div key={i} className="carousel-item">
-              <Skeleton h={200} r={20} />
-              <Skeleton w="70%" h={18} className="mt-12" />
-              <Skeleton w="50%" h={14} className="mt-8" />
-            </div>
-          ))}
-        </div>
-      ) : scenario.forYouError ? (
-        <div className="inline-error">
-          <p>Couldn't load your matches.</p>
-          <Button variant="secondary" size="s" onClick={() => store.setScenario({ forYouError: false })}>
-            Retry
-          </Button>
-        </div>
-      ) : opps.length ? (
-        <>
-          <motion.div className="feature-wrap" {...stagger(0)}>
-            <FeaturedCard o={opps[0]} onOpen={() => push({ name: 'opportunity', id: opps[0].id })} />
-          </motion.div>
-          {opps.length > 1 && (
-            <div className="carousel carousel--more">
-              {opps.slice(1).map((o, i) => (
-                <motion.div key={o.id} className="carousel-item" {...stagger(i + 1, 0.05)}>
-                  <OpportunityCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <p className="hint">No new roles for your craft this week.</p>
-      )}
+        {loading ? (
+          <div className="carousel carousel--roles">
+            {[0, 1].map((i) => (
+              <div key={i} className="carousel-item">
+                <Skeleton h={400} r={28} />
+              </div>
+            ))}
+          </div>
+        ) : scenario.forYouError ? (
+          <div className="inline-error inline-error--flush">
+            <p>Couldn't load your matches.</p>
+            <Button variant="secondary" size="s" onClick={() => store.setScenario({ forYouError: false })}>
+              Retry
+            </Button>
+          </div>
+        ) : opps.length ? (
+          <div className="carousel carousel--roles">
+            {opps.map((o, i) => (
+              <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
+                <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <p className="meta">No new roles for your craft this week.</p>
+        )}
+      </section>
 
       {loading ? null : events.length ? (
         <section className="section">
