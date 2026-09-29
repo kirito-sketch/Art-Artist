@@ -1,211 +1,156 @@
-import { CalendarDays, Check, ChevronLeft, ChevronRight, Clapperboard, Flag, Globe2, IndianRupee, Languages, MapPin, MessageCircle, Share, ShieldCheck, Sparkles, Users, WifiOff } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { CalendarDays, ChevronLeft, Clock, Languages, MapPin, Share, Sparkles, Users } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useStore } from '../../state/store';
-import { findOpportunity, firstName, org, person } from '../../state/selectors';
-import { Avatar, Button, EmptyState, IconButton, PressCard, TypeBadge, Verified } from '../../ui/primitives';
-import { Still } from '../../ui/Still';
-import { SaveButton } from '../home/OpportunityCard';
+import { findOpportunity, firstName, kindLabel, person } from '../../state/selectors';
+import { Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
+import { Byline, SaveButton } from '../home/OpportunityCard';
 
-function Fact({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+const TODAY = new Date(2026, 8, 29);
+export const closesOn = (days: number) => {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
+function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="fact">
+    <li className="fact">
       <span className="fact-icon">{icon}</span>
-      <span className="fact-label">{label}</span>
-      <span className="fact-value">{value}</span>
-    </div>
+      <span>{children}</span>
+    </li>
   );
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
   const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, showToast } = useStore();
   const o = findOpportunity(id, userCollabs);
-  const [scrolled, setScrolled] = useState(false);
 
   if (!o) {
     return (
-      <div className="screen-scroll">
-        <div className="detail-topbar detail-topbar--plain">
-          <IconButton label="Back" className="icon-btn--glass" onClick={pop}>
-            <ChevronLeft size={22} />
+      <div className="screen">
+        <header className="topbar topbar--nav">
+          <IconButton label="Back" onClick={pop}>
+            <ChevronLeft size={26} />
           </IconButton>
-        </div>
-        <EmptyState icon={<Clapperboard />} title="This role is no longer open" body="The production closed it or it was removed. Anything you sent is still in My responses." />
+        </header>
+        <EmptyState title="This role has closed" body="Anything you sent is still in your activity." />
       </div>
     );
   }
 
-  const official = o.kind !== 'collab';
-  const house = o.orgId ? org(o.orgId) : null;
   const author = o.authorId ? person(o.authorId) : null;
   const mine = o.authorId === viewer.id;
   const response = responses[o.id];
   const interested = interestsSent[o.id] !== undefined;
-  const received = interestsReceived.filter((i) => i.opportunityId === o.id);
+  const received = interestsReceived.filter((i) => i.opportunityId === o.id).length;
 
-  let cta: ReactNode;
+  /* Footer: what it pays and when it closes on the left, the one action on the right. */
+  let left: ReactNode = (
+    <>
+      <p className="item-title">{o.paid ? o.compensation : 'Unpaid'}</p>
+      <p className="meta">{o.closesInDays !== undefined ? `Closes ${closesOn(o.closesInDays)}` : o.dates}</p>
+    </>
+  );
+  let action: ReactNode;
   if (mine) {
-    cta = (
-      <Button block size="l" variant="primary" icon={<Users size={18} />} onClick={() => openSheet({ name: 'reviewInterest', opportunityId: o.id })}>
-        Review interest{received.length ? ` (${received.length})` : ''}
+    action = <Button onClick={() => openSheet({ name: 'reviewInterest', opportunityId: o.id })}>{received ? `Review ${received}` : 'Review interest'}</Button>;
+  } else if (response) {
+    left = (
+      <>
+        <p className="item-title">Response sent</p>
+        <p className="meta">{response.sentAt}</p>
+      </>
+    );
+  } else if (interested) {
+    left = (
+      <>
+        <p className="item-title">Interest sent</p>
+        <p className="meta">{firstName(author!)} will message you if it's a fit</p>
+      </>
+    );
+    action = (
+      <Button variant="secondary" onClick={() => withdrawInterest(o.id)}>
+        Withdraw
       </Button>
     );
   } else if (scenario.offline) {
-    cta = (
-      <Button block size="l" variant="secondary" icon={<WifiOff size={16} />} disabled>
-        Available when you're back online
-      </Button>
-    );
-  } else if (official) {
-    cta = response ? (
-      <div className="cta-record">
-        <span className="cta-record-icon">
-          <Check size={16} strokeWidth={3} />
-        </span>
-        <div>
-          <p className="cta-record-title">Response sent · {response.sentAt}</p>
-          <p className="cta-record-body">{house?.name} will contact you in Inbox if they want to proceed.</p>
-        </div>
-      </div>
-    ) : (
-      <Button block size="l" onClick={() => openSheet({ name: 'respond', id: o.id })}>
-        {o.kind === 'casting' ? 'Respond to casting call' : 'Respond to this role'}
-      </Button>
-    );
+    action = <Button disabled>Offline</Button>;
+  } else if (o.kind !== 'collab') {
+    action = <Button onClick={() => openSheet({ name: 'respond', id: o.id })}>Respond</Button>;
   } else if (o.allowDM) {
-    cta = (
+    action = (
       <Button
-        block
-        size="l"
-        icon={<MessageCircle size={18} />}
         onClick={() => {
           const cid = startConversation(author!.id, { kind: 'collab', label: 'Collaboration', detail: `${o.role} · ${o.project}`, refId: o.id });
           push({ name: 'conversation', id: cid });
         }}
       >
-        Message {firstName(author!)}
+        Message
       </Button>
     );
   } else {
-    cta = interested ? (
-      <div className="cta-record">
-        <span className="cta-record-icon">
-          <Check size={16} strokeWidth={3} />
-        </span>
-        <div>
-          <p className="cta-record-title">Interest sent</p>
-          <p className="cta-record-body">{firstName(author!)} will message you if it's a fit.</p>
-        </div>
-        <button className="link-btn" onClick={() => withdrawInterest(o.id)}>
-          Withdraw
-        </button>
-      </div>
-    ) : (
-      <Button block size="l" icon={<Sparkles size={17} />} onClick={() => openSheet({ name: 'showInterest', id: o.id })}>
-        Show interest
-      </Button>
-    );
+    action = <Button onClick={() => openSheet({ name: 'showInterest', id: o.id })}>Show interest</Button>;
   }
 
   return (
     <div className="detail">
-      <div className="screen-scroll detail-scroll" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 300)}>
-        <div className="detail-hero">
-          <Still media={o.media} className="detail-hero-media" />
-          <div className="detail-hero-scrim" />
-        </div>
+      <div className="screen">
+        <header className="topbar topbar--nav">
+          <IconButton label="Back" onClick={pop}>
+            <ChevronLeft size={26} />
+          </IconButton>
+          <span className="flex" />
+          <IconButton label="Share" onClick={() => showToast({ text: 'Link copied' })}>
+            <Share size={20} />
+          </IconButton>
+          <SaveButton id={o.id} />
+        </header>
 
-        <div className="detail-sheet">
-          <div className="detail-badges">
-            <TypeBadge kind={o.kind} />
-            {o.closesInDays !== undefined && <span className={`closing ${o.closesInDays <= 3 ? 'closing--soon' : ''}`}>Closes in {o.closesInDays} days</span>}
-            <span className="detail-posted">{o.postedAgo === 'now' ? 'Posted just now' : `Posted ${o.postedAgo} ago`}</span>
-          </div>
-          {o.kind === 'collab' && <p className="collab-kicker">{o.collabIntent === 'available' ? 'Available for' : 'Looking for'}</p>}
-          <h1 className="detail-title">{o.role}</h1>
-          <p className="detail-project">
-            {o.project} · {o.projectType}
+        <div className="detail-body">
+          <Photo media={o.media} className="detail-image" />
+
+          <p className="kicker">
+            {kindLabel[o.kind]} · {o.projectType.split(' · ')[0]}
           </p>
+          <h1 className="large-title">{o.role}</h1>
+          <Pressable className="detail-by" onClick={() => (author ? push({ name: 'profile', id: author.id }) : showToast({ text: 'Production page' }))} scale={0.98}>
+            <Byline o={o} />
+            <span className="meta">· {o.project}</span>
+          </Pressable>
 
-          {house && (
-            <PressCard className="poster-row" onPress={() => showToast({ text: `${house.name} company page` })}>
-              <Avatar party={house} size={40} />
-              <div className="poster-row-text">
-                <p className="poster-row-name">
-                  {house.name} <Verified size={14} />
-                </p>
-                <p className="poster-row-sub">Verified production house · {house.city}</p>
-              </div>
-              <ChevronRight size={16} className="muted" />
-            </PressCard>
-          )}
-          {author && (
-            <PressCard className="poster-row poster-row--peer" onPress={() => push({ name: 'profile', id: author.id })}>
-              <Avatar party={author} size={40} />
-              <div className="poster-row-text">
-                <p className="poster-row-name">{mine ? 'You' : author.name}</p>
-                <p className="poster-row-sub">
-                  {author.role} · Peer collaboration, not a verified production
-                </p>
-              </div>
-              <ChevronRight size={16} className="muted" />
-            </PressCard>
-          )}
-
-          <div className="facts-grid">
-            <Fact icon={<MapPin size={15} />} label="Location" value={o.city} />
-            <Fact icon={<CalendarDays size={15} />} label="Dates" value={o.dates} />
-            <Fact icon={<IndianRupee size={15} />} label="Compensation" value={o.compensation} />
-            <Fact icon={o.language ? <Languages size={15} /> : <Globe2 size={15} />} label={o.language ? 'Language' : 'Stage'} value={o.language ?? o.stage} />
-          </div>
-
-          {o.match.length > 0 && (
-            <div className="why">
-              <p className="why-title">
-                <Sparkles size={13} /> Why you're seeing this
-              </p>
-              <div className="why-chips">
-                {o.match.map((m) => (
-                  <span key={m} className="why-chip">
-                    {m}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <ul className="facts">
+            <Fact icon={<MapPin size={20} />}>{o.city}</Fact>
+            <Fact icon={<CalendarDays size={20} />}>{o.dates}</Fact>
+            {o.language && <Fact icon={<Languages size={20} />}>{o.language}</Fact>}
+            {o.highlight && <Fact icon={<Sparkles size={20} />}>{o.highlight}</Fact>}
+            {o.kind === 'collab' && !o.allowDM && !mine && <Fact icon={<Users size={20} />}>{firstName(author!)} reviews interest before messaging</Fact>}
+          </ul>
 
           <section className="detail-section">
-            <h2>About the {o.kind === 'collab' ? 'project' : 'role'}</h2>
-            <p>{o.about}</p>
-          </section>
-
-          <section className="detail-section">
-            <h2>{o.collabIntent === 'available' ? 'Open to' : 'Looking for'}</h2>
-            <ul className="ticks">
+            <h2 className="section-title">About</h2>
+            <p className="body">{o.about}</p>
+            <ul className="bullets">
               {o.lookingFor.map((l) => (
-                <li key={l}>
-                  <Check size={14} strokeWidth={2.6} />
-                  {l}
-                </li>
+                <li key={l}>{l}</li>
               ))}
             </ul>
           </section>
 
           {o.audition && (
             <section className="detail-section">
-              <h2>Audition for this role</h2>
-              <div className="audition">
-                <p className="audition-place">{o.audition.place}</p>
-                <p className="audition-when">{o.audition.when}</p>
-                <p className="audition-notes">{o.audition.notes}</p>
-              </div>
+              <h2 className="section-title">Audition</h2>
+              <ul className="facts facts--tight">
+                <Fact icon={<MapPin size={20} />}>{o.audition.place}</Fact>
+                <Fact icon={<Clock size={20} />}>{o.audition.when}</Fact>
+              </ul>
+              <p className="meta">{o.audition.notes}</p>
             </section>
           )}
 
-          {official && o.questions && (
+          {o.questions && !response && (
             <section className="detail-section">
-              <h2>What {house?.name.split(' ')[0]} will ask</h2>
-              <p className="muted-body">Role-specific questions only. You answer them when you respond.</p>
-              <ol className="questions">
+              <h2 className="section-title">You'll be asked</h2>
+              <ol className="numbered">
                 {o.questions.map((q) => (
                   <li key={q}>{q}</li>
                 ))}
@@ -213,43 +158,19 @@ export function OpportunityScreen({ id }: { id: string }) {
             </section>
           )}
 
-          {!official && !mine && (
-            <section className="detail-section">
-              <h2>How responses work</h2>
-              <p className="muted-body">
-                {o.allowDM
-                  ? `${firstName(author!)} is open to direct messages about this collaboration.`
-                  : `${firstName(author!)} is reviewing interest first. Send yours and they'll start the conversation if it's a fit.`}
-              </p>
-            </section>
-          )}
-
-          <div className="trust-note">
-            <ShieldCheck size={18} />
-            <p>
-              Ana never charges to apply, audition or be cast. If anyone asks you for a fee, report it.
-              <button className="link-btn" onClick={() => showToast({ text: 'Report sent to Trust & Safety · Case #A-20931', tone: 'success' })}>
-                <Flag size={12} /> Report
-              </button>
-            </p>
-          </div>
+          <p className="meta detail-trust">
+            Ana never charges to apply or audition.{' '}
+            <button className="link link--small" onClick={() => showToast({ text: 'Reported. Case A-20931' })}>
+              Report
+            </button>
+          </p>
         </div>
       </div>
 
-      <div className={`detail-topbar ${scrolled ? 'is-scrolled' : ''}`}>
-        <IconButton label="Back" className="icon-btn--glass" onClick={pop}>
-          <ChevronLeft size={22} />
-        </IconButton>
-        <span className="detail-topbar-title" style={{ opacity: scrolled ? 1 : 0 }}>
-          {o.role}
-        </span>
-        <IconButton label="Share" className="icon-btn--glass" onClick={() => showToast({ text: 'Link copied' })}>
-          <Share size={17} />
-        </IconButton>
-        <SaveButton id={o.id} onMedia />
-      </div>
-
-      <div className="cta-bar">{cta}</div>
+      <footer className="booking">
+        <div className="booking-left">{left}</div>
+        {action}
+      </footer>
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, RotateCcw, WifiOff, X } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { useStore } from '../state/store';
 import { spring } from './motion';
-import { Still } from './Still';
+import { Photo } from './primitives';
 
-export function StatusBar({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
+export function StatusBar({ tone = 'dark' }: { tone?: 'light' | 'dark' }) {
   return (
     <div className={`status-bar status-bar--${tone}`} aria-hidden>
       <span className="status-time">9:41</span>
@@ -35,17 +35,8 @@ export function ToastHost() {
     <div className="toast-host" aria-live="polite">
       <AnimatePresence>
         {toast && (
-          <motion.div
-            key={toast.id}
-            className={`toast toast--${toast.tone ?? 'default'}`}
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={spring.snappy}
-          >
-            {toast.tone === 'success' && <CheckCircle2 size={16} className="toast-icon" />}
-            {toast.tone === 'error' && <AlertCircle size={16} className="toast-icon" />}
-            <span className="toast-text">{toast.text}</span>
+          <motion.div key={toast.id} className="toast" initial={{ opacity: 0, y: 16, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10 }} transition={spring.snappy}>
+            <span>{toast.text}</span>
             {toast.action && (
               <button
                 className="toast-action"
@@ -64,45 +55,30 @@ export function ToastHost() {
   );
 }
 
-/** Publishing lives as a slim, persistent card at the top of Home so the user can keep browsing. */
+/** Upload progress as one slim row; the user keeps browsing. */
 export function PublishBar() {
   const { publishing, retryPublish, cancelPublish, scenario } = useStore();
   return (
     <AnimatePresence>
       {publishing && (
-        <motion.div
-          className={`publish-bar publish-bar--${publishing.state}`}
-          initial={{ opacity: 0, y: -12, height: 0 }}
-          animate={{ opacity: 1, y: 0, height: 'auto' }}
-          exit={{ opacity: 0, y: -12, height: 0 }}
-          transition={spring.gentle}
-        >
-          <div className="publish-bar-inner">
-            <span className="publish-thumb">{publishing.thumb ? <Still media={publishing.thumb} showPlay={false} /> : <span className="publish-thumb-text">Aa</span>}</span>
-            <div className="publish-copy">
-              <p className="publish-label">
-                {publishing.state === 'uploading' && publishing.label}
-                {publishing.state === 'done' && (publishing.kind === 'post' ? 'Posted' : 'Published')}
-                {publishing.state === 'failed' && (scenario.offline ? 'Waiting for connection' : 'Upload failed')}
-              </p>
-              <p className="publish-sub">
-                {publishing.state === 'uploading' && `${Math.round(publishing.progress * 100)}% · you can keep browsing`}
-                {publishing.state === 'done' && 'Visible to your network'}
-                {publishing.state === 'failed' && 'Your draft is safe. Nothing was published.'}
-              </p>
-            </div>
-            {publishing.state === 'failed' ? (
-              <div className="publish-actions">
-                <button className="publish-action" onClick={retryPublish} aria-label="Retry">
-                  <RotateCcw size={16} />
+        <motion.div className={`publish publish--${publishing.state}`} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={spring.gentle}>
+          <div className="publish-row">
+            {publishing.thumb && <Photo media={publishing.thumb} className="publish-thumb" showPlay={false} />}
+            <p className="publish-label">
+              {publishing.state === 'uploading' && 'Posting…'}
+              {publishing.state === 'done' && 'Posted'}
+              {publishing.state === 'failed' && (scenario.offline ? 'Waiting for connection' : "Couldn't post")}
+            </p>
+            {publishing.state === 'failed' && (
+              <>
+                <button className="link" onClick={retryPublish}>
+                  Retry
                 </button>
-                <button className="publish-action publish-action--muted" onClick={cancelPublish} aria-label="Cancel upload">
-                  <X size={16} />
+                <button className="link link--muted" onClick={cancelPublish}>
+                  Cancel
                 </button>
-              </div>
-            ) : publishing.state === 'done' ? (
-              <CheckCircle2 size={20} className="publish-done" />
-            ) : null}
+              </>
+            )}
           </div>
           <div className="publish-track">
             <motion.span className="publish-fill" animate={{ scaleX: publishing.progress }} transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }} />
@@ -118,10 +94,9 @@ export function OfflineBanner() {
   return (
     <AnimatePresence>
       {scenario.offline && (
-        <motion.div className="offline-banner" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-          <WifiOff size={14} />
-          <span>Offline · showing what was loaded at 9:12</span>
-        </motion.div>
+        <motion.p className="offline" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+          <WifiOff size={14} /> You're offline
+        </motion.p>
       )}
     </AnimatePresence>
   );

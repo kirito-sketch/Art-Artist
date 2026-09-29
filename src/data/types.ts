@@ -1,14 +1,12 @@
-export type Mood = 'golden' | 'dusk' | 'monsoon' | 'neon' | 'tungsten' | 'dawn' | 'desert' | 'night';
-export type Motif = 'crew' | 'figure' | 'landscape' | 'street' | 'stage' | 'sea' | 'road' | 'interior';
-
-/** A piece of visual media. `src` wins when present; otherwise a procedural still is rendered from `seed`. */
+/**
+ * A piece of visual media. `src` is the intended file; `fallback` is shown until that file exists, so
+ * later image deliveries replace stand-ins without code changes.
+ */
 export interface Media {
   id: string;
   kind: 'image' | 'video';
-  seed: string;
-  mood: Mood;
-  motif: Motif;
-  src?: string;
+  src: string;
+  fallback?: string;
   duration?: string;
   caption?: string;
 }
@@ -33,6 +31,8 @@ export interface Person {
   craft: Craft;
   city: string;
   tone: number;
+  photo?: string;
+  gear?: string;
   years?: number;
   languages?: string[];
   identityVerified?: boolean;
@@ -80,6 +80,8 @@ export interface Opportunity {
   questions?: string[];
   audition?: { place: string; when: string; notes: string };
   match: string[];
+  /** A match reason worth surfacing on the card because the user could not guess it. */
+  highlight?: string;
   forCrafts: Craft[];
   media: Media;
   postedAgo: string;
@@ -151,6 +153,9 @@ export interface Conversation {
   withId: string;
   context: { kind: ContextKind; label: string; detail: string; refId?: string };
   orgOwned?: boolean;
+  /** One suggested next step shown in the inbox row, e.g. confirming a recce. */
+  action?: { label: string; reply: string };
+  media?: Media;
   unread: number;
   updated: string;
   messages: Message[];

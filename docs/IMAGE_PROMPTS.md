@@ -4,6 +4,28 @@ Every image the v2 prototype needs, with a ready-to-paste prompt for each. The p
 light, so the photography does all the emotional work. It has to look like **one production company shot
 all of it**.
 
+## Status
+
+- **Delivered:** all 12 opportunity covers (one 3 × 4 sheet). Already in the app.
+- **Next, in order of visual impact.** Generate each as **one grid image** exactly like the covers sheet
+  (thin white gutters, no text, equal cells, filled row by row), then drop it in `design/sheets/` with the
+  file name shown, or attach it in chat:
+
+| Sheet file | Grid | Cells, row by row | Style |
+| --- | --- | --- | --- |
+| `people-1.png` | 3 × 3 square | kiran, tara, meera, arjun, rhea, vikram, devika, sameer, kabir | B |
+| `people-2.png` | 3 × 3 square | nikhil, priya, omar, lakshmi, ishaan, nandini, sana, raghu, zoya | B |
+| `posters.png` | 2 × 2 portrait | kaaval, monsoon-letters, fault-lines, neeli-raat | A |
+| `stills-1.png` | 2 × 2 | reel-kiran, kiran-neeli-raat, kiran-monsoon-letters, kiran-fault-lines | A |
+| `stills-2.png` | 2 × 2 | kiran-salt, kiran-kaaval-desert, reel-tara, tara-stage | A |
+| `stills-3.png` | 2 × 2 | nandini-kaaval, sameer-charminar, devika-rushikonda, ishaan-set-1 | A |
+
+Prompt for a sheet: paste the style block, then *"A grid of N separate photographs, equal cells, thin
+white gutters, no text or numbers. Row by row:"* followed by the descriptions below for each cell in
+order. Headshots are the biggest visible gain: every avatar in the app is currently a monogram.
+
+Until a file exists, the app shows a related cover in its place, so nothing looks broken meanwhile.
+
 ---
 
 ## How to deliver

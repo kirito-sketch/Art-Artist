@@ -1,29 +1,23 @@
 import { AnimatePresence, motion, useDragControls, type PanInfo } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { X } from 'lucide-react';
 import { spring } from './motion';
-import { IconButton } from './primitives';
 
 interface SheetProps {
   open: boolean;
   onClose: () => void;
-  title?: ReactNode;
-  subtitle?: ReactNode;
+  title?: string;
   children: ReactNode;
   footer?: ReactNode;
   /** 'auto' hugs content; 'tall' reaches near the top for lists and forms. */
   size?: 'auto' | 'tall';
-  showClose?: boolean;
-  label?: string;
 }
 
 /**
- * iOS-style sheet: spring in from the bottom, dimmed backdrop, drag the grabber or header down to dismiss.
- * Dragging is scoped to the header so scrolling content never fights the dismiss gesture.
+ * iOS sheet: springs up, dims the screen, dismisses by dragging the handle or tapping outside.
+ * Title is centred and quiet; the sheet's own content and its one button carry the weight.
  */
-export function Sheet({ open, onClose, title, subtitle, children, footer, size = 'auto', showClose = true, label }: SheetProps) {
+export function Sheet({ open, onClose, title, children, footer, size = 'auto' }: SheetProps) {
   const controls = useDragControls();
-
   const onDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.y > 110 || info.velocity.y > 650) onClose();
   };
@@ -31,15 +25,8 @@ export function Sheet({ open, onClose, title, subtitle, children, footer, size =
   return (
     <AnimatePresence>
       {open && (
-        <div className="sheet-layer" role="dialog" aria-modal="true" aria-label={label ?? (typeof title === 'string' ? title : 'Sheet')}>
-          <motion.div
-            className="sheet-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            onClick={onClose}
-          />
+        <div className="sheet-layer" role="dialog" aria-modal="true" aria-label={title ?? 'Sheet'}>
+          <motion.div className="sheet-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }} onClick={onClose} />
           <motion.div
             className={`sheet sheet--${size}`}
             initial={{ y: '100%' }}
@@ -55,19 +42,7 @@ export function Sheet({ open, onClose, title, subtitle, children, footer, size =
           >
             <div className="sheet-head" onPointerDown={(e) => controls.start(e)}>
               <span className="sheet-grabber" />
-              {(title || showClose) && (
-                <div className="sheet-titlebar">
-                  <div>
-                    {title && <h3 className="sheet-title">{title}</h3>}
-                    {subtitle && <p className="sheet-subtitle">{subtitle}</p>}
-                  </div>
-                  {showClose && (
-                    <IconButton label="Close" className="icon-btn--soft" onClick={onClose} onPointerDown={(e) => e.stopPropagation()}>
-                      <X size={18} />
-                    </IconButton>
-                  )}
-                </div>
-              )}
+              {title && <h3 className="sheet-title">{title}</h3>}
             </div>
             <div className="sheet-body">{children}</div>
             {footer && <div className="sheet-footer">{footer}</div>}

@@ -1,27 +1,20 @@
 import { motion, type HTMLMotionProps } from 'framer-motion';
-import { forwardRef, type ReactNode } from 'react';
-import { BadgeCheck, ChevronRight, Clapperboard, Handshake, Megaphone } from 'lucide-react';
-import type { Opportunity, Party } from '../data/types';
+import { forwardRef, useState, type ReactNode } from 'react';
+import { BadgeCheck, ChevronRight, ImageOff, Play } from 'lucide-react';
+import type { Media, Party } from '../data/types';
 import { spring } from './motion';
 
 /* ------------------------------------------------------------ Pressable */
 
 type PressableProps = HTMLMotionProps<'button'> & { scale?: number };
 
-/** Every tappable surface compresses slightly on touch, like a physical card. */
+/** Every tappable surface compresses slightly on touch. */
 export const Pressable = forwardRef<HTMLButtonElement, PressableProps>(function Pressable(
   { scale = 0.97, className = '', children, type = 'button', ...rest },
   ref,
 ) {
   return (
-    <motion.button
-      ref={ref}
-      type={type}
-      whileTap={{ scale }}
-      transition={spring.press}
-      className={`pressable ${className}`}
-      {...rest}
-    >
+    <motion.button ref={ref} type={type} whileTap={{ scale }} transition={spring.press} className={`pressable ${className}`} {...rest}>
       {children}
     </motion.button>
   );
@@ -29,8 +22,8 @@ export const Pressable = forwardRef<HTMLButtonElement, PressableProps>(function 
 
 type PressCardProps = HTMLMotionProps<'div'> & { scale?: number; onPress: () => void };
 
-/** A tappable card that can contain its own buttons (save, follow) without nesting <button>s. */
-export function PressCard({ scale = 0.975, className = '', onPress, children, ...rest }: PressCardProps) {
+/** A tappable block that can contain its own buttons (save, follow) without nesting <button>s. */
+export function PressCard({ scale = 0.98, className = '', onPress, children, ...rest }: PressCardProps) {
   return (
     <motion.div
       role="button"
@@ -55,49 +48,59 @@ export function PressCard({ scale = 0.975, className = '', onPress, children, ..
 /* ---------------------------------------------------------------- Button */
 
 type ButtonProps = HTMLMotionProps<'button'> & {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'light' | 'danger';
+  variant?: 'primary' | 'secondary' | 'plain' | 'danger' | 'outline';
   size?: 'l' | 'm' | 's';
   icon?: ReactNode;
-  trailing?: ReactNode;
   block?: boolean;
   loading?: boolean;
 };
 
-export function Button({ variant = 'primary', size = 'm', icon, trailing, block, loading, className = '', children, disabled, ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', size = 'm', icon, block, loading, className = '', children, disabled, ...rest }: ButtonProps) {
   return (
-    <Pressable
-      scale={0.96}
-      className={`btn btn--${variant} btn--${size} ${block ? 'btn--block' : ''} ${className}`}
-      disabled={disabled || loading}
-      {...rest}
-    >
+    <Pressable scale={0.96} className={`btn btn--${variant} btn--${size} ${block ? 'btn--block' : ''} ${className}`} disabled={disabled || loading} {...rest}>
       {loading ? <span className="spinner" aria-label="Loading" /> : icon}
       {children as ReactNode}
-      {trailing}
     </Pressable>
   );
 }
 
 export function IconButton({ label, className = '', children, ...rest }: HTMLMotionProps<'button'> & { label: string }) {
   return (
-    <Pressable scale={0.9} aria-label={label} className={`icon-btn ${className}`} {...rest}>
+    <Pressable scale={0.9} aria-label={label} title={label} className={`icon-btn ${className}`} {...rest}>
       {children as ReactNode}
     </Pressable>
   );
 }
 
-/* ---------------------------------------------------------------- Avatar */
+/* ----------------------------------------------------------------- Photo */
 
-const TONES: [string, string][] = [
-  ['#6d4b3a', '#c89066'],
-  ['#3d4f5c', '#8fb1c2'],
-  ['#5a3b52', '#c9879f'],
-  ['#3f5448', '#95b89f'],
-  ['#6a5530', '#e0bb72'],
-  ['#4b3a63', '#a592cf'],
-  ['#5c3a33', '#d1897a'],
-  ['#34485a', '#7fa3c4'],
-];
+/**
+ * Real image with a delivery fallback: tries `src`, then `fallback`, then a quiet placeholder.
+ * Video media gets a play affordance and duration.
+ */
+export function Photo({ media, className = '', alt = '', showPlay = true }: { media?: Media | null; className?: string; alt?: string; showPlay?: boolean }) {
+  const [stage, setStage] = useState(0);
+  const url = !media ? null : stage === 0 ? media.src : stage === 1 && media.fallback ? media.fallback : null;
+  return (
+    <div className={`photo ${className}`}>
+      {url ? (
+        <img src={url} alt={alt} loading="lazy" draggable={false} onError={() => setStage((s) => (s === 0 && media?.fallback ? 1 : 2))} />
+      ) : (
+        <span className="photo-missing" aria-label="Image unavailable">
+          <ImageOff size={18} strokeWidth={1.6} />
+        </span>
+      )}
+      {media?.kind === 'video' && showPlay && (
+        <span className="photo-play">
+          <Play size={12} fill="currentColor" strokeWidth={0} />
+          {media.duration}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Avatar */
 
 export function initials(name: string) {
   return name
@@ -108,89 +111,70 @@ export function initials(name: string) {
     .join('');
 }
 
-export function Avatar({ party, size = 40, ring }: { party: Party; size?: number; ring?: 'available' | 'new' }) {
-  const [a, b] = TONES[party.tone % TONES.length];
+/** Headshot when delivered, otherwise a neutral monogram. Organisations are rounded squares. */
+export function Avatar({ party, size = 40, available }: { party: Party; size?: number; available?: boolean }) {
+  const [failed, setFailed] = useState(false);
   const isOrg = party.kind === 'org';
+  const src = party.kind === 'person' ? party.photo : undefined;
   return (
-    <span
-      className={`avatar ${isOrg ? 'avatar--org' : ''} ${ring ? `avatar--ring-${ring}` : ''}`}
-      style={{ width: size, height: size, fontSize: size * (isOrg ? 0.34 : 0.38), background: `linear-gradient(145deg, ${b}, ${a})` }}
-      aria-hidden
-    >
-      {initials(party.name)}
+    <span className={`avatar ${isOrg ? 'avatar--org' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden>
+      {src && !failed ? <img src={src} alt="" onError={() => setFailed(true)} /> : size >= 24 ? initials(party.name) : null}
+      {available && <span className="avatar-dot" style={{ width: Math.max(10, size * 0.24), height: Math.max(10, size * 0.24) }} />}
     </span>
   );
 }
 
-export function AvatarStack({ parties, size = 28, max = 3 }: { parties: Party[]; size?: number; max?: number }) {
-  const shown = parties.slice(0, max);
+export function Verified({ size = 15, label = 'Verified' }: { size?: number; label?: string }) {
   return (
-    <span className="avatar-stack" style={{ height: size }}>
-      {shown.map((p) => (
-        <span key={p.id} className="avatar-stack-item" style={{ marginLeft: -size * 0.32 }}>
-          <Avatar party={p} size={size} />
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/* ------------------------------------------------------------ Trust type */
-
-const TYPE_META = {
-  crew: { label: 'Crew job', Icon: Clapperboard },
-  casting: { label: 'Casting call', Icon: Megaphone },
-  collab: { label: 'Collaboration', Icon: Handshake },
-} as const;
-
-/** The single most important label in Ana: official vs peer. Icon + text + hue, so it survives greyscale. */
-export function TypeBadge({ kind, onMedia }: { kind: Opportunity['kind']; onMedia?: boolean }) {
-  const { label, Icon } = TYPE_META[kind];
-  return (
-    <span className={`type-badge type-badge--${kind} ${onMedia ? 'type-badge--on-media' : ''}`}>
-      <Icon size={12} strokeWidth={2.2} />
-      {label}
-    </span>
-  );
-}
-
-export function Verified({ size = 14, label = 'Verified production house' }: { size?: number; label?: string }) {
-  return (
-    <span className="verified" title={label} aria-label={label}>
+    <span className="verified" role="img" aria-label={label} title={label}>
       <BadgeCheck size={size} strokeWidth={2.2} />
     </span>
   );
 }
 
-export function Chip({ children, tone = 'default', icon }: { children: ReactNode; tone?: 'default' | 'available' | 'accent' | 'collab' | 'danger'; icon?: ReactNode }) {
-  return (
-    <span className={`chip chip--${tone}`}>
-      {icon}
-      {children}
-    </span>
-  );
-}
+/* --------------------------------------------------------------- Layout */
 
-/* --------------------------------------------------------- Section header */
-
-export function SectionHeader({ title, meta, action, onAction }: { title: string; meta?: ReactNode; action?: string; onAction?: () => void }) {
+export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="section-header">
-      <div className="section-header-title">
-        <h2>{title}</h2>
-        {meta && <span className="section-header-meta">{meta}</span>}
-      </div>
+    <div className="section-head">
+      <h2>{title}</h2>
       {action && (
-        <Pressable className="section-header-action" onClick={onAction} scale={0.94}>
+        <button className="link" onClick={onAction}>
           {action}
-          <ChevronRight size={15} strokeWidth={2.2} />
-        </Pressable>
+        </button>
       )}
     </div>
   );
 }
 
-/* ---------------------------------------------------------------- States */
+/** iOS inset-grouped row: icon, label, value, and optional chevron. */
+export function Row({ icon, label, value, onPress, chevron = !!onPress, children }: { icon?: ReactNode; label: ReactNode; value?: ReactNode; onPress?: () => void; chevron?: boolean; children?: ReactNode }) {
+  const inner = (
+    <>
+      {icon && <span className="row-icon">{icon}</span>}
+      <span className="row-label">{label}</span>
+      {value !== undefined && <span className="row-value">{value}</span>}
+      {children}
+      {chevron && <ChevronRight size={18} className="row-chevron" />}
+    </>
+  );
+  return onPress ? (
+    <Pressable className="row" onClick={onPress} scale={0.99}>
+      {inner}
+    </Pressable>
+  ) : (
+    <div className="row">{inner}</div>
+  );
+}
+
+export function Chip({ active, children, onClick, icon }: { active?: boolean; children: ReactNode; onClick?: () => void; icon?: ReactNode }) {
+  return (
+    <motion.button whileTap={{ scale: 0.95 }} className={`chip ${active ? 'is-on' : ''}`} onClick={onClick} aria-pressed={active}>
+      {icon}
+      {children}
+    </motion.button>
+  );
+}
 
 export function Skeleton({ w = '100%', h = 14, r = 8, className = '' }: { w?: number | string; h?: number | string; r?: number; className?: string }) {
   return <span className={`skeleton ${className}`} style={{ width: w, height: h, borderRadius: r }} />;
@@ -215,16 +199,14 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boo
   );
 }
 
-export function Segmented<T extends string>({ value, options, onChange, id }: { value: T; options: { value: T; label: string; count?: number }[]; onChange: (v: T) => void; id: string }) {
+export function Tabs<T extends string>({ value, options, onChange, id }: { value: T; options: { value: T; label: string; icon?: ReactNode }[]; onChange: (v: T) => void; id: string }) {
   return (
-    <div className="segmented" role="tablist">
+    <div className="tabs" role="tablist">
       {options.map((o) => (
-        <button key={o.value} role="tab" aria-selected={value === o.value} className={`segmented-item ${value === o.value ? 'is-active' : ''}`} onClick={() => onChange(o.value)}>
-          {value === o.value && <motion.span layoutId={`seg-${id}`} className="segmented-pill" transition={spring.snappy} />}
-          <span className="segmented-label">
-            {o.label}
-            {o.count ? <span className="segmented-count">{o.count}</span> : null}
-          </span>
+        <button key={o.value} role="tab" aria-selected={value === o.value} className={`tab ${value === o.value ? 'is-on' : ''}`} onClick={() => onChange(o.value)}>
+          {o.icon}
+          <span>{o.label}</span>
+          {value === o.value && <motion.span layoutId={`tabs-${id}`} className="tab-underline" transition={spring.snappy} />}
         </button>
       ))}
     </div>

@@ -121,3 +121,18 @@ Measured in Chromium at 393 × 852. "First screen" means what is visible before 
 
 Pay, project, format, language and match reasons move to the detail page. Only a match reason that is
 genuinely surprising ("You shot Season 1") may replace the place line.
+
+---
+
+## v2 result
+
+Same measurements, same viewport.
+
+| Screen | v1 words (first screen) | v2 words | v1 font sizes | v2 font sizes | v1 boxed surfaces | v2 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Home | 251 | **86** | 13 | 5 | 13 | 1 |
+| Home, whole page | 465 words, 2,853px | **200 words, 1,775px** | | | | |
+| Opportunity | 98 | **65** | 8 | 4 | 8 | 0 |
+| Create sheet | 51 | **8** | 5 | 1 | 4 | 1 |
+
+(Font sizes exclude status bar and avatar monograms.)

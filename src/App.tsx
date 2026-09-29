@@ -16,8 +16,7 @@ import { networkFor } from './state/selectors';
 import { StoreProvider, useStore, type Route } from './state/store';
 import { StatusBar, ToastHost } from './ui/chrome';
 import { spring } from './ui/motion';
-import { IconButton } from './ui/primitives';
-import { Still } from './ui/Still';
+import { IconButton, Photo } from './ui/primitives';
 import { PrototypeControls } from './dev/PrototypeControls';
 
 /* Transition per route type: composers rise like sheets, media zooms, detail pushes from the right. */
@@ -51,15 +50,16 @@ function NetworkScreen() {
   const { viewer, scenario, pop } = useStore();
   const events = networkFor(viewer, scenario);
   return (
-    <div className="screen-scroll">
-      <header className="plain-bar">
-        <IconButton label="Back" className="icon-btn--ghost" onClick={pop}>
-          <ChevronLeft size={24} />
+    <div className="screen">
+      <header className="topbar topbar--nav">
+        <IconButton label="Back" onClick={pop}>
+          <ChevronLeft size={26} />
         </IconButton>
-        <p className="plain-bar-title">Network activity</p>
-        <span style={{ width: 40 }} />
       </header>
-      <div className="net-list net-list--page">
+      <div className="title-block">
+        <h1 className="large-title">Your network</h1>
+      </div>
+      <div className="list">
         {events.map((e, i) => (
           <NetworkRow key={e.id} e={e} index={i} />
         ))}
@@ -80,7 +80,7 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
   return (
     <div className="viewer">
       <div className="viewer-bar">
-        <IconButton label="Close" className="icon-btn--glass" onClick={pop}>
+        <IconButton label="Close" className="icon-btn--on-dark" onClick={pop}>
           <X size={20} />
         </IconButton>
         {items.length > 1 && (
@@ -92,7 +92,7 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
       <motion.div className="viewer-stage" drag dragSnapToOrigin dragElastic={0.5} onDragEnd={onDragEnd}>
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div key={m.id} className="viewer-media" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={spring.gentle}>
-            <Still media={m} />
+            <Photo media={m} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
@@ -111,9 +111,9 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
 function Phone() {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
-  const [discoverScope, setDiscoverScope] = useState<Scope>('all');
+  const [discoverScope, setDiscoverScope] = useState<Scope>('roles');
   const goDiscover = (scope?: string) => {
-    setDiscoverScope((scope as Scope) ?? 'all');
+    setDiscoverScope((scope as Scope) ?? 'roles');
     setTab('discover');
   };
 
@@ -130,12 +130,11 @@ function Phone() {
   }, [store]);
 
   const top = stack[stack.length - 1];
-  const statusTone = top?.name === 'media' ? 'light' : 'light';
+  const statusTone = top?.name === 'media' ? 'light' : 'dark';
 
   return (
     <div className="phone" data-viewer={viewer.id}>
       <div className="phone-screen">
-        <div className="status-scrim" />
         <StatusBar tone={statusTone} />
         {/* Tabs stay mounted so scroll position survives switching. */}
         {(['home', 'discover', 'inbox', 'profile'] as const).map((t) => (
@@ -188,7 +187,6 @@ export default function App() {
   return (
     <StoreProvider>
       <div className="stage">
-        <div className="stage-glow" />
         <Phone />
         <PrototypeControls />
       </div>

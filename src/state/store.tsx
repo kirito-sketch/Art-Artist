@@ -22,7 +22,8 @@ export type Sheet =
   | { name: 'respond'; id: string }
   | { name: 'showInterest'; id: string }
   | { name: 'reviewInterest'; opportunityId?: string }
-  | { name: 'reportCredit'; title: string };
+  | { name: 'reportCredit'; title: string }
+  | { name: 'activity' };
 
 export interface Scenario {
   newUser: boolean;
