@@ -326,11 +326,11 @@
 .logo {
   display: inline-flex;
   align-items: center;
-  height: 34px;
+  height: 36px;
 }
 
 .logo img {
-  height: 34px;
+  height: 32px;
   width: auto;
 }
 
@@ -776,7 +776,7 @@
   display: grid;
   place-items: center;
   background: var(--accent);
-  box-shadow: 0 6px 16px rgba(224, 40, 46, 0.35);
+  box-shadow: 0 6px 16px rgba(196, 65, 46, 0.35);
   color: #fff;
 }
 

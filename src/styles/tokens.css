@@ -21,8 +21,8 @@
   --on-dark: #ffffff;
 
   /* State */
-  --accent: #e0282e; /* brand red, from the logo */
-  --accent-soft: rgba(224, 40, 46, 0.1);
+  --accent: #c4412e; /* brand red, from the logo */
+  --accent-soft: rgba(196, 65, 46, 0.1);
   --verified: #1f5af6;
   --available: #1e9e5a;
   --danger: #d83a2e;
