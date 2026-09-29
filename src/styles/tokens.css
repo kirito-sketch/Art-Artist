@@ -4,6 +4,8 @@
  * Trust types (crew job, casting call, collaboration) each own one hue and are never reused elsewhere.
  */
 :root {
+  color-scheme: dark;
+
   /* Surfaces */
   --bg: #0d0b0a;
   --surface-1: #161311;
