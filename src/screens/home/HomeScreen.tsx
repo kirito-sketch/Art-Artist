@@ -8,7 +8,8 @@ import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { stagger } from '../../ui/motion';
 import { Avatar, Button, IconButton, PressCard, SectionHeader, Skeleton } from '../../ui/primitives';
 import { NetworkRow } from './NetworkActivity';
-import { OpportunityCard } from './OpportunityCard';
+import { FeaturedCard, OpportunityCard } from './OpportunityCard';
+import { Logo } from '../../ui/Logo';
 import { PostCard } from './PostCard';
 
 const NETWORK_LIMIT = 4;
@@ -36,7 +37,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
   return (
     <div className="screen" ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
       <header className="topbar">
-        <span className="wordmark">Ana</span>
+        <Logo />
         <IconButton label="Notifications" onClick={() => openSheet({ name: 'notifications' })}>
           <Bell size={22} />
           {unread && <span className="dot" />}
@@ -86,13 +87,20 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
           </Button>
         </div>
       ) : opps.length ? (
-        <div className="carousel">
-          {opps.map((o, i) => (
-            <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
-              <OpportunityCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
-            </motion.div>
-          ))}
-        </div>
+        <>
+          <motion.div className="feature-wrap" {...stagger(0)}>
+            <FeaturedCard o={opps[0]} onOpen={() => push({ name: 'opportunity', id: opps[0].id })} />
+          </motion.div>
+          {opps.length > 1 && (
+            <div className="carousel carousel--more">
+              {opps.slice(1).map((o, i) => (
+                <motion.div key={o.id} className="carousel-item" {...stagger(i + 1, 0.05)}>
+                  <OpportunityCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
       ) : (
         <p className="hint">No new roles for your craft this week.</p>
       )}

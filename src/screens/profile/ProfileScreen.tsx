@@ -34,7 +34,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
-  const [overHero, setOverHero] = useState(true);
+  const [scrollY, setScrollY] = useState(0);
+  const overHero = scrollY < 360;
 
   // While the photo sits under the status bar, the bar turns light.
   useEffect(() => {
@@ -69,9 +70,11 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: p.photo ?? '', fallback: backdrop?.fallback ?? backdrop?.src };
 
   return (
-    <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setOverHero(e.currentTarget.scrollTop < 360)}>
+    <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="phero">
-        <Photo media={hero} className="phero-photo" alt={p.name} />
+        <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
+          <Photo media={hero} className="phero-photo" alt={p.name} />
+        </div>
         <div className="phero-bar">
           {isTab ? (
             <IconButton label="Your activity" className="icon-btn--float" onClick={() => openSheet({ name: 'activity' })}>

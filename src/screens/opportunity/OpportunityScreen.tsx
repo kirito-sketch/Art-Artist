@@ -1,5 +1,6 @@
 import { CalendarDays, ChevronLeft, Clock, Languages, MapPin, Share, Sparkles, Users } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useImageTint } from '../../ui/useImageTint';
 import { useStore } from '../../state/store';
 import { findOpportunity, firstName, kindLabel, person } from '../../state/selectors';
 import { Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
@@ -22,8 +23,16 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, showToast } = useStore();
+  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, showToast, setHero } = useStore();
   const o = findOpportunity(id, userCollabs);
+  const [scrollY, setScrollY] = useState(0);
+  const tint = useImageTint(o?.media);
+
+  // Light status bar while the photo is under it.
+  useEffect(() => {
+    setHero('opportunity', scrollY < 330);
+    return () => setHero('opportunity', false);
+  }, [scrollY, setHero]);
 
   if (!o) {
     return (
@@ -94,21 +103,14 @@ export function OpportunityScreen({ id }: { id: string }) {
 
   return (
     <div className="detail">
-      <div className="screen">
-        <header className="topbar topbar--nav">
-          <IconButton label="Back" onClick={pop}>
-            <ChevronLeft size={26} />
-          </IconButton>
-          <span className="flex" />
-          <IconButton label="Share" onClick={() => showToast({ text: 'Link copied' })}>
-            <Share size={20} />
-          </IconButton>
-          <SaveButton id={o.id} />
-        </header>
+      <div className="screen screen--hero" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+        <div className="ohero">
+          <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
+            <Photo media={o.media} className="ohero-photo" />
+          </div>
+        </div>
 
-        <div className="detail-body">
-          <Photo media={o.media} className="detail-image" />
-
+        <div className="detail-body osheet" style={tint ? { background: `linear-gradient(to bottom, rgba(${tint}, 0.14), rgba(255, 255, 255, 0) 360px), #ffffff` } : undefined}>
           <p className="kicker">
             {kindLabel[o.kind]} · {o.projectType.split(' · ')[0]}
           </p>
@@ -165,6 +167,19 @@ export function OpportunityScreen({ id }: { id: string }) {
             </button>
           </p>
         </div>
+      </div>
+
+      <div className="float-bar">
+        <IconButton label="Back" className="icon-btn--float" onClick={pop}>
+          <ChevronLeft size={24} />
+        </IconButton>
+        <span className="flex" />
+        <IconButton label="Share" className="icon-btn--float" onClick={() => showToast({ text: 'Link copied' })}>
+          <Share size={18} />
+        </IconButton>
+        <span className="save-float">
+          <SaveButton id={o.id} floating />
+        </span>
       </div>
 
       <footer className="booking">

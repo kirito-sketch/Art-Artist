@@ -253,7 +253,128 @@
   color: var(--danger);
 }
 
+/* featured match */
+
+.feature-wrap {
+  padding: 0 var(--gutter);
+}
+
+.feature {
+  position: relative;
+  height: 460px;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.feature-photo {
+  position: absolute !important;
+  inset: 0;
+}
+
+.feature-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 35%, rgba(0, 0, 0, 0) 60%);
+  pointer-events: none;
+}
+
+.feature .pill {
+  top: 16px;
+  left: 16px;
+}
+
+.feature .save--floating {
+  top: 12px;
+  right: 12px;
+}
+
+.feature-text {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  color: #fff;
+}
+
+.feature-title {
+  font-size: var(--t-1);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+
+.feature-line {
+  font-size: var(--t-4);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.feature-line .verified {
+  color: #fff;
+}
+
+.carousel--more {
+  margin-top: 20px;
+}
+
+.carousel--more .carousel-item {
+  width: 240px;
+}
+
 /* ======================================================== opportunity */
+
+.ohero {
+  position: relative;
+  height: 430px;
+  overflow: hidden;
+  background: #111;
+}
+
+.ohero-parallax {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.ohero-photo {
+  position: absolute !important;
+  inset: 0;
+}
+
+.osheet {
+  position: relative;
+  margin-top: -28px;
+  padding-top: 28px;
+  border-radius: 28px 28px 0 0;
+  background: var(--bg);
+}
+
+.float-bar {
+  position: absolute;
+  top: calc(var(--status-bar) + 6px);
+  left: 16px;
+  right: 16px;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.save-float {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.save-float .save--floating {
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+}
+
 
 .detail {
   position: absolute;
@@ -1030,6 +1151,7 @@
 .phero {
   position: relative;
   height: 440px;
+  overflow: hidden;
   background: #111;
 }
 
@@ -1367,4 +1489,8 @@
   .stage {
     flex-direction: column;
   }
+}
+
+.detail-body.osheet {
+  padding-top: 32px;
 }

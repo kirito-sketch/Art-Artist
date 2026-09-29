@@ -67,7 +67,7 @@ export function OpportunityCard({ o, onOpen }: { o: Opportunity; onOpen: () => v
     <PressCard className="ocard" onPress={onOpen} aria-label={`${o.role}, ${o.project}`}>
       <div className="ocard-media">
         <Photo media={o.media} />
-        {pill && <span className={`pill ${sent ? 'pill--done' : ''}`}>{pill}</span>}
+        {pill && <span className={`pill ${sent ? 'pill--done' : o.kind !== 'collab' && (o.closesInDays ?? 9) <= 3 ? 'pill--urgent' : ''}`}>{pill}</span>}
         <SaveButton id={o.id} floating />
       </div>
       <p className="ocard-title">{o.role}</p>
@@ -75,6 +75,27 @@ export function OpportunityCard({ o, onOpen }: { o: Opportunity; onOpen: () => v
         <Byline o={o} />
       </p>
       <p className="ocard-line">{o.highlight ?? `${o.city} · ${o.dates}`}</p>
+    </PressCard>
+  );
+}
+
+/** The single strongest match, shown large at the top of Home with its title set on the image. */
+export function FeaturedCard({ o, onOpen }: { o: Opportunity; onOpen: () => void }) {
+  const sent = useSentLabel(o);
+  const pill = sent ?? (o.closesInDays !== undefined && o.closesInDays <= 5 ? `Closes in ${o.closesInDays} days` : o.kind === 'collab' ? 'Collaboration' : null);
+  return (
+    <PressCard className="feature" onPress={onOpen} scale={0.985} aria-label={`${o.role}, ${o.project}`}>
+      <Photo media={o.media} className="feature-photo" />
+      <div className="feature-scrim" />
+      {pill && <span className={`pill ${sent ? 'pill--done' : (o.closesInDays ?? 9) <= 5 ? 'pill--urgent' : ''}`}>{pill}</span>}
+      <SaveButton id={o.id} floating />
+      <div className="feature-text">
+        <p className="feature-title">{o.role}</p>
+        <p className="feature-line">
+          <Byline o={o} />
+        </p>
+        <p className="feature-line">{o.highlight ?? `${o.city} · ${o.dates}`}</p>
+      </div>
     </PressCard>
   );
 }

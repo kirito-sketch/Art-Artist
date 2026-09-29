@@ -2,18 +2,18 @@
 
 .large-title {
   font-size: var(--t-1);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
   text-wrap: balance;
 }
 
 .section-title,
 .section-head h2 {
   font-size: var(--t-2);
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.2;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .item-title {
@@ -59,7 +59,7 @@
 }
 
 .link {
-  color: var(--accent);
+  color: var(--text);
   font-size: var(--t-4);
   font-weight: 600;
 }
@@ -323,6 +323,25 @@
   object-fit: cover;
 }
 
+.logo {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+}
+
+.logo img {
+  height: 34px;
+  width: auto;
+}
+
+.photo img {
+  transition: transform 0.5s var(--ease-out);
+}
+
+.pressable:active .photo img {
+  transform: scale(1.04);
+}
+
 .photo-missing {
   position: absolute;
   inset: 0;
@@ -385,7 +404,7 @@
 
 .verified {
   display: inline-flex;
-  color: var(--accent);
+  color: var(--verified);
   vertical-align: -2px;
   flex: none;
 }
@@ -404,6 +423,10 @@
   font-size: var(--t-5);
   font-weight: 600;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.pill--urgent {
+  color: var(--accent);
 }
 
 .pill--done {
@@ -719,7 +742,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--text);
+  background: var(--accent);
 }
 
 .tab-dot {
@@ -752,7 +775,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--primary);
+  background: var(--accent);
+  box-shadow: 0 6px 16px rgba(224, 40, 46, 0.35);
   color: #fff;
 }
 
