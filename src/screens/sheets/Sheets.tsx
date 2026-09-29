@@ -18,7 +18,7 @@ export function SheetHost() {
       <Sheet open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
         <Notifications />
       </Sheet>
-      <Sheet open={is('availability')} onClose={closeSheet} title="Availability">
+      <Sheet open={is('availability')} onClose={closeSheet} title="Matching">
         <AvailabilityForm />
       </Sheet>
       <Sheet open={is('respond')} onClose={closeSheet} title="Respond" size="tall">

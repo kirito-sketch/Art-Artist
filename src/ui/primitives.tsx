@@ -48,7 +48,7 @@ export function PressCard({ scale = 0.98, className = '', onPress, children, ...
 /* ---------------------------------------------------------------- Button */
 
 type ButtonProps = HTMLMotionProps<'button'> & {
-  variant?: 'primary' | 'secondary' | 'plain' | 'danger' | 'outline';
+  variant?: 'primary' | 'secondary' | 'plain' | 'danger' | 'outline' | 'light';
   size?: 'l' | 'm' | 's';
   icon?: ReactNode;
   block?: boolean;
@@ -134,14 +134,17 @@ export function Verified({ size = 15, label = 'Verified' }: { size?: number; lab
 
 /* --------------------------------------------------------------- Layout */
 
+/** Section title. When the section has more to show, the title itself is the link, with a chevron. */
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <div className="section-head">
-      <h2>{title}</h2>
-      {action && (
-        <button className="link" onClick={onAction}>
-          {action}
+      {action && onAction ? (
+        <button className="section-link" onClick={onAction} aria-label={`${title}, ${action.toLowerCase()}`}>
+          <h2>{title}</h2>
+          <ChevronRight size={22} strokeWidth={2.6} />
         </button>
+      ) : (
+        <h2>{title}</h2>
       )}
     </div>
   );
