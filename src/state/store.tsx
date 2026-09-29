@@ -104,6 +104,11 @@ function useStoreValue() {
   const [userPortfolio, setUserPortfolio] = useState<Media[]>([]);
   const [publishing, setPublishing] = useState<Publishing | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  /** Screens currently showing a full-bleed photo under the status bar, keyed by screen. */
+  const [heroUnderStatus, setHeroUnderStatus] = useState<Record<string, boolean>>({});
+  const setHero = useCallback((key: string, on: boolean) => {
+    setHeroUnderStatus((h) => (h[key] === on ? h : { ...h, [key]: on }));
+  }, []);
 
   const toastTimer = useRef<number>();
   const showToast = useCallback((t: Omit<Toast, 'id'>) => {
@@ -348,6 +353,8 @@ function useStoreValue() {
   return {
     viewer,
     switchViewer,
+    heroUnderStatus,
+    setHero,
     scenario,
     setScenario,
     reloadKey,

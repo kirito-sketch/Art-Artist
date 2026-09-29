@@ -130,7 +130,9 @@ function Phone() {
   }, [store]);
 
   const top = stack[stack.length - 1];
-  const statusTone = top?.name === 'media' ? 'light' : 'dark';
+  // The status bar turns light and transparent over full-bleed photos (media viewer, profile hero).
+  const topKey = top ? (top.name === 'profile' ? `profile-${top.id}` : top.name) : tab === 'profile' ? `profile-${viewer.id}-tab` : tab;
+  const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : 'dark';
 
   return (
     <div className="phone" data-viewer={viewer.id}>

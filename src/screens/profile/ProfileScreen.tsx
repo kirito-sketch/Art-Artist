@@ -1,10 +1,10 @@
-import { BadgeCheck, Camera, ChevronLeft, Flag, Languages, List, Lock, MapPin, Settings, Share } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Camera, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
-import { Avatar, Button, EmptyState, IconButton, Photo, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Button, EmptyState, IconButton, Photo, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 
@@ -30,39 +30,27 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast } = useStore();
+  const { viewer, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero } = useStore();
   const p = person(id);
   const own = id === viewer.id;
+  const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
+  const [overHero, setOverHero] = useState(true);
 
-  const topbar = (
-    <header className="topbar topbar--nav">
-      {!isTab && (
-        <IconButton label="Back" onClick={pop}>
-          <ChevronLeft size={26} />
-        </IconButton>
-      )}
-      <span className="flex" />
-      {own && (
-        <IconButton label="Your activity" onClick={() => openSheet({ name: 'activity' })}>
-          <List size={22} />
-        </IconButton>
-      )}
-      <IconButton label="Share profile" onClick={() => showToast({ text: 'Profile link copied' })}>
-        <Share size={20} />
-      </IconButton>
-      {own && (
-        <IconButton label="Settings" onClick={() => showToast({ text: 'Settings' })}>
-          <Settings size={21} />
-        </IconButton>
-      )}
-    </header>
-  );
+  // While the photo sits under the status bar, the bar turns light.
+  useEffect(() => {
+    setHero(heroKey, overHero && p?.visibility !== 'private');
+    return () => setHero(heroKey, false);
+  }, [heroKey, overHero, setHero, p?.visibility]);
 
   if (!p) return <EmptyState title="Profile unavailable" />;
   if (!own && p.visibility !== 'public') {
     return (
       <div className="screen">
-        {topbar}
+        <header className="topbar topbar--nav">
+          <IconButton label="Back" onClick={pop}>
+            <ChevronLeft size={26} />
+          </IconButton>
+        </header>
         <EmptyState icon={<Lock />} title={p.visibility === 'removed' ? 'This profile has been removed' : 'This profile is private'} />
       </div>
     );
@@ -76,40 +64,62 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const collabs = seed.opportunities.filter((o) => o.authorId === id);
   const from = own ? (availability.open ? availability.from : null) : p.availableFrom ?? null;
   const isFollowing = following.includes(id);
+  const backdrop = reel ?? work[0] ?? d.credits[0]?.media;
+  // Portrait first; until a headshot exists, the person's own work stands in.
+  const hero: Media = { id: `hero-${id}`, kind: 'image', src: p.photo ?? '', fallback: backdrop?.fallback ?? backdrop?.src };
 
   return (
-    <div className="screen" data-scroll={isTab ? 'profile' : undefined}>
-      {topbar}
+    <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setOverHero(e.currentTarget.scrollTop < 360)}>
+      <div className="phero">
+        <Photo media={hero} className="phero-photo" alt={p.name} />
+        <div className="phero-bar">
+          {isTab ? (
+            <IconButton label="Your activity" className="icon-btn--float" onClick={() => openSheet({ name: 'activity' })}>
+              <List size={20} />
+            </IconButton>
+          ) : (
+            <IconButton label="Back" className="icon-btn--float" onClick={pop}>
+              <ChevronLeft size={24} />
+            </IconButton>
+          )}
+          <span className="flex" />
+          <IconButton label="Share profile" className="icon-btn--float" onClick={() => showToast({ text: 'Profile link copied' })}>
+            <Share size={18} />
+          </IconButton>
+          <IconButton label={own ? 'Settings' : 'More'} className="icon-btn--float" onClick={() => showToast({ text: own ? 'Settings' : 'Report or block' })}>
+            {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
+          </IconButton>
+        </div>
+      </div>
 
-      <div className="profile">
-        <section className="host-card">
-          <div className="host-id">
-            <span className="host-photo">
-              <Avatar party={p} size={104} />
-              {p.identityVerified && (
-                <span className="host-badge" aria-label="Identity verified">
-                  <BadgeCheck size={18} strokeWidth={2.4} />
-                </span>
-              )}
+      <div className="psheet">
+        <header className="pid">
+          <h1 className="large-title">
+            {p.name}
+            {p.identityVerified && <Verified size={22} label="Identity verified" />}
+          </h1>
+          <p className="pid-role">{p.role}</p>
+          <p className="meta">
+            {p.city}
+            {p.languages ? ` · ${p.languages.join(', ')}` : ''}
+          </p>
+          <p className="pid-stats">
+            <span>
+              <b>{d.credits.length}</b> credits
             </span>
-            <p className="host-name">{p.name}</p>
-            <p className="meta">{p.role}</p>
-          </div>
-          <div className="host-stats">
-            <div>
-              <b>{d.credits.length}</b>
-              <span>Credits</span>
-            </div>
-            <div>
-              <b>{p.years ?? '–'}</b>
-              <span>Years</span>
-            </div>
-            <div>
-              <b>{d.projects.length + work.length}</b>
-              <span>Works</span>
-            </div>
-          </div>
-        </section>
+            {p.years && (
+              <span>
+                <b>{p.years}</b> years active
+              </span>
+            )}
+          </p>
+          {from && (
+            <button className="pid-available" onClick={() => own && openSheet({ name: 'availability' })} disabled={!own}>
+              <span className="status-dot is-on" />
+              {availableLabel(from)}
+            </button>
+          )}
+        </header>
 
         <div className="profile-actions">
           {own ? (
@@ -118,8 +128,12 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </Button>
           ) : (
             <>
+              <Button block variant={isFollowing ? 'secondary' : 'primary'} onClick={() => toggleFollow(id)}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
               <Button
                 block
+                variant="outline"
                 onClick={() => {
                   const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: `profile-${id}` });
                   push({ name: 'conversation', id: cid });
@@ -127,39 +141,24 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               >
                 Message
               </Button>
-              <Button block variant="secondary" onClick={() => toggleFollow(id)}>
-                {isFollowing ? 'Following' : 'Follow'}
-              </Button>
             </>
           )}
         </div>
-
-        <ul className="facts">
-          {from && (
-            <li className="fact">
-              <span className="fact-icon">
-                <span className="status-dot is-on" />
-              </span>
-              <span>{availableLabel(from)}</span>
-              {own && (
-                <button className="link" onClick={() => openSheet({ name: 'availability' })}>
-                  Edit
-                </button>
-              )}
-            </li>
-          )}
-          <Fact icon={<MapPin size={20} />}>Based in {p.city}</Fact>
-          {p.languages && <Fact icon={<Languages size={20} />}>{p.languages.join(', ')}</Fact>}
-          {p.gear && <Fact icon={<Camera size={20} />}>{p.gear}</Fact>}
-        </ul>
-
-        {d.about && <p className="body profile-about">{d.about}</p>}
 
         {reel && (
           <section className="section section--flush">
             <SectionHeader title="Showreel" />
             <Pressable className="reel" onClick={() => push({ name: 'media', items: [reel], index: 0 })} scale={0.985}>
-              <Photo media={reel} />
+              <Photo media={reel} showPlay={false} />
+              <span className="reel-play" aria-hidden>
+                <Play size={20} fill="currentColor" strokeWidth={0} />
+              </span>
+              <span className="reel-caption">
+                <span className="item-title">{reel.caption ?? 'Showreel'}</span>
+                <span className="reel-sub">
+                  {p.role} · {reel.duration}
+                </span>
+              </span>
             </Pressable>
           </section>
         )}
@@ -167,23 +166,16 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
         <section className="section section--flush">
           <SectionHeader title="Credits" />
           {d.credits.length ? (
-            <div className="list list--flush">
+            <div className="rail">
               {d.credits.map((c) => (
-                <div key={c.id} className="credit">
-                  <Photo media={c.media} className="credit-poster" showPlay={false} />
-                  <div className="credit-text">
-                    <p className="item-title">{c.title}</p>
-                    <p className="meta meta--dark">{c.role}</p>
-                    <p className="meta">
-                      {org(c.orgId).name} <Verified size={12} /> · {c.year}
-                    </p>
-                  </div>
-                  {own && (
-                    <IconButton label={`Report ${c.title}`} className="icon-btn--quiet" onClick={() => openSheet({ name: 'reportCredit', title: c.title })}>
-                      <Flag size={16} />
-                    </IconButton>
-                  )}
-                </div>
+                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => own && openSheet({ name: 'reportCredit', title: c.title })} aria-label={own ? `${c.title}, report a problem` : c.title}>
+                  <Photo media={c.media} className="rail-poster" showPlay={false} />
+                  <p className="item-title">{c.title}</p>
+                  <p className="meta">{c.role}</p>
+                  <p className="meta rail-issuer">
+                    {org(c.orgId).name} <Verified size={12} />
+                  </p>
+                </Pressable>
               ))}
             </div>
           ) : (
@@ -201,6 +193,18 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </Pressable>
               ))}
             </div>
+          </section>
+        )}
+
+        {(d.about || p.gear) && (
+          <section className="section section--flush">
+            <SectionHeader title="About" />
+            {d.about && <p className="body">{d.about}</p>}
+            {p.gear && (
+              <ul className="facts facts--tight facts--after">
+                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
+              </ul>
+            )}
           </section>
         )}
 
