@@ -59,7 +59,7 @@ export function EntryFlow() {
   // Splash lasts only as long as "loading" (simulated as a moment), then fades into entry.
   useEffect(() => {
     if (step !== 'splash') return;
-    const t = window.setTimeout(() => setStep('entry'), 900);
+    const t = window.setTimeout(() => setStep('entry'), 2300);
     return () => window.clearTimeout(t);
   }, [step]);
 
@@ -96,7 +96,7 @@ export function EntryFlow() {
   const steps: Step[] = invite ? ['you', 'craft', 'where'] : ['you', 'craft', 'where', 'looking', 'work'];
   const stepIndex = steps.indexOf(step);
 
-  const overImage = ['splash', 'entry', 'you', 'craft', 'where', 'looking', 'work', 'invite', 'inviteTip'].includes(step);
+  const overImage = ['entry', 'you', 'craft', 'where', 'looking', 'work', 'invite', 'inviteTip'].includes(step);
   return (
     <div className="entry">
       <div className="entry-status">
@@ -106,10 +106,10 @@ export function EntryFlow() {
         <motion.div key={step} className="entry-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
           {step === 'splash' && (
             <div className="splash">
-              <Photo media={art('chair')} className="splash-art" showPlay={false} />
-              <div className="splash-mark">
-                <Logo />
-              </div>
+              <motion.img src="images/brand/logo.png" alt="" className="splash-logo" initial={{ opacity: 0, scale: 0.86 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }} />
+              <motion.div className="splash-loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.3 }} aria-label="Loading">
+                <span />
+              </motion.div>
             </div>
           )}
 
