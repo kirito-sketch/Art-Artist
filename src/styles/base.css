@@ -124,7 +124,7 @@ img {
   .phone-screen {
     border-radius: 0;
   }
-  .proto {
+  .proto, .pc, .stage-notice {
     display: none !important;
   }
 }

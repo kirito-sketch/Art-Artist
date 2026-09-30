@@ -26,7 +26,7 @@ import { StoreProvider, useStore, type Route } from './state/store';
 import { StatusBar, ToastHost } from './ui/chrome';
 import { spring } from './ui/motion';
 import { IconButton, Photo } from './ui/primitives';
-import { PrototypeControls } from './dev/PrototypeControls';
+import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
 import { EntryFlow } from './entry/Entry';
 import { PolicyUpdate } from './legal/PolicyUpdate';
@@ -234,7 +234,10 @@ export default function App() {
   return (
     <StoreProvider>
       <div className="stage">
-        <Phone />
+        <div className="stage-phone">
+          {!RESEARCH && <StageNotice />}
+          <Phone />
+        </div>
         {!RESEARCH && <PrototypeControls />}
       </div>
     </StoreProvider>
