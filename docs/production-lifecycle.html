@@ -1,0 +1,338 @@
+<title>Production House Lifecycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a production memo. One reading column, with wide blocks (stage board, model, home) breaking out to full width. Mono labels borrow call-sheet vernacular. */
+:root {
+  --paper: #f6f6f3;
+  --sheet: #ffffff;
+  --ink: #17191c;
+  --ink-2: #4b5058;
+  --ink-3: #7c828b;
+  --rule: #dcdcd6;
+  --red: #b83b2a;
+  --red-soft: #f6e3df;
+  --blue: #2749b8;
+  --blue-soft: #e3e8f7;
+  --amber-soft: #f7efd9;
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --body: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #131416; --sheet: #1b1d20; --ink: #eceae6; --ink-2: #b5b8bd; --ink-3: #868a91; --rule: #2e3136;
+    --red: #e7735f; --red-soft: #3a211d; --blue: #8ea6f0; --blue-soft: #1e2640; --amber-soft: #332c19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #131416; --sheet: #1b1d20; --ink: #eceae6; --ink-2: #b5b8bd; --ink-3: #868a91; --rule: #2e3136;
+  --red: #e7735f; --red-soft: #3a211d; --blue: #8ea6f0; --blue-soft: #1e2640; --amber-soft: #332c19;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; margin: 0; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 24px; padding-block: 56px 96px; }
+.col { max-width: 700px; }
+h1, h2, h3 { font-family: var(--display); color: var(--ink); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(38px, 6vw, 64px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; }
+h2 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; }
+p { margin: 0; }
+.label { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.label--red { color: var(--red); }
+.lede { font-size: 20px; line-height: 1.55; color: var(--ink-2); }
+.muted { color: var(--ink-2); }
+a { color: var(--blue); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+header.top { display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px; border-bottom: 2px solid var(--ink); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+.meta-row span { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+
+section.part { display: flex; flex-direction: column; gap: 22px; padding-block: 56px; border-bottom: 1px solid var(--rule); }
+section.part:last-of-type { border-bottom: 0; }
+.part-head { display: flex; flex-direction: column; gap: 10px; }
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+ul.clean { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+
+/* findings */
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.finding { background: var(--sheet); padding: 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.finding .so { font-size: 15px; color: var(--ink); background: var(--blue-soft); padding: 10px 12px; border-left: 3px solid var(--blue); }
+.finding .so b { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); display: block; margin-bottom: 2px; }
+.src { font-size: 13px; color: var(--ink-3); }
+
+/* rules */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.rule { border-top: 3px solid var(--ink); padding-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.rule p { font-size: 15.5px; color: var(--ink-2); }
+
+/* stage board */
+.board { display: flex; flex-direction: column; border: 1px solid var(--rule); background: var(--sheet); }
+.stage { display: grid; grid-template-columns: 88px minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; padding: 20px 22px; border-top: 1px solid var(--rule); align-items: start; }
+.stage:first-child { border-top: 0; }
+.stage--head { background: var(--paper); padding-block: 12px; }
+.stage-no { font-family: var(--mono); font-size: 13px; color: var(--red); font-weight: 500; padding-top: 3px; }
+.stage p { font-size: 15px; color: var(--ink-2); }
+.stage h3 { margin-bottom: 4px; }
+.who { font-family: var(--mono); font-size: 12px; color: var(--ink-3); letter-spacing: 0.03em; }
+.phase { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); background: var(--amber-soft); padding: 8px 22px; border-top: 1px solid var(--rule); }
+@media (max-width: 800px) {
+  .stage { grid-template-columns: 1fr; gap: 8px; }
+  .stage--head { display: none; }
+}
+
+/* model */
+.model { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.entity { background: var(--sheet); border: 1px solid var(--rule); padding: 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.entity--core { border: 2px solid var(--ink); }
+.entity .fields { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); line-height: 1.7; }
+.entity p { font-size: 15px; color: var(--ink-2); }
+.callout { background: var(--red-soft); border-left: 4px solid var(--red); padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; }
+.callout p { font-size: 16px; }
+
+/* example */
+.example { overflow-x: auto; border: 1px solid var(--rule); background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 11px 14px; border-top: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); border-top: 0; background: var(--paper); }
+td.state { font-family: var(--mono); font-size: 12.5px; }
+.st-live { color: var(--blue); } .st-wait { color: var(--red); } .st-done { color: var(--ink-3); }
+
+/* home */
+.home { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 40px; align-items: start; }
+@media (max-width: 860px) { .home { grid-template-columns: 1fr; } }
+.phone { border: 2px solid var(--ink); border-radius: 36px; padding: 18px; background: var(--sheet); display: flex; flex-direction: column; gap: 12px; max-width: 360px; width: 100%; }
+.ph-top { display: flex; justify-content: space-between; align-items: center; }
+.ph-org { font-family: var(--display); font-weight: 800; font-size: 18px; }
+.ph-switch { font-family: var(--mono); font-size: 11px; color: var(--ink-3); border: 1px solid var(--rule); padding: 4px 8px; border-radius: 99px; }
+.ph-h { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
+.task { display: flex; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid var(--rule); border-radius: 12px; font-size: 14.5px; }
+.task b { font-weight: 600; }
+.task .n { font-family: var(--mono); font-size: 13px; color: var(--red); white-space: nowrap; }
+.task--hot { background: var(--red-soft); border-color: transparent; }
+.proj { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; padding: 8px 0; border-top: 1px solid var(--rule); }
+.proj span:last-child { font-family: var(--mono); font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+
+/* questions */
+ol.qs { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
+.sources { font-size: 14px; color: var(--ink-2); }
+.sources li { margin-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="label label--red">Ana · Production houses · Working model v0.1</p>
+  <h1>Production House Lifecycle</h1>
+  <p class="lede col">How production houses actually hire, credit and run projects, and what that means for Ana's architecture and the production house experience. Built from desk research; to be validated with the first houses the sales team onboards.</p>
+  <div class="meta-row"><span>30 Sep 2026</span><span>Status: for review</span><span>Supersedes: posting flow in the scale audit</span></div>
+</header>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">1 · What real productions do</p>
+    <h2>Six findings that shape the product</h2>
+    <p class="muted col">Each finding is followed by what it means for Ana. They come from public reporting and industry references, not interviews yet.</p>
+  </div>
+  <div class="findings">
+    <div class="finding">
+      <h3>Hiring is layered, not central</h3>
+      <p class="muted">The line producer or production manager hires heads of department. Heads of department bring their own teams: a DoP brings the camera and lighting crew they trust. Telugu producers describe each craft "bringing in several assistants".</p>
+      <p class="so"><b>So in Ana</b>Heads of department must be able to build their own department inside a project. The house should not have to add every assistant itself.</p>
+      <p class="src">Hollywood Reporter India; Wikipedia, Film crew</p>
+    </div>
+    <div class="finding">
+      <h3>Most crew are freelance and move constantly</h3>
+      <p class="muted">Crew work project to project across houses, on day or weekly rates. Union membership (FWICE, FEFSI, FEFKA) appears on CVs as a credential. The Telugu Film Chamber now lets producers hire non-union technicians.</p>
+      <p class="so"><b>So in Ana</b>People are never "in" a company. They have engagements on projects. Union membership is a verifiable attribute on a profile, never a gate.</p>
+      <p class="src">Deccan Chronicle; AIO Cine crew CV guide</p>
+    </div>
+    <div class="finding">
+      <h3>Casting is often an outside company</h3>
+      <p class="muted">Productions contract casting directors from the script stage. The flow is brief, search, auditions, tapes to the director. Firms like Mukesh Chhabra Casting Co. run their own databases and remote-audition apps.</p>
+      <p class="so"><b>So in Ana</b>A second organisation can work on a project with limited scope: a casting company manages cast requirements and shortlists for another house's film.</p>
+      <p class="src">Forbes India; The Print; The Week</p>
+    </div>
+    <div class="finding">
+      <h3>Projects have several banners</h3>
+      <p class="muted">A film is often "presented by" one house, "produced by" another, "in association with" a third, and commissioned by a streaming platform. Credits and control are shared.</p>
+      <p class="so"><b>So in Ana</b>A project links to several organisations, each with a relationship and permissions. One of them is the lead that can issue credits.</p>
+      <p class="src">Industry convention; to verify with sales</p>
+    </div>
+    <div class="finding">
+      <h3>Projects live for years</h3>
+      <p class="muted">Development can take years, pre-production 3 to 8 weeks, then shoot, post and release. Crew joins and leaves at different stages, and the team at wrap is not the team at the start.</p>
+      <p class="so"><b>So in Ana</b>A project can exist with only a title and grow. Engagements carry dates and states. Nothing forces a house to complete a profile before it can act.</p>
+      <p class="src">VFS; StudioBinder stages of production</p>
+    </div>
+    <div class="finding">
+      <h3>No one owns the credit record</h3>
+      <p class="muted">Final credits are compiled by the production from contracts. Public records such as IMDb are user-edited and unverified. There is no shared, confirmed record of who worked on what.</p>
+      <p class="so"><b>So in Ana</b>Credits come from engagements the house confirms and the person accepts. This is Ana's trust asset and the main reason a house keeps its projects here.</p>
+      <p class="src">Producers Guild credit rules; IMDb practice</p>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">2 · Rules</p>
+    <h2>Five rules the architecture has to follow</h2>
+  </div>
+  <div class="rules">
+    <div class="rule"><h3>The project is the centre</h3><p>Hiring, requirements, conversations and credits all hang off a project, not off the company.</p></div>
+    <div class="rule"><h3>The person owns their profile</h3><p>Engagements add to a profile. Ending one never removes anything a person earned.</p></div>
+    <div class="rule"><h3>Membership is about permission</h3><p>Being a member of a house means you can act for it. It says nothing about employment, and one person can be a member of several houses.</p></div>
+    <div class="rule"><h3>Everything is progressive</h3><p>A project, a department, a requirement can start as one line and fill in over weeks.</p></div>
+    <div class="rule"><h3>Both sides confirm a credit</h3><p>The house issues, the person accepts or disputes. Nothing public until both agree.</p></div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">3 · The lifecycle</p>
+    <h2>Eleven stages, from sales handover to a verified credit list</h2>
+    <p class="muted col">Stages overlap in practice: a house hires for one department while publishing a requirement for another. The order below is the first time each happens.</p>
+  </div>
+  <div class="board" role="table" aria-label="Production house lifecycle">
+    <div class="stage stage--head" role="row"><span class="label">Stage</span><span class="label">What the house does</span><span class="label">Who at the house</span><span class="label">What Ana provides</span></div>
+    <p class="phase">Onboarding</p>
+    <div class="stage" role="row"><span class="stage-no">01</span><div><h3>Onboarded by sales</h3><p>Verification, company profile, first members, past filmography imported.</p></div><p class="who">Owner, with Ana sales</p><p>Sales creates the house and sends the owner a claim link. No self-serve sign-up. Past films come in as projects so credits can be issued backwards.</p></div>
+    <p class="phase">Development and pre-production</p>
+    <div class="stage" role="row"><span class="stage-no">02</span><div><h3>Create a project</h3><p>Title, format, language. Nothing else required.</p></div><p class="who">Producer, owner</p><p>A project page, private until published. Stage label: development, pre-production, shooting, post, released.</p></div>
+    <div class="stage" role="row"><span class="stage-no">03</span><div><h3>Add information over time</h3><p>Synopsis, poster, schedule, locations, banners, platform.</p></div><p class="who">Producer, coordinator</p><p>A short "what's missing" list instead of a completion score. Co-producing houses and a casting company can be linked.</p></div>
+    <div class="stage" role="row"><span class="stage-no">04</span><div><h3>Add cast and crew already chosen</h3><p>Most early hiring is by reference: director, DoP, key HODs.</p></div><p class="who">Producer, line producer</p><p>Invite a person to a position. They accept, and it shows on the project and, if they choose, on their profile as "working on". HODs get rights to add their own department.</p></div>
+    <div class="stage" role="row"><span class="stage-no">05</span><div><h3>Publish requirements</h3><p>For the gaps: cast roles, crew positions, collaborations.</p></div><p class="who">Casting, HODs, producer</p><p>A requirement belongs to a project and a position. Open to all, to invited people, or to past collaborators. Audition place and questions per requirement.</p></div>
+    <div class="stage" role="row"><span class="stage-no">06</span><div><h3>Discover people</h3><p>Search for a specific gap, often for a person someone recommended.</p></div><p class="who">Casting, HODs</p><p>Discover opened from a requirement is pre-filtered: craft, city, languages, dates free. "Invite to this requirement" instead of generic following.</p></div>
+    <div class="stage" role="row"><span class="stage-no">07</span><div><h3>Receive interest</h3><p>Responses and interest arrive per requirement.</p></div><p class="who">Whoever owns the requirement</p><p>A queue per requirement with counts on Home. Duplicate responses merged; late ones marked.</p></div>
+    <div class="stage" role="row"><span class="stage-no">08</span><div><h3>Evaluate</h3><p>Compare reels and answers, shortlist, share with the director.</p></div><p class="who">Casting, director, producer</p><p>Private shortlist with team notes. Share a shortlist link with the director inside the house. The applicant never sees a status.</p></div>
+    <div class="stage" role="row"><span class="stage-no">09</span><div><h3>Collaborate and confirm</h3><p>Talk, audition outside the app, agree terms outside the app.</p></div><p class="who">Casting, line producer</p><p>Conversations tied to the requirement and owned by the house. "Add to project" turns a candidate into an engagement.</p></div>
+    <p class="phase">Wrap and after</p>
+    <div class="stage" role="row"><span class="stage-no">10</span><div><h3>Establish credits</h3><p>At wrap or release, the credit list is finalised.</p></div><p class="who">Credits member, producer</p><p>A draft credit list generated from engagements. Edit titles, add missing people, send. Each person accepts or disputes. Published credits appear on profiles and the project page.</p></div>
+    <div class="stage" role="row"><span class="stage-no">11</span><div><h3>Manage the organisation</h3><p>Ongoing: members, permissions, company page, all projects.</p></div><p class="who">Owner</p><p>Members and roles, the company page, a projects list by stage, and an activity log for accountability.</p></div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">4 · Data model</p>
+    <h2>Eight entities. The engagement is the new one.</h2>
+    <p class="muted col">This replaces the audit's six blocks. The engagement links a person to a project, and it is what makes fluid careers, layered hiring and verified credits work together.</p>
+  </div>
+  <div class="model">
+    <div class="entity"><p class="label">Person</p><p class="fields">name · disciplines[ ] · domains[ ] · city · languages · unions[ ] · availability</p><p>Belongs to no one. Disciplines can span Film and Fine arts.</p></div>
+    <div class="entity"><p class="label">Organisation</p><p class="fields">type: production house · casting company · gallery · publication<br>verified · profile</p><p>Onboarded by sales. Types added later without new screens.</p></div>
+    <div class="entity"><p class="label">Membership</p><p class="fields">person × organisation · permissions[ ]</p><p>Who can act for the organisation. Many per person.</p></div>
+    <div class="entity"><p class="label">Project</p><p class="fields">domain · type: feature · series · ad · short · exhibition<br>stage · dates · poster</p><p>The centre of work. Exhibitions fit the same shape.</p></div>
+    <div class="entity"><p class="label">Project link</p><p class="fields">project × organisation · relation: lead · co-producer · presenter · casting · platform</p><p>Several houses on one project, one lead.</p></div>
+    <div class="entity entity--core"><p class="label label--red">Engagement</p><p class="fields">person × project · department · position · via (organisation)<br>state: invited → confirmed → wrapped · dates</p><p>One per job. A person can hold many at once, across houses and crafts.</p></div>
+    <div class="entity"><p class="label">Requirement</p><p class="fields">project · position · visibility · questions · audition · closes</p><p>Posted for a gap. Responses and interest attach here.</p></div>
+    <div class="entity entity--core"><p class="label label--red">Credit</p><p class="fields">engagement · credited title<br>state: draft → sent → accepted · disputed → published</p><p>Issued by the lead organisation. Accepted by the person.</p></div>
+  </div>
+  <div class="callout col">
+    <p class="label label--red">Why this handles every case you described</p>
+    <p>A freelance DoP on two films for two houses: two engagements. A casting director who works for three houses: three memberships, each giving her access to that house's cast requirements. A painter who also designs film sets: one person with disciplines in both domains, an exhibition project and a film project.</p>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">5 · Example</p>
+    <h2>One person, one week</h2>
+    <p class="muted col">Sana Mirza, 1st AC, Hyderabad. Illustrative data showing how the model looks from her side.</p>
+  </div>
+  <div class="example">
+    <table>
+      <tr><th>Record</th><th>Project</th><th>Through</th><th>Position</th><th>State</th></tr>
+      <tr><td>Engagement</td><td>Neela Akasham</td><td>Konark Pictures, via DoP Kiran Varma</td><td>1st AC, camera</td><td class="state st-live">Confirmed · shooting</td></tr>
+      <tr><td>Engagement</td><td>Morning Ritual (ad)</td><td>Northstar Ad Films</td><td>Focus puller</td><td class="state st-wait">Invited · reply due</td></tr>
+      <tr><td>Engagement</td><td>Salt 2 (short)</td><td>Independent, Kabir Nair</td><td>1st AC</td><td class="state st-live">Confirmed · pre-production</td></tr>
+      <tr><td>Credit</td><td>Fault Lines S1</td><td>Blue Lotus Originals</td><td>Camera department</td><td class="state st-wait">Sent · accept or dispute</td></tr>
+      <tr><td>Membership</td><td>none</td><td>none</td><td>none</td><td class="state st-done">Freelance, no house membership</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">6 · Production house Home</p>
+    <h2>A work queue across projects, not a feed</h2>
+  </div>
+  <div class="home">
+    <div class="stack">
+      <p class="col">When someone switches to acting for a house, the same five tabs change jobs. Their personal Home stays personal.</p>
+      <ul class="clean">
+        <li><b>Home</b>: what needs a decision, ordered by urgency, then projects by stage.</li>
+        <li><b>Discover</b>: find people, opened with a requirement's filters when started from one.</li>
+        <li><b>Create</b>: project, requirement, or a post as the house.</li>
+        <li><b>Inbox</b>: conversations grouped by project and requirement, owned by the house.</li>
+        <li><b>Profile</b>: the company page, members and settings.</li>
+      </ul>
+      <p class="muted">Each project opens a workspace with four views: Overview, Team, Requirements, Credits. This is where most of the eleven stages happen.</p>
+      <p class="muted">Tracking activity lives on each project and in an organisation log, not as a notification stream on Home.</p>
+    </div>
+    <div class="phone" aria-label="Sketch of a production house Home">
+      <div class="ph-top"><span class="ph-org">Konark Pictures</span><span class="ph-switch">Acting as house ▾</span></div>
+      <p class="ph-h">Needs you</p>
+      <div class="task task--hot"><span><b>Review responses</b><br>Neela Akasham · DoP</span><span class="n">9 new</span></div>
+      <div class="task"><span><b>Credits disputed</b><br>Monsoon Letters</span><span class="n">2</span></div>
+      <div class="task"><span><b>Invites waiting</b><br>Neela Akasham · Camera</span><span class="n">3</span></div>
+      <div class="task"><span><b>Requirement closes</b><br>Supporting · Journalist</span><span class="n">in 5 days</span></div>
+      <p class="ph-h">Projects</p>
+      <div class="proj"><span>Neela Akasham</span><span>Pre-production · 34 people</span></div>
+      <div class="proj"><span>Monsoon Letters</span><span>Released · credits open</span></div>
+      <div class="proj"><span>Untitled thriller</span><span>Development</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head">
+    <p class="label">7 · Validation</p>
+    <h2>Model it on real houses next</h2>
+    <p class="muted col">Everything above is a hypothesis until three houses confirm it. Ask the sales team for one of each: a large banner with several projects a year, a mid-size house producing series for streaming, and an independent producer. One hour each, ideally with the line producer and a casting person present.</p>
+  </div>
+  <div class="stack col">
+    <h3>Questions to ask</h3>
+    <ol class="qs">
+      <li>Walk us through your last project from green light to release. Who joined when?</li>
+      <li>Who hires the camera, lighting and art teams: you, or the head of department?</li>
+      <li>How do you find people today? References, unions, casting companies, WhatsApp groups?</li>
+      <li>How many projects run at once, and how many people from the house touch each?</li>
+      <li>When there are co-producers or a platform, who decides on cast, crew and credits?</li>
+      <li>How is the final credit list built and checked today? Who signs it off?</li>
+      <li>What would stop you from putting an unannounced project on Ana?</li>
+      <li>What goes wrong most often between shortlisting and a confirmed hire?</li>
+    </ol>
+    <h3>What would change the model</h3>
+    <ul class="clean muted">
+      <li>If houses never let heads of department act in the app, stage 04 collapses into the house.</li>
+      <li>If confidentiality blocks early projects, projects need a hidden mode visible only to engaged people.</li>
+      <li>If credits are signed off by the platform, the platform becomes a credit approver.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><p class="label">Sources</p></div>
+  <ul class="sources clean">
+    <li><a href="https://www.hollywoodreporterindia.com/features/insight/telugu-film-industry-shoots-grind-to-a-halt-as-wage-hike-deadlock-enters-second-week">Telugu film industry shoots grind to a halt, The Hollywood Reporter India</a></li>
+    <li><a href="https://www.deccanchronicle.com/entertainment/tollywood/telugu-film-chamber-opens-doors-to-non-union-workers-amid-wage-dispute-1895559">Telugu Film Chamber opens doors to non-union workers, Deccan Chronicle</a></li>
+    <li><a href="https://www.forbesindia.com/article/showstoppers-2026/casting-their-spell-how-bollywoods-talent-spotters-found-their-power/2997937/1">How Bollywood's talent spotters found their power, Forbes India</a></li>
+    <li><a href="https://theprint.in/ground-reports/bollywood-casting-directors-want-real-relatable-talent-not-stars-ott-is-changing-it/2192591/">Casting directors and OTT, The Print</a></li>
+    <li><a href="https://www.theweek.in/theweek/leisure/2023/10/14/how-mukesh-chhabra-works-his-magic-on-screen.html">How Mukesh Chhabra picks actors, The Week</a></li>
+    <li><a href="https://www.aiocine.com/blog/film-crew-resume-template-india">Film crew resume template India, AIO Cine</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Film_crew">Film crew, Wikipedia</a></li>
+    <li><a href="https://vfs.edu/news/film-production-stages">The 5 stages of film production, Vancouver Film School</a></li>
+    <li><a href="https://www.masterclass.com/articles/film-101-what-does-a-line-producer-do">What does a line producer do, MasterClass</a></li>
+    <li><a href="https://www.producersguildawards.com/Content/documents/PM_Master_Rules_Theatrical_Motion_Pictures.pdf">Producers Mark rules, Producers Guild of America</a></li>
+  </ul>
+</section>
+
+</div>
