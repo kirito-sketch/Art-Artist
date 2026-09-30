@@ -8,7 +8,7 @@ import { useStore } from '../../state/store';
 import { forYou, kindLabel, networkFor, person, postsFor } from '../../state/selectors';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { spring, stagger } from '../../ui/motion';
-import { Avatar, Button, IconButton, Photo, PressCard, Row, SectionHeader, Skeleton } from '../../ui/primitives';
+import { Avatar, Button, IconButton, Photo, PressCard, Row, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { NetworkRow } from './NetworkActivity';
 import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
@@ -104,7 +104,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
                   ))}
                 </div>
               ) : (
-                <p className="meta">No roles match your dates this week.</p>
+                <p className="meta">{store.isNewPerson ? 'Few roles match you yet. More appear as productions post.' : 'No roles match your dates this week.'}</p>
               )}
             </section>
           )}
@@ -114,6 +114,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
               <Row icon={<Clapperboard size={20} />} label="All open roles" value={String(seed.opportunities.length + world.roles.filter((r) => r.visibility === 'open').length)} onPress={() => goDiscover('roles')} />
             </div>
           )}
+
+          {store.isNewPerson && !loading && <FirstRun />}
 
           {loading ? null : events.length ? (
             <section className="section section--flush">
@@ -253,5 +255,51 @@ function SuggestedPeople() {
         })}
       </div>
     </section>
+  );
+}
+
+/** A new person's first Home: real matches only, and one thing worth doing next. No fake activity. */
+function FirstRun() {
+  const { viewer, push, userPortfolio } = useStore();
+  const me = person(viewer.id);
+  const [dismissed, setDismissed] = useState(false);
+  const houses = seed.orgs.filter((o) => o.verified).sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city)).slice(0, 3);
+  const hasWork = (seed.portfolio[viewer.id]?.length ?? 0) + userPortfolio.length > 0;
+  const next = !hasWork ? { t: 'Add your work', b: 'Stills or a reel help productions understand what you do.' } : { t: 'Add a short bio', b: 'Two lines on the work you do and the work you want.' };
+  return (
+    <>
+      {!dismissed && (
+        <div className="setup-card">
+          <div>
+            <p className="item-title">{next.t}</p>
+            <p className="meta">{next.b}</p>
+          </div>
+          <div className="setup-card-actions">
+            <Button size="s" onClick={() => push({ name: 'editProfile' })}>
+              Add
+            </Button>
+            <button className="link link--muted" onClick={() => setDismissed(true)}>
+              Later
+            </button>
+          </div>
+        </div>
+      )}
+      <section className="section section--flush">
+        <SectionHeader title={houses.some((h) => h.city === me.city) ? `Productions in ${me.city}` : 'Productions on Ana'} />
+        <div className="list list--flush">
+          {houses.map((o) => (
+            <PressCard key={o.id} className="prow" onPress={() => push({ name: 'org', id: o.id })} scale={0.985}>
+              <Avatar party={o} size={44} />
+              <div className="prow-text">
+                <p className="item-title">
+                  {o.name} <Verified size={12} />
+                </p>
+                <p className="meta">{o.about}</p>
+              </div>
+            </PressCard>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }

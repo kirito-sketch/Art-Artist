@@ -6,6 +6,7 @@ import { RESEARCH } from '../research';
 const START = RESEARCH ? 'aditi' : 'kiran';
 import { party, person } from './selectors';
 import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject } from './world';
+import type { Craft, Person } from '../data/types';
 import type { Conversation, Credit, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
 
 /* ------------------------------------------------------------ navigation */
@@ -23,6 +24,9 @@ export type Route =
   | { name: 'project'; id: string }
   | { name: 'work'; id: string }
   | { name: 'settings' }
+  | { name: 'houseSetup' }
+  | { name: 'legal'; doc: 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority' }
+  | { name: 'yourData' }
   | { name: 'hproject'; id: string }
   | { name: 'association'; id: string }
   | { name: 'org'; id: string }
@@ -106,7 +110,7 @@ const DEFAULT_AVAILABILITY: Record<string, Availability> = {
 };
 
 function useStoreValue() {
-  const [viewerId, setViewerId] = useState<'kiran' | 'tara' | 'aditi'>(START);
+  const [viewerId, setViewerId] = useState<string>(START);
   const viewer = VIEWERS[viewerId];
 
   const [scenario, setScenarioState] = useState<Scenario>({
@@ -153,7 +157,18 @@ function useStoreValue() {
   /** Exploration: acting on behalf of a production house instead of as yourself. */
   const [acting, setActing] = useState<string>(RESEARCH ? 'konark' : 'self');
   /** Organisations the signed-in person may act for. Permission only; not a team product. */
-  const memberships = viewer.id === 'aditi' ? ['konark', 'tidewater'] : [];
+  /** Organisations each person may act for. Permission only; not a team product. */
+  const [memberMap, setMemberMap] = useState<Record<string, string[]>>({ aditi: ['konark', 'tidewater'] });
+  const memberships = memberMap[viewer.id] ?? [];
+  /** Entry layer: splash → entry → auth → consent → onboarding (and a house invite). Null means the app. */
+  const [entry, setEntry] = useState<null | { mode: 'new' | 'invite' | 'signin'; notice?: string }>(null);
+  /** Consent records: which document, which version, when. */
+  const [consents, setConsents] = useState<{ doc: string; version: string; at: string; method: string }[]>([
+    { doc: 'Terms of Service', version: 'Draft 0.3', at: '12 Mar 2026', method: 'Signup' },
+    { doc: 'Privacy Policy', version: 'Draft 0.3', at: '12 Mar 2026', method: 'Signup' },
+  ]);
+  const [policyUpdate, setPolicyUpdate] = useState(false);
+  const [newPeople, setNewPeople] = useState<string[]>([]);
   const [blocked, setBlocked] = useState<string[]>([]);
   const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
   const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
@@ -178,7 +193,7 @@ function useStoreValue() {
   const dismissToast = useCallback(() => setToast(null), []);
 
   /* Switching persona resets per-account state, like signing into another account. */
-  const switchViewer = useCallback((id: 'kiran' | 'tara' | 'aditi') => {
+  const switchViewer = useCallback((id: string) => {
     setViewerId(id);
     setToast(null);
     setAvailabilityState(DEFAULT_AVAILABILITY[id]);
@@ -462,6 +477,56 @@ function useStoreValue() {
     setHomeLayout,
     acting,
     memberships,
+    entry,
+    startEntry: (mode: 'new' | 'invite' | 'signin', notice?: string) => {
+      setSheet(null);
+      setStack([]);
+      setEntry({ mode, notice });
+    },
+    endEntry: () => setEntry(null),
+    consents,
+    recordConsent: (docs: string[], method: string) =>
+      setConsents((c) => [...docs.map((doc) => ({ doc, version: 'Draft 0.3', at: 'Today', method })), ...c]),
+    policyUpdate,
+    setPolicyUpdate,
+    isNewPerson: newPeople.includes(viewer.id),
+    /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
+    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string }) => {
+      const id = `you-${Date.now().toString(36)}`;
+      const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, visibility: 'public', identityVerified: false };
+      seed.people.push(p);
+      seed.parties[id] = p;
+      VIEWERS[id] = { id, craft: d.craft, firstName: d.name.split(' ')[0] };
+      DEFAULT_AVAILABILITY[id] = d.availability;
+      seed.conversations[id] = [];
+      seed.interests[id] = [];
+      seed.notifications[id] = [];
+      seed.pendingCredits[id] = [];
+      seed.portfolio[id] = d.work;
+      seed.about[id] = '';
+      // Generated, not curated: people in the same craft, nearest first.
+      seed.suggestedFor[id] = seed.people
+        .filter((x) => x.id !== id && x.visibility === 'public' && (x.craft === d.craft || d.crafts.includes(x.craft)))
+        .sort((a, b) => Number(b.city === d.city) - Number(a.city === d.city))
+        .slice(0, 5)
+        .map((x) => x.id);
+      setNewPeople((n) => [...n, id]);
+      return id;
+    },
+    addMembership: (personId: string, orgId: string) => setMemberMap((m) => ({ ...m, [personId]: [...new Set([...(m[personId] ?? []), orgId])] })),
+    /** Self-serve setup: the house exists immediately but is unverified until the Ana team checks it. */
+    createHouse: (d: { name: string; city: string; about: string; work: string[]; website: string; logo?: string }) => {
+      const id = `h-${Date.now().toString(36)}`;
+      const o = { id, kind: 'org' as const, name: d.name, city: d.city, tone: 2, verified: false, logo: d.logo, about: d.about || `${d.work.join(', ')}.` };
+      seed.orgs.push(o);
+      seed.parties[id] = o;
+      setMemberMap((m) => ({ ...m, [viewer.id]: [...(m[viewer.id] ?? []), id] }));
+      return id;
+    },
+    verifyPendingHouses: () => {
+      seed.orgs.forEach((o) => (o.verified = true));
+      bump();
+    },
     pendingCredits: [
       ...world.credits
         .filter((c) => c.personId === viewer.id && (c.status === 'proposed' || c.status === 'correction'))

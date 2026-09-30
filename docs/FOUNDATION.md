@@ -1,6 +1,13 @@
 # Foundation pass: entry, onboarding, access, legal, moderation
 
-Status: **architecture for review. Nothing built yet.** Version 19 (the research prototype) stays frozen; this work sits in front of it and beside it, not inside the validated flows.
+Status: **approved and built (Version 20).** Version 19's research flows are unchanged; this work sits in front of and beside them. Try it from the prototype controls under **Foundation flows**.
+
+## Decisions (30 Sep 2026)
+
+1. **Sign-in: Apple, Google and email.** Phone is verification and linking infrastructure, never a separate login, to avoid fragmented accounts, profiles and credits. Phone-first sign-in could be added later only with a proper account-linking model.
+2. **Unverified houses** can create the organisation, edit their page, create private projects and invite members. They **cannot** open public roles, issue credits, share projects, or appear as verified or in search. No "Unverified" public label.
+3. **18+ only at launch.** This is a launch limitation, not a statement that minors don't matter. A guardian-managed experience is a future trust and safety requirement; minors can't create normal accounts. Legal to review wording and age rules.
+4. **Deleting an account** removes the profile. Accepted credits stay on the project under the person's name, with no profile link. No "Credit withheld" by default and no toggle to erase accepted records. Name suppression (privacy, safety, legal, identity disputes) is a separate exceptional process. **Draft: requires legal review.**
 
 Questions this answers: How does someone enter Ana? How does Ana establish who they are? How does an organisation gain legitimate access? What do users agree to? What happens when someone reports a problem?
 
@@ -223,14 +230,27 @@ The reporter's identity is never revealed. A formal appeals system is out of sco
 
 Build order: 1 splash and entry → 2 signup and onboarding → 3 house invite and setup → 4 legal and consent → 5 admin queue → 6 admin detail and actions.
 
-## 9. Open questions (not decided silently)
+## 9. Built (Version 20)
 
-1. **Sign-in methods:** Apple + Google + email is proposed. Is **phone OTP as a sign-in method** wanted for the Indian market, not just for verification?
-2. **Phone verification** required for everyone, or only for org invites (proposed)?
-3. **Minors:** 18+ at signup for now. When does the guardian flow come, and are child actors in scope for launch?
-4. **Unverified houses:** can they post public roles with an "Unverified" label, or nothing until verified (proposed)?
+- Splash and entry, with Apple, Google, email and sign in; the simulated provider chooser demonstrates the invite email mismatch.
+- Create account, consent (recorded with document, version, date and method), email verification, sign in with errors, forgot password, sign out.
+- Individual onboarding (You, What you do, Where you work, What you're looking for, Show your work), then first-run Home (setup card, productions in your city, people in your craft).
+- House invite for Saffron Reel Studios: mismatch, authority confirmation, switcher tip, Slate.
+- Self-serve house setup with verification, and a pending state that locks public roles, sharing and credits. "Ana team: verify pending houses" in the controls simulates verification.
+- Legal and safety screens in Settings; Your data (agreements, download, delete account with 30-day deactivation); policy re-consent.
+- Moderation console (`Open moderation console` in the controls, or `?admin`): staff sign-in, queue, detail, actions with confirmations and message previews, audit history, credit-specific actions.
+
+Prototype limits: nothing persists across reloads; reports made in the app don't reach the console (it has its own seeded reports); logos and verification documents use the sample image picker.
+
+## 10. Legal review list
+
+18+ requirement · privacy and data retention after deletion · accepted-credit name retention after deletion · verification claims · moderation and suspension notices · consent wording · policy re-consent rules · organisation authority wording.
+
+## 11. Open questions (not decided silently)
+
+1. ~~Sign-in methods~~ Decided. 2. **Phone verification**: optional for individuals, required for phone invites (current). 3. ~~Minors~~ Decided for launch; guardian flow still to design. 4. ~~Unverified houses~~ Decided.
 5. **Verification evidence** for houses: which documents, who checks, and turnaround.
-6. **Deleted accounts and accepted credits:** keep the name, withhold it, or let the person choose (legal, including India's DPDP Act).
+6. ~~Deleted accounts and accepted credits~~ Decided as product rule; legal review pending.
 7. **Retention periods** for reports, audit logs and consent records (legal).
 8. **Organisation authority consent** wording and liability: legal review.
 9. **Entry line** says "film people": when fine arts arrives, the line and the craft list widen; the model doesn't change.

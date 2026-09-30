@@ -145,6 +145,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </h1>
           )}
           <p className="meta">Production house · {o.city}</p>
+          {!o.verified && <p className="meta accent">Verification pending · only people who act for {o.name} can see this page</p>}
           <p className="body">{o.about}</p>
           <p className="pid-stats">
             <span>

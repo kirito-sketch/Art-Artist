@@ -1,6 +1,7 @@
 import { useStore } from '../state/store';
 import { Button, Toggle } from '../ui/primitives';
 import { startResearch } from '../research';
+import { openAdmin } from '../admin/adminMode';
 
 type Persona = 'kiran' | 'tara' | 'konark' | 'tidewater';
 const PERSONAS: { id: Persona; name: string; sub: string }[] = [
@@ -16,7 +17,7 @@ const PERSONAS: { id: Persona; name: string; sub: string }[] = [
  * comparison only; new product work is designed for the primary path.
  */
 export function PrototypeControls() {
-  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel, canIssue, setCanIssue } = useStore();
+  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel, canIssue, setCanIssue, startEntry, setPolicyUpdate, verifyPendingHouses, showToast } = useStore();
   const persona: Persona = acting === 'konark' || acting === 'tidewater' ? acting : (viewer.id as Persona);
   const isHouse = persona === 'konark' || persona === 'tidewater';
   const pick = (p: Persona) => {
@@ -75,6 +76,16 @@ export function PrototypeControls() {
           <Toggle on={canIssue} onChange={setCanIssue} label="Aditi can issue credits" />
         </div>
       )}
+
+      <p className="proto-step">Foundation flows</p>
+      <div className="proto-flows">
+        <button className="proto-archive-btn" onClick={() => startEntry('new')}>Start as a new person</button>
+        <button className="proto-archive-btn" onClick={() => startEntry('invite')}>Accept a house invite (Saffron)</button>
+        <button className="proto-archive-btn" onClick={() => startEntry('signin')}>Sign in screen</button>
+        <button className="proto-archive-btn" onClick={() => setPolicyUpdate(true)}>Policy update (re-consent)</button>
+        <button className="proto-archive-btn" onClick={() => (verifyPendingHouses(), showToast({ text: 'Ana team verified pending houses' }))}>Ana team: verify pending houses</button>
+        <button className="proto-archive-btn" onClick={openAdmin}>Open moderation console</button>
+      </div>
 
       <details className="proto-more" open={activeStates > 0}>
         <summary>Test states{activeStates ? ` · ${activeStates} on` : ''}</summary>

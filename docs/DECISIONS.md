@@ -69,3 +69,11 @@ The lifecycle (private project → role → interest → selection → added to 
 ## 14. Working title visible to people added to a project (validate)
 
 Someone added to a project sees its internal working title, because they're inside the project relationship. This is marked for validation (codenames, secrecy even from crew, who controls what collaborators see). No extra permissions layer until research shows the need.
+
+## 15. Entry, access and trust foundation (see FOUNDATION.md)
+
+- Apple, Google and email sign-in; phone only for verification and linking.
+- Unverified houses can prepare privately; public roles, credits and sharing unlock on verification.
+- 18+ at launch; the guardian flow is a future requirement (legal review).
+- Deleting an account keeps accepted credits on the film under the person's name, unlinked; name suppression is a separate exceptional process (legal review).
+- Moderation is an internal console, not an app identity. Moderators can't delete credits.

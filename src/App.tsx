@@ -17,6 +17,9 @@ import { WorkScreen } from './screens/org/WorkScreen';
 import { OrgScreen } from './screens/org/OrgScreen';
 import { SettingsScreen } from './screens/settings/Settings';
 import { AssociationScreen, HouseProjectScreen } from './screens/production/Create';
+import { HouseSetup } from './screens/production/HouseSetup';
+import { LegalScreen } from './legal/docs';
+import { YourData } from './screens/settings/YourData';
 import { SheetHost } from './screens/sheets/Sheets';
 import { networkFor } from './state/selectors';
 import { StoreProvider, useStore, type Route } from './state/store';
@@ -25,6 +28,10 @@ import { spring } from './ui/motion';
 import { IconButton, Photo } from './ui/primitives';
 import { PrototypeControls } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
+import { EntryFlow } from './entry/Entry';
+import { PolicyUpdate } from './legal/PolicyUpdate';
+import { ADMIN } from './admin/adminMode';
+import { AdminConsole } from './admin/Admin';
 
 /* Transition per route type: composers rise like sheets, media zooms, detail pushes from the right. */
 function transitionFor(r: Route) {
@@ -64,6 +71,12 @@ function RouteView({ r }: { r: Route }) {
       return <HouseProjectScreen id={r.id} />;
     case 'association':
       return <AssociationScreen id={r.id} />;
+    case 'houseSetup':
+      return <HouseSetup />;
+    case 'legal':
+      return <LegalScreen id={r.doc} />;
+    case 'yourData':
+      return <YourData />;
   }
 }
 
@@ -199,6 +212,8 @@ function Phone() {
         </AnimatePresence>
 
         <SheetHost />
+        {store.policyUpdate && !store.entry && <PolicyUpdate />}
+        {store.entry && <EntryFlow key={store.entry.mode + (store.entry.notice ?? '')} />}
         <ToastHost />
         <div className="home-indicator" />
       </div>
@@ -214,6 +229,8 @@ export default function App() {
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, []);
+  // The moderation console is a separate internal tool, never part of the app's identities.
+  if (ADMIN) return <AdminConsole />;
   return (
     <StoreProvider>
       <div className="stage">

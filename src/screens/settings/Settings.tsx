@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
 import { Avatar, Button, IconButton, Row, Toggle, Verified } from '../../ui/primitives';
+import { Sheet } from '../../ui/Sheet';
 
 /*
  * Settings follow the identity you're acting as, and never mix.
@@ -56,7 +57,8 @@ export function SettingsScreen() {
 }
 
 function Personal() {
-  const { viewer, blocked, unblock, memberships, showToast, setActing } = useStore();
+  const { viewer, blocked, unblock, memberships, setActing, push, startEntry } = useStore();
+  const [signOut, setSignOut] = useState(false);
   const me = person(viewer.id);
   const [who, setWho] = useState<'everyone' | 'known'>('everyone');
   return (
@@ -97,19 +99,45 @@ function Personal() {
         )}
       </Group>
 
-      {memberships.length > 0 && (
-        <Group title="Organisations you can act for" note="A house's owner decides who can act for it. Leaving removes only your permission; your credits stay yours.">
-          {memberships.map((m) => (
-            <Row key={m} icon={<Avatar party={org(m)} size={32} />} label={org(m).name} value="Member" onPress={() => setActing(m)} />
-          ))}
-        </Group>
-      )}
+      <Group title="Organisations you can act for" note="A house's owner decides who can act for it. Leaving removes only your permission; your credits stay yours.">
+        {memberships.map((m) => (
+          <Row key={m} icon={<Avatar party={org(m)} size={32} />} label={org(m).name} value={org(m).verified ? 'Member' : 'Verification pending'} onPress={() => setActing(m)} />
+        ))}
+        <Row label="Set up a production house" onPress={() => push({ name: 'houseSetup' })} />
+      </Group>
+
+      <Group title="Legal and safety">
+        <Row label="Terms of Service" onPress={() => push({ name: 'legal', doc: 'terms' })} />
+        <Row label="Privacy Policy" onPress={() => push({ name: 'legal', doc: 'privacy' })} />
+        <Row label="Community guidelines" onPress={() => push({ name: 'legal', doc: 'conduct' })} />
+        <Row label="How reporting works" onPress={() => push({ name: 'legal', doc: 'reporting' })} />
+        <Row label="How blocking works" onPress={() => push({ name: 'legal', doc: 'blocking' })} />
+      </Group>
+
+      <Group title="Your data">
+        <Row label="Agreements, download, delete account" onPress={() => push({ name: 'yourData' })} />
+      </Group>
+
+      <Group title="Help">
+        <Row label="Contact support" value="support@ana.film" chevron={false} />
+      </Group>
 
       <Group title="Security">
         <Row label="Two-step verification" value="On" chevron={false} />
         <Row label="Signed-in devices" value="2" chevron={false} />
-        <Row label={<span className="danger-text">Sign out</span>} chevron={false} onPress={() => showToast({ text: 'Sign out is not part of the prototype' })} />
+        <Row label={<span className="danger-text">Sign out</span>} chevron={false} onPress={() => setSignOut(true)} />
       </Group>
+      <Sheet open={signOut} onClose={() => setSignOut(false)} title="Sign out?">
+        <div className="stack">
+          <p className="meta">You'll need to sign in again on this phone.</p>
+          <Button block size="l" variant="danger" onClick={() => startEntry('signin', "You've signed out.")}>
+            Sign out
+          </Button>
+          <Button block size="l" variant="secondary" onClick={() => setSignOut(false)}>
+            Cancel
+          </Button>
+        </div>
+      </Sheet>
     </div>
   );
 }

@@ -112,6 +112,8 @@ export function HouseProjectScreen({ id }: { id: string }) {
   if (!p) return <EmptyState title="Project not found" />;
   const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
   const canAct = p.houseId ? acting === p.houseId : acting === 'self' && viewer.id === p.ownerId;
+  // Trust-sensitive actions (public roles, sharing, credits) unlock only once Ana verifies the house.
+  const verified = !p.houseId || org(p.houseId).verified;
   const roles = world.roles.filter((r) => r.projectId === id);
   const people = world.associations.filter((a) => a.projectId === id && a.status !== 'removed');
   const creditFor = (a: Association) => [...world.credits].reverse().find((c) => c.associationId === a.id);
@@ -139,12 +141,13 @@ export function HouseProjectScreen({ id }: { id: string }) {
       </div>
 
       {!canAct && <p className="inline-note ws-pad">You're viewing as yourself. Switch to {owner} to make changes.</p>}
+      {!verified && <p className="inline-note ws-pad">Verification pending. You can prepare this project privately; opening roles, sharing and credits unlock once Ana verifies {owner}.</p>}
 
       {!p.shared && (
         <div className="ws-announce">
           <p className="item-title">Not announced</p>
           <p className="meta">Add details and roles privately. Share when you're ready, and you'll see exactly what becomes public.</p>
-          <Button disabled={!canAct} onClick={() => setSheet('share')}>
+          <Button disabled={!canAct || !verified} onClick={() => setSheet('share')}>
             Share on Ana
           </Button>
         </div>
@@ -181,7 +184,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
                   <Button
                     size="s"
                     variant="outline"
-                    disabled={!canAct}
+                    disabled={!canAct || !verified}
                     onClick={() => {
                       // On an unannounced project, opening a role is a deliberate, previewed disclosure.
                       if (!p.shared) return setConfirmRole(r.id);
@@ -418,7 +421,8 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
   const [paid, setPaid] = useState(true);
   const [range, setRange] = useState('');
   const [qs, setQs] = useState<string[]>([]);
-  const [vis, setVis] = useState<'private' | 'open'>('open');
+  const houseVerified = !p.houseId || org(p.houseId).verified;
+  const [vis, setVis] = useState<'private' | 'open'>(houseVerified ? 'open' : 'private');
   return (
     <div className="stack">
       <div>
@@ -476,10 +480,11 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
           <button className={`chip ${vis === 'private' ? 'is-on' : ''}`} onClick={() => setVis('private')}>
             <Lock size={13} /> Only {p.houseId ? org(p.houseId).name : 'you'}
           </button>
-          <button className={`chip ${vis === 'open' ? 'is-on' : ''}`} onClick={() => setVis('open')}>
+          <button className={`chip ${vis === 'open' ? 'is-on' : ''}`} disabled={!houseVerified} onClick={() => setVis('open')}>
             <Globe2 size={13} /> Open on Ana
           </button>
         </div>
+        {!houseVerified && <p className="meta field-hint">Public roles unlock once Ana verifies {org(p.houseId!).name}.</p>}
         {vis === 'open' && !p.shared && <RoleDisclosure projectId={projectId} />}
       </div>
       <Button
@@ -598,7 +603,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
         <Button block size="l" disabled={!roleText.trim()} onClick={addOnly}>
           Add to project
         </Button>
-        {house && picked && (
+        {house && picked && org(p.houseId!).verified && (
           <Button
             block
             size="l"
@@ -707,7 +712,7 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
   const c = [...world.credits].reverse().find((x) => x.associationId === id);
   const [roleText, setRoleText] = useState(a.workingRole);
   const name = a.personId ? person(a.personId).name : a.pending!.name;
-  const canCredit = !!a.personId && !!p.houseId && (!c || c.status === 'correction');
+  const canCredit = !!a.personId && !!p.houseId && org(p.houseId).verified && (!c || c.status === 'correction');
   // An accepted credit is part of the person's record. The house can't erase it by removing them.
   const locked = c?.status === 'accepted';
   return (
@@ -734,6 +739,7 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
       <div className="group">
         {canCredit && <Row label={c?.status === 'correction' ? 'Issue corrected credit' : 'Issue credit'} onPress={issue} />}
         {!p.houseId && <Row label={<span className="meta">Credits for independent projects aren't available yet</span>} chevron={false} />}
+        {p.houseId && !org(p.houseId).verified && <Row label={<span className="meta">Credits unlock once Ana verifies {org(p.houseId).name}</span>} chevron={false} />}
         {a.pending && <Row label={<span className="meta">Can be credited once they join Ana</span>} chevron={false} />}
         {locked ? (
           <Row label={<span className="meta">Credit accepted. It's part of {name.split(' ')[0]}'s record; changes go through a correction with them.</span>} chevron={false} />

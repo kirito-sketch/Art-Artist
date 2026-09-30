@@ -22,7 +22,11 @@ export type Craft =
   | 'sound'
   | 'costume'
   | 'lighting'
-  | 'production';
+  | 'production'
+  | 'writing'
+  | 'music'
+  | 'makeup'
+  | 'vfx';
 
 export interface Person {
   id: string;
@@ -40,6 +44,10 @@ export interface Person {
   availableFrom?: string;
   /** Private or removed profiles still render as authors but cannot be opened. */
   visibility?: 'public' | 'private' | 'removed';
+  /** Structured identity: up to four more crafts, and a free-text specialisation. */
+  crafts?: Craft[];
+  specialisation?: string;
+  openToTravel?: boolean;
 }
 
 export interface Org {
@@ -50,6 +58,7 @@ export interface Org {
   tone: number;
   verified: boolean;
   about: string;
+  logo?: string;
 }
 
 export type Party = Person | Org;

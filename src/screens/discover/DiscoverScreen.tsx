@@ -100,7 +100,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
     .filter((p) => (craft ? p.craft === craft || (craft === 'cinematographer' && p.craft === 'camera') : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
   const projects = publicWorks().filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
-  const houses = q ? seed.orgs.filter((o) => !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
+  const houses = q ? seed.orgs.filter((o) => o.verified && !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
   const grouped = !!q && !narrowed;
   const runSearch = () => {
     if (!q || !(scenario.loading || scenario.actionsFail)) return setSearchState('ready');

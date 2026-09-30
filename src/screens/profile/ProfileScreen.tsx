@@ -93,7 +93,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const isFollowing = following.includes(id);
   const backdrop = reel ?? work[0] ?? d.credits[0]?.media;
   // Portrait first; until a headshot exists, the person's own work stands in.
-  const hero: Media = { id: `hero-${id}`, kind: 'image', src: p.photo ?? '', fallback: backdrop?.fallback ?? backdrop?.src };
+  // A new person may have no photo or work yet: fall back to a neutral Ana illustration, never a broken image.
+  const hero: Media = { id: `hero-${id}`, kind: 'image', src: p.photo ?? backdrop?.src ?? 'images/brand/entry/camera.jpg', fallback: backdrop?.fallback ?? backdrop?.src ?? 'images/brand/entry/camera.jpg' };
 
   return (
     <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>

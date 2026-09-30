@@ -58,6 +58,12 @@ export function ProductionHome() {
 
 /* ------------------------------------------------------------ Slate (primary) */
 
+function Pending() {
+  const { acting } = useStore();
+  if (org(acting).verified) return null;
+  return <p className="inline-note ws-pad">Verification pending. Ana checks houses within 2 working days. Until then you can edit your page and prepare private projects; public roles and credits unlock after.</p>;
+}
+
 function SlateHome() {
   const { push } = useStore();
   const h = useHouse();
@@ -65,6 +71,7 @@ function SlateHome() {
   return (
     <div className="screen" data-scroll="home">
       <HouseTop />
+      <Pending />
       {lead ? (
         <PressCard className="slate-hero" onPress={() => push({ name: 'hproject', id: lead.id })} scale={0.985}>
           {lead.artwork ? <Photo media={lead.artwork} className="slate-hero-photo" showPlay={false} /> : <div className="slate-hero-photo whero-empty" />}
@@ -158,6 +165,7 @@ function Slate({ compact }: { compact?: boolean }) {
     ) : (
       <span className={`rail-poster ph-noposter ${compact ? 'rail-poster--s' : ''}`}>{p.shared ? p.workingTitle[0] : <Lock size={20} />}</span>
     );
+  if (!h.mine.length && !h.co.length) return null;
   return (
     <section className="section">
       <SectionHeader title="Our slate" />

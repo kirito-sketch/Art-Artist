@@ -115,7 +115,7 @@ export function initials(name: string) {
 export function Avatar({ party, size = 40, available }: { party: Party; size?: number; available?: boolean }) {
   const [failed, setFailed] = useState(false);
   const isOrg = party.kind === 'org';
-  const src = party.kind === 'person' ? party.photo : undefined;
+  const src = party.kind === 'person' ? party.photo : party.logo;
   return (
     <span className={`avatar ${isOrg ? 'avatar--org' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden>
       {src && !failed ? <img src={src} alt="" onError={() => setFailed(true)} /> : size >= 24 ? initials(party.name) : null}
