@@ -4,6 +4,9 @@ import { useStore } from '../../state/store';
 import { org, party } from '../../state/selectors';
 import { publicName, world, type HouseProject } from '../../state/world';
 import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
+import { Faces, FrameLabel, PortraitCard, PosterTile, TitleCard } from '../../ui/compose';
+import { publicCreditsFor } from '../../domain/discovery';
+import { person } from '../../state/selectors';
 
 /*
  * House Home. Slate is the primary direction: the house's work is the visual centre and operational
@@ -69,45 +72,176 @@ function SlateHome() {
   const h = useHouse();
   const lead = [...h.live].sort((a, b) => Number(!!b.artwork) - Number(!!a.artwork) || Number(b.shared) - Number(a.shared))[0];
   return (
-    <div className="screen" data-scroll="home">
+    <div className="screen canvas v-slate" data-scroll="home">
       <HouseTop />
       <Pending />
-      {lead ? (
-        <PressCard className="slate-hero" onPress={() => push({ name: 'hproject', id: lead.id })} scale={0.985}>
-          {lead.artwork ? <Photo media={lead.artwork} className="slate-hero-photo" showPlay={false} /> : <div className="slate-hero-photo whero-empty" />}
-          <div className="slate-hero-text">
-            <p className="now-card-kicker">
-              {lead.stage}
-              {!lead.shared && ' · Not announced'}
-            </p>
-            <p className="slate-hero-title">{lead.workingTitle}</p>
-            <Signals p={lead} />
-          </div>
-        </PressCard>
-      ) : (
-        <EmptyHouse />
-      )}
-      <Around />
-      <Slate />
-      <PeopleForRoles />
+      {lead ? <LeadProject p={lead} onOpen={() => push({ name: 'hproject', id: lead.id })} /> : <EmptyHouse />}
+      <div className="ws-pad">
+        <AroundWork />
+        <OpenRoles />
+        <SlateRail />
+        <PeopleToConsider />
+      </div>
     </div>
   );
 }
 
-/** Live signals, written as what is happening on this project, not as counters. */
-function Signals({ p }: { p: HouseProject }) {
+/**
+ * The lead project as a cinematic slate: its artwork is the page's centre, and what is happening
+ * on it (interest, open roles, corrections) is set on the image as one working strip with faces.
+ */
+function LeadProject({ p, onOpen }: { p: HouseProject; onOpen: () => void }) {
   const h = useHouse();
-  const interested = h.interestOf(p).length;
+  const interest = h.interestOf(p);
   const open = h.rolesOf(p).filter((r) => r.visibility === 'open').length;
-  const corrections = world.credits.filter((c) => c.projectId === p.id && c.status === 'correction').length;
-  const items = [interested && `${interested} interested`, open && `${open} ${open === 1 ? 'role' : 'roles'} open`, corrections && `${corrections} correction asked`].filter(Boolean);
+  const corrections = world.credits.filter((c) => c.projectId === p.id && (c.status === 'correction')).length + world.amendments.filter((m) => m.projectId === p.id && m.status === 'open').length;
+  const faces = [...new Set(interest.map((i) => i.personId))].map(person);
+  return (
+    <PressCard className="slate-lead" onPress={onOpen} scale={0.985} aria-label={p.workingTitle}>
+      {p.artwork ? <Photo media={p.artwork} className="slate-lead-photo" showPlay={false} /> : <TitleCard title={p.workingTitle} locked={!p.shared} />}
+      <span className="slate-lead-labels">
+        <FrameLabel>{p.stage}</FrameLabel>
+        {!p.shared && <FrameLabel icon={<Lock size={11} strokeWidth={2.6} />}>Not announced</FrameLabel>}
+      </span>
+      <div className="slate-lead-text">
+        <p className="slate-lead-title">{p.workingTitle}</p>
+        {(faces.length > 0 || open > 0 || corrections > 0) && (
+          <div className="slate-strip">
+            {faces.length > 0 && (
+              <span className="slate-strip-item">
+                <Faces people={faces} size={24} />
+                {faces.length} interested
+              </span>
+            )}
+            {faces.length > 0 && open > 0 && <span className="slate-strip-sep" />}
+            {open > 0 && <span className="slate-strip-item">{open} {open === 1 ? 'role' : 'roles'} open</span>}
+            {corrections > 0 && <span className="slate-strip-sep" />}
+            {corrections > 0 && <span className="slate-strip-item slate-strip-flag">{corrections} to review</span>}
+          </div>
+        )}
+      </div>
+    </PressCard>
+  );
+}
+
+/** Editorial rows: what is happening around the work. Attention is a small mark, not red text. */
+function AroundWork() {
+  const { push, markNotificationRead } = useStore();
+  const h = useHouse();
+  const items = h.houseNotes.slice(0, 3);
   if (!items.length) return null;
   return (
-    <p className="slate-signals">
-      {items.map((t) => (
-        <span key={String(t)}>{t}</span>
-      ))}
-    </p>
+    <section className="v-section">
+      <SectionHeader title="Around your work" />
+      <div className="list list--flush">
+        {items.map((n) => (
+          <PressCard
+            key={n.id}
+            className="around"
+            onPress={() => {
+              markNotificationRead(n.id);
+              if (n.route) push(n.route as never);
+            }}
+            scale={0.985}
+          >
+            <Avatar party={party(n.actorId)!} size={36} />
+            <span className="around-text">
+              <span className="item-title">{n.text}</span>
+              <span className="meta">{n.time}</span>
+            </span>
+            {n.kind === 'credit' && /correct|amend|isn't right/.test(n.text) && <span className="around-flag-dot" aria-label="Needs a decision" />}
+          </PressCard>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Compact role cards: each open role with its project image and the faces of who is interested. */
+function OpenRoles() {
+  const { push, interestsReceived } = useStore();
+  const h = useHouse();
+  const roles = h.mine.flatMap((p) => h.rolesOf(p).filter((r) => r.visibility === 'open').map((r) => ({ r, p })));
+  if (!roles.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="Open roles" />
+      <div className="role-strip">
+        {roles.map(({ r, p }) => {
+          const who = [...new Set(interestsReceived.filter((i) => i.opportunityId === r.id && !i.withdrawn).map((i) => i.personId))].map(person);
+          return (
+            <PressCard key={r.id} className="role-compact" onPress={() => push({ name: 'opportunity', id: r.id })} scale={0.98} aria-label={r.role}>
+              <span className="role-compact-media">{p.artwork ? <Photo media={p.artwork} showPlay={false} /> : <TitleCard title={p.workingTitle} />}</span>
+              <span className="role-compact-text">
+                <p className="item-title">{r.role}</p>
+                <p className="meta">{p.workingTitle}</p>
+                <span className="role-compact-foot">
+                  {who.length ? (
+                    <>
+                      <Faces people={who} size={22} max={3} /> {who.length} interested
+                    </>
+                  ) : (
+                    'No interest yet'
+                  )}
+                </span>
+              </span>
+            </PressCard>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/** Poster rail: the whole slate. Unannounced work is its own title card, never an empty box. */
+function SlateRail() {
+  const { push } = useStore();
+  const h = useHouse();
+  if (!h.mine.length && !h.co.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="Our slate" />
+      <div className="poster-rail">
+        {h.mine.map((p) => (
+          <PosterTile
+            key={p.id}
+            media={p.artwork}
+            title={p.workingTitle}
+            meta={p.stage === 'Released' ? p.year : p.stage}
+            label={p.artwork ? <FrameLabel>{p.stage === 'Released' ? p.year : p.stage}</FrameLabel> : undefined}
+            locked={!p.shared}
+            onPress={() => push({ name: 'hproject', id: p.id })}
+          />
+        ))}
+        {h.co.map((p) => (
+          <PosterTile key={p.id} media={p.artwork} title={publicName(p)} meta={`With ${org(p.houseId!).name}`} label={<FrameLabel>Co-production</FrameLabel>} onPress={() => push({ name: 'work', id: p.id })} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Portrait Cards, the same family as the Individual Home: people who fit roles you haven't opened. */
+function PeopleToConsider() {
+  const { push } = useStore();
+  const h = useHouse();
+  const picks = h.mine
+    .flatMap((p) => h.rolesOf(p).filter((r) => r.visibility === 'private').map((r) => ({ r, p })))
+    .map(({ r, p }) => ({ r, p, who: seed.people.find((x) => x.visibility === 'public' && x.role.toLowerCase().includes(r.role.toLowerCase().split(' ')[0])) }))
+    .filter((x) => x.who)
+    .slice(0, 3);
+  if (!picks.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="For roles you haven't opened" />
+      <div className="portrait-rail">
+        {picks.map(({ r, p, who }) => {
+          const c = publicCreditsFor(who!.id)[0];
+          const w = c ? world.projects.find((x) => x.id === c.projectId) : undefined;
+          return <PortraitCard key={r.id} person={who!} still={w?.artwork ?? seed.portfolio[who!.id]?.[0]} context={`${r.role} · private on ${p.workingTitle}`} onPress={() => push({ name: 'profile', id: who!.id })} />;
+        })}
+      </div>
+    </section>
   );
 }
 

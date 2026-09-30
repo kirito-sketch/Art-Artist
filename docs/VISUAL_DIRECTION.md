@@ -1,0 +1,282 @@
+# Ana visual direction: Editorial Workbench
+
+**Status:** Proposed. Proven on four screens in the coded prototype. Awaiting review.
+**Framework:** `docs/VISUAL_COMPOSITION_SYSTEM.md` (the structural rules this direction fills in).
+**Scope:** Individual Home (Large Cards), Production House Home (Slate), Individual Profile, Role Detail. Nothing else was restyled.
+**Unchanged:** product architecture, flows, bridge model, rules and copy. Figma migration paused.
+
+---
+
+## 1. Audit of the current visual language
+
+**What works and stays:**
+- The calm neutral base.
+- Strong SF typography.
+- The overlapped sheet on photo heroes (Profile, Role).
+- The cinematic role cards on Home.
+- One icon family.
+- The floating tab bar with the red Create button.
+- The disciplined use of colour for state.
+
+The foundation is sound. The problem is monotony, not ugliness.
+
+**Where it falls short**
+
+| Problem | Where you see it |
+|---|---|
+| **Generic.** Remove the logo and Ana could be any iOS product. Nothing belongs to film or to making work. | Every screen |
+| **Repetitive.** Each section is a heading, then a list or card, then a heading. Section after section has the same weight and rhythm. | Home, House Home, Profile |
+| **White on white.** Page, sheet, card, footer and header are all `#fff`, so hierarchy relies entirely on type weight. | Everywhere; most visible on Home and Slate below the fold |
+| **Rounded-box reflex.** Grey rounded containers are used whether or not grouping helps (availability row, pending credit tint, lock circles, empty poster boxes). | Profile, Slate |
+| **Imagery shrinks after the fold.** Only the first card is image-led; after that, images become 44 to 72 px thumbnails. | Home network/posts, Slate rows, Search |
+| **Weak depth model.** One shadow value is used for everything, and there is no deliberate surface level. Floating chrome and content cards feel the same. | Home cards vs. tab bar |
+| **Colour used as alarm.** Red appears as whole sentences of text ("Sameer Ali asked to correct…") and as a pink-tinted credit card, so trust events read as errors. | Slate "Around your work", Profile "Waiting for you" |
+| **Social or LinkedIn cues.** A centred name, a follower-style stats row and a centred "Edit profile" read as Instagram. The credit list reads as a résumé. | Profile |
+| **Administrative House side.** A small project card, a text list of notifications, a grey locked placeholder poster and plain people rows make it a production-management dashboard with one photo on top. | House Home |
+| **Status as generic pills.** The white rounded "Closes in 4 days" pill is the same component as every chip; nothing identifies it as production metadata. | Home, Role |
+| **Facts as a settings list.** Location, dates and language use the same icon rows as Settings, so Role Detail mid-screen looks like a form. | Role Detail |
+| **No creative objects.** Crafts appear only as line icons (Discover tiles) or text. There is no brand moment beyond the logo. | Home, Discover |
+| **Empty and success states are generic.** Empty states are centred grey text; success is a black toast. Ana's character never shows. | Across the app (not redesigned in this pass) |
+
+---
+
+## 2. Territories considered
+
+| | A. Cinematic Editorial | B. Studio Portfolio | C. Production Workbench |
+|---|---|---|---|
+| Idea | Dark, film-journal pages, huge type on stills | Gallery white, captions, a serif, catalogue calm | The artefacts of making: slates, call sheets, contact sheets, the tools themselves |
+| Distinctive | High, but close to streaming apps | Medium: many portfolio sites look like this | High and specific to Ana's audience |
+| Cohesion / scale | Hard: trust and settings screens fight a dark world | Easy | Good, if kept as a grammar, not decoration |
+| Relation to making | Watching films, not making them | Showing finished work | Making work: the closest fit |
+| Fine Arts later | Weak | Strong | Strong (studio, materials, tools) |
+| Houses | Good for hero moments, bad for density | Turns the House into a catalogue | Natural: a slate is literally a House tool |
+| Trust screens | Poor | Good | Good: call sheets and records are trust objects |
+| Motion | Parallax, cinematic cuts | Very little | Tactile: objects, labels, sheets, playheads |
+| Gimmick risk | Medium (red-carpet drift) | Low | Medium if literal (fake tape, clapboards) |
+| Dates quickly | Yes (dark-mode fashion) | Slowly | Slowly, if abstracted |
+
+**Recommendation: C, disciplined by B and lit by A.** In practice that means:
+- **From C:** the production workbench provides the grammar: frame labels, title cards, the call sheet, the record family and the tools as objects.
+- **From B:** the studio calm provides the ground: warm paper, generous space, unboxed rows.
+- **From A:** the cinematic confidence is kept for imagery only: full-bleed heroes and large cards.
+
+Each territory alone fails a need:
+- A alone makes the House side and trust screens heavy.
+- B alone is quiet but anonymous.
+- C alone risks costume.
+
+Together they give a recognisable system that scales down to Settings without decoration.
+
+---
+
+## 3. Visual thesis
+
+> **Ana looks like work in progress, set with editorial calm.** Real stills lead. Production artefacts supply the grammar: the frame label, the title card, the call sheet, the record. The tools of each craft appear as tactile objects. Everything sits on a warm paper ground, with depth only where it carries hierarchy.
+
+This refines "Minimal structure + cinematic/editorial expression + tactile creative objects". It keeps all three, and it names *where* each one lives so that it scales past one Home screen:
+- **Structure:** paper ground, spacing, type.
+- **Expression:** imagery and objects.
+- **Tactility:** depth levels and objects.
+
+---
+
+## 4. What changed on the four screens
+
+The before and after sequences are in the review page and in the scratch captures (`vis/ba-*.png`). Composition mapping per screen:
+
+### Individual Home (High identity)
+
+| Section | Family | Surface |
+|---|---|---|
+| Roles for you | Cinematic Card (frame label replaces pill) | Level 2 |
+| People worth knowing (new placement of existing suggestions) | Portrait Card: work still behind, face breaking the edge | Level 2 |
+| From your network | Editorial Row, unboxed, hairlines | Level 1 |
+| Explore your craft | Object Tile on the sand band; objects break the tile top | Expressive band |
+| Projects to watch | Poster / Stills rail; lead poster larger (4:5 vs 2:3) | Level 1 with image shadow |
+| Production houses | Wide editorial card: 16:9 current work, house avatar overlapping | Level 1 |
+| Latest posts | Unchanged editorial posts | Level 1 |
+
+- **Rhythm:** peak, human, quiet, brand moment, media, editorial, quiet.
+- **Removed:** the pill component on cards and the white page under everything.
+- **Colour:** stills, the objects and the sand band. Nothing else.
+
+### Production House Home: Slate (High identity)
+
+| Section | Family | Surface |
+|---|---|---|
+| Lead project | Cinematic slate: 470 px artwork, frame labels (stage, Not announced), display title, **working strip** on the image (faces of interested people, open roles, items to review) | Level 2 |
+| Around your work | Editorial Row. Attention is a small red mark, not red sentences | Level 1 |
+| Open roles (existing data, now shown) | Compact role cards: project still, role, faces of interested people | Level 2 |
+| Our slate | Poster rail; an unannounced project is a **dark title card** (title plus "Private"), never a grey lock box | Level 1 |
+| For roles you haven't opened | Portrait Card, the same family as the Individual Home | Level 2 |
+
+- **Kept:** the Slate information architecture and the identity switcher.
+- **Removed:** chip counters, red text and the grey placeholder poster.
+- **Why it's no longer a dashboard:** the work is still the centre, and every operational signal sits on the work or on a face.
+
+### Individual Profile (Medium identity)
+
+- **Order:** Person, Craft, Work, Credibility.
+- **Person:**
+  - Taller portrait hero.
+  - A left-aligned name at display size under a small-caps **craft label** ("CINEMATOGRAPHY").
+  - The role, and "verified credits" marked with the verification tick.
+  - Availability as an unboxed hairline row.
+- **Owner only:** a "Waiting for you" record comes next.
+- **Craft:** the showreel as a Cinematic Card, then the portfolio as a **stills mosaic** (mixed spans, one contact-sheet block) instead of a uniform 3×3 grid.
+- **Work:** credits as posters with a record footer, then independent projects as editorial rows.
+- **Credibility:** "Projects you're on" as record rows (square record mark, not a grey circle), then About.
+- **Removed:**
+  - the centred Instagram header;
+  - the pink tint on pending credits, which is now a white record with a hairline;
+  - the grey availability box.
+
+### Role Detail (Medium identity)
+
+- **Hero:** 500 px, confident crop, a frame label on the image ("CREW JOB", with "CLOSES IN 4 DAYS" when urgent).
+- **Sheet:** a paper sheet overlaps the hero by 40 px and carries the image's tint.
+- **Title:** display title, and a byline with the house mark.
+- **Relationship signal:** "You worked with Tidewater before" becomes a sand strip, colour through meaning.
+- **Facts:** a **call sheet**, a two-column grid of Location, Dates, Language and Pay under small-caps labels and hairlines, replacing the icon list.
+- **Action bar:** floats (Level 3, blurred), keeps pay, close date and **Show interest**, with a soft fade underneath so content never crowds it.
+- **Unchanged:** About, Questions and the trust line.
+
+---
+
+## 5. Craft objects
+
+**Decision: pseudo-3D layered vector.** Not flat illustration, not rendered bitmaps, not real-time 3D.
+- It reads as tactile at 64 to 150 px.
+- It is tiny, sharp at every density, and themable.
+- It is animatable by layer: the shadow, body and background groups are separate. The motion system can give an object a 2 to 4 degree tilt, a lift on press, or a parallax offset without new art.
+- Real-time 3D would add weight and cost for no task benefit.
+- Rendered 3D is the right *production* upgrade for hero moments (onboarding, empty states). It should follow the same art spec, below.
+
+**The family spec (applies to every future object):**
+- **Perspective:** three-quarter, seen slightly from above.
+- **Key light:** top-left. Highlights sit on upper-left edges; lower-right faces fall into shade.
+- **Shadow:** one soft contact shadow below and slightly right. Same blur and opacity on every object.
+- **Materials:** graphite (anodised), aluminium (brushed), glass, and three warm neutrals (amber `#c99a4e`, clay `#b8735a`, sage `#6f8b83`). The Ana red appears only as one tiny indicator (tally light, playhead, index dot).
+- **Detail:** readable at 64 px, never photographic, no outlines.
+
+**The first four:**
+- **Cinematography:** cine prime with a focus ring and a red index dot.
+- **Editing:** a timeline slab with three tracks and a red playhead.
+- **Sound:** a capsule microphone with a waveform behind it.
+- **Production design:** a fan of fabric, timber and paint-chip samples on a brass pivot.
+
+Objects are content, never UI icons, and never appear on trust, legal or destructive surfaces.
+
+---
+
+## 6. Colour, background and depth
+
+**Surfaces:**
+- **Level 0 base:** warm paper `--base #f6f4f0`.
+- **Level 1 content:** unboxed on the paper.
+- **Level 2 raised:** white `--raised`, with one warm shadow (`--shadow-2`).
+- **Level 3 floating:** blurred, with `--shadow-3`.
+
+**Bands:**
+- **Quiet tint** `--tint #efebe4` is available for rhythm.
+- **Expressive sand** `--sand #e8dfcf` is used only for the craft band and relationship highlights.
+- **Dark** `--dark #151413` is used only for title cards (and, later, media viewers).
+
+**Colour:**
+- Stays neutral.
+- Hue comes from stills, the objects and meaning: available (green), verified (blue), attention (a small red mark or red frame-label text), and Ana red on Create and inside objects.
+- No colour per craft, no gradients beyond image scrims.
+
+**Depth audit:**
+- **Level 2:** cinematic cards, portrait cards, compact roles, the lead project and the showreel.
+- **Flat:** editorial rows, the call sheet and records (a hairline, no shadow).
+- **Level 3:** only the tab bar, the role action bar, float buttons and sheets.
+
+---
+
+## 7. Typography
+
+The SF family is sufficient, and no font was added.
+
+Two additions give it editorial personality:
+- **A display size (40 px, weight 800, tracking −0.045em)** for the one title per screen that names the work or person: the project on Slate, the name on Profile, the role on Role Detail.
+- **A small-caps label (11.5 px, 700, +0.09em)** used for every piece of production metadata: frame labels, the craft label, and call-sheet field names.
+
+Metadata got quieter; section titles stay at 22 px.
+
+A serif could add warmth later (Fine Arts), but it is not needed for this direction. Flagged, not introduced.
+
+---
+
+## 8. Cohesion audit (four screens side by side)
+
+What all four share:
+- **Type:** the same scale (display, section 22, item 17, meta 15, label 11.5).
+- **Layout:** the same 20 px gutter and radius family (14, 20, 28).
+- **Surfaces:** the same paper ground, and the same frame label on every image.
+- **Depth:** the same two shadows.
+- **Controls:** the same black primary and outline secondary buttons, the same tab bar, the same verified tick.
+
+Individual and House share Portrait Cards, the poster rail, frame labels, faces and the cinematic lead. The House is denser (working strip, open roles), not a different product.
+
+Simplified during the audit:
+- Stage labels shrink on small posters rather than wrapping.
+- House activity rows dropped to regular weight so they don't shout.
+- The status bar now takes the paper on canvas screens.
+- The call sheet never leaves an orphan cell.
+
+**Would someone believe these are four screens from one app?** Yes. See the cohesion board on the review page.
+
+---
+
+## 9. What makes Ana recognisable in five seconds
+
+A combination, not a mascot:
+1. **Warm paper ground** with work images that are allowed to be big.
+2. **Small-caps frame labels** on images, like a label on a film can.
+3. **Display-weight names of work and people**, left-aligned, set tight.
+4. **Tactile craft objects** in one consistent light, used sparingly.
+5. **Dark title cards** for unannounced work, with a thin red rule.
+6. **The call sheet and the record**: hairline grids and quiet records where trust matters.
+7. **Faces sitting on the work**: portraits breaking card edges and interest stacked on the slate.
+
+---
+
+## 10. Implementation notes
+
+- **Code:**
+  - `src/styles/expression.css` holds the tokens and families, scoped with `.canvas` and the `v-*` screen classes.
+  - `src/ui/compose.tsx` holds FrameLabel, PortraitCard, PosterTile, TitleCard, ObjectTile, HouseFeature, CallSheet and Faces.
+  - `src/ui/craft.tsx` holds the object family.
+- **One direction only:** no console switch was added. Archived Home and Slate variants are unchanged references.
+- **Content gap:** person portrait photography does not exist in the prototype (every person falls back to initials), so Portrait Cards pair each person's credited work with their monogram. Real portraits will strengthen them without layout changes.
+
+### Components and tokens to update when Figma resumes
+
+- **New variables:**
+  - `base`, `raised`, `tint`, `sand`, `dark`, `hairline`
+  - `shadow-2`, `shadow-3` (effect styles)
+  - `t-display`, `label` (text styles: Display/Work 40, Label/Caps 11.5)
+- **New components:**
+  - Frame Label (Plate, Paper, Urgent)
+  - Portrait Card
+  - Poster Tile (Standard, Lead)
+  - Title Card (Locked on or off)
+  - Object Tile, plus a Craft Object set (4 variants)
+  - House Feature
+  - Call Sheet (and Cell)
+  - Faces Stack
+  - Role Compact
+  - Slate Lead with Working Strip
+  - Stills Mosaic
+  - Record Row
+- **Updated components:**
+  - Cinematic Role Card (frame label instead of Pill)
+  - Pending Credit (record surface)
+  - Profile Header (left-aligned, craft label, display name)
+  - Role Header (frame labels, byline mark, 40 px overlap)
+  - Role Action Bar (floating Level 3)
+  - Status Bar (paper tone)
+- **Retired:** the Pill usage on media (Pill remains for non-media chips); the grey locked poster.
+
+Product architecture is unchanged. This pass touched only presentation files and section order. The Figma migration remains paused on Page 03, after Flows B and C; it resumes at Flow D once this direction is approved.

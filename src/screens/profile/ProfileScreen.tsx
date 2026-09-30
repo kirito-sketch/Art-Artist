@@ -37,6 +37,8 @@ export function associationStage(credit?: string) {
   return 'Added · not a credit';
 }
 
+const CRAFT_LABEL: Record<string, string> = { cinematographer: 'Cinematography', camera: 'Camera', editor: 'Editing', director: 'Direction', actor: 'Acting', colourist: 'Colour', 'production-design': 'Production design', sound: 'Sound', production: 'Production' };
+
 function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <li className="fact">
@@ -106,7 +108,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: p.photo ?? backdrop?.src ?? 'images/brand/entry/camera.jpg', fallback: backdrop?.fallback ?? backdrop?.src ?? 'images/brand/entry/camera.jpg' };
 
   return (
-    <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+    <div className="screen screen--hero canvas v-profile" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="phero">
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
           <Photo media={hero} className="phero-photo" alt={p.name} />
@@ -133,6 +135,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
       <div className="psheet">
         <header className="pid">
+          <p className="pid-craft">{CRAFT_LABEL[p.craft] ?? p.role}</p>
           {own && isTab && memberships.length > 0 ? (
             <button className="large-title org-name--switch" onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
               {p.name}
@@ -152,7 +155,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </p>
           <p className="pid-stats">
             <span>
-              <b>{credits.length}</b> credits
+              <Verified size={13} label="Verified credits" />
+              <b>{credits.length}</b> verified {credits.length === 1 ? 'credit' : 'credits'}
             </span>
             {p.years && (
               <span>
@@ -211,24 +215,6 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           )}
         </div>
 
-        {reel && (
-          <section className="section section--flush">
-            <SectionHeader title="Showreel" />
-            <Pressable className="reel" onClick={() => push({ name: 'media', items: [reel], index: 0 })} scale={0.985}>
-              <Photo media={reel} showPlay={false} />
-              <span className="reel-play" aria-hidden>
-                <Play size={20} fill="currentColor" strokeWidth={0} />
-              </span>
-              <span className="reel-caption">
-                <span className="item-title">{reel.caption ?? 'Showreel'}</span>
-                <span className="reel-sub">
-                  {p.role} · {reel.duration}
-                </span>
-              </span>
-            </Pressable>
-          </section>
-        )}
-
         {own && pendingCredits.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Waiting for you" />
@@ -266,55 +252,36 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </section>
         )}
 
-        {own && (() => {
-          // Private associations others made, plus the person's own unshared independent projects.
-          const mine = world.associations.filter((a) => {
-            if (a.personId !== viewer.id || a.status === 'removed' || wproject(a.projectId)?.ownerId === viewer.id) return false;
-            // Once a credit is accepted on a shared project it lives under Credits, the public record.
-            return !(creditState(a.id).current && wproject(a.projectId)?.shared);
-          });
-          const drafts = world.projects.filter((w) => w.ownerId === viewer.id && !w.shared);
-          if (!mine.length && !drafts.length) return null;
-          return (
-            <section className="section section--flush">
-              <SectionHeader title="Projects you're on" />
-              <p className="meta ph-note">
-                <Lock size={11} /> Only you and each production see these. They aren't credits.
-              </p>
-              <div className="list list--flush">
-                {drafts.map((w) => (
-                  <PressCard key={w.id} className="prow" onPress={() => push({ name: 'hproject', id: w.id })} scale={0.99}>
-                    <span className="ph-initial">
-                      <Lock size={14} />
-                    </span>
-                    <div className="prow-text">
-                      <p className="item-title">{w.workingTitle}</p>
-                      <p className="meta">Your independent project · not shared</p>
-                    </div>
-                  </PressCard>
-                ))}
-                {mine.map((a) => {
-                  const w = wproject(a.projectId)!;
-                  const cs = creditState(a.id);
-                  return (
-                    <PressCard key={a.id} className="prow" onPress={() => push({ name: 'association', id: a.id })} scale={0.99}>
-                      <span className="ph-initial">
-                        <Lock size={14} />
-                      </span>
-                      <div className="prow-text">
-                        <p className="item-title">{w.workingTitle}</p>
-                        <p className="meta">
-                          {a.workingRole} · {w.houseId ? org(w.houseId).name : 'Independent'}
-                        </p>
-                        <p className="meta">{a.status === 'flagged' ? <span className="accent">You said this isn't right</span> : associationStage(cs.pending?.status ?? cs.current?.status)}</p>
-                      </div>
-                    </PressCard>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })()}
+        {reel && (
+          <section className="section section--flush">
+            <SectionHeader title="Showreel" />
+            <Pressable className="reel" onClick={() => push({ name: 'media', items: [reel], index: 0 })} scale={0.985}>
+              <Photo media={reel} showPlay={false} />
+              <span className="reel-play" aria-hidden>
+                <Play size={20} fill="currentColor" strokeWidth={0} />
+              </span>
+              <span className="reel-caption">
+                <span className="item-title">{reel.caption ?? 'Showreel'}</span>
+                <span className="reel-sub">
+                  {p.role} · {reel.duration}
+                </span>
+              </span>
+            </Pressable>
+          </section>
+        )}
+
+        {stills.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Portfolio" />
+            <div className="stills-mosaic">
+              {stills.map((m, i) => (
+                <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i })} scale={0.97}>
+                  <Photo media={m} />
+                </Pressable>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="section section--flush">
           <SectionHeader title="Credits" />
@@ -339,31 +306,6 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           )}
         </section>
 
-        {stills.length > 0 && (
-          <section className="section section--flush">
-            <SectionHeader title="Portfolio" />
-            <div className="grid-3">
-              {stills.map((m, i) => (
-                <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i })} scale={0.97}>
-                  <Photo media={m} />
-                </Pressable>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {(d.about || p.gear) && (
-          <section className="section section--flush">
-            <SectionHeader title="About" />
-            {d.about && <p className="body">{d.about}</p>}
-            {p.gear && (
-              <ul className="facts facts--tight facts--after">
-                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
-              </ul>
-            )}
-          </section>
-        )}
-
         {d.projects.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Independent projects" />
@@ -382,6 +324,68 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </PressCard>
               ))}
             </div>
+          </section>
+        )}
+
+        {own && (() => {
+          // Private associations others made, plus the person's own unshared independent projects.
+          const mine = world.associations.filter((a) => {
+            if (a.personId !== viewer.id || a.status === 'removed' || wproject(a.projectId)?.ownerId === viewer.id) return false;
+            // Once a credit is accepted on a shared project it lives under Credits, the public record.
+            return !(creditState(a.id).current && wproject(a.projectId)?.shared);
+          });
+          const drafts = world.projects.filter((w) => w.ownerId === viewer.id && !w.shared);
+          if (!mine.length && !drafts.length) return null;
+          return (
+            <section className="section section--flush">
+              <SectionHeader title="Projects you're on" />
+              <p className="meta ph-note">
+                <Lock size={11} /> Only you and each production see these. They aren't credits.
+              </p>
+              <div className="list list--flush">
+                {drafts.map((w) => (
+                  <PressCard key={w.id} className="prow" onPress={() => push({ name: 'hproject', id: w.id })} scale={0.99}>
+                    <span className="record-mark">
+                      <Lock size={14} />
+                    </span>
+                    <div className="prow-text">
+                      <p className="item-title">{w.workingTitle}</p>
+                      <p className="meta">Your independent project · not shared</p>
+                    </div>
+                  </PressCard>
+                ))}
+                {mine.map((a) => {
+                  const w = wproject(a.projectId)!;
+                  const cs = creditState(a.id);
+                  return (
+                    <PressCard key={a.id} className="prow" onPress={() => push({ name: 'association', id: a.id })} scale={0.99}>
+                      <span className="record-mark">
+                        <Lock size={14} />
+                      </span>
+                      <div className="prow-text">
+                        <p className="item-title">{w.workingTitle}</p>
+                        <p className="meta">
+                          {a.workingRole} · {w.houseId ? org(w.houseId).name : 'Independent'}
+                        </p>
+                        <p className="meta">{a.status === 'flagged' ? <span className="accent">You said this isn't right</span> : associationStage(cs.pending?.status ?? cs.current?.status)}</p>
+                      </div>
+                    </PressCard>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
+
+        {(d.about || p.gear) && (
+          <section className="section section--flush">
+            <SectionHeader title="About" />
+            {d.about && <p className="body">{d.about}</p>}
+            {p.gear && (
+              <ul className="facts facts--tight facts--after">
+                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
+              </ul>
+            )}
           </section>
         )}
 

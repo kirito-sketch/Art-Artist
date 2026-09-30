@@ -1,0 +1,267 @@
+import { useId } from 'react';
+
+/*
+ * Ana craft objects. One family, drawn as layered vector "pseudo-3D":
+ *   perspective  three-quarter, seen slightly from above
+ *   key light    top-left; highlights on upper-left edges, shade on lower-right faces
+ *   shadow       one soft contact shadow, offset down-right, same on every object
+ *   materials    graphite (anodised), aluminium (brushed), glass, and three warm neutrals
+ *                (amber, clay, sage); the Ana red appears only as a tiny indicator
+ *   detail       enough to read the tool at 64px, never photographic
+ * They are expressive content, never interface icons. Layers are separate groups so the
+ * motion system can later give them depth (parallax, a small tilt on press) without new art.
+ */
+
+export type CraftObjectKind = 'lens' | 'timeline' | 'microphone' | 'swatches';
+
+const INK = '#1d1d1f';
+const GRAPHITE = ['#4a4a4e', '#26262a', '#141416'];
+const ALU = ['#f4f2ee', '#cfcbc4', '#9a968f'];
+const AMBER = '#c99a4e';
+const CLAY = '#b8735a';
+const SAGE = '#6f8b83';
+const RED = '#c4412e';
+
+function Shadow({ id, cx = 84, cy = 140, rx = 50 }: { id: string; cx?: number; cy?: number; rx?: number }) {
+  return (
+    <g className="craft-shadow">
+      <defs>
+        <filter id={`${id}-blur`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="5" />
+        </filter>
+      </defs>
+      <ellipse cx={cx} cy={cy} rx={rx} ry={9} fill="#2a1d10" opacity={0.26} filter={`url(#${id}-blur)`} />
+    </g>
+  );
+}
+
+/** Cinematography: a cine prime standing on its mount, front element up. */
+function Lens({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-wall`} x1="0" x2="1">
+          <stop offset="0" stopColor={GRAPHITE[0]} />
+          <stop offset="0.35" stopColor={GRAPHITE[1]} />
+          <stop offset="1" stopColor={GRAPHITE[2]} />
+        </linearGradient>
+        <linearGradient id={`${id}-ring`} x1="0" x2="1">
+          <stop offset="0" stopColor="#5a5a5f" />
+          <stop offset="0.4" stopColor="#2c2c30" />
+          <stop offset="1" stopColor="#101012" />
+        </linearGradient>
+        <linearGradient id={`${id}-alu`} x1="0" x2="1">
+          <stop offset="0" stopColor={ALU[0]} />
+          <stop offset="0.5" stopColor={ALU[1]} />
+          <stop offset="1" stopColor={ALU[2]} />
+        </linearGradient>
+        <radialGradient id={`${id}-glass`} cx="0.38" cy="0.35" r="0.75">
+          <stop offset="0" stopColor="#5a6f8c" />
+          <stop offset="0.45" stopColor="#1f2a3d" />
+          <stop offset="1" stopColor="#07090e" />
+        </radialGradient>
+      </defs>
+      <Shadow id={id} cx={86} cy={138} rx={48} />
+      <g className="craft-body">
+        {/* mount */}
+        <path d="M44 116 L44 124 A36 11 0 0 0 116 124 L116 116 Z" fill={`url(#${id}-alu)`} />
+        <ellipse cx="80" cy="116" rx="36" ry="11" fill="#bdb8b0" />
+        {/* barrel */}
+        <path d="M34 50 L34 112 A46 15 0 0 0 126 112 L126 50 Z" fill={`url(#${id}-wall)`} />
+        {/* focus ring with ridges */}
+        <path d="M32 72 L32 94 A48 16 0 0 0 128 94 L128 72 Z" fill={`url(#${id}-ring)`} />
+        {Array.from({ length: 15 }, (_, i) => {
+          const t = (i + 0.5) / 15;
+          const x = 80 - 48 * Math.cos(Math.PI * t);
+          const y = 94 + 16 * Math.sin(Math.PI * t);
+          return <line key={i} x1={x} y1={y - 20} x2={x} y2={y} stroke="#000" strokeOpacity={0.35 + 0.3 * t} strokeWidth={1.4} />;
+        })}
+        <path d="M32 72 A48 16 0 0 0 128 72" fill="none" stroke="#6b6b70" strokeWidth="1" opacity="0.8" />
+        {/* distance scale */}
+        <path d="M40 104 A42 13 0 0 0 120 104" fill="none" stroke="#e9e5de" strokeWidth="1" strokeDasharray="1.2 5" opacity="0.8" />
+        <circle cx="80" cy="109" r="2.2" fill={RED} />
+        {/* front rim and glass */}
+        <ellipse cx="80" cy="50" rx="46" ry="15" fill="#2f2f33" />
+        <ellipse cx="80" cy="50" rx="41" ry="12.5" fill="#0c0c0e" />
+        <ellipse cx="80" cy="51" rx="34" ry="10" fill={`url(#${id}-glass)`} />
+        <path d="M58 47 A26 7 0 0 1 90 43" fill="none" stroke="#e7b86a" strokeWidth="2" strokeLinecap="round" opacity="0.75" />
+        <path d="M94 55 A22 6 0 0 1 104 50" fill="none" stroke="#8fb3d9" strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+        {/* key light on the left edge */}
+        <path d="M36 54 L36 110" stroke="#fff" strokeOpacity="0.22" strokeWidth="2" strokeLinecap="round" />
+      </g>
+    </>
+  );
+}
+
+/** Editing: three tracks of clips on a timeline slab, with the playhead. */
+function Timeline({ id }: { id: string }) {
+  // Flat design space (x 0..120, y 0..64) projected into three-quarter view.
+  const M = 'matrix(0.92 0.3 -0.54 0.6 40 30)';
+  const clip = (x: number, y: number, w: number, color: string, k: string) => (
+    <g key={k}>
+      <rect x={x} y={y + 4} width={w} height={12} rx={3} fill="#000" opacity={0.28} />
+      <rect x={x} y={y} width={w} height={12} rx={3} fill={color} />
+      <rect x={x + 1} y={y + 1} width={w - 2} height={3} rx={1.5} fill="#fff" opacity={0.28} />
+    </g>
+  );
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-plate`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={ALU[0]} />
+          <stop offset="1" stopColor={ALU[1]} />
+        </linearGradient>
+      </defs>
+      <Shadow id={id} cx={82} cy={118} rx={62} />
+      <g className="craft-body">
+        {/* slab thickness */}
+        <g transform={M}>
+          <rect x="0" y="8" width="120" height="64" rx="7" fill={ALU[2]} />
+        </g>
+        <g transform={M}>
+          <rect x="0" y="0" width="120" height="64" rx="7" fill={`url(#${id}-plate)`} />
+          {clip(6, 7, 40, AMBER, 'a')}
+          {clip(50, 7, 42, GRAPHITE[1], 'b')}
+          {clip(96, 7, 18, CLAY, 'c')}
+          {clip(14, 25, 46, SAGE, 'd')}
+          {clip(64, 25, 44, AMBER, 'e')}
+          <g>
+            <rect x="6" y="47" width="108" height="10" rx="3" fill="#000" opacity={0.28} />
+            <rect x="6" y="43" width="108" height="10" rx="3" fill={GRAPHITE[1]} />
+            {Array.from({ length: 34 }, (_, i) => {
+              const h = 1.5 + Math.abs(Math.sin(i * 1.7)) * 3.5;
+              return <rect key={i} x={9 + i * 3.1} y={48 - h / 2} width={1.4} height={h} rx={0.7} fill="#e8e3da" opacity={0.75} />;
+            })}
+          </g>
+          {/* playhead */}
+          <rect x="73" y="-2" width="2" height="62" rx="1" fill={RED} />
+        </g>
+        {/* playhead pin, standing up from where the playhead meets the top edge */}
+        <line x1="109" y1="51" x2="109" y2="30" stroke={RED} strokeWidth="2" strokeLinecap="round" />
+        <path d="M104 20 L114 20 L114 28 L109 33 L104 28 Z" fill={RED} />
+      </g>
+    </>
+  );
+}
+
+/** Sound: a studio capsule microphone, with a waveform behind it. */
+function Microphone({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-body`} x1="0" x2="1">
+          <stop offset="0" stopColor={GRAPHITE[0]} />
+          <stop offset="0.4" stopColor={GRAPHITE[1]} />
+          <stop offset="1" stopColor={GRAPHITE[2]} />
+        </linearGradient>
+        <linearGradient id={`${id}-grille`} x1="0" x2="1">
+          <stop offset="0" stopColor={ALU[0]} />
+          <stop offset="0.55" stopColor={ALU[1]} />
+          <stop offset="1" stopColor={ALU[2]} />
+        </linearGradient>
+        <pattern id={`${id}-mesh`} width="4" height="4" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="0.9" fill="#6d6962" opacity="0.55" />
+        </pattern>
+        <clipPath id={`${id}-cap`}>
+          <path d="M56 50 A24 24 0 0 1 104 50 L104 70 L56 70 Z" />
+        </clipPath>
+      </defs>
+      <Shadow id={id} cx={84} cy={140} rx={40} />
+      {/* waveform behind */}
+      <g className="craft-back" opacity="0.9">
+        {Array.from({ length: 13 }, (_, i) => {
+          const h = 10 + Math.abs(Math.sin(i * 0.9 + 0.4)) * 34;
+          const x = 18 + i * 10;
+          return <rect key={i} x={x} y={74 - h / 2} width={4} height={h} rx={2} fill={AMBER} opacity={i > 3 && i < 9 ? 0 : 0.55} />;
+        })}
+      </g>
+      <g className="craft-body">
+        {/* stand */}
+        <rect x="76" y="108" width="8" height="24" rx="2" fill={GRAPHITE[1]} />
+        <ellipse cx="80" cy="133" rx="22" ry="6" fill={GRAPHITE[2]} />
+        <ellipse cx="80" cy="131" rx="22" ry="6" fill={GRAPHITE[0]} />
+        {/* body */}
+        <path d="M56 70 L56 96 Q56 112 80 112 Q104 112 104 96 L104 70 Z" fill={`url(#${id}-body)`} />
+        <circle cx="80" cy="92" r="2.2" fill={RED} />
+        {/* ring */}
+        <rect x="54" y="66" width="52" height="8" rx="3" fill={`url(#${id}-grille)`} />
+        {/* grille */}
+        <path d="M56 50 A24 24 0 0 1 104 50 L104 70 L56 70 Z" fill={`url(#${id}-grille)`} />
+        <rect x="56" y="24" width="48" height="46" fill={`url(#${id}-mesh)`} clipPath={`url(#${id}-cap)`} />
+        <path d="M62 44 A18 18 0 0 1 76 30" fill="none" stroke="#fff" strokeOpacity="0.7" strokeWidth="2" strokeLinecap="round" />
+        <path d="M58 76 L58 98" stroke="#fff" strokeOpacity="0.2" strokeWidth="2" strokeLinecap="round" />
+      </g>
+    </>
+  );
+}
+
+/** Production design: a fan of material samples (fabric, timber, paint chips) on a brass pivot. */
+function Swatches({ id }: { id: string }) {
+  const card = (rot: number, fill: React.ReactNode, k: string) => (
+    <g key={k} transform={`rotate(${rot} 80 124)`}>
+      <rect x="58" y="34" width="44" height="94" rx="6" fill="#000" opacity="0.22" transform="translate(3 4)" />
+      <rect x="58" y="34" width="44" height="94" rx="6" fill="#f3efe8" />
+      {fill}
+      <rect x="58" y="34" width="44" height="94" rx="6" fill="none" stroke="#000" strokeOpacity="0.08" />
+    </g>
+  );
+  return (
+    <>
+      <defs>
+        <pattern id={`${id}-weave`} width="4" height="4" patternUnits="userSpaceOnUse">
+          <rect width="4" height="4" fill={CLAY} />
+          <path d="M0 1 H4 M1 0 V4" stroke="#8f5642" strokeWidth="0.8" opacity="0.5" />
+        </pattern>
+        <linearGradient id={`${id}-wood`} x1="0" x2="1">
+          <stop offset="0" stopColor="#c89668" />
+          <stop offset="1" stopColor="#9c6b43" />
+        </linearGradient>
+      </defs>
+      <Shadow id={id} cx={86} cy={140} rx={46} />
+      <g className="craft-body">
+        {card(-24, <rect x="62" y="38" width="36" height="70" rx="4" fill={`url(#${id}-weave)`} />, 'fabric')}
+        {card(
+          -6,
+          <g>
+            <rect x="62" y="38" width="36" height="70" rx="4" fill={`url(#${id}-wood)`} />
+            {[0, 1, 2, 3].map((i) => (
+              <path key={i} d={`M${64 + i * 8} 38 Q${70 + i * 8} 72 ${63 + i * 8} 108`} fill="none" stroke="#6e4527" strokeWidth="0.9" opacity="0.45" />
+            ))}
+          </g>,
+          'timber',
+        )}
+        {card(
+          14,
+          <g>
+            <rect x="62" y="38" width="36" height="22" rx="3" fill={SAGE} />
+            <rect x="62" y="62" width="36" height="22" rx="3" fill="#d9cdb8" />
+            <rect x="62" y="86" width="36" height="22" rx="3" fill={INK} />
+          </g>,
+          'paint',
+        )}
+        <circle cx="80" cy="120" r="6" fill="#b3924f" />
+        <circle cx="79" cy="119" r="2.4" fill="#f1dfb0" />
+      </g>
+    </>
+  );
+}
+
+const DRAW: Record<CraftObjectKind, (p: { id: string }) => JSX.Element> = { lens: Lens, timeline: Timeline, microphone: Microphone, swatches: Swatches };
+
+export function CraftObject({ kind, size = 120, className = '' }: { kind: CraftObjectKind; size?: number; className?: string }) {
+  const id = `craft-${useId().replace(/:/g, '')}`;
+  const Draw = DRAW[kind];
+  return (
+    <svg className={`craft-object ${className}`} width={size} height={size} viewBox="0 0 160 160" aria-hidden focusable="false">
+      <Draw id={id} />
+    </svg>
+  );
+}
+
+/** The crafts Home offers as objects. Labels are Ana's craft names; routes go to existing Discover. */
+export const CRAFT_OBJECTS: { kind: CraftObjectKind; label: string; crafts: string[] }[] = [
+  { kind: 'lens', label: 'Cinematography', crafts: ['cinematographer', 'camera'] },
+  { kind: 'timeline', label: 'Editing', crafts: ['editor'] },
+  { kind: 'microphone', label: 'Sound', crafts: ['sound'] },
+  { kind: 'swatches', label: 'Production design', crafts: ['production-design'] },
+];

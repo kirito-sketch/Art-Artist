@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Opportunity } from '../../data/types';
 import { useStore } from '../../state/store';
-import { blockedBy, discoverableRoles, searchableHouses } from '../../domain/discovery';
-import { forYou, kindLabel, networkFor, person, postsFor } from '../../state/selectors';
+import { blockedBy, discoverableProjects, discoverableRoles, publicCreditsFor, searchableHouses } from '../../domain/discovery';
+import { project as wproject, worksForOrg } from '../../state/world';
+import { isLive } from '../../data/works';
+import { CRAFT_OBJECTS } from '../../ui/craft';
+import { FrameLabel, HouseFeature, ObjectTile, PortraitCard, PosterTile } from '../../ui/compose';
+import { forYou, kindLabel, networkFor, org, person, postsFor } from '../../state/selectors';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { spring, stagger } from '../../ui/motion';
 import { Avatar, Button, IconButton, Photo, PressCard, Row, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
@@ -48,7 +52,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
 
   return (
     <>
-      <div className="screen screen--hero" ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+      <div className={`screen screen--hero ${cards ? 'canvas v-home' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         {cards ? (
           <div className="cards-top" />
         ) : loading ? (
@@ -117,8 +121,10 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
 
           {store.isNewPerson && !loading && <FirstRun />}
 
+          {cards && !loading && <PeopleWorthKnowing />}
+
           {loading ? null : events.length ? (
-            <section className="section section--flush">
+            <section className={cards ? 'v-section' : 'section section--flush'}>
               <SectionHeader title="From your network" action={events.length > NETWORK_LIMIT ? 'See all' : undefined} onAction={() => push({ name: 'network' })} />
               <div className="list list--flush">
                 {events.slice(0, NETWORK_LIMIT).map((e, i) => (
@@ -130,8 +136,16 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
             <SuggestedPeople />
           )}
 
+          {cards && !loading && (
+            <>
+              <ExploreCraft goDiscover={goDiscover} />
+              <ProjectsToWatch />
+              <HousesOnAna />
+            </>
+          )}
+
           {!loading && posts.length > 0 && (
-            <section className="section section--flush">
+            <section className={cards ? 'v-section' : 'section section--flush'}>
               <SectionHeader title="Latest posts" action={posts.length > POSTS_LIMIT ? 'See all' : undefined} onAction={() => goDiscover('posts')} />
               <div className="list list--flush">
                 {posts.slice(0, POSTS_LIMIT).map((p) => (
@@ -302,5 +316,137 @@ function FirstRun() {
         </div>
       </section>
     </>
+  );
+}
+
+/* ---------------------------------------------------------- Large Cards composition */
+
+/** Portrait Cards: people worth knowing, each set against their own credited work. */
+function PeopleWorthKnowing() {
+  const { viewer, following, toggleFollow, push } = useStore();
+  const blocked = blockedBy(viewer.id);
+  const ids = (seed.suggestedFor[viewer.id] ?? []).filter((id) => !blocked.includes(id));
+  if (!ids.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="People worth knowing" />
+      <div className="portrait-rail">
+        {ids.map((id) => {
+          const p = person(id);
+          const credit = publicCreditsFor(id)[0];
+          const w = credit ? wproject(credit.projectId) : undefined;
+          const on = following.includes(id);
+          return (
+            <PortraitCard
+              key={id}
+              person={p}
+              still={w?.artwork ?? seed.portfolio[id]?.[0]}
+              context={
+                p.availableFrom ? (
+                  <>
+                    <span className="status-dot is-on" /> Available from {p.availableFrom}
+                  </>
+                ) : w ? (
+                  `Credited on ${w.publicTitle ?? w.workingTitle}`
+                ) : (
+                  p.city
+                )
+              }
+              onPress={() => push({ name: 'profile', id })}
+              action={
+                <Button
+                  size="s"
+                  variant={on ? 'secondary' : 'outline'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFollow(id);
+                  }}
+                >
+                  {on ? 'Following' : 'Follow'}
+                </Button>
+              }
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/** Object Tiles: the brand moment. The crafts, represented by their tools. */
+function ExploreCraft({ goDiscover }: { goDiscover: (scope?: string) => void }) {
+  const { viewer } = useStore();
+  const roles = discoverableRoles(viewer.id);
+  return (
+    <section className="band band--sand">
+      <SectionHeader title="Explore your craft" />
+      <p className="band-sub">Roles, people and work, by the tools of the trade.</p>
+      <div className="object-grid">
+        {CRAFT_OBJECTS.map((c) => {
+          const n = roles.filter((r) => r.forCrafts.some((f) => c.crafts.includes(f))).length;
+          return <ObjectTile key={c.kind} kind={c.kind} label={c.label} meta={n ? `${n} open ${n === 1 ? 'role' : 'roles'}` : 'People and work'} onPress={() => goDiscover('roles')} />;
+        })}
+      </div>
+    </section>
+  );
+}
+
+/** Poster / Stills rail: the work leads. The first project is set larger to break the rhythm. */
+function ProjectsToWatch() {
+  const { viewer, push } = useStore();
+  const works = discoverableProjects(blockedBy(viewer.id)).filter((w) => w.ownerId !== viewer.id && w.orgIds.length);
+  const ordered = [...works.filter(isLive), ...works.filter((w) => !isLive(w))].slice(0, 6);
+  if (!ordered.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="Projects to watch" />
+      <div className="poster-rail">
+        {ordered.map((w, i) => (
+          <PosterTile
+            key={w.id}
+            lead={i === 0}
+            media={w.media.id === 'ph' ? undefined : w.stills[0] ?? w.media}
+            title={w.title}
+            meta={
+              <>
+                {org(w.orgIds[0]).name} <Verified size={12} />
+              </>
+            }
+            label={<FrameLabel>{isLive(w) ? w.stage : w.year}</FrameLabel>}
+            onPress={() => push({ name: 'work', id: w.id })}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Wide editorial cards: a production house is shown by what it is making. */
+function HousesOnAna() {
+  const { viewer, push } = useStore();
+  const houses = searchableHouses(blockedBy(viewer.id))
+    .map((o) => ({ o, ws: worksForOrg(o.id) }))
+    .filter((x) => x.ws.length)
+    .sort((a, b) => Number(b.ws.some(isLive)) - Number(a.ws.some(isLive)))
+    .slice(0, 2);
+  if (!houses.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="Production houses" />
+      {houses.map(({ o, ws }) => {
+        const live = ws.find(isLive);
+        const lead = live ?? ws[0];
+        const hiring = discoverableRoles(viewer.id).filter((r) => r.orgId === o.id).length;
+        return (
+          <HouseFeature
+            key={o.id}
+            house={o}
+            still={lead.media.id === 'ph' ? undefined : lead.stills[0] ?? lead.media}
+            line={live ? `Now making ${live.title}${hiring ? ` · Hiring ${hiring}` : ''}` : `${lead.title}, ${lead.year}`}
+            onPress={() => push({ name: 'org', id: o.id })}
+          />
+        );
+      })}
+    </section>
   );
 }

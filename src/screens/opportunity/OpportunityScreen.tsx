@@ -1,10 +1,11 @@
-import { CalendarDays, ChevronLeft, Clock, Languages, MapPin, Share, Sparkles, Users } from 'lucide-react';
+import { ChevronLeft, Clock, MapPin, Share, Sparkles, Users } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useImageTint } from '../../ui/useImageTint';
 import { useStore } from '../../state/store';
 import { world } from '../../state/world';
 import { findOpportunity, firstName, kindLabel, org, person } from '../../state/selectors';
-import { Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
+import { Avatar, Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
+import { CallSheet, FrameLabel } from '../../ui/compose';
 import { Byline, SaveButton } from '../home/OpportunityCard';
 
 const TODAY = new Date(2026, 8, 29);
@@ -172,20 +173,23 @@ export function OpportunityScreen({ id }: { id: string }) {
   }
 
   return (
-    <div className="detail">
-      <div className="screen screen--hero" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+    <div className="detail v-role">
+      <div className="screen screen--hero canvas" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         <div className="ohero">
           <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
             <Photo media={o.media} className="ohero-photo" />
           </div>
+          <span className="ohero-labels">
+            <FrameLabel>{kindLabel[o.kind]}</FrameLabel>
+            {!status && o.closesInDays !== undefined && o.closesInDays <= 5 && <FrameLabel tone="urgent">Closes in {o.closesInDays} days</FrameLabel>}
+          </span>
         </div>
 
-        <div className="detail-body osheet" style={tint ? { background: `linear-gradient(to bottom, rgba(${tint}, 0.14), rgba(255, 255, 255, 0) 360px), var(--surface)` } : undefined}>
-          <p className="kicker">
-            {kindLabel[o.kind]} · {o.projectType.split(' · ')[0]}
-          </p>
+        <div className="detail-body osheet" style={tint ? { background: `linear-gradient(to bottom, rgba(${tint}, 0.12), rgba(246, 244, 240, 0) 320px), var(--base)` } : undefined}>
+          <p className="kicker">{o.projectType}</p>
           <h1 className="large-title">{o.role}</h1>
           <Pressable className="detail-by" onClick={() => (author ? push({ name: 'profile', id: author.id }) : push({ name: 'org', id: o.orgId! }))} scale={0.98}>
+            {o.orgId && <Avatar party={org(o.orgId)} size={26} />}
             <Byline o={o} />
             <span className="meta">· {o.project}</span>
           </Pressable>
@@ -216,13 +220,24 @@ export function OpportunityScreen({ id }: { id: string }) {
             );
           })()}
 
-          <ul className="facts">
-            <Fact icon={<MapPin size={20} />}>{o.city}</Fact>
-            <Fact icon={<CalendarDays size={20} />}>{o.dates}</Fact>
-            {o.language && <Fact icon={<Languages size={20} />}>{o.language}</Fact>}
-            {o.highlight && <Fact icon={<Sparkles size={20} />}>{o.highlight}</Fact>}
-            {!respondModel && !o.allowDM && !mine && <Fact icon={<Users size={20} />}>{poster} sees your profile and decides whether to message you</Fact>}
-          </ul>
+          {o.highlight && (
+            <p className="role-highlight">
+              <Sparkles size={18} /> {o.highlight}
+            </p>
+          )}
+          <CallSheet
+            items={[
+              { label: 'Location', value: o.city },
+              { label: 'Dates', value: o.dates },
+              ...(o.language ? [{ label: 'Language', value: o.language }] : []),
+              { label: 'Pay', value: o.paid ? o.compensation : 'Unpaid' },
+            ]}
+          />
+          {!respondModel && !o.allowDM && !mine && (
+            <p className="role-decides">
+              <Users size={18} /> {poster} sees your profile and decides whether to message you
+            </p>
+          )}
 
           <section className="detail-section">
             <h2 className="section-title">About</h2>

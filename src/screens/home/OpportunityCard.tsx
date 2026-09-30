@@ -5,6 +5,7 @@ import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { spring } from '../../ui/motion';
 import { Avatar, PressCard, Photo, Verified } from '../../ui/primitives';
+import { FrameLabel } from '../../ui/compose';
 
 export function SaveButton({ id, floating }: { id: string; floating?: boolean }) {
   const { saved, toggleSave } = useStore();
@@ -87,7 +88,7 @@ export function FeaturedCard({ o, onOpen }: { o: Opportunity; onOpen: () => void
     <PressCard className="feature" onPress={onOpen} scale={0.985} aria-label={`${o.role}, ${o.project}`}>
       <Photo media={o.media} className="feature-photo" />
       <div className="feature-scrim" />
-      {pill && <span className={`pill ${sent ? 'pill--done' : (o.closesInDays ?? 9) <= 5 ? 'pill--urgent' : ''}`}>{pill}</span>}
+      {pill && <FrameLabel tone={sent ? 'paper' : (o.closesInDays ?? 9) <= 5 ? 'urgent' : 'plate'}>{pill}</FrameLabel>}
       <SaveButton id={o.id} floating />
       <div className="feature-text">
         <p className="feature-title">{o.role}</p>
