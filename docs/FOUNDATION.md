@@ -246,6 +246,10 @@ Prototype limits: nothing persists across reloads; reports made in the app don't
 
 18+ requirement · privacy and data retention after deletion · accepted-credit name retention after deletion · verification claims · moderation and suspension notices · consent wording · policy re-consent rules · organisation authority wording.
 
+## Intro screens (added after review)
+
+First launch for someone new: splash → **three intro screens** → entry. Each says one true thing about Ana (find the people behind the work · credits you can trust · get to the work, with no fees to apply), with a Skip button, swipe, dots, and Next / Get started. **Invite links and sign-in skip them**, because those people already know why they're here.
+
 ## 11. Open questions (not decided silently)
 
 1. ~~Sign-in methods~~ Decided. 2. **Phone verification**: optional for individuals, required for phone invites (current). 3. ~~Minors~~ Decided for launch; guardian flow still to design. 4. ~~Unverified houses~~ Decided.

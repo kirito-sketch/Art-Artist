@@ -19,7 +19,7 @@ import { MediaPicker } from '../screens/create/PostComposer';
  * Apple, Google and email are the ways in. Phone is verification and linking only, never a login.
  */
 
-type Step = 'splash' | 'entry' | 'email' | 'signin' | 'forgot' | 'consent' | 'verify' | 'you' | 'craft' | 'where' | 'looking' | 'work' | 'invite' | 'inviteTip';
+type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'forgot' | 'consent' | 'verify' | 'you' | 'craft' | 'where' | 'looking' | 'work' | 'invite' | 'inviteTip';
 
 /** The demo invitation: Ana's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Ana team', canIssue: true };
@@ -59,7 +59,7 @@ export function EntryFlow() {
   // Splash lasts only as long as "loading" (simulated as a moment), then fades into entry.
   useEffect(() => {
     if (step !== 'splash') return;
-    const t = window.setTimeout(() => setStep('entry'), 2300);
+    const t = window.setTimeout(() => setStep(entry?.mode === 'new' ? 'intro' : 'entry'), 2300);
     return () => window.clearTimeout(t);
   }, [step]);
 
@@ -96,7 +96,7 @@ export function EntryFlow() {
   const steps: Step[] = invite ? ['you', 'craft', 'where'] : ['you', 'craft', 'where', 'looking', 'work'];
   const stepIndex = steps.indexOf(step);
 
-  const overImage = ['entry', 'you', 'craft', 'where', 'looking', 'work', 'invite', 'inviteTip'].includes(step);
+  const overImage = ['intro', 'entry', 'you', 'craft', 'where', 'looking', 'work', 'invite', 'inviteTip'].includes(step);
   return (
     <div className="entry">
       <div className="entry-status">
@@ -104,6 +104,8 @@ export function EntryFlow() {
       </div>
       <AnimatePresence mode="wait">
         <motion.div key={step} className="entry-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+          {step === 'intro' && <Intro onDone={() => setStep('entry')} />}
+
           {step === 'splash' && (
             <div className="splash">
               <motion.img src="images/brand/logo.png" alt="" className="splash-logo" initial={{ opacity: 0, scale: 0.86 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }} />
@@ -790,5 +792,67 @@ function AppleMark() {
     <svg width="16" height="18" viewBox="0 0 16 19" aria-hidden fill="currentColor">
       <path d="M13.2 10.1c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.8-3-.8C3.8 5 2.3 5.9 1.5 7.4c-1.7 2.9-.4 7.2 1.2 9.6.8 1.2 1.7 2.4 3 2.4 1.2 0 1.6-.8 3.1-.8s1.8.8 3.1.8c1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.5-1-2.5-3.9zM10.9 3.2c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.8 1.4-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.5 2.8-1.3z" />
     </svg>
+  );
+}
+
+/**
+ * First-launch intro for people who arrive with no context: three screens, each saying one true thing
+ * about Ana. Skippable, swipeable, never shown to invited people or on sign-in.
+ */
+const INTRO = [
+  { art: 'search', title: 'Find the people behind the work', body: 'Discover crew, cast and productions by craft, city and language.', chip: 'Real people, real work' },
+  { art: 'star', title: 'Credits you can trust', body: "Credits come from productions, and you accept them. No one can claim a film they didn't work on.", chip: 'Verified credits from real productions' },
+  { art: 'valley', title: 'Get to the work', body: 'Roles that fit your craft and dates come to you. Show interest, and the production decides whether to talk.', chip: 'No fees to apply, ever' },
+];
+
+function Intro({ onDone }: { onDone: () => void }) {
+  const [i, setI] = useState(0);
+  const last = i === INTRO.length - 1;
+  const s = INTRO[i];
+  return (
+    <div className="intro">
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={s.art}
+          className="intro-art"
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.45 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(_, info) => {
+            if (info.offset.x < -60 && !last) setI(i + 1);
+            if (info.offset.x > 60 && i > 0) setI(i - 1);
+          }}
+        >
+          <Photo media={art(s.art)} className="splash-art" showPlay={false} />
+        </motion.div>
+      </AnimatePresence>
+      <div className="intro-shade" />
+      <button className="intro-skip" onClick={onDone}>
+        Skip
+      </button>
+      <div className="intro-body">
+        <AnimatePresence mode="wait">
+          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }} className="intro-text">
+            <h1 className="intro-title">{s.title}</h1>
+            <p className="intro-copy">{s.body}</p>
+            <span className="intro-chip">
+              <Check size={13} strokeWidth={2.6} /> {s.chip}
+            </span>
+          </motion.div>
+        </AnimatePresence>
+        <div className="intro-dots" aria-label={`Screen ${i + 1} of ${INTRO.length}`}>
+          {INTRO.map((_, k) => (
+            <button key={k} className={k === i ? 'is-on' : ''} onClick={() => setI(k)} aria-label={`Screen ${k + 1}`} />
+          ))}
+        </div>
+        <Button block size="l" onClick={() => (last ? onDone() : setI(i + 1))}>
+          {last ? 'Get started' : 'Next'}
+        </Button>
+      </div>
+    </div>
   );
 }
