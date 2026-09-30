@@ -32,6 +32,9 @@ import { EntryFlow } from './entry/Entry';
 import { PolicyUpdate } from './legal/PolicyUpdate';
 import { ADMIN } from './admin/adminMode';
 import { AdminConsole } from './admin/Admin';
+import { LAB, SCENARIO } from './qa/boot';
+import { EdgeCaseLab } from './qa/Lab';
+import { ScenarioBar } from './qa/ScenarioBar';
 
 /* Transition per route type: composers rise like sheets, media zooms, detail pushes from the right. */
 function transitionFor(r: Route) {
@@ -230,15 +233,24 @@ export default function App() {
     return () => window.removeEventListener('keydown', k);
   }, []);
   // The moderation console is a separate internal tool, never part of the app's identities.
-  if (ADMIN) return <AdminConsole />;
+  // The Edge Case Lab is an internal page; a scenario replaces the console with its own bar.
+  if (LAB) return <EdgeCaseLab />;
+  if (SCENARIO?.fixture?.surface === 'admin')
+    return (
+      <>
+        <AdminConsole start={{ report: SCENARIO.fixture.report }} />
+        <ScenarioBar compact />
+      </>
+    );
+  if (ADMIN && !SCENARIO) return <AdminConsole />;
   return (
     <StoreProvider>
       <div className="stage">
         <div className="stage-phone">
-          {!RESEARCH && <StageNotice />}
+          {!RESEARCH && !SCENARIO && <StageNotice />}
           <Phone />
         </div>
-        {!RESEARCH && <PrototypeControls />}
+        {RESEARCH ? null : SCENARIO ? <ScenarioBar /> : <PrototypeControls />}
       </div>
     </StoreProvider>
   );

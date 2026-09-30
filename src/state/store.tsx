@@ -1,11 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
 import { RESEARCH } from '../research';
+import { BOOT } from '../qa/boot';
+import * as act from '../domain/actions';
+import { notificationsFor } from '../domain/discovery';
 
-/** Research sessions start as Aditi acting for Konark; everything else starts as Kiran. */
-const START = RESEARCH ? 'aditi' : 'kiran';
-import { party, person } from './selectors';
-import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject } from './world';
+/** Research sessions start as Aditi acting for Konark; an edge-case scenario starts where it says; everything else starts as Kiran. */
+const START = RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran';
+const START_ACTING = RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
+import { party } from './selectors';
+import { world, publicName, project as wproject, type Association, type Format, type HouseProject } from './world';
 import type { Craft, Person } from '../data/types';
 import type { Conversation, Credit, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
 
@@ -92,9 +96,6 @@ export interface Toast {
 
 export type PostDraft = { text: string; media: Media[]; addToPortfolio: boolean };
 
-/** Roles on an unannounced project never borrow its private artwork. */
-const GENERIC_ROLE_IMAGE: Media = { id: 'role-generic', kind: 'image', src: 'images/covers/coastline.jpg' };
-
 const VIEWERS: Record<string, Viewer> = {
   kiran: { id: 'kiran', craft: 'cinematographer', firstName: 'Kiran' },
   tara: { id: 'tara', craft: 'actor', firstName: 'Tara' },
@@ -120,11 +121,12 @@ function useStoreValue() {
     failPublish: false,
     actionsFail: false,
     forYouError: false,
+    ...BOOT?.flags,
   });
 
-  const [tab, setTabState] = useState<Tab>('home');
-  const [stack, setStack] = useState<Route[]>([]);
-  const [sheet, setSheet] = useState<Sheet | null>(null);
+  const [tab, setTabState] = useState<Tab>(BOOT?.tab ?? 'home');
+  const [stack, setStack] = useState<Route[]>(BOOT?.stack ?? []);
+  const [sheet, setSheet] = useState<Sheet | null>(BOOT?.sheet ?? null);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const [saved, setSaved] = useState<string[]>([]);
@@ -134,19 +136,18 @@ function useStoreValue() {
   const [creditBusy, setCreditBusy] = useState<string | null>(null);
   /** Poster-side changes to published roles. Title and project stay fixed once published. */
   const [roleEdits, setRoleEdits] = useState<Record<string, Partial<Opportunity> & { changed?: string[] }>>({});
-  const [roleStatus, setRoleStatus] = useState<Record<string, { state: 'filled' | 'closed'; reason: string }>>({});
   const failedOnce = useRef(new Set<string>());
   /** Bumped whenever the shared world changes, so every screen re-reads it. */
   const [worldVersion, setWorldVersion] = useState(0);
   const bump = useCallback(() => setWorldVersion((v) => v + 1), []);
   /** Test state: the signed-in member holds credit authority for the house. */
-  const [canIssue, setCanIssue] = useState(true);
+  const [canIssue, setCanIssue] = useState(BOOT?.canIssue ?? true);
   const [following, setFollowing] = useState<string[]>(DEFAULT_FOLLOWING);
   const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
   const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY[START]);
   const [conversations, setConversations] = useState<Conversation[]>(seed.conversations[START]);
-  const [interestsReceived, setInterestsReceived] = useState<Interest[]>(RESEARCH ? [] : seed.interests.kiran);
+  const [interestsReceived, setInterestsReceived] = useState<Interest[]>(RESEARCH ? [] : seed.interests[START_ACTING === 'self' ? START : START_ACTING] ?? []);
   const [notifications, setNotifications] = useState<Notification[]>(seed.notifications[START]);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userCollabs, setUserCollabs] = useState<Opportunity[]>([]);
@@ -155,21 +156,23 @@ function useStoreValue() {
   const [reloadKey, setReloadKey] = useState(0);
   /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
   /** Exploration: acting on behalf of a production house instead of as yourself. */
-  const [acting, setActing] = useState<string>(RESEARCH ? 'konark' : 'self');
+  const [acting, setActing] = useState<string>(START_ACTING);
   /** Organisations the signed-in person may act for. Permission only; not a team product. */
   /** Organisations each person may act for. Permission only; not a team product. */
-  const [memberMap, setMemberMap] = useState<Record<string, string[]>>({ aditi: ['konark', 'tidewater'] });
+  const [memberMap, setMemberMap] = useState<Record<string, string[]>>(BOOT?.memberships ?? { aditi: ['konark', 'tidewater'] });
   const memberships = memberMap[viewer.id] ?? [];
+  /** Who is doing things right now. Every change to shared records goes through the domain actions with this. */
+  const actor: act.Actor = { viewerId: viewer.id, acting, memberships, canIssue };
   /** Entry layer: splash → entry → auth → consent → onboarding (and a house invite). Null means the app. */
-  const [entry, setEntry] = useState<null | { mode: 'new' | 'invite' | 'signin'; notice?: string }>(null);
+  const [entry, setEntry] = useState<null | { mode: 'new' | 'invite' | 'signin'; notice?: string }>(BOOT?.entry ? { mode: BOOT.entry } : null);
   /** Consent records: which document, which version, when. */
   const [consents, setConsents] = useState<{ doc: string; version: string; at: string; method: string }[]>([
     { doc: 'Terms of Service', version: 'Draft 0.3', at: '12 Mar 2026', method: 'Signup' },
     { doc: 'Privacy Policy', version: 'Draft 0.3', at: '12 Mar 2026', method: 'Signup' },
   ]);
-  const [policyUpdate, setPolicyUpdate] = useState(false);
+  const [policyUpdate, setPolicyUpdate] = useState(BOOT?.policyUpdate ?? false);
   const [newPeople, setNewPeople] = useState<string[]>([]);
-  const [blocked, setBlocked] = useState<string[]>([]);
+  const [blocked, setBlocked] = useState<string[]>(BOOT?.blocked ?? []);
   const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
   const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
   /** VALIDATE: one Interest model everywhere (A) vs Interest for collaborations plus Respond for crew and casting (B). */
@@ -524,7 +527,7 @@ function useStoreValue() {
       return id;
     },
     verifyPendingHouses: () => {
-      seed.orgs.forEach((o) => (o.verified = true));
+      act.verifyPendingHouses();
       bump();
     },
     pendingCredits: [
@@ -546,9 +549,7 @@ function useStoreValue() {
           `credit-${cid}`,
           () => {
             setCreditBusy(null);
-            wc.status = 'accepted';
-            const p = wproject(wc.projectId)!;
-            world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: viewer.id, text: `${person(viewer.id).name} accepted the credit on ${p.workingTitle}: ${wc.line}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+            const p = act.acceptCredit(actor, cid)!;
             bump();
             showToast({ text: p.shared ? `Credit accepted. It now shows on your profile and on ${publicName(p)}.` : `Credit accepted. It becomes public when ${party(p.houseId!)!.name} shares the project.`, tone: 'success' });
           },
@@ -579,17 +580,12 @@ function useStoreValue() {
     attempt,
     retryMessage,
     roleEdits,
-    roleStatus,
+    roleStatus: world.roleStatus,
     editRole: (id: string, patch: Partial<Opportunity>, changed: string[]) => setRoleEdits((r) => ({ ...r, [id]: { ...r[id], ...patch, changed: [...new Set([...(r[id]?.changed ?? []), ...changed])] } })),
-    closeRole: (id: string, state: 'filled' | 'closed', reason: string) => setRoleStatus((r) => ({ ...r, [id]: { state, reason } })),
-    reopenRole: (id: string) => setRoleStatus((r) => { const n = { ...r }; delete n[id]; return n; }),
+    closeRole: (id: string, state: 'filled' | 'closed', reason: string) => (act.closeRole(actor, id, state, reason), bump()),
+    reopenRole: (id: string) => (act.reopenRole(actor, id), bump()),
     requestCorrection: (cid: string, reason?: string) => {
-      const wc = world.credits.find((x) => x.id === cid);
-      if (wc) {
-        wc.status = 'correction';
-        wc.note = reason;
-        const p = wproject(wc.projectId)!;
-        world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: viewer.id, text: `${person(viewer.id).name} asked to correct a credit on ${p.workingTitle}: ${reason ?? ''}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+      if (act.requestCorrection(actor, cid, reason)) {
         bump();
         return;
       }
@@ -616,9 +612,9 @@ function useStoreValue() {
     openAgain: (id: string) => {
       const base = userCollabs.find((x) => x.id === id) ?? seed.opportunities.find((x) => x.id === id) ?? world.roles.find((x) => x.id === id);
       if (!base) return id;
-      const nid = `${id}-again-${Date.now()}`;
-      setUserCollabs((cs) => [{ ...base, id: nid, postedAgo: 'now', closesInDays: 14 }, ...cs]);
-      return nid;
+      const again = act.openAgainFrom(base);
+      setUserCollabs((cs) => [again, ...cs]);
+      return again.id;
     },
     profileVersion,
     bumpProfile: () => setProfileVersion((v) => v + 1),
@@ -662,18 +658,11 @@ function useStoreValue() {
     },
     interestsSent,
     sendInterest: (id: string, note: string, answers?: string[]) => {
-      // Roles created in the prototype reach their house through the shared world.
-      if (world.roles.some((r) => r.id === id)) {
-        world.interests = world.interests.filter((i) => !(i.opportunityId === id && i.personId === viewer.id));
-        world.interests.push({ id: wid('wi'), personId: viewer.id, opportunityId: id, note: note || undefined, answers: answers?.some(Boolean) ? answers : undefined, time: 'now' });
-        const r = world.roles.find((x) => x.id === id)!;
-        if (r.orgId) world.notifications.unshift({ id: wid('wn'), forId: r.orgId, kind: 'interest', actorId: viewer.id, text: `${person(viewer.id).name} is interested in ${r.role} on ${r.project}`, time: 'now', unread: true, route: { name: 'hproject', id: r.projectId } });
-        bump();
-      }
+      if (act.sendInterest(actor, id, note, answers)) bump();
       sendInterest(id, note);
     },
     withdrawInterest: (id: string) => {
-      world.interests.forEach((i) => i.opportunityId === id && i.personId === viewer.id && (i.withdrawn = true));
+      act.withdrawInterest(actor, id);
       bump();
       withdrawInterest(id);
     },
@@ -692,84 +681,36 @@ function useStoreValue() {
       if (w) (w.dismissed = true), bump();
       else dismissInterest(id);
     },
-    notifications: [...world.notifications.filter((n) => n.toPersonId === viewer.id || (!!n.forId && memberships.includes(n.forId))), ...notifications],
+    notifications: notificationsFor(viewer.id, memberships, notifications),
     worldVersion,
     canIssue,
     setCanIssue,
     createProject: (d: { workingTitle: string; format: Format; languages: string[] }) => {
-      const p: HouseProject = { id: wid('hp'), ...(acting !== 'self' ? { houseId: acting } : { ownerId: viewer.id }), workingTitle: d.workingTitle, format: d.format, languages: d.languages, stage: 'Development', shared: false };
-      world.projects.unshift(p);
+      const id = act.createProject(actor, d);
       bump();
-      return p.id;
+      return id;
     },
-    updateProject: (id: string, patch: Partial<HouseProject>) => {
-      const p = wproject(id);
-      if (!p) return;
-      Object.assign(p, patch);
-      // Artwork reaches public roles only once the project itself is shared.
-      world.roles.forEach((r) => r.projectId === id && ((r.project = publicName(p)), (r.stage = p.stage), p.shared && p.artwork && (r.media = p.artwork)));
+    updateProject: (id: string, patch: Partial<HouseProject>) => (act.updateProject(actor, id, patch), bump()),
+    addRole: (projectId: string, f: Parameters<typeof act.addRole>[2]) => {
+      const id = act.addRole(actor, projectId, f);
       bump();
+      return id;
     },
-    addRole: (projectId: string, f: { role: string; about: string; dates: string; city: string; paid: boolean; compensation: string; questions: string[]; visibility: 'private' | 'open' }) => {
-      const p = wproject(projectId)!;
-      const r = {
-        id: wid('wr'), projectId, visibility: f.visibility, kind: 'crew' as const, role: f.role, project: publicName(p), projectType: `${p.format} · ${p.languages.join(', ')}`,
-        ...(p.houseId ? { orgId: p.houseId } : { authorId: p.ownerId }),
-        city: f.city || 'To be confirmed', dates: f.dates || 'Dates to be confirmed', compensation: f.paid ? f.compensation || 'Paid' : 'Unpaid', paid: f.paid, closesInDays: 14, stage: p.stage, language: p.languages.join(', '),
-        about: f.about, lookingFor: [], questions: f.questions.filter(Boolean).slice(0, 3), match: [], forCrafts: [], media: (p.shared && p.artwork) || GENERIC_ROLE_IMAGE, postedAgo: 'now',
-      };
-      world.roles.unshift(r);
-      bump();
-      return r.id;
-    },
-    setRoleVisibility: (id: string, v: 'private' | 'open') => {
-      const r = world.roles.find((x) => x.id === id);
-      if (r) (r.visibility = v), (r.postedAgo = 'now'), bump();
-    },
+    setRoleVisibility: (id: string, v: 'private' | 'open') => (act.setRoleVisibility(actor, id, v), bump()),
     addToProject: (projectId: string, who: { personId?: string; pending?: { name: string; phone: string } }, workingRole: string, dept: string, fromRoleId?: string) => {
-      const p = wproject(projectId)!;
-      const a: Association = { id: wid('wa'), projectId, ...who, workingRole, dept, fromRoleId, status: 'added' };
-      world.associations.push(a);
-      const owner = p.houseId ? party(p.houseId)!.name : person(p.ownerId!).name;
-      // Transparency, not permission: the person is told privately. There is nothing to accept.
-      if (who.personId) world.notifications.unshift({ id: wid('wn'), toPersonId: who.personId, kind: 'credit', actorId: p.houseId ?? p.ownerId!, text: `${owner} added you to ${p.workingTitle} as ${workingRole}`, time: 'now', unread: true, route: { name: 'association', id: a.id } });
+      const id = act.addToProject(actor, projectId, who, workingRole, dept, fromRoleId);
       bump();
-      return a.id;
+      return id;
     },
-    editAssociation: (id: string, patch: Partial<Association>) => {
-      const a = world.associations.find((x) => x.id === id);
-      if (!a) return;
-      Object.assign(a, patch);
-      if (a.status === 'flagged' && (patch.workingRole || patch.dept)) a.status = 'added';
-      bump();
-    },
-    flagAssociation: (id: string) => {
-      const a = world.associations.find((x) => x.id === id);
-      if (!a) return;
-      a.status = 'flagged';
-      const p = wproject(a.projectId)!;
-      if (p.houseId) world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: a.personId!, text: `${person(a.personId!).name} says being on ${p.workingTitle} as ${a.workingRole} isn't right`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
-      bump();
-    },
+    editAssociation: (id: string, patch: Partial<Association>) => (act.editAssociation(actor, id, patch), bump()),
+    removeAssociation: (id: string) => (act.removeAssociation(actor, id), bump()),
+    flagAssociation: (id: string) => (act.flagAssociation(actor, id), bump()),
     issueCredit: (associationId: string, line: string, dept: string) => {
-      const a = world.associations.find((x) => x.id === associationId)!;
-      const p = wproject(a.projectId)!;
-      const status = canIssue ? 'proposed' : 'prepared';
-      world.credits = world.credits.filter((c) => c.associationId !== associationId || c.status === 'accepted');
-      const c = { id: wid('wc'), projectId: a.projectId, associationId, personId: a.personId!, line, dept, status } as const;
-      world.credits.push({ ...c });
-      if (status === 'proposed') world.notifications.unshift({ id: wid('wn'), toPersonId: a.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} issued you a credit on ${p.workingTitle}: ${line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'profile', id: a.personId! } });
+      const status = act.issueCredit(actor, associationId, line, dept);
       bump();
       return status;
     },
-    proposePrepared: (creditId: string) => {
-      const c = world.credits.find((x) => x.id === creditId);
-      if (!c) return;
-      const p = wproject(c.projectId)!;
-      c.status = 'proposed';
-      world.notifications.unshift({ id: wid('wn'), toPersonId: c.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} issued you a credit on ${p.workingTitle}: ${c.line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'profile', id: c.personId } });
-      bump();
-    },
+    proposePrepared: (creditId: string) => (act.proposePrepared(actor, creditId), bump()),
     markNotificationsRead,
     userPosts,
     userCollabs,

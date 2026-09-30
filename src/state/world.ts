@@ -85,6 +85,8 @@ export const world = {
   credits: [] as WorldCredit[],
   interests: [] as WorldInterest[],
   notifications: [] as WorldNotification[],
+  /** Filled or closed roles, by role id. A filled role is a record; hiring again is a new role. */
+  roleStatus: {} as Record<string, { state: 'filled' | 'closed'; reason: string }>,
 };
 
 let n = 0;

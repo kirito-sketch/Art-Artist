@@ -1,0 +1,125 @@
+{
+ "date": "2026-09-30",
+ "results": {
+  "AC-01": {
+   "result": "pass",
+   "detail": "No unshared project or private role appears in public search."
+  },
+  "AC-02": {
+   "result": "pass",
+   "detail": "Public surfaces show \"Untitled …\" for unshared projects."
+  },
+  "AC-03": {
+   "result": "pass",
+   "detail": "Roles on unshared projects use the generic image."
+  },
+  "AC-04": {
+   "result": "pass",
+   "detail": "Only accepted credits on shared projects are public."
+  },
+  "AC-05": {
+   "result": "pass",
+   "detail": "Removing Kiran from Neeli Raat kept his accepted credit on the film and profile."
+  },
+  "AC-06": {
+   "result": "missing",
+   "detail": "There is no account-deletion action in the prototype to test. The rule is written in Your data (Draft for legal review)."
+  },
+  "AC-07": {
+   "result": "fail",
+   "detail": "A credit (proposed) was created by Kiran on his own independent project. The action has no issuer check."
+  },
+  "AC-08": {
+   "result": "fail",
+   "detail": "Credit proposed while Konark is unverified. The action has no verification check (the screen hides it)."
+  },
+  "AC-09": {
+   "result": "fail",
+   "detail": "2 role(s) opened publicly while Konark is unverified. The action has no verification check (the screen disables it)."
+  },
+  "AC-10": {
+   "result": "pass",
+   "detail": "Held as prepared; Sana was not asked to accept."
+  },
+  "AC-11": {
+   "result": "fail",
+   "detail": "After losing Konark access, Aditi still opened a role and issued a credit. Actions do not check membership."
+  },
+  "AC-12": {
+   "result": "fail",
+   "detail": "Roles from blocked parties still listed in Discover: Documentary DoP (tidewater)."
+  },
+  "AC-13": {
+   "result": "pass",
+   "detail": "One Interest after a retry."
+  },
+  "AC-14": {
+   "result": "missing",
+   "detail": "Messages live in per-session state, not the shared records. The retry path reuses the message id (verify by hand in EC-MSG-002)."
+  },
+  "AC-15": {
+   "result": "fail",
+   "detail": "2 projects from one create plus a retry. Create has no request key, so a retry after a timeout makes a duplicate."
+  },
+  "AC-16": {
+   "result": "pass",
+   "detail": "One open credit per association."
+  },
+  "AC-17": {
+   "result": "fail",
+   "detail": "Interest was recorded on a closed role. The action does not check role status (the screen hides the button)."
+  },
+  "AC-18": {
+   "result": "fail",
+   "detail": "The filled role reopened. Reopen does not check filled versus closed (the screen offers Hire again instead)."
+  },
+  "AC-19": {
+   "result": "pass",
+   "detail": "Not on any public surface."
+  },
+  "AC-20": {
+   "result": "pass",
+   "detail": "No credit, no public trace."
+  },
+  "AC-21": {
+   "result": "missing",
+   "detail": "No account-deletion or re-registration model in the prototype."
+  },
+  "AC-22": {
+   "result": "fail",
+   "detail": "Acting personally, Aditi opened a role and added someone on Konark's Neela Akasham. Actions do not check the acting identity."
+  },
+  "AC-23": {
+   "result": "fail",
+   "detail": "Aditi accepted her credit while acting as Konark. Accept does not check identity (the profile hides it)."
+  },
+  "AC-24": {
+   "result": "fail",
+   "detail": "A retried Interest made 2 house notifications; a re-issued credit made 2 for Sana."
+  },
+  "AC-25": {
+   "result": "missing",
+   "detail": "There is no ownership model: membership is a list, and Your data only blocks deletion for houses created in the session. Aditi, the only member of Konark, is not blocked."
+  },
+  "AC-26": {
+   "result": "pass",
+   "detail": "Not searchable."
+  },
+  "AC-27": {
+   "result": "pass",
+   "detail": "Scoped to current memberships."
+  },
+  "AC-28": {
+   "result": "pass",
+   "detail": "One owner each."
+  },
+  "AC-29": {
+   "result": "pass",
+   "detail": "Records are independent of blocks."
+  },
+  "AC-30": {
+   "result": "pass",
+   "detail": "30 credits, none orphaned."
+  }
+ }
+}

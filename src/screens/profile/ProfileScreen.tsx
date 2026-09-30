@@ -5,6 +5,7 @@ import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
+import { publicCreditsFor } from '../../domain/discovery';
 import { Button, Row, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
@@ -15,8 +16,7 @@ import { RoleRow } from '../discover/RoleRow';
  */
 function derive(p: Person) {
   const events = Object.values(seed.networkEvents).flat().filter((e) => e.actorIds.includes(p.id));
-  const credits: Credit[] = world.credits
-    .filter((c) => c.personId === p.id && c.status === 'accepted' && wproject(c.projectId)?.shared)
+  const credits: Credit[] = publicCreditsFor(p.id)
     .map((c) => {
       const w = wproject(c.projectId)!;
       return { id: c.id, title: publicName(w), year: w.year ?? '2026', role: c.line, department: c.dept, orgId: w.houseId!, format: w.format, status: 'Released' as const, media: w.artwork ?? seed.cameraRoll[0] };

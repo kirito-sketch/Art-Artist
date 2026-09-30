@@ -706,7 +706,7 @@ function IssueCredit({ associationId, done }: { associationId: string; done: () 
 }
 
 function PersonActions({ id, issue, done }: { id: string; issue: () => void; done: () => void }) {
-  const { editAssociation, showToast } = useStore();
+  const { editAssociation, removeAssociation, showToast } = useStore();
   const a = world.associations.find((x) => x.id === id)!;
   const p = project(a.projectId)!;
   const c = [...world.credits].reverse().find((x) => x.associationId === id);
@@ -748,8 +748,7 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
             label={<span className="danger-text">Remove from project</span>}
             chevron={false}
             onPress={() => {
-              editAssociation(id, { status: 'removed' });
-              world.credits = world.credits.filter((x) => !(x.associationId === id && x.status !== 'accepted'));
+              removeAssociation(id);
               done();
               showToast({ text: `${name} removed from the project` });
             }}

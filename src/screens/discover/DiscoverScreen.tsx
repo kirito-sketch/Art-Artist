@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newspaper, Palette, Scissors, Search, Shirt, SlidersHorizontal, Sparkles, Theater, Users, Video, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
-import { world, publicWorks } from '../../state/world';
+import { discoverableRoles, publicProjects, searchableHouses, searchablePeople } from '../../domain/discovery';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
@@ -33,7 +33,6 @@ const KINDS: { id: 'all' | Opportunity['kind']; label: string }[] = [
 ];
 
 /* Only adult, public profiles are searchable. Guardian-managed profiles never enter this index. */
-const searchablePeople = (viewerId: string) => seed.people.filter((p) => p.id !== viewerId && p.visibility === 'public');
 
 
 function PersonRow({ p }: { p: Person }) {
@@ -82,7 +81,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const [filterOpen, setFilterOpen] = useState(false);
 
   const q = query.trim().toLowerCase();
-  const roles = useMemo(() => [...world.roles.filter((r) => r.visibility === 'open'), ...userCollabs, ...seed.opportunities.filter((o) => o.authorId !== viewer.id)], [userCollabs, viewer.id, worldVersion]);
+  const roles = useMemo(() => discoverableRoles(viewer.id, userCollabs), [userCollabs, viewer.id, worldVersion]);
 
   const applyRoleFilters = (list: Opportunity[], f: Filters, k: typeof kind) =>
     list
@@ -95,12 +94,11 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
       .filter((o) => (q ? [o.role, o.project, o.city, o.orgId ? org(o.orgId).name : person(o.authorId!).name].join(' ').toLowerCase().includes(q) : true));
 
   const shownRoles = applyRoleFilters(roles, filters, kind);
-  const people = searchablePeople(viewer.id)
-    .filter((p) => !blocked.includes(p.id))
+  const people = searchablePeople(viewer.id, blocked)
     .filter((p) => (craft ? p.craft === craft || (craft === 'cinematographer' && p.craft === 'camera') : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
-  const projects = publicWorks().filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
-  const houses = q ? seed.orgs.filter((o) => o.verified && !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
+  const projects = publicProjects().filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
+  const houses = q ? searchableHouses(blocked).filter((o) => `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
   const grouped = !!q && !narrowed;
   const runSearch = () => {
     if (!q || !(scenario.loading || scenario.actionsFail)) return setSearchState('ready');

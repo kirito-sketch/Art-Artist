@@ -103,12 +103,13 @@ const ACTIONS: Record<ActionId, { label: string; high?: boolean; person: string;
 
 const REASONS = ['Fake profile or impersonation', 'Asking for money', 'Harassment or unsafe behaviour', 'Misleading', 'Stolen or misused work', 'Spam', 'No violation found'];
 
-export function AdminConsole() {
-  const [signedIn, setSignedIn] = useState(false);
+/** `start` lets an edge-case scenario open the console signed in, on a given report. */
+export function AdminConsole({ start }: { start?: { report?: string } } = {}) {
+  const [signedIn, setSignedIn] = useState(!!start);
   const [reports, setReports] = useState(SEED);
-  const [tab, setTab] = useState<Status>('New');
+  const [tab, setTab] = useState<Status>(SEED.find((r) => r.id === start?.report)?.status ?? 'New');
   const [q, setQ] = useState('');
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(start?.report ?? null);
   const [act, setAct] = useState<ActionId | null>(null);
 
   const list = useMemo(

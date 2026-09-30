@@ -5,6 +5,13 @@ import { org, person } from '../state/selectors';
 import { Toggle } from '../ui/primitives';
 import { startResearch } from '../research';
 import { openAdmin } from '../admin/adminMode';
+import { labUrl } from '../qa/boot';
+import { SCENARIOS } from '../qa/scenarios';
+import { effective, isSettled } from '../qa/status';
+import lastRun from '../qa/last-run.json';
+
+/** From the last automated run (npm run test:edge). The Lab itself re-runs the checks live. */
+const P0_REMAINING = SCENARIOS.filter((s) => s.priority === 'P0' && !isSettled(effective(s, lastRun.results as never).status)).length;
 
 /*
  * Prototype console. Outside the phone and never part of Ana.
@@ -251,14 +258,14 @@ export function PrototypeControls() {
                 </button>
               </div>
             </Sub>
-            <button className="pc-row pc-row--disabled" disabled title="Coming next">
+            <a className="pc-row" href={labUrl()}>
               <FlaskConical size={14} />
               <span className="pc-row-text">
                 <span>Open Edge Case Lab</span>
-                <span className="pc-row-hint">Coming soon</span>
+                <span className="pc-row-hint">P0: {P0_REMAINING} remaining</span>
               </span>
               <ChevronRight size={14} />
-            </button>
+            </a>
 
             <p className="pc-group-h">Reference</p>
             <Sub title="Archived explorations" meta={archived.length ? 'Viewing one' : 'Reference only'} open={open === 'archive'} onToggle={() => setOpen(open === 'archive' ? null : 'archive')}>
