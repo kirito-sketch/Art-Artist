@@ -60,8 +60,36 @@ export interface WorldCredit {
   personId: string;
   line: string;
   dept: string;
-  status: 'prepared' | 'proposed' | 'accepted' | 'correction';
+  /**
+   * superseded  an accepted version later replaced by an accepted revision; kept as history, never public
+   * declined    a proposed revision the person chose not to accept; the accepted version stays current
+   */
+  status: 'prepared' | 'proposed' | 'accepted' | 'correction' | 'superseded' | 'declined';
   note?: string;
+  /** A proposed revision of this accepted credit. Accepting it supersedes that credit. */
+  supersedes?: string;
+  /** The person who issued it (internal attribution; the public issuer is the house). */
+  issuedBy?: string;
+}
+
+/**
+ * A request to amend an accepted credit. The accepted credit stays the public record throughout;
+ * only the person accepting a revised version replaces it.
+ *   open       the person asked; the house hasn't decided
+ *   revised    the house proposed a revised credit (revisionId), waiting for the person
+ *   kept       the house kept the credit as it is
+ *   accepted   the person accepted the revision; it replaced the old version
+ *   withdrawn  the person kept the current credit instead
+ */
+export interface Amendment {
+  id: string;
+  creditId: string;
+  associationId: string;
+  projectId: string;
+  personId: string;
+  reason: string;
+  status: 'open' | 'revised' | 'kept' | 'accepted' | 'withdrawn';
+  revisionId?: string;
 }
 
 /** The record never disappears: withdrawn, messaged or set aside, it stays the history of this role. */
@@ -71,6 +99,17 @@ export type WorldInterest = Interest;
  * A conversation between two identities (a person, or a house acting through its members). Both sides
  * read the same record, so what the house sends as Konark is what the person receives from Konark.
  */
+/** Where one association's credit stands: the current public version, anything pending, the latest amendment and the history. */
+export function creditState(associationId: string) {
+  const cs = world.credits.filter((c) => c.associationId === associationId);
+  return {
+    current: cs.find((c) => c.status === 'accepted'),
+    pending: [...cs].reverse().find((c) => c.status === 'prepared' || c.status === 'proposed' || c.status === 'correction'),
+    amendment: [...world.amendments].reverse().find((m) => m.associationId === associationId),
+    history: cs.filter((c) => c.status === 'superseded'),
+  };
+}
+
 export interface Thread {
   id: string;
   /** One suggested next step for one side, e.g. confirming a recce. */
@@ -79,7 +118,8 @@ export interface Thread {
   sides: [string, string];
   context: { kind: 'crew' | 'casting' | 'collab' | 'project'; label: string; detail: string; refId?: string };
   media?: Media;
-  messages: { id: string; from: string; text: string; time: string }[];
+  /** `from` is the identity (person or house). `by` is the human who sent it: kept internally, never shown to the other side. */
+  messages: { id: string; from: string; by?: string; text: string; time: string }[];
   /** Sides with something unread. */
   unreadFor: string[];
   updated: string;
@@ -112,6 +152,7 @@ export const world = {
   /** A poster's changes to a published role, and which material details changed. Everyone reads the same edits. */
   roleEdits: {} as Record<string, Partial<Opportunity> & { changed?: string[] }>,
   blocks: [] as Block[],
+  amendments: [] as Amendment[],
   /** Filled or closed roles, by role id. A filled role is a record; hiring again is a new role. */
   roleStatus: {} as Record<string, { state: 'filled' | 'closed'; reason: string }>,
 };

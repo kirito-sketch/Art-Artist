@@ -314,11 +314,13 @@ function useStoreValue() {
       if (existing) return existing.id;
       const media = context.refId ? findRole(context.refId)?.media : undefined;
       const id = act.startThread(actorRef.current, withId, context as Thread['context'], media);
+      // A block (of this identity, or of the person behind it) means no new conversation. Existing ones stay readable.
+      if (!id) return showToast({ text: "You can't message them.", tone: 'error' }), undefined;
       if (opener) act.sendThreadMessage(actorRef.current, id, opener, nowTime());
       bump();
       return id;
     },
-    [conversations, acting, bump],
+    [conversations, acting, bump, showToast],
   );
 
   /** Runs a key action after a short delay. With "Actions fail" on, the first try of each key fails and a retry succeeds. */
@@ -540,7 +542,7 @@ function useStoreValue() {
       .filter((c) => c.personId === viewer.id && (c.status === 'proposed' || c.status === 'correction'))
       .map((c) => {
         const p = wproject(c.projectId)!;
-        return { id: c.id, associationId: c.associationId, title: p.workingTitle, year: '2026', role: c.line, department: c.dept, orgId: p.houseId ?? 'konark', format: p.format, status: 'Filming' as const, media: p.artwork ?? seed.cameraRoll[0], correction: c.status === 'correction', note: c.note };
+        return { id: c.id, associationId: c.associationId, title: p.workingTitle, year: '2026', role: c.line, department: c.dept, orgId: p.houseId ?? 'konark', format: p.format, status: 'Filming' as const, media: p.artwork ?? seed.cameraRoll[0], correction: c.status === 'correction', note: c.note, revision: !!c.supersedes };
       }),
     creditBusy,
     acceptCredit: function accept(cid: string) {
@@ -713,6 +715,9 @@ function useStoreValue() {
       return status;
     },
     proposePrepared: (creditId: string) => (act.proposePrepared(actor, creditId), bump()),
+    proposeRevision: (amendmentId: string, line: string, dept: string) => (act.proposeRevision(actor, amendmentId, line, dept), bump()),
+    keepCredit: (amendmentId: string) => (act.keepCredit(actor, amendmentId), bump()),
+    declineRevision: (revisionId: string) => (act.declineRevision(actor, revisionId), bump()),
     markNotificationsRead,
     userPosts,
     userCollabs,

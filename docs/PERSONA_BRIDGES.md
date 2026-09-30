@@ -20,7 +20,8 @@ A bridge is sound when both personas read **the same record**, and each persona 
 | Interest | `world.interests` (one per person and role) | Person | Sent / Withdrawn; survives persona switches. | New, In conversation, Not now, No longer interested. Never deleted. |
 | Conversation | `world.threads` (two sides: identities, not members) | Both | Reads the house as the house ("Konark Pictures · Production team"). | Reads and replies as the house ("Replying as Konark Pictures"). |
 | Association ("added to project") | `world.associations` | House | "Project you're on" view: private, not a credit, "This isn't right". | Workspace "On this project": edit working role, remove, issue credit. |
-| Credit | `world.credits` (prepared → proposed → accepted \| correction) | Issued by house, accepted by person | Accept, Something wrong? | Issue, prepare, reissue after correction. An accepted credit can't be removed. |
+| Credit | `world.credits` (prepared → proposed → accepted \| correction; superseded and declined kept as history) | Issued by house, accepted by person | Accept, Something wrong? On an accepted credit: ask to amend, accept or decline a revision. | Issue, prepare, reissue after correction. On an accepted credit: propose a revision or keep it. It can never be removed, reissued over or edited. |
+| Amendment | `world.amendments` (open → revised \| kept → accepted \| withdrawn) | Person asks, house answers | "Something wrong with this credit?", then Accept revision / Keep current | Propose revised credit / Keep the credit as it is |
 | Notification | `world.notifications` (exactly one owner: `toPersonId` or `forId`) | Recipient identity | "You" notifications only. | Filed under the house; filterable. |
 | Block | `world.blocks` (by a person, of a person or house) | The person blocking | Personal, even while acting for a house. | A house never blocks; its members do, for themselves. |
 
@@ -234,14 +235,20 @@ Every notification has exactly one owner (AC-28). A member only receives the not
 
 ## 7. Transitions acknowledged, not built
 
-**Not on Ana → real account.** A house can add someone privately by name and phone. That creates no profile, no search entry and no credit.
+**Not on Ana → real account (rule recorded; linking not built).** A house can add someone privately by name and phone. That creates no profile, no search entry and no credit.
 
-Intended rule:
-1. When that person joins with the same verified phone number, the placeholder becomes their association.
-2. They get the "added you" notification.
-3. Credits become possible from that point.
+Expected behaviour:
+1. The pending person joins Ana.
+2. They prove control of the invited phone or email, and confirm the project and role.
+3. Only then does the pending project relationship link to their real account, and they get the "added you" notification.
 
-The claim step is not built. It needs a rule for conflicts: the name differs, or two houses used the same number.
+Until then the placeholder:
+- stays private to the house;
+- is not searchable;
+- is not a public profile;
+- cannot accept a public credit.
+
+A name match is never enough on its own (recycled numbers, wrong numbers). Recorded as EC-PEND-018.
 
 **Private → public project.** Built and walked through (W5, B20). Sharing reveals only what the preview lists. Accepted credits on a private project stay under Projects you're on until the project is shared.
 
@@ -255,7 +262,19 @@ The claim step is not built. It needs a rule for conflicts: the name differs, or
   - Interest is refused;
   - the blocked identity sees the profile as private and is never told why.
 - It **never erases shared history**. Thread messages, credits, associations, Interest and public projects are unchanged (W6, AC-29, AC-34). The person who blocked sees "You blocked Konark Pictures. Messages stay here."
+- **A block follows the human, not just the identity.** If Tara blocks Aditi personally, Aditi cannot start or send any conversation to Tara, including while acting as Konark Pictures. Tara has not blocked Konark: another authorised Konark member can still write to her as Konark, unless Tara also blocks the house. Ana keeps the member behind each house message internally (`by` on each message); Tara only ever sees Konark Pictures. (AC-37, walkthrough WB)
+- **Blocking a house hides its active content, not its history.** A blocked house's roles, Home recommendations, house suggestions, suggested people and live project suggestions are hidden. A role reached through an old link shows "You blocked Konark Pictures" with no action. Accepted credits, past project pages and attribution stay, because the public record and the recommendation relationship are different things. (AC-12, AC-29, walkthrough WC)
 - Reporting creates a moderation report and changes no records.
+
+**Losing access to a house (rule recorded; no membership-management flow built).** When a member loses access:
+- they can no longer act as that house;
+- if they are acting as it, Ana returns them to their personal identity ("You no longer have access to Konark Pictures");
+- house-only actions become unavailable;
+- house conversations and workspaces leave their working access (house threads are already read through current memberships);
+- an unfinished privileged action cannot complete;
+- actions already completed stay attributed as they were (credits keep `issuedBy`, messages keep `by`, both internal).
+
+Recorded as EC-ID-002 and EC-MSG-006. Enforcing it on every action is AC-11 and AC-22 (business rules, section 12).
 
 ---
 
@@ -272,12 +291,12 @@ The claim step is not built. It needs a rule for conflicts: the name differs, or
 8. **Unguarded Project you're on.** Anyone holding the route could open a person's Project you're on.
 9. **Role edits stayed local.** A house's edits to a role were local to that session, so "Updated since you showed interest" never reached the person.
 
-**Behaviour-only gaps (still open; a rule is needed before UI)**
-- **Correcting an accepted credit.** "Something wrong?" on the public project says "Sent to the production", but no record is created. Needs a rule: does a correction unpublish, or stay public until reissued?
-- **Blocking a member, not the house.** If Tara blocks Aditi personally, Aditi can still write to her *as Konark*. Blocks target identities; a rule is needed on whether blocking a member also blocks the houses they act for.
-- **Roles from blocked houses in Discover.** They still appear (AC-12, an existing P0 failure, left for the P0 fix pass).
-- **Losing access to a house.** House threads leave a member's inbox when their membership ends, but the console has no control to end a membership.
-- **Not on Ana → real account.** The claim step (section 7).
+**Behaviour-only gaps**
+- **Correcting an accepted credit.** Resolved in the hardening pass (section 12.1).
+- **Blocking a member, not the house.** Resolved (section 8, 12.2).
+- **Roles from blocked houses in Discover.** Resolved; AC-12 passes (section 8, 12.3).
+- **Losing access to a house.** Rule recorded (section 8). Not built: there is no console control to end a membership.
+- **Not on Ana → real account.** Rule recorded (section 7). Not built.
 
 **Private data confirmation.** Walkthroughs W1–W6 checked each receiving screen for data it must not show:
 - the working title, on public surfaces;
@@ -325,6 +344,14 @@ The migration stays **paused**. When it resumes, it continues from where it stop
 
 **05 · Projects, Roles & Credits**
 - Credit lifecycle strip: Added → Proposed → Correction → Reissued → Accepted (private) → Accepted (public)
+- Accepted credit amendment (built from the existing Credit components; no new page or flow):
+  - Amend sheet ("Something wrong with this credit?": reasons, "Your credit stays public as it is", Ask to amend, Report to Ana)
+  - Project you're on / Accepted · amendment asked
+  - Project you're on / Revised credit waiting (Accept revision / Keep current, "Replaces …")
+  - Project you're on / Revision accepted, with Earlier versions
+  - Project you're on / House kept the credit (with Report to Ana)
+  - Workspace / Amendment asked (row state, and Person actions: Propose revised credit / Keep the credit as it is)
+  - Propose revised credit sheet (current credit, their reason, preview)
 - Public project / Credits after acceptance ("You're credited as")
 - Notifications / Bridge set (interest, message, filled, added, credit issued, corrected, correction asked, accepted)
 
@@ -343,3 +370,74 @@ Run in Chromium against the prototype. Personas were switched through the consol
 | W5 | Correction loop on a private project (Kiran, Kaal) → corrected reissue → accept → share → public | 14 | Pass |
 | W6 | Tara blocks Konark: credit, public project and thread history remain; both sides are closed for sending; Konark sees a private profile | 7 | Pass |
 | Extra | Interest survives a persona switch; withdraw → "No longer interested"; a house's role edit reaches the person ("Updated since you showed interest: location"); Research Mode, Lab and scenario links load | 6 | Pass |
+
+---
+
+## 12. Bridge hardening pass
+
+### 12.1 Amending an accepted credit
+
+An accepted credit is a professional record. Neither side can silently edit it, remove it, or make it disappear while a change is discussed.
+
+1. On an accepted credit, the person chooses **"Something wrong with this credit?"** (on Project you're on, or "Something wrong?" on the public project).
+2. That creates an **amendment request** with their reason. The accepted credit does not change and stays public.
+3. The house is notified and sees "Amendment asked" in the workspace. It has two choices:
+   - **Propose revised credit.** A revised version goes to the person. The accepted credit stays public until they decide.
+     - **Accept revision:** the revised credit replaces the old one on every public surface. The old version is kept as history (`superseded`) and is shown to the person under "Earlier versions".
+     - **Keep current:** the revision is declined and kept as history, and the accepted credit stays.
+   - **Keep the credit as it is.** The person is told, and the accepted credit remains the current public record.
+4. For fraud, identity misuse or a malicious credit, the credit sheet and the "kept" state link to **Report to Ana**, the existing moderation path. There is no second dispute system.
+
+These rules are enforced on the records, not only hidden in the UI:
+- `requestCorrection` on an accepted credit becomes an amendment request and never sends the credit back;
+- `issueCredit` refuses an association that already has an accepted credit;
+- `acceptCredit` only accepts a proposed credit.
+
+States added:
+- **Credit:** `superseded`, `declined`, and a `supersedes` link on a revision.
+- **Amendment:** `open`, `revised`, `kept`, `accepted`, `withdrawn`.
+
+Checked by AC-36 and walkthrough WA.
+
+### 12.2 Blocking a person who can act for a house
+
+See section 8. In short, a personally blocked human cannot get round a block by switching to an organisation identity. The organisation is blocked only if the person blocks it. The member behind each house message is kept internally and never shown to the recipient. Existing credits and history are untouched.
+
+Checked by AC-37 and walkthrough WB. The domain check covers "another member can still write". The console has only one Konark member, so the browser walkthrough covers Aditi's side.
+
+### 12.3 Blocking a production house (AC-12)
+
+See section 8. `discoverableRoles`, `recommendedRoles` (Home), `searchableHouses`, `discoverableProjects`, house suggestions on first-run Home, suggested people, network activity and followed posts all read the viewer's blocks from the shared block records. A blocked house's project page opened from a credit still shows the record, without its Hiring section.
+
+Checked by AC-12, AC-29 and walkthrough WC.
+
+### 12.4 Classification of the automated failures
+
+There were 11 failures before this pass. AC-12 is fixed, so 10 remain. None of them block the Figma migration: in every case the canonical screens already show the right thing, and the rule is missing only at the record level.
+
+| Check | Failure | Class | Why | Required before Figma? | Action |
+|---|---|---|---|---|---|
+| AC-07 | An individual could issue a credit on their own project | B. Business / backend rule | The screens never offer it ("Credits for independent projects aren't available yet"). Only the record action lacks the issuer check. | No | Rule recorded (EC-CREDIT-038). Enforce in the backend. |
+| AC-08 | An unverified house could issue a credit | B | The screens show "Credits unlock once Ana verifies …". The action lacks the verification check. | No | Enforce at write time. |
+| AC-09 | An unverified house could open a public role | B | The screen disables "Open on Ana" with a note. The action lacks the check. | No | Enforce at write time. |
+| **AC-12** | Roles from blocked houses still in Discover | **A. Canonical UX blocker** | People kept being recommended opportunities from a house they blocked. This changes what Home and Discover show. | **Yes** | **Fixed** (12.3). |
+| AC-11 | A revoked member could still act as the house | B | Membership-loss rule (section 8). No canonical screen changes: the existing identity switch and notice cover it. | No | Rule recorded (EC-ID-002). Enforce at write time. |
+| AC-15 | A retried create made a duplicate project | B | Idempotency (request keys) belongs in the backend. The UI already shows one pending state. | No | Rule recorded (EC-PROJ-004). |
+| AC-17 | Interest recorded on a closed role | B | The screen already hides the button and shows "This role is no longer open". | No | Enforce at write time. |
+| AC-18 | A filled role could reopen as the same record | B | The screen offers "Open a new role" for filled roles. Only the action allows it. | No | Enforce at write time. |
+| AC-22 | House actions ran while acting personally | B | The screens gate house actions behind the identity switch. The action lacks the identity check. | No | Enforce at write time. |
+| AC-23 | Personal credit acceptance ran as a house | B | The screens show "Switch to you to respond". The action lacks the identity check. | No | Enforce at write time. |
+| AC-24 | A retried event made duplicate notifications | D. P1/P2 edge case | Notification de-duplication on retry. It doesn't change any canonical screen. | No | Backlog. |
+
+The four checks without a model yet stay unresolved on purpose:
+- **AC-06, AC-21, AC-25** need the account-deletion and ownership model. Class C: that depends on legal review (drafts marked "Draft for legal review").
+- **AC-14** (message retry) is verified by hand. Class D.
+
+### 12.5 Totals
+
+| | Before this pass | After |
+|---|---|---|
+| Pass | 20 | 23 (AC-12, AC-36, AC-37) |
+| Fail | 11 | 10 (all class B or D) |
+| Without a model | 4 | 4 |
+| Scenarios in the matrix | 515 | 520 (EC-CREDIT-040, 041; EC-BLOCK-022, 023; EC-PEND-018) |

@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newspaper, Palette, Scissors, Search, Shirt, SlidersHorizontal, Sparkles, Theater, Users, Video, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
-import { discoverableRoles, publicProjects, searchableHouses, searchablePeople } from '../../domain/discovery';
+import { discoverableProjects, discoverableRoles, searchableHouses, searchablePeople } from '../../domain/discovery';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
@@ -97,7 +97,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const people = searchablePeople(viewer.id, blocked)
     .filter((p) => (craft ? p.craft === craft || (craft === 'cinematographer' && p.craft === 'camera') : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
-  const projects = publicProjects().filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
+  const projects = discoverableProjects(blocked).filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const houses = q ? searchableHouses(blocked).filter((o) => `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
   const grouped = !!q && !narrowed;
   const runSearch = () => {

@@ -2,6 +2,7 @@ import * as seed from '../data/seed';
 import type { NetworkEvent, Opportunity, Org, Party, Person, Post, Viewer } from '../data/types';
 import type { Scenario } from './store';
 import { world } from './world';
+import { blockedBy, recommendedRoles } from '../domain/discovery';
 
 export const party = (id: string): Party | undefined => seed.parties[id];
 export const person = (id: string) => seed.parties[id] as Person;
@@ -13,8 +14,7 @@ export function findOpportunity(id: string, userCollabs: Opportunity[] = []) {
 
 /** Opportunities the recommendation layer would return for this viewer. */
 export function forYou(viewer: Viewer, scenario: Scenario): Opportunity[] {
-  const open = [...world.roles.filter((r) => r.visibility === 'open'), ...seed.opportunities];
-  const matches = open.filter((o) => o.forCrafts.includes(viewer.craft) && o.authorId !== viewer.id);
+  const matches = recommendedRoles(viewer.id, viewer.craft);
   if (scenario.newUser) {
     // A brand-new profile only has role + city to go on, so we show fewer, broader matches and say so.
     return matches.slice(0, 2).map((o) => ({ ...o, match: ['Your role', o.city.split(' ')[0]] }));
@@ -24,13 +24,15 @@ export function forYou(viewer: Viewer, scenario: Scenario): Opportunity[] {
 
 export function networkFor(viewer: Viewer, scenario: Scenario): NetworkEvent[] {
   if (scenario.newUser) return [];
-  return [...(seed.networkEvents[viewer.id] ?? [])].sort((a, b) => a.weight - b.weight);
+  const blocked = blockedBy(viewer.id);
+  return [...(seed.networkEvents[viewer.id] ?? [])].filter((e) => !e.actorIds.some((a) => blocked.includes(a))).sort((a, b) => a.weight - b.weight);
 }
 
 export function postsFor(viewer: Viewer, scenario: Scenario, following: string[], userPosts: Post[]): Post[] {
   const mine = userPosts.filter((p) => p.authorId === viewer.id);
   if (scenario.newUser || viewer.id === 'tara') return mine;
-  return [...mine, ...seed.posts.filter((p) => following.includes(p.authorId))];
+  const blocked = blockedBy(viewer.id);
+  return [...mine, ...seed.posts.filter((p) => following.includes(p.authorId) && !blocked.includes(p.authorId))];
 }
 
 export const firstName = (p: Party) => (p.kind === 'org' ? p.name : p.name.split(' ')[0]);

@@ -14,7 +14,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  * is hiring. The house's private workspace is a different screen and a different context.
  */
 export function WorkScreen({ id }: { id: string }) {
-  const { pop, push, openSheet, viewer, acting, setHero, roleStatus } = useStore();
+  const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked } = useStore();
   const wp = wproject(id);
   const w = work(id);
   const [scrollY, setScrollY] = useState(0);
@@ -39,7 +39,10 @@ export function WorkScreen({ id }: { id: string }) {
     );
   }
 
-  const roles = [...seed.opportunities.filter((o) => o.project === w.title), ...world.roles.filter((r) => r.projectId === id && r.visibility === 'open')].filter((o) => !roleStatus[o.id]);
+  const roles = [...seed.opportunities.filter((o) => o.project === w.title), ...world.roles.filter((r) => r.projectId === id && r.visibility === 'open')]
+    .filter((o) => !roleStatus[o.id])
+    // The record stays readable; hiring from someone you blocked is not offered.
+    .filter((o) => !blocked.includes(o.orgId ?? o.authorId ?? ''));
   const depts = [...new Set(w.credits.map((c) => c.dept))];
   const mine = acting === 'self' ? w.credits.find((c) => c.personId === viewer.id) : undefined;
   // Only the lead production opens the workspace. Co-producers see the public page like everyone else (authority is an open question).
@@ -106,7 +109,7 @@ export function WorkScreen({ id }: { id: string }) {
         {mine && (
           <div className="work-mine">
             <p className="item-title">You're credited as {mine.role}</p>
-            <button className="link link--small" onClick={() => openSheet({ name: 'reportCredit', title: w.title })}>
+            <button className="link link--small" onClick={() => openSheet({ name: 'reportCredit', title: w.title, creditId: world.credits.find((c) => c.projectId === id && c.personId === viewer.id && c.status === 'accepted')?.id })}>
               Something wrong?
             </button>
           </div>

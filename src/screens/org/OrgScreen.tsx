@@ -186,7 +186,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                     variant="outline"
                     onClick={() => {
                       const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
-                      push({ name: 'conversation', id: cid });
+                      cid && push({ name: 'conversation', id: cid });
                     }}
                   >
                     Message

@@ -1,5 +1,5 @@
 import * as act from '../domain/actions';
-import { discoverableRoles, notificationsFor, publicCreditsFor, publicProjects, searchableHouses, searchablePeople } from '../domain/discovery';
+import { blockedBy, discoverableProjects, discoverableRoles, notificationsFor, publicCreditsFor, publicProjects, recommendedRoles, searchableHouses, searchablePeople } from '../domain/discovery';
 import { toPublicWork, world, project as wproject } from '../state/world';
 import { applyOps } from './fixtures';
 import { restoreCanonical } from './snapshot';
@@ -186,11 +186,16 @@ export const CHECKS: Check[] = [
     id: 'AC-12',
     title: 'Blocked people and houses are excluded from discovery',
     run: () => {
-      const blocked = ['tidewater', 'vikram'];
-      if (searchablePeople('kiran', blocked).some((p) => blocked.includes(p.id))) return fail('A blocked person is searchable.');
+      act.block(person('kiran'), 'tidewater');
+      act.block(person('kiran'), 'vikram');
+      const blocked = blockedBy('kiran');
+      if (searchablePeople('kiran').some((p) => blocked.includes(p.id))) return fail('A blocked person is searchable.');
       if (searchableHouses(blocked).some((o) => blocked.includes(o.id))) return fail('A blocked house is searchable.');
       const roles = discoverableRoles('kiran').filter((r) => blocked.includes(r.orgId ?? r.authorId ?? ''));
       if (roles.length) return fail(`Roles from blocked parties still listed in Discover: ${roles.map((r) => `${r.role} (${r.orgId ?? r.authorId})`).join(', ')}.`);
+      const recs = recommendedRoles('kiran', 'cinematographer').filter((r) => blocked.includes(r.orgId ?? r.authorId ?? ''));
+      if (recs.length) return fail(`Blocked parties still recommended on Home: ${recs.map((r) => r.role).join(', ')}.`);
+      if (discoverableProjects(blocked).some((w) => w.orgIds[0] === 'tidewater')) return fail('Projects led by a blocked house are still suggested.');
       return pass('Excluded everywhere.');
     },
   },
@@ -364,7 +369,7 @@ export const CHECKS: Check[] = [
     id: 'AC-31',
     title: 'A house message reaches the person from the house, in one shared thread',
     run: () => {
-      const t = act.startThread(member('konark'), 'tara', { kind: 'casting', label: 'Casting', detail: 'Supporting · Journalist · Neela Akasham', refId: 'o-neela-journalist' });
+      const t = act.startThread(member('konark'), 'tara', { kind: 'casting', label: 'Casting', detail: 'Supporting · Journalist · Neela Akasham', refId: 'o-neela-journalist' })!;
       act.sendThreadMessage(member('konark'), t, 'Can you do a reading on Friday?', '10:00');
       const th = world.threads.find((x) => x.id === t)!;
       if (!th.sides.includes('konark') || th.sides.includes('aditi')) return fail(`Thread sides are ${th.sides.join(' and ')}; the house, not the member, is the identity.`);
@@ -413,7 +418,7 @@ export const CHECKS: Check[] = [
     id: 'AC-34',
     title: 'A block closes a thread both ways and leaves shared records in place',
     run: () => {
-      const t = act.startThread(member('konark'), 'kiran', { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+      const t = act.startThread(member('konark'), 'kiran', { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' })!;
       act.sendThreadMessage(member('konark'), t, 'Hello', '10:00');
       const before = { credits: world.credits.length, assoc: world.associations.length, interests: world.interests.length };
       act.block(person('kiran'), 'konark');
@@ -444,6 +449,53 @@ export const CHECKS: Check[] = [
       if (pub.length !== 1 || pub[0].role !== 'Anjali (Journalist)') return fail('Public project does not show exactly the accepted line.');
       if (!publicCreditsFor('tara').some((c) => c.id === all[0].id)) return fail('Profile does not read the same record.');
       return pass('Notification → project view; one record from issue to acceptance, read by the project page and the profile.');
+    },
+  },
+  {
+    id: 'AC-36',
+    title: 'An accepted credit is amended only by a revision the person accepts',
+    run: () => {
+      const aid = act.addToProject(member('konark'), 'neela', { personId: 'tara' }, 'Journalist', 'Cast');
+      act.issueCredit(member('konark'), aid, 'Anjali (Sister)', 'Cast');
+      const first = world.credits.find((c) => c.associationId === aid)!;
+      act.acceptCredit(person('tara'), first.id);
+      const line = () => toPublicWork(wproject('neela')!)!.credits.filter((c) => c.personId === 'tara').map((c) => c.role);
+      // Neither side can rewrite it directly.
+      act.requestCorrection(person('tara'), first.id, 'Wrong role');
+      if (first.status !== 'accepted') return fail(`"Something wrong?" on an accepted credit changed it to ${first.status}.`);
+      if (act.issueCredit(member('konark'), aid, 'Journalist', 'Cast')) return fail('The house issued a new credit over an accepted one.');
+      const m = world.amendments.find((x) => x.creditId === first.id && x.status === 'open');
+      if (!m) return fail('No amendment request was recorded.');
+      // Agreed: revised, still the old one public until accepted.
+      const rev = act.proposeRevision(member('konark'), m.id, 'Anjali (Journalist)', 'Cast')!;
+      if (JSON.stringify(line()) !== '["Anjali (Sister)"]') return fail('The credit changed publicly before the person accepted the revision.');
+      act.acceptCredit(person('tara'), rev);
+      if (JSON.stringify(line()) !== '["Anjali (Journalist)"]') return fail(`After accepting, public shows ${line()}.`);
+      if ((first.status as string) !== 'superseded' || !world.credits.includes(first)) return fail('The previous version was not kept as history.');
+      // Not agreed: the accepted credit stays.
+      const m2 = act.requestAmendment(person('tara'), rev, 'Name misspelled')!;
+      act.keepCredit(member('konark'), m2);
+      if (JSON.stringify(line()) !== '["Anjali (Journalist)"]') return fail('Keeping the credit changed it.');
+      return pass('Stays public while unresolved; replaced only on acceptance; old version kept; "keep" leaves it as is.');
+    },
+  },
+  {
+    id: 'AC-37',
+    title: 'A personally blocked member cannot reach the person through the house',
+    run: () => {
+      act.block(person('tara'), 'aditi');
+      const aditi = member('konark', true, 'aditi');
+      const ravi = member('konark', true, 'ravi');
+      if (act.startThread(aditi, 'tara', { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' })) return fail('Aditi started a conversation as Konark.');
+      const t = act.startThread(ravi, 'tara', { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+      if (!t) return fail('Another Konark member was stopped, though Tara did not block Konark.');
+      if (!act.sendThreadMessage(ravi, t, 'Hello from Konark', '10:00')) return fail('Another member could not send.');
+      if (act.sendThreadMessage(aditi, t, 'Me too', '10:01')) return fail('Aditi sent in the Konark thread.');
+      const th = world.threads.find((x) => x.id === t)!;
+      if (th.messages[0].from !== 'konark' || th.messages[0].by !== 'ravi') return fail('The house identity or the internal sender was not kept.');
+      act.block(person('tara'), 'konark');
+      if (act.sendThreadMessage(ravi, t, 'Again', '10:02')) return fail('Blocking the house did not stop its members.');
+      return pass('Blocked human stopped under the house identity; other members unaffected until the house is blocked.');
     },
   },
 ];

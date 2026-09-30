@@ -4,7 +4,7 @@ import * as seed from '../../data/seed';
 import type { Media } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
-import { DEPTS, FORMATS, LANGUAGES, STAGES, project, publicName, world, type Association, type Format } from '../../state/world';
+import { DEPTS, FORMATS, LANGUAGES, STAGES, creditState, project, publicName, world, type Format } from '../../state/world';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, Row, SectionHeader, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 
@@ -102,13 +102,13 @@ export function PickProject() {
 
 /* ============================================================ Workspace */
 
-const CREDIT_LABEL = { prepared: 'Credit prepared', proposed: 'Credit proposed', accepted: 'Credited', correction: 'Correction asked' } as const;
+const CREDIT_LABEL: Record<string, string> = { prepared: 'Credit prepared', proposed: 'Credit proposed', accepted: 'Credited', correction: 'Correction asked' };
 
 export function HouseProjectScreen({ id }: { id: string }) {
   const { pop, push, acting, viewer, interestsReceived, roleStatus, setRoleVisibility, showToast, canIssue, proposePrepared, memberships, setActing } = useStore();
   const p = project(id);
   const [confirmRole, setConfirmRole] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'share' | 'details' | 'role' | 'person' | { issue: string } | { edit: string }>(null);
+  const [sheet, setSheet] = useState<null | 'share' | 'details' | 'role' | 'person' | { issue: string } | { edit: string } | { revise: string }>(null);
   if (!p) return <EmptyState title="Project not found" />;
   const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
   const canAct = p.houseId ? acting === p.houseId : acting === 'self' && viewer.id === p.ownerId;
@@ -116,7 +116,6 @@ export function HouseProjectScreen({ id }: { id: string }) {
   const verified = !p.houseId || org(p.houseId).verified;
   const roles = world.roles.filter((r) => r.projectId === id);
   const people = world.associations.filter((a) => a.projectId === id && a.status !== 'removed');
-  const creditFor = (a: Association) => [...world.credits].reverse().find((c) => c.associationId === a.id);
 
   return (
     <div className="screen">
@@ -226,20 +225,22 @@ export function HouseProjectScreen({ id }: { id: string }) {
         <p className="meta ph-note">Private to {owner} and each person. Being added isn't a credit. Issue a credit when it's earned.</p>
         <div className="list list--flush">
           {people.map((a) => {
-            const c = creditFor(a);
+            const { current, pending, amendment } = creditState(a.id);
+            const c = pending ?? current;
+            const amending = amendment?.status === 'open';
             const who = a.personId ? person(a.personId) : null;
+            const label = pending ? (pending.supersedes ? 'Revision proposed' : CREDIT_LABEL[pending.status]) : amending ? 'Amendment asked' : current ? 'Credited' : a.pending ? 'Not on Ana' : 'Added';
             return (
               <PressCard key={a.id} className="prow" onPress={() => canAct && setSheet({ edit: a.id })} scale={0.99}>
                 {who ? <Avatar party={who} size={40} /> : <span className="ph-initial">{a.pending!.name[0]}</span>}
                 <div className="prow-text">
                   <p className="item-title">{who?.name ?? a.pending!.name}</p>
-                  <p className="meta">{c && c.status !== 'prepared' ? c.line : a.workingRole}</p>
+                  <p className="meta">{c && c.status !== 'prepared' ? c.line : current ? current.line : a.workingRole}</p>
                   {a.status === 'flagged' && <p className="meta accent">Says this isn't right</p>}
                   {c?.status === 'correction' && c.note && <p className="meta accent">Asked: {c.note}</p>}
+                  {amending && <p className="meta accent">Asked to amend: {amendment!.reason}. The credit stays public until you decide.</p>}
                 </div>
-                <span className={`ph-state ${c?.status === 'accepted' ? 'ph-state--confirmed' : c ? 'ph-state--invited' : 'ph-state--added'}`}>
-                  {c ? CREDIT_LABEL[c.status] : a.pending ? 'Not on Ana' : 'Added'}
-                </span>
+                <span className={`ph-state ${!pending && !amending && current ? 'ph-state--confirmed' : c ? 'ph-state--invited' : 'ph-state--added'}`}>{label}</span>
               </PressCard>
             );
           })}
@@ -293,10 +294,13 @@ export function HouseProjectScreen({ id }: { id: string }) {
         {sheet === 'person' && <AddPerson projectId={id} done={() => setSheet(null)} />}
       </Sheet>
       <Sheet open={!!sheet && typeof sheet === 'object' && 'edit' in sheet} onClose={() => setSheet(null)} title="">
-        {sheet && typeof sheet === 'object' && 'edit' in sheet && <PersonActions id={sheet.edit} issue={() => setSheet({ issue: sheet.edit })} done={() => setSheet(null)} />}
+        {sheet && typeof sheet === 'object' && 'edit' in sheet && <PersonActions id={sheet.edit} issue={() => setSheet({ issue: sheet.edit })} revise={(m) => setSheet({ revise: m })} done={() => setSheet(null)} />}
       </Sheet>
       <Sheet open={!!sheet && typeof sheet === 'object' && 'issue' in sheet} onClose={() => setSheet(null)} title="Issue credit" size="tall">
         {sheet && typeof sheet === 'object' && 'issue' in sheet && <IssueCredit associationId={sheet.issue} done={() => setSheet(null)} />}
+      </Sheet>
+      <Sheet open={!!sheet && typeof sheet === 'object' && 'revise' in sheet} onClose={() => setSheet(null)} title="Propose revised credit" size="tall">
+        {sheet && typeof sheet === 'object' && 'revise' in sheet && <ReviseCredit amendmentId={sheet.revise} done={() => setSheet(null)} />}
       </Sheet>
     </div>
   );
@@ -652,7 +656,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
 
 /* ------------------------------------------------------------ Issue credit */
 
-function CreditForm({ personId, projectId, line, setLine, dept, setDept, cta, submit }: { personId: string; projectId: string; line: string; setLine: (s: string) => void; dept: string; setDept: (s: string) => void; cta: string; submit: () => void }) {
+function CreditForm({ personId, projectId, line, setLine, dept, setDept, cta, submit, note }: { personId: string; projectId: string; line: string; setLine: (s: string) => void; dept: string; setDept: (s: string) => void; cta: string; submit: () => void; note?: string }) {
   const { canIssue } = useStore();
   const p = project(projectId)!;
   const who = person(personId);
@@ -685,7 +689,7 @@ function CreditForm({ personId, projectId, line, setLine, dept, setDept, cta, su
           </span>
         </div>
       </div>
-      <p className="meta">{canIssue ? `${who.name.split(' ')[0]} is asked to accept it. It becomes public only once they accept and the project is shared.` : "You can prepare this credit. Someone with credit authority in the house has to issue it."}</p>
+      <p className="meta">{note ?? (canIssue ? `${who.name.split(' ')[0]} is asked to accept it. It becomes public only once they accept and the project is shared.` : "You can prepare this credit. Someone with credit authority in the house has to issue it.")}</p>
       <Button block size="l" disabled={!line.trim() || !dept} onClick={submit}>
         {cta}
       </Button>
@@ -716,20 +720,55 @@ function IssueCredit({ associationId, done }: { associationId: string; done: () 
   );
 }
 
-function PersonActions({ id, issue, done }: { id: string; issue: () => void; done: () => void }) {
-  const { editAssociation, removeAssociation, showToast } = useStore();
+/** The house agrees with an amendment request. The accepted credit stays public until the person accepts this revision. */
+function ReviseCredit({ amendmentId, done }: { amendmentId: string; done: () => void }) {
+  const { proposeRevision, showToast } = useStore();
+  const m = world.amendments.find((x) => x.id === amendmentId)!;
+  const old = world.credits.find((x) => x.id === m.creditId)!;
+  const [line, setLine] = useState(old.line);
+  const [dept, setDept] = useState(old.dept);
+  return (
+    <div className="stack">
+      <div className="group">
+        <Row label="Current credit" value={old.line} chevron={false} />
+        <Row label="They asked" value={m.reason} chevron={false} />
+      </div>
+      <CreditForm
+        personId={m.personId}
+        projectId={m.projectId}
+        line={line}
+        setLine={setLine}
+        dept={dept}
+        setDept={setDept}
+        cta="Propose revised credit"
+        note={`${person(m.personId).name.split(' ')[0]} is asked to accept the revision. Until then "${old.line}" stays their public credit, and the old version is kept in the record's history.`}
+        submit={() => {
+          proposeRevision(amendmentId, line.trim(), dept);
+          done();
+          showToast({ text: `Revised credit proposed to ${person(m.personId).name}` });
+        }}
+      />
+    </div>
+  );
+}
+
+function PersonActions({ id, issue, revise, done }: { id: string; issue: () => void; revise: (amendmentId: string) => void; done: () => void }) {
+  const { editAssociation, removeAssociation, showToast, keepCredit } = useStore();
   const a = world.associations.find((x) => x.id === id)!;
   const p = project(a.projectId)!;
-  const c = [...world.credits].reverse().find((x) => x.associationId === id);
+  const { current, pending, amendment } = creditState(id);
+  const c = pending ?? current;
   const [roleText, setRoleText] = useState(a.workingRole);
   const name = a.personId ? person(a.personId).name : a.pending!.name;
-  const canCredit = !!a.personId && !!p.houseId && org(p.houseId).verified && (!c || c.status === 'correction');
-  // An accepted credit is part of the person's record. The house can't erase it by removing them.
-  const locked = c?.status === 'accepted';
+  const canCredit = !!a.personId && !!p.houseId && org(p.houseId).verified && !current && (!pending || pending.status === 'correction');
+  // An accepted credit is part of the person's record. The house can't erase or rewrite it; only an amendment the person accepts replaces it.
+  const locked = !!current;
+  const amending = amendment?.status === 'open' ? amendment : undefined;
   return (
     <div className="stack">
       <p className="title-2">{name}</p>
       {a.status === 'flagged' && <p className="inline-note">{name.split(' ')[0]} says this association isn't right. Correct the working role or remove them.</p>}
+      {amending && <p className="inline-note">{name.split(' ')[0]} asked to amend "{current?.line}": {amending.reason}. It stays public as it is while you decide.</p>}
       {!c && (
         <div>
           <label className="field-label" htmlFor="pa-role">Working role</label>
@@ -752,8 +791,23 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
         {!p.houseId && <Row label={<span className="meta">Credits for independent projects aren't available yet</span>} chevron={false} />}
         {p.houseId && !org(p.houseId).verified && <Row label={<span className="meta">Credits unlock once Ana verifies {org(p.houseId).name}</span>} chevron={false} />}
         {a.pending && <Row label={<span className="meta">Can be credited once they join Ana</span>} chevron={false} />}
+        {amending && (
+          <>
+            <Row label="Propose revised credit" onPress={() => revise(amending.id)} />
+            <Row
+              label="Keep the credit as it is"
+              chevron={false}
+              onPress={() => {
+                keepCredit(amending.id);
+                done();
+                showToast({ text: `${name.split(' ')[0]} is told the credit stays as it is` });
+              }}
+            />
+          </>
+        )}
+        {pending?.supersedes && <Row label={<span className="meta">Revised credit proposed. "{current?.line}" stays public until {name.split(' ')[0]} accepts it.</span>} chevron={false} />}
         {locked ? (
-          <Row label={<span className="meta">Credit accepted. It's part of {name.split(' ')[0]}'s record; changes go through a correction with them.</span>} chevron={false} />
+          <Row label={<span className="meta">Credit accepted. It's part of {name.split(' ')[0]}'s record: it can't be removed or edited, only amended at their request.</span>} chevron={false} />
         ) : (
           <Row
             label={<span className="danger-text">Remove from project</span>}
@@ -779,7 +833,7 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
  * project, other roles, anyone else's credits or the house's notes.
  */
 export function AssociationScreen({ id }: { id: string }) {
-  const { pop, flagAssociation, showToast, push, viewer, acting, setActing, acceptCredit, creditBusy, openSheet } = useStore();
+  const { pop, flagAssociation, showToast, push, viewer, acting, setActing, acceptCredit, creditBusy, openSheet, declineRevision } = useStore();
   const a = world.associations.find((x) => x.id === id);
   const [confirm, setConfirm] = useState(false);
   const back = (
@@ -799,10 +853,16 @@ export function AssociationScreen({ id }: { id: string }) {
     );
   const p = project(a.projectId)!;
   const owner = p.houseId ? org(p.houseId) : person(p.ownerId!);
-  const credit = [...world.credits].reverse().find((c) => c.associationId === id);
-  const shown = credit && credit.status !== 'prepared' ? credit : undefined;
-  const isPublic = shown?.status === 'accepted' && p.shared;
-  const creditValue = !shown ? 'Not issued' : shown.status === 'proposed' ? 'Waiting for you' : shown.status === 'correction' ? 'Correction sent' : 'Accepted';
+  const cs = creditState(id);
+  const current = cs.current;
+  const pending = cs.pending && cs.pending.status !== 'prepared' ? cs.pending : undefined;
+  const revision = pending?.supersedes ? pending : undefined;
+  const amendment = cs.amendment;
+  const asked = amendment?.status === 'open' ? amendment : undefined;
+  const kept = amendment?.status === 'kept' && !pending ? amendment : undefined;
+  const isPublic = !!current && p.shared;
+  const creditValue = current ? (revision ? 'Accepted · revision waiting' : asked ? 'Accepted · amendment asked' : 'Accepted') : !pending ? 'Not issued' : pending.status === 'proposed' ? 'Waiting for you' : 'Correction sent';
+  const canAmend = !!current && !asked && !revision;
   return (
     <div className="screen">
       {back}
@@ -833,45 +893,80 @@ export function AssociationScreen({ id }: { id: string }) {
         <p className="meta settings-note">Being added isn't a credit. A credit is issued by {owner.name}, and shows publicly only once you accept it and the project is shared.</p>
       </section>
 
-      {shown?.status === 'proposed' && (
+      {pending?.status === 'proposed' && (
         <section className="section assoc-section">
-          <SectionHeader title="Waiting for you" />
+          <SectionHeader title={revision ? 'Revised credit' : 'Waiting for you'} />
           <div className="assoc-credit">
             <p className="meta">
-              {owner.name} {p.houseId && <Verified size={12} />} credited you as
+              {owner.name} {p.houseId && <Verified size={12} />} {revision ? 'proposes' : 'credited you as'}
             </p>
-            <p className="item-title">{shown.line}</p>
+            <p className="item-title">{pending.line}</p>
+            {revision && <p className="meta">Replaces "{current?.line}". Your current credit stays public until you accept.</p>}
             {acting !== 'self' ? (
               <button className="link link--small" onClick={() => setActing('self', true, true)}>
                 Switch to you to respond
               </button>
             ) : (
               <div className="pending-credit-actions">
-                <Button size="s" loading={creditBusy === shown.id} onClick={() => acceptCredit(shown.id)}>
-                  Accept
+                <Button size="s" loading={creditBusy === pending.id} onClick={() => acceptCredit(pending.id)}>
+                  {revision ? 'Accept revision' : 'Accept'}
                 </Button>
-                <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: p.workingTitle, creditId: shown.id })}>
-                  Something wrong?
-                </Button>
+                {revision ? (
+                  <Button size="s" variant="plain" onClick={() => (declineRevision(pending.id), showToast({ text: `Kept "${current?.line}"` }))}>
+                    Keep current
+                  </Button>
+                ) : (
+                  <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: p.workingTitle, creditId: pending.id })}>
+                    Something wrong?
+                  </Button>
+                )}
               </div>
             )}
           </div>
         </section>
       )}
-      {shown?.status === 'correction' && <p className="inline-note ws-pad">You asked: {shown.note ?? 'a correction'}. {owner.name} will send a corrected credit for you to accept.</p>}
-      {shown?.status === 'accepted' && !p.shared && <p className="inline-note ws-pad">Credit accepted. It becomes public when {owner.name} shares the project.</p>}
-      {isPublic && (
-        <div className="ws-pad assoc-actions">
-          <Button block variant="secondary" onClick={() => push({ name: 'work', id: p.id })}>
-            View public project
-          </Button>
+      {pending?.status === 'correction' && <p className="inline-note ws-pad">You asked: {pending.note ?? 'a correction'}. {owner.name} will send a corrected credit for you to accept.</p>}
+      {current && !p.shared && <p className="inline-note ws-pad">Credit accepted. It becomes public when {owner.name} shares the project.</p>}
+      {asked && <p className="inline-note ws-pad">You asked to amend "{current?.line}": {asked.reason}. It stays {p.shared ? 'public' : 'your credit'} as it is while {owner.name} reviews it.</p>}
+      {kept && (
+        <p className="inline-note ws-pad">
+          {owner.name} kept the credit as it is, so "{current?.line}" stays your current record. If this is fraud or someone misusing your identity,{' '}
+          <button className="link" onClick={() => openSheet({ name: 'report', subject: `Credit on ${publicName(p)}`, partyId: p.houseId })}>
+            report it to Ana
+          </button>
+          .
+        </p>
+      )}
+      {(isPublic || canAmend) && (
+        <div className="ws-pad assoc-actions stack">
+          {isPublic && (
+            <Button block variant="secondary" onClick={() => push({ name: 'work', id: p.id })}>
+              View public project
+            </Button>
+          )}
+          {canAmend && acting === 'self' && (
+            <button className="link link--small" onClick={() => openSheet({ name: 'reportCredit', title: publicName(p), creditId: current!.id })}>
+              Something wrong with this credit?
+            </button>
+          )}
         </div>
+      )}
+      {cs.history.length > 0 && (
+        <section className="section assoc-section">
+          <SectionHeader title="Earlier versions" />
+          <div className="group">
+            {cs.history.map((h) => (
+              <Row key={h.id} label={h.line} value="Replaced" chevron={false} />
+            ))}
+          </div>
+          <p className="meta settings-note">Kept in the credit's history. Only the current version is public.</p>
+        </section>
       )}
 
       {a.status === 'removed' && <p className="inline-note ws-pad">{owner.name} removed this association. Nothing about it was public.</p>}
       {a.status === 'flagged' && <p className="inline-note ws-pad">You told {owner.name} this isn't right. They can correct or remove it.</p>}
       {/* Once a credit exists, "Something wrong?" on the credit is the one way to correct it. */}
-      {a.status === 'added' && !shown && !confirm && (
+      {a.status === 'added' && !pending && !current && !confirm && (
         <div className="ws-pad assoc-actions">
           <Button variant="secondary" block onClick={() => setConfirm(true)}>
             This isn't right

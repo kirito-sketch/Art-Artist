@@ -24,7 +24,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse, roleModel, openAgain, showToast } = useStore();
+  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse, roleModel, openAgain, showToast, blocked } = useStore();
   const base = findOpportunity(id, userCollabs);
   const o = base && { ...base, ...roleEdits[id] };
   const status = roleStatus[id];
@@ -97,6 +97,15 @@ export function OpportunityScreen({ id }: { id: string }) {
       );
   } else if (mine) {
     action = <Button onClick={() => openSheet({ name: 'reviewInterest', opportunityId: o.id })}>{received ? `Review ${received}` : 'Review interest'}</Button>;
+  } else if (!mine && blocked.includes(o.orgId ?? o.authorId ?? '')) {
+    // Reached from an old link or a notification: the role is readable, but nothing is offered.
+    left = (
+      <>
+        <p className="item-title">You blocked {poster}</p>
+        <p className="meta">Unblock from their page to respond</p>
+      </>
+    );
+    action = null;
   } else if (acting !== 'self') {
     // Responding is always personal. A house never applies for a role, so make the switch explicit.
     left = (
@@ -152,7 +161,7 @@ export function OpportunityScreen({ id }: { id: string }) {
       <Button
         onClick={() => {
           const cid = startConversation(author!.id, { kind: 'collab', label: 'Collaboration', detail: `${o.role} · ${o.project}`, refId: o.id });
-          push({ name: 'conversation', id: cid });
+          cid && push({ name: 'conversation', id: cid });
         }}
       >
         Message

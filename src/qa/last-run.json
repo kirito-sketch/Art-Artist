@@ -46,8 +46,8 @@
    "detail": "After losing Konark access, Aditi still opened a role and issued a credit. Actions do not check membership."
   },
   "AC-12": {
-   "result": "fail",
-   "detail": "Roles from blocked parties still listed in Discover: Documentary DoP (tidewater)."
+   "result": "pass",
+   "detail": "Excluded everywhere."
   },
   "AC-13": {
    "result": "pass",
@@ -140,6 +140,14 @@
   "AC-35": {
    "result": "pass",
    "detail": "Notification → project view; one record from issue to acceptance, read by the project page and the profile."
+  },
+  "AC-36": {
+   "result": "pass",
+   "detail": "Stays public while unresolved; replaced only on acceptance; old version kept; \"keep\" leaves it as is."
+  },
+  "AC-37": {
+   "result": "pass",
+   "detail": "Blocked human stopped under the house identity; other members unaffected until the house is blocked."
   }
  }
 }

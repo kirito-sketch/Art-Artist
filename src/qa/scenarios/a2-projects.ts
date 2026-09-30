@@ -142,5 +142,6 @@ export const projects = [
     [15, 'Wrong Ana account linked', 'P0', 'Id Rec', 'I', 'Person says "Not me"; the link undoes, no credit issued.', 'UB', 'PD', { why: 'Wrong person gets a record.', not: ['Credit accepted by the wrong person'], nofx: 'Needs matching model.' }],
     [16, 'Pending record deleted', 'P2', 'Pv', 'L', 'Phone erased.', 'B', 'RD', {}],
     [17, 'Member loses access but saw phones', 'P1', 'Pv', 'L', 'Access removed immediately; phones not exportable.', 'B', 'PD', {}],
+    [18, 'Pending person joins Ana', 'P0', 'Id Rec Pv', 'L', 'The pending relationship links to the real account only after the person proves control of the invited phone or email, and confirms the project and role. Until then the placeholder stays private to the house: not searchable, not a profile, and it cannot accept a public credit.', 'B', 'RD', { why: 'A stranger must never inherit someone else\'s work history.', not: ['Automatic match on name', 'Placeholder visible anywhere public'], nofx: 'Linking is not built; rule recorded.' }],
   ]),
 ];

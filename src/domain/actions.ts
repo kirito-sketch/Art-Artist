@@ -1,7 +1,7 @@
 import * as seed from '../data/seed';
 import type { Opportunity } from '../data/types';
 import { party, person } from '../state/selectors';
-import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from '../state/world';
+import { world, wid, publicName, project as wproject, type Amendment, type Association, type Format, type HouseProject, type Thread } from '../state/world';
 
 /*
  * The actions that change Ana's shared records (projects, roles, associations, credits, interests and
@@ -130,10 +130,12 @@ export function flagAssociation(_actor: Actor, id: string) {
 export function issueCredit(actor: Actor, associationId: string, line: string, dept: string) {
   const a = world.associations.find((x) => x.id === associationId)!;
   const p = wproject(a.projectId)!;
+  // An accepted credit is never reissued over. Changing it goes through an amendment the person asks for and accepts.
+  if (world.credits.some((c) => c.associationId === associationId && c.status === 'accepted')) return undefined;
   const status = actor.canIssue ? 'proposed' : 'prepared';
   const corrected = world.credits.some((c) => c.associationId === associationId && c.status === 'correction');
   world.credits = world.credits.filter((c) => c.associationId !== associationId || c.status === 'accepted');
-  const c = { id: wid('wc'), projectId: a.projectId, associationId, personId: a.personId!, line, dept, status } as const;
+  const c = { id: wid('wc'), projectId: a.projectId, associationId, personId: a.personId!, line, dept, status, issuedBy: actor.viewerId } as const;
   world.credits.push({ ...c });
   // The notification opens the person's own view of the project, where the credit waits for them.
   if (status === 'proposed') world.notifications.unshift({ id: wid('wn'), toPersonId: a.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)?.name} issued you ${corrected ? 'a corrected credit' : 'a credit'} on ${p.workingTitle}: ${line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'association', id: associationId } });
@@ -151,20 +153,78 @@ export function proposePrepared(_actor: Actor, creditId: string) {
 /** The person accepts a credit a production issued to them. Returns the project, or nothing if there was no such credit. */
 export function acceptCredit(actor: Actor, cid: string) {
   const wc = world.credits.find((x) => x.id === cid);
-  if (!wc) return undefined;
+  if (!wc || wc.status !== 'proposed') return undefined;
   wc.status = 'accepted';
+  // A revised credit replaces the version it amends. The old version is kept as history, never deleted.
+  const old = wc.supersedes ? world.credits.find((x) => x.id === wc.supersedes) : undefined;
+  if (old) old.status = 'superseded';
+  world.amendments.forEach((m) => m.revisionId === cid && (m.status = 'accepted'));
   const p = wproject(wc.projectId)!;
-  world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: actor.viewerId, text: `${person(actor.viewerId).name} accepted the credit on ${p.workingTitle}: ${wc.line}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+  world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: actor.viewerId, text: `${person(actor.viewerId).name} accepted the ${old ? 'revised ' : ''}credit on ${p.workingTitle}: ${wc.line}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
   return p;
 }
 
 export function requestCorrection(actor: Actor, cid: string, reason?: string) {
   const wc = world.credits.find((x) => x.id === cid);
   if (!wc) return false;
+  // An accepted credit is a professional record: it is never sent back. The person asks for an amendment instead.
+  if (wc.status === 'accepted') return !!requestAmendment(actor, cid, reason ?? '');
+  // A revised version they don't want: the accepted credit stays as it is.
+  if (wc.supersedes) return declineRevision(actor, cid);
   wc.status = 'correction';
   wc.note = reason;
   const p = wproject(wc.projectId)!;
   world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: actor.viewerId, text: `${person(actor.viewerId).name} asked to correct a credit on ${p.workingTitle}: ${reason ?? ''}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+  return true;
+}
+
+/* ------------------------------------------------------------ amending an accepted credit */
+
+/**
+ * The person asks to amend an accepted credit. Nothing about the credit changes: it stays public as it
+ * is while the house reviews. One open request per credit.
+ */
+export function requestAmendment(actor: Actor, creditId: string, reason: string) {
+  const c = world.credits.find((x) => x.id === creditId);
+  if (!c || c.status !== 'accepted' || c.personId !== actor.viewerId) return undefined;
+  if (world.amendments.some((m) => m.creditId === creditId && (m.status === 'open' || m.status === 'revised'))) return undefined;
+  const m: Amendment = { id: wid('am'), creditId, associationId: c.associationId, projectId: c.projectId, personId: c.personId, reason, status: 'open' };
+  world.amendments.push(m);
+  const p = wproject(c.projectId)!;
+  world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: c.personId, text: `${person(c.personId).name} asked to amend an accepted credit on ${p.workingTitle}: ${reason}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+  return m.id;
+}
+
+/** The house agrees and proposes a revised credit. The accepted one stays public until the person accepts the revision. */
+export function proposeRevision(actor: Actor, amendmentId: string, line: string, dept: string) {
+  const m = world.amendments.find((x) => x.id === amendmentId);
+  if (!m || m.status !== 'open') return undefined;
+  const old = world.credits.find((x) => x.id === m.creditId)!;
+  const p = wproject(m.projectId)!;
+  const c = { id: wid('wc'), projectId: m.projectId, associationId: m.associationId, personId: m.personId, line, dept, status: 'proposed' as const, supersedes: old.id, issuedBy: actor.viewerId };
+  world.credits.push(c);
+  m.status = 'revised';
+  m.revisionId = c.id;
+  world.notifications.unshift({ id: wid('wn'), toPersonId: m.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} proposed a revised credit on ${p.workingTitle}: ${line}. Your current credit stays until you accept.`, time: 'now', unread: true, route: { name: 'association', id: m.associationId } });
+  return c.id;
+}
+
+/** The house does not agree. The accepted credit remains the current public record. */
+export function keepCredit(_actor: Actor, amendmentId: string) {
+  const m = world.amendments.find((x) => x.id === amendmentId);
+  if (!m || m.status !== 'open') return false;
+  m.status = 'kept';
+  const p = wproject(m.projectId)!;
+  world.notifications.unshift({ id: wid('wn'), toPersonId: m.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} kept your credit on ${p.workingTitle} as it is`, time: 'now', unread: true, route: { name: 'association', id: m.associationId } });
+  return true;
+}
+
+/** The person prefers their current credit to the revised version. The revision is kept as history. */
+export function declineRevision(actor: Actor, revisionId: string) {
+  const r = world.credits.find((x) => x.id === revisionId);
+  if (!r || !r.supersedes || r.status !== 'proposed' || r.personId !== actor.viewerId) return false;
+  r.status = 'declined';
+  world.amendments.forEach((m) => m.revisionId === revisionId && (m.status = 'withdrawn'));
   return true;
 }
 
@@ -204,11 +264,19 @@ export const speakingAs = (actor: Actor) => (actor.acting === 'self' ? actor.vie
 /** A block by either person closes contact between the two identities. Houses don't block; people do. */
 export const blockedBetween = (a: string, b: string) => world.blocks.some((x) => (x.by === a && x.target === b) || (x.by === b && x.target === a));
 
+/**
+ * Whether this actor may contact that party. Checks the identity they speak as (a block of the house)
+ * and the human behind it (a block of them personally), so switching to a house can't get round a block.
+ * Another member of the same house is unaffected unless the house itself is blocked.
+ */
+export const mayContact = (actor: Actor, other: string, as = speakingAs(actor)) => !blockedBetween(as, other) && !blockedBetween(actor.viewerId, other);
+
 /** One thread per pair of identities and context. Direct messages share one context per pair. */
-export function startThread(actor: Actor, withId: string, context: Thread['context'], media?: Thread['media']) {
+export function startThread(actor: Actor, withId: string, context: Thread['context'], media?: Thread['media']): string | undefined {
   const me = speakingAs(actor);
   const found = world.threads.find((t) => t.sides.includes(me) && t.sides.includes(withId) && t.context.refId === context.refId);
   if (found) return found.id;
+  if (!mayContact(actor, withId, me)) return undefined;
   const t: Thread = { id: wid('th'), sides: [me, withId], context, media, messages: [], unreadFor: [], updated: 'now' };
   world.threads.unshift(t);
   return t.id;
@@ -219,9 +287,9 @@ export function sendThreadMessage(actor: Actor, threadId: string, text: string, 
   if (!t) return false;
   const me = t.sides.includes(speakingAs(actor)) ? speakingAs(actor) : t.sides.find((s) => s === actor.viewerId || actor.memberships.includes(s))!;
   const other = t.sides.find((s) => s !== me)!;
-  if (blockedBetween(me, other)) return false;
+  if (!mayContact(actor, other, me)) return false;
   const first = !t.messages.some((m) => m.from === me);
-  t.messages.push({ id: wid('m'), from: me, text, time });
+  t.messages.push({ id: wid('m'), from: me, by: actor.viewerId, text, time });
   t.unreadFor = [other];
   t.updated = 'now';
   if (t.action?.side === me) t.action = undefined;

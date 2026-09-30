@@ -2,9 +2,9 @@ import { motion } from 'framer-motion';
 import { Bell, CheckCircle2, Clapperboard, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
-import { world } from '../../state/world';
 import type { Opportunity } from '../../data/types';
 import { useStore } from '../../state/store';
+import { blockedBy, discoverableRoles, searchableHouses } from '../../domain/discovery';
 import { forYou, kindLabel, networkFor, person, postsFor } from '../../state/selectors';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { spring, stagger } from '../../ui/motion';
@@ -111,7 +111,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
 
           {hasHero && (
             <div className="group">
-              <Row icon={<Clapperboard size={20} />} label="All open roles" value={String(seed.opportunities.length + world.roles.filter((r) => r.visibility === 'open').length)} onPress={() => goDiscover('roles')} />
+              <Row icon={<Clapperboard size={20} />} label="All open roles" value={String(discoverableRoles(viewer.id).length)} onPress={() => goDiscover('roles')} />
             </div>
           )}
 
@@ -222,7 +222,8 @@ function HeroSlide({ o, onOpen }: { o: Opportunity; onOpen: () => void }) {
 /** A new account has no network yet, so the section offers people in the same craft and city instead. */
 function SuggestedPeople() {
   const { viewer, following, toggleFollow, push } = useStore();
-  const ids = seed.suggestedFor[viewer.id] ?? [];
+  const blocked = blockedBy(viewer.id);
+  const ids = (seed.suggestedFor[viewer.id] ?? []).filter((id) => !blocked.includes(id));
   if (!ids.length) return null;
   return (
     <section className="section section--flush">
@@ -263,7 +264,7 @@ function FirstRun() {
   const { viewer, push, userPortfolio } = useStore();
   const me = person(viewer.id);
   const [dismissed, setDismissed] = useState(false);
-  const houses = seed.orgs.filter((o) => o.verified).sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city)).slice(0, 3);
+  const houses = searchableHouses(blockedBy(viewer.id)).sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city)).slice(0, 3);
   const hasWork = (seed.portfolio[viewer.id]?.length ?? 0) + userPortfolio.length > 0;
   const next = !hasWork ? { t: 'Add your work', b: 'Stills or a reel help productions understand what you do.' } : { t: 'Add a short bio', b: 'Two lines on the work you do and the work you want.' };
   return (

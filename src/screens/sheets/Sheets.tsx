@@ -7,7 +7,7 @@ import { Avatar, Button, EmptyState, PressCard, Pressable, Row, Toggle } from '.
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
-import { world } from '../../state/world';
+import { world, project as wproject } from '../../state/world';
 
 export function SheetHost() {
   const { sheet, closeSheet } = useStore();
@@ -321,7 +321,7 @@ function InterestForm({ id }: { id: string }) {
  * stays as "No longer interested", so nobody the house looked at silently vanishes.
  */
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
-  const { interestsReceived, reviewInterest, startConversation, push, userCollabs, acting, blocked, conversations } = useStore();
+  const { interestsReceived, reviewInterest, startConversation, push, userCollabs, acting, blocked, conversations, cannotReach } = useStore();
   const all = (opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived).filter((i) => !blocked.includes(i.personId));
   if (!all.length) return <EmptyState title="No one yet" />;
   const groups: { title?: string; items: typeof all }[] = [
@@ -368,7 +368,10 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
                     )}
                     {!it.withdrawn && (
                       <div className="interest-actions">
-                        {it.review === 'messaged' && talk ? (
+                        {cannotReach(p.id) && !talk ? (
+                          // A person who blocked this member can't be contacted by them, even as the house. Another member can.
+                          <p className="meta">You can't message {p.name.split(' ')[0]}</p>
+                        ) : it.review === 'messaged' && talk ? (
                           <Button size="s" variant="secondary" onClick={() => push({ name: 'conversation', id: talk.id })}>
                             Open chat
                           </Button>
@@ -378,7 +381,7 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
                             onClick={() => {
                               const cid = startConversation(p.id, { kind: o.kind === 'casting' ? 'casting' : o.kind === 'collab' ? 'collab' : 'crew', label: o.kind === 'casting' ? 'Casting' : o.kind === 'collab' ? 'Collaboration' : 'Crew job', detail: `${o.role} · ${o.project}`, refId: o.id });
                               reviewInterest(it.id, 'messaged');
-                              push({ name: 'conversation', id: cid });
+                              cid && push({ name: 'conversation', id: cid });
                             }}
                           >
                             {as ? `Message as ${as}` : 'Message'}
@@ -415,14 +418,26 @@ const p0 = (all: { withdrawn?: boolean }[]) => {
 
 /* ------------------------------------------------------------------ Report */
 
+/**
+ * "Something wrong?" on a credit. On a credit waiting for the person it sends the credit back for
+ * correction. On an accepted credit it asks for an amendment instead: the accepted credit stays public
+ * as it is while the production reviews, and only a revised version the person accepts can replace it.
+ */
 function ReportCredit({ title, creditId }: { title: string; creditId?: string }) {
-  const { closeSheet, showToast, requestCorrection, attempt } = useStore();
+  const { closeSheet, showToast, requestCorrection, attempt, openSheet } = useStore();
   const [reason, setReason] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'failed'>('idle');
+  const c = creditId ? world.credits.find((x) => x.id === creditId) : undefined;
+  const accepted = c?.status === 'accepted';
+  const house = c ? wproject(c.projectId)?.houseId : undefined;
   const reasons = ['Wrong role', 'Wrong episodes or dates', "I didn't work on this", 'Name misspelled'];
   return (
     <div className="stack">
-      <p className="meta">The production that issued {title} will review it.</p>
+      <p className="meta">
+        {accepted
+          ? `The production that issued your credit on ${title} will review it. Your credit stays public as it is until you accept a revised version.`
+          : `The production that issued ${title} will review it.`}
+      </p>
       <div className="group">
         {reasons.map((r) => (
           <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} value={reason === r ? <Check size={18} className="accent" /> : undefined} />
@@ -441,14 +456,22 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
             () => {
               if (creditId) requestCorrection(creditId, reason);
               closeSheet();
-              showToast({ text: 'Sent to the production. Nothing is public until you accept.' });
+              showToast({ text: accepted ? 'Sent to the production. Your credit stays as it is until you accept a change.' : 'Sent to the production. Nothing is public until you accept.' });
             },
             () => setState('failed'),
           );
         }}
       >
-        {state === 'failed' ? 'Try again' : 'Send'}
+        {state === 'failed' ? 'Try again' : accepted ? 'Ask to amend' : 'Send'}
       </Button>
+      {house && (
+        <p className="meta">
+          Fraud, a fake credit or someone using your identity?{' '}
+          <button className="link link--small" onClick={() => openSheet({ name: 'report', subject: `Credit on ${title}`, partyId: house })}>
+            Report to Ana
+          </button>
+        </p>
+      )}
     </div>
   );
 }

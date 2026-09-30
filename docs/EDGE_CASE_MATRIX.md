@@ -10,9 +10,9 @@ Last automated run: 2026-09-30.
 
 | Total | P0 | P1 | P2 | Need UI | Need interaction test | Need automated test | Need backend/business rule | Need legal review | Need user validation | Reproducible in the Lab |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 515 | 177 | 221 | 117 | 246 | 80 | 145 | 308 | 62 | 8 | 142 |
+| 520 | 181 | 222 | 117 | 250 | 83 | 148 | 312 | 62 | 8 | 143 |
 
-Status counts: Rule defined 99 · Needs product decision 120 · Implemented 106 · Needs UI 40 · Not reviewed 54 · Needs legal 29 · Failed 25 · Passed 41 · Needs user validation 1
+Status counts: Rule defined 100 · Needs product decision 118 · Implemented 107 · Needs UI 40 · Not reviewed 54 · Needs legal 29 · Failed 24 · Passed 47 · Needs user validation 1
 
 ## Automated checks
 
@@ -29,7 +29,7 @@ Status counts: Rule defined 99 · Needs product decision 120 · Implemented 106 
 | AC-09 | An unverified house cannot publish a public role | **Fail** | 2 role(s) opened publicly while Konark is unverified. The action has no verification check (the screen disables it). |
 | AC-10 | A member without credit authority can only prepare a credit | Pass | Held as prepared; Sana was not asked to accept. |
 | AC-11 | A revoked member cannot continue house actions | **Fail** | After losing Konark access, Aditi still opened a role and issued a credit. Actions do not check membership. |
-| AC-12 | Blocked people and houses are excluded from discovery | **Fail** | Roles from blocked parties still listed in Discover: Documentary DoP (tidewater). |
+| AC-12 | Blocked people and houses are excluded from discovery | Pass | Excluded everywhere. |
 | AC-13 | Retry does not duplicate an Interest | Pass | One Interest after a retry. |
 | AC-14 | Retry does not duplicate a message | No model yet | Messages live in per-session state, not the shared records. The retry path reuses the message id (verify by hand in EC-MSG-002). |
 | AC-15 | Retry does not duplicate a project | **Fail** | 2 projects from one create plus a retry. Create has no request key, so a retry after a timeout makes a duplicate. |
@@ -53,6 +53,8 @@ Status counts: Rule defined 99 · Needs product decision 120 · Implemented 106 
 | AC-33 | Filling a role tells everyone else, by public name only | Pass | Konark Pictures filled Script Supervisor on Untitled Telugu feature. Thanks for your interest. |
 | AC-34 | A block closes a thread both ways and leaves shared records in place | Pass | Closed both ways; history, credits, associations and Interest unchanged. |
 | AC-35 | A credit notification opens the person's own project view, and a correction reissue is one record | Pass | Notification → project view; one record from issue to acceptance, read by the project page and the profile. |
+| AC-36 | An accepted credit is amended only by a revision the person accepts | Pass | Stays public while unresolved; replaced only on acceptance; old version kept; "keep" leaves it as is. |
+| AC-37 | A personally blocked member cannot reach the person through the house | Pass | Blocked human stopped under the house identity; other members unaffected until the house is blocked. |
 
 Statuses: Not reviewed · Rule defined · Needs product decision · Needs user validation · Needs legal · Needs UI · Implemented (handled in the prototype, checked by hand) · Automated · Passed (automated checks pass) · Failed (an automated check fails, or checked by hand and wrong) · Blocked.
 
@@ -157,7 +159,7 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | ID | Area | Scenario | Priority | Risk | Expected behaviour | Starting persona | Starting identity | Starting state | Needs UI? | Needs interaction test? | Needs automated test? | Needs backend/business rule? | Needs legal review? | Needs user validation? | Status | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | EC-ID-001 | Identity switching | One person acts for several houses | P0 | Identity, Permission | The identity switcher lists the person and every house they may act for. The current one is always shown at the top of Home. | Aditi | Konark Pictures | Identity sheet | Yes |  | Yes |  |  |  | Implemented | Lab: reproducible |
-| EC-ID-002 | Identity switching | House permission revoked while acting as the house | P0 | Permission, Security | The next action is refused, the app switches back to the person with "You no longer have access to Konark Pictures", and nothing is written as the house. | Aditi | Konark Pictures | Project workspace | Yes | Yes | Yes | Yes |  |  | Failed | Domain actions do not check membership. · Checks: AC-11 · Lab: reproducible |
+| EC-ID-002 | Identity switching | House permission revoked while acting as the house | P0 | Permission, Security | They can no longer act as the house. If acting as it, Ana returns them to their personal identity with "You no longer have access to Konark Pictures". House-only actions become unavailable; house conversations and workspaces leave their working access; an unfinished privileged action cannot complete. Actions already completed stay attributed as they were. | Aditi | Konark Pictures | Project workspace | Yes | Yes | Yes | Yes |  |  | Failed | Domain actions do not check membership. · Checks: AC-11 · Lab: reproducible |
 | EC-ID-003 | Identity switching | Permission changes while editing | P0 | Permission, Data integrity | The draft is kept locally; saving is refused with the reason. The person can copy their text. | Aditi | Konark Pictures | House Home | Yes | Yes |  | Yes |  |  | Needs UI | Lab: Permission change mid-session is not simulated. |
 | EC-ID-004 | Identity switching | Credit authority removed while issuing | P0 | Permission, Record integrity | The credit is saved as prepared, not issued: "You can prepare this credit. Someone with credit authority has to issue it." | Aditi | Konark Pictures | Project workspace | Yes | Yes | Yes | Yes |  |  | Passed | Checks: AC-10 · Lab: reproducible |
 | EC-ID-005 | Identity switching | Personal notification opened while acting as the house | P0 | Identity | Opening it does not change identity. The destination shows who you are, and personal actions (accept credit) ask to switch back first. | Aditi | Konark Pictures | Notifications sheet | Yes | Yes | Yes |  |  |  | Implemented | Lab: reproducible |
@@ -376,6 +378,7 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-PEND-015 | People not yet on Ana | Wrong Ana account linked | P0 | Identity, Record integrity | Person says "Not me"; the link undoes, no credit issued. | Aditi | Konark Pictures | Project workspace | Yes |  |  | Yes |  |  | Needs product decision | Lab: Needs matching model. |
 | EC-PEND-016 | People not yet on Ana | Pending record deleted | P2 | Privacy | Phone erased. | Aditi | Konark Pictures | Project workspace |  |  |  | Yes |  |  | Rule defined |  |
 | EC-PEND-017 | People not yet on Ana | Member loses access but saw phones | P1 | Privacy | Access removed immediately; phones not exportable. | Aditi | Konark Pictures | Project workspace |  |  |  | Yes |  |  | Needs product decision |  |
+| EC-PEND-018 | People not yet on Ana | Pending person joins Ana | P0 | Identity, Record integrity, Privacy | The pending relationship links to the real account only after the person proves control of the invited phone or email, and confirms the project and role. Until then the placeholder stays private to the house: not searchable, not a profile, and it cannot accept a public credit. | Aditi | Konark Pictures | Project workspace |  |  |  | Yes |  |  | Rule defined | Lab: Linking is not built; rule recorded. |
 
 ## 18 Credits
 
@@ -394,8 +397,8 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-CREDIT-011 | Credits | Correction rejected by the house | P1 | Record integrity, Trust | The person is told why and can still accept, decline or report. | Kiran | Personal | Profile | Yes |  |  | Yes |  |  | Needs UI |  |
 | EC-CREDIT-012 | Credits | Correction stalls | P2 | Record integrity | Reminders after 7 and 21 days. | Kiran | Personal | Profile |  |  |  | Yes |  |  | Needs product decision |  |
 | EC-CREDIT-013 | Credits | Production withdraws a proposal | P1 | Record integrity | Removed from the person's pending list. | Kiran | Personal | Profile | Yes |  |  | Yes |  |  | Needs UI |  |
-| EC-CREDIT-014 | Credits | Accepted credit edited by the house | P0 | Record integrity | Not allowed directly. Changes to an accepted credit are proposals the person accepts again. | Kiran | Personal | Profile |  |  | Yes | Yes |  |  | Rule defined | Lab: No edit path exists; rule recorded. |
-| EC-CREDIT-015 | Credits | Accepted credit disputed years later | P1 | Record integrity, Trust | Report as fraudulent credit; moderation hides pending review, never deletes. | Kiran | Personal | Profile |  |  |  | Yes | Yes |  | Needs product decision |  |
+| EC-CREDIT-014 | Credits | Accepted credit needs amending | P0 | Record integrity | Neither side edits an accepted credit. The person chooses "Something wrong with this credit?", which records an amendment request. The accepted credit stays public while unresolved. The house either proposes a revised credit or keeps it as it is. A revision replaces the public credit only when the person accepts it; the old version is kept as history. | Kiran | Personal | Profile | Yes | Yes | Yes | Yes |  |  | Passed | Checks: AC-36 · Lab: Walk through as in PERSONA_BRIDGES.md (accepted-credit amendment). |
+| EC-CREDIT-015 | Credits | Accepted credit disputed years later | P1 | Record integrity, Trust | Fraud, identity misuse or a malicious credit goes to the existing Report and moderation path ("Report to Ana" from the credit sheet, or after the house keeps a credit). Moderation can hide pending review, never deletes. There is no second dispute system. | Kiran | Personal | Profile | Yes |  |  | Yes | Yes |  | Rule defined |  |
 | EC-CREDIT-016 | Credits | Project title changes after acceptance | P1 | Record integrity | See EC-LIFE-001. | Kiran | Personal | Profile |  |  | Yes |  |  |  | Implemented |  |
 | EC-CREDIT-017 | Credits | Production name changes | P1 | Record integrity | See EC-HOUSE-008. | Kiran | Personal | Profile |  |  |  | Yes |  |  | Needs product decision |  |
 | EC-CREDIT-018 | Credits | Co-producer disputes credit authority | P1 | Record integrity, Permission | Lead production issues credits at launch; disputes go to support. | Kiran | Personal | Profile |  |  |  | Yes | Yes |  | Needs product decision |  |
@@ -419,7 +422,9 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-CREDIT-036 | Credits | Person wants a credit hidden on their profile but kept on the film | P1 | Privacy, Record integrity | Allowed: hide from my profile. The film still lists them. | Kiran | Personal | Profile | Yes |  |  | Yes |  |  | Needs product decision |  |
 | EC-CREDIT-037 | Credits | Multilingual credit lines | P2 | Data integrity | Credit lines in any script. | Kiran | Personal | Profile | Yes |  |  |  |  |  | Not reviewed |  |
 | EC-CREDIT-038 | Credits | Individual cannot self-issue a credit | P0 | Trust, Record integrity | Individuals never issue credits, for themselves or anyone, on any project. | Kiran | Personal | Project page |  |  | Yes | Yes |  |  | Failed | UI never offers it; the action itself does not check. · Checks: AC-07 · Lab: reproducible |
-| EC-CREDIT-039 | Credits | Accepted credit is re-issued | P1 | Record integrity | Re-issuing on an association with an accepted credit is a correction proposal, not a second credit. | Kiran | Personal | Profile |  |  | Yes | Yes |  |  | Needs product decision |  |
+| EC-CREDIT-039 | Credits | Accepted credit is re-issued | P1 | Record integrity | Refused. Issuing on an association that has an accepted credit is not possible; a change is a revision proposed in answer to the person's amendment request. | Kiran | Personal | Profile |  |  | Yes | Yes |  |  | Passed | Checks: AC-36 |
+| EC-CREDIT-040 | Credits | House keeps an accepted credit after an amendment request | P0 | Record integrity | The person is told the credit stays as it is. It remains the current public record. The person can report it to Ana if it is fraud or identity misuse. | Kiran | Personal | Profile | Yes | Yes | Yes | Yes |  |  | Passed | Checks: AC-36 |
+| EC-CREDIT-041 | Credits | Person prefers the current credit to the revision | P1 | Record integrity | "Keep current" declines the revision. The accepted credit stays; the declined revision is kept as history. | Kiran | Personal | Profile | Yes | Yes |  | Yes |  |  | Implemented |  |
 
 ## 19 Independent projects
 
@@ -450,7 +455,7 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-SRCH-004 | Search and discovery | Spelling mistakes | P2 | Usability | Fuzzy matching later. | Kiran | Personal | Discover |  |  |  | Yes |  |  | Not reviewed |  |
 | EC-SRCH-005 | Search and discovery | Craft synonyms | P2 | Usability | DoP, Cinematographer map together. | Kiran | Personal | Discover |  |  |  | Yes |  |  | Not reviewed |  |
 | EC-SRCH-006 | Search and discovery | Multiple scripts and languages | P2 | Usability | Transliteration later. | Kiran | Personal | Discover |  |  |  | Yes |  |  | Not reviewed |  |
-| EC-SRCH-007 | Search and discovery | Blocked people and houses excluded | P0 | Safety | People, houses and their roles are hidden from someone who blocked them. | Kiran | Personal | Discover |  |  | Yes |  |  |  | Failed | People and houses are filtered; roles are not. · Checks: AC-12 · Lab: reproducible |
+| EC-SRCH-007 | Search and discovery | Blocked people and houses excluded | P0 | Safety | People, houses and their roles are hidden from someone who blocked them. | Kiran | Personal | Discover |  |  | Yes |  |  |  | Passed | Roles, Home recommendations, house suggestions, suggested people and projects are all filtered. Historical records (credits, past project pages) stay reachable from the record. · Checks: AC-12 · Lab: reproducible |
 | EC-SRCH-008 | Search and discovery | Suspended user in search | P0 | Safety, Trust | Hidden. | Kiran | Personal | Discover |  |  | Yes | Yes |  |  | Needs UI | Lab: No account or organisation status model (suspended, deleted) in the prototype. |
 | EC-SRCH-009 | Search and discovery | Deleted user in search | P0 | Privacy | Gone. | Kiran | Personal | Discover |  |  | Yes | Yes |  |  | Needs UI | Lab: No account or organisation status model (suspended, deleted) in the prototype. |
 | EC-SRCH-010 | Search and discovery | Archived project in search | P2 | Usability | Shown, labelled archived. | Kiran | Personal | Discover |  |  |  | Yes |  |  | Not reviewed |  |
@@ -546,6 +551,8 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-BLOCK-019 | Report and Block | Account owner reported | P1 | Trust | Same process. | Kiran | Personal | Profile |  |  |  | Yes |  |  | Rule defined |  |
 | EC-BLOCK-020 | Report and Block | Reporter deletes their account | P1 | Privacy | Case continues without reporter identity. | Kiran | Personal | Profile |  |  |  | Yes |  |  | Needs product decision |  |
 | EC-BLOCK-021 | Report and Block | Reported user deletes their account | P1 | Safety | Case continues; evidence kept for a limited time. | Kiran | Personal | Profile |  |  |  | Yes | Yes |  | Needs legal |  |
+| EC-BLOCK-022 | Report and Block | Personally blocked member acts for a house | P0 | Safety, Identity | If Tara blocks Aditi, Aditi cannot start or send any conversation to Tara, including as Konark Pictures. Konark itself is not blocked: another member can still write as Konark unless Tara blocks the house. Ana keeps the member behind each house message internally; Tara only ever sees Konark Pictures. | Kiran | Personal | Profile |  |  | Yes | Yes |  |  | Passed | Checks: AC-37 |
+| EC-BLOCK-023 | Report and Block | Blocked house in discovery | P0 | Safety, Record integrity | Roles, Home recommendations, house suggestions and project suggestions from a blocked house are hidden. Accepted credits, past project pages and attribution stay. | Kiran | Personal | Discover |  |  | Yes |  |  |  | Passed | Checks: AC-12, AC-29 · Lab: reproducible |
 
 ## 25 Moderation
 

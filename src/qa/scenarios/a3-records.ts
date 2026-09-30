@@ -17,8 +17,8 @@ export const records = [
     [11, 'Correction rejected by the house', 'P1', 'Rec Tr', 'I', 'The person is told why and can still accept, decline or report.', 'UB', 'NU', {}],
     [12, 'Correction stalls', 'P2', 'Rec', 'L', 'Reminders after 7 and 21 days.', 'B', 'PD', {}],
     [13, 'Production withdraws a proposal', 'P1', 'Rec', 'I', 'Removed from the person\'s pending list.', 'UB', 'NU', {}],
-    [14, 'Accepted credit edited by the house', 'P0', 'Rec', 'L', 'Not allowed directly. Changes to an accepted credit are proposals the person accepts again.', 'AB', 'RD', { why: 'An accepted credit is agreed by both sides.', not: ['House edits the line silently'], nofx: 'No edit path exists; rule recorded.' }],
-    [15, 'Accepted credit disputed years later', 'P1', 'Rec Tr', 'L', 'Report as fraudulent credit; moderation hides pending review, never deletes.', 'BL', 'PD', {}],
+    [14, 'Accepted credit needs amending', 'P0', 'Rec', 'IL', 'Neither side edits an accepted credit. The person chooses "Something wrong with this credit?", which records an amendment request. The accepted credit stays public while unresolved. The house either proposes a revised credit or keeps it as it is. A revision replaces the public credit only when the person accepts it; the old version is kept as history.', 'UIAB', 'AU', { why: 'An accepted credit is agreed by both sides, and others rely on it.', not: ['House edits the line silently', 'The credit disappears while the request is open', 'The old version is deleted'], auto: ['AC-36'], nofx: 'Walk through as in PERSONA_BRIDGES.md (accepted-credit amendment).' }],
+    [15, 'Accepted credit disputed years later', 'P1', 'Rec Tr', 'L', 'Fraud, identity misuse or a malicious credit goes to the existing Report and moderation path ("Report to Ana" from the credit sheet, or after the house keeps a credit). Moderation can hide pending review, never deletes. There is no second dispute system.', 'UBL', 'RD', {}],
     [16, 'Project title changes after acceptance', 'P1', 'Rec', 'L', 'See EC-LIFE-001.', 'A', 'IM', {}],
     [17, 'Production name changes', 'P1', 'Rec', 'L', 'See EC-HOUSE-008.', 'B', 'PD', {}],
     [18, 'Co-producer disputes credit authority', 'P1', 'Rec Pe', 'L', 'Lead production issues credits at launch; disputes go to support.', 'BL', 'PD', {}],
@@ -42,7 +42,9 @@ export const records = [
     [36, 'Person wants a credit hidden on their profile but kept on the film', 'P1', 'Pv Rec', 'L', 'Allowed: hide from my profile. The film still lists them.', 'UB', 'PD', {}],
     [37, 'Multilingual credit lines', 'P2', 'Da', 'V', 'Credit lines in any script.', 'U', 'NR', {}],
     [38, 'Individual cannot self-issue a credit', 'P0', 'Tr Rec', 'L', 'Individuals never issue credits, for themselves or anyone, on any project.', 'AB', 'FA', { why: 'Fixed rule: people never self-claim credits.', do: 'Kiran adds himself to his own independent project and issues a credit.', not: ['A credit exists that no production issued'], fx: asKiran({ stack: [{ name: 'work', id: 'salt' }] }), auto: ['AC-07'], notes: 'UI never offers it; the action itself does not check.' }],
-    [39, 'Accepted credit is re-issued', 'P1', 'Rec', 'L', 'Re-issuing on an association with an accepted credit is a correction proposal, not a second credit.', 'AB', 'PD', {}],
+    [39, 'Accepted credit is re-issued', 'P1', 'Rec', 'L', 'Refused. Issuing on an association that has an accepted credit is not possible; a change is a revision proposed in answer to the person\'s amendment request.', 'AB', 'AU', { auto: ['AC-36'] }],
+    [40, 'House keeps an accepted credit after an amendment request', 'P0', 'Rec', 'IL', 'The person is told the credit stays as it is. It remains the current public record. The person can report it to Ana if it is fraud or identity misuse.', 'UIAB', 'AU', { auto: ['AC-36'] }],
+    [41, 'Person prefers the current credit to the revision', 'P1', 'Rec', 'I', '"Keep current" declines the revision. The accepted credit stays; the declined revision is kept as history.', 'UIB', 'IM', {}],
   ]),
 
   ...area(19, 'INDIE', 'Independent projects', ['Kiran', 'Personal', 'Independent project'], [
@@ -69,7 +71,7 @@ export const records = [
     [4, 'Spelling mistakes', 'P2', 'Us', 'L', 'Fuzzy matching later.', 'B', 'NR', {}],
     [5, 'Craft synonyms', 'P2', 'Us', 'L', 'DoP, Cinematographer map together.', 'B', 'NR', {}],
     [6, 'Multiple scripts and languages', 'P2', 'Us', 'L', 'Transliteration later.', 'B', 'NR', {}],
-    [7, 'Blocked people and houses excluded', 'P0', 'Sa', 'L', 'People, houses and their roles are hidden from someone who blocked them.', 'A', 'FA', { why: 'Blocking must hold across every surface.', do: 'Block Tidewater, then search Discover for "Backwaters".', not: ['Roles from a blocked house'], fx: asKiran({ blocked: ['tidewater', 'vikram'], tab: 'discover' }), auto: ['AC-12'], notes: 'People and houses are filtered; roles are not.' }],
+    [7, 'Blocked people and houses excluded', 'P0', 'Sa', 'L', 'People, houses and their roles are hidden from someone who blocked them.', 'A', 'AU', { why: 'Blocking must hold across every surface.', do: 'Block Tidewater, then search Discover for "Backwaters".', not: ['Roles from a blocked house'], fx: asKiran({ blocked: ['tidewater', 'vikram'], tab: 'discover' }), auto: ['AC-12'], notes: 'Roles, Home recommendations, house suggestions, suggested people and projects are all filtered. Historical records (credits, past project pages) stay reachable from the record.' }],
     [8, 'Suspended user in search', 'P0', 'Sa Tr', 'L', 'Hidden.', 'AB', 'NU', { nofx: NO_STATUS }],
     [9, 'Deleted user in search', 'P0', 'Pv', 'L', 'Gone.', 'AB', 'NU', { nofx: NO_STATUS }],
     [10, 'Archived project in search', 'P2', 'Us', 'L', 'Shown, labelled archived.', 'B', 'NR', {}],
@@ -157,6 +159,8 @@ export const records = [
     [19, 'Account owner reported', 'P1', 'Tr', 'L', 'Same process.', 'B', 'RD', {}],
     [20, 'Reporter deletes their account', 'P1', 'Pv', 'L', 'Case continues without reporter identity.', 'B', 'PD', {}],
     [21, 'Reported user deletes their account', 'P1', 'Sa', 'L', 'Case continues; evidence kept for a limited time.', 'BL', 'NL', {}],
+    [22, 'Personally blocked member acts for a house', 'P0', 'Sa Id', 'L', 'If Tara blocks Aditi, Aditi cannot start or send any conversation to Tara, including as Konark Pictures. Konark itself is not blocked: another member can still write as Konark unless Tara blocks the house. Ana keeps the member behind each house message internally; Tara only ever sees Konark Pictures.', 'AB', 'AU', { why: 'A block must not be bypassed by switching identity.', not: ['Blocked member messages as the house', 'Tara sees which member wrote'], auto: ['AC-37'] }],
+    [23, 'Blocked house in discovery', 'P0', 'Sa Rec', 'L', 'Roles, Home recommendations, house suggestions and project suggestions from a blocked house are hidden. Accepted credits, past project pages and attribution stay.', 'A', 'AU', { why: 'You should not keep being recommended opportunities from a house you blocked; the public record is a different thing.', auto: ['AC-12', 'AC-29'], fx: asKiran({ blocked: ['konark'], tab: 'discover' }) }],
   ]),
 ];
 

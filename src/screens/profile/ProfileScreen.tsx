@@ -1,5 +1,5 @@
 import { Ban, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
-import { world, project as wproject, publicName } from '../../state/world';
+import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
@@ -30,7 +30,7 @@ function derive(p: Person) {
 }
 
 /** Where one association stands, in the person's words. Being added is never called a credit. */
-export function associationStage(credit?: 'prepared' | 'proposed' | 'accepted' | 'correction') {
+export function associationStage(credit?: string) {
   if (credit === 'proposed') return 'Credit waiting for you';
   if (credit === 'correction') return 'Correction sent';
   if (credit === 'accepted') return 'Credit accepted · public when the project is shared';
@@ -202,7 +202,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 variant="outline"
                 onClick={() => {
                   const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
-                  push({ name: 'conversation', id: cid });
+                  cid && push({ name: 'conversation', id: cid });
                 }}
               >
                 {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
@@ -237,7 +237,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 <Photo media={c.media} className="pending-credit-poster" showPlay={false} />
                 <div className="pending-credit-text">
                   <p className="meta">
-                    {org(c.orgId).name} <Verified size={12} /> credited you
+                    {org(c.orgId).name} <Verified size={12} /> {c.revision ? 'proposes a revised credit' : 'credited you'}
                   </p>
                   <button className="item-title pending-credit-title" onClick={() => push({ name: 'association', id: c.associationId })}>
                     {c.title}
@@ -254,8 +254,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                       <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)}>
                         Accept
                       </Button>
-                      <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: c.title, creditId: c.id })}>
-                        Something wrong?
+                      <Button size="s" variant="plain" onClick={() => (c.revision ? push({ name: 'association', id: c.associationId }) : openSheet({ name: 'reportCredit', title: c.title, creditId: c.id }))}>
+                        {c.revision ? 'Compare' : 'Something wrong?'}
                       </Button>
                     </div>
                   )}
@@ -270,9 +270,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           // Private associations others made, plus the person's own unshared independent projects.
           const mine = world.associations.filter((a) => {
             if (a.personId !== viewer.id || a.status === 'removed' || wproject(a.projectId)?.ownerId === viewer.id) return false;
-            const c = [...world.credits].reverse().find((x) => x.associationId === a.id);
-            // Once the credit is accepted on a shared project it lives under Credits, the public record.
-            return !(c?.status === 'accepted' && wproject(a.projectId)?.shared);
+            // Once a credit is accepted on a shared project it lives under Credits, the public record.
+            return !(creditState(a.id).current && wproject(a.projectId)?.shared);
           });
           const drafts = world.projects.filter((w) => w.ownerId === viewer.id && !w.shared);
           if (!mine.length && !drafts.length) return null;
@@ -296,7 +295,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 ))}
                 {mine.map((a) => {
                   const w = wproject(a.projectId)!;
-                  const c = [...world.credits].reverse().find((x) => x.associationId === a.id);
+                  const cs = creditState(a.id);
                   return (
                     <PressCard key={a.id} className="prow" onPress={() => push({ name: 'association', id: a.id })} scale={0.99}>
                       <span className="ph-initial">
@@ -307,7 +306,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                         <p className="meta">
                           {a.workingRole} · {w.houseId ? org(w.houseId).name : 'Independent'}
                         </p>
-                        <p className="meta">{a.status === 'flagged' ? <span className="accent">You said this isn't right</span> : associationStage(c?.status)}</p>
+                        <p className="meta">{a.status === 'flagged' ? <span className="accent">You said this isn't right</span> : associationStage(cs.pending?.status ?? cs.current?.status)}</p>
                       </div>
                     </PressCard>
                   );
