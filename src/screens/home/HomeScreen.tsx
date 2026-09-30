@@ -50,11 +50,25 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
     if (publishingId) scrollRef.current?.scrollTo({ top: HERO_HEIGHT - 40, behavior: 'smooth' });
   }, [publishingId]);
 
+  // Cards layout: the header is part of the page, on the same paper, and scrolls away with it.
+  const header = (className: string) => (
+    <header className={`home-header ${className}`}>
+      <span className="home-logo">
+        <Logo />
+      </span>
+      <span className="flex" />
+      <IconButton label="Notifications" className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
+        <Bell size={19} />
+        {unread && <span className="dot" />}
+      </IconButton>
+    </header>
+  );
+
   return (
     <>
       <div className={`screen screen--hero ${cards ? 'canvas v-home' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         {cards ? (
-          <div className="cards-top" />
+          header('home-header--inline')
         ) : loading ? (
           <div className="hero hero--empty">
             <Skeleton w="100%" h="100%" r={0} />
@@ -163,17 +177,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
         </div>
       </div>
 
-      {/* Floating header: controls over the photo, a solid bar once the photo has scrolled away. */}
-      <header className={`home-header ${solid ? 'is-solid' : ''}`}>
-        <span className="home-logo">
-          <Logo />
-        </span>
-        <span className="flex" />
-        <IconButton label="Notifications" className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
-          <Bell size={19} />
-          {unread && <span className="dot" />}
-        </IconButton>
-      </header>
+      {/* Archived hero layout: controls float over the photo, a solid bar once it has scrolled away. */}
+      {!cards && header(solid ? 'is-solid' : '')}
     </>
   );
 }

@@ -35,13 +35,6 @@
   background: var(--base);
 }
 
-.canvas .home-header.is-solid {
-  background: color-mix(in srgb, var(--base) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(18px);
-  -webkit-backdrop-filter: saturate(1.4) blur(18px);
-  box-shadow: 0 1px 0 var(--hairline);
-}
-
 .canvas .list > * + *,
 .canvas .nrow + .nrow {
   border-color: var(--hairline);
@@ -532,8 +525,18 @@
 
 /* =================================================== Individual Home */
 
-.v-home .cards-top {
-  height: calc(var(--status-bar) + 50px);
+/* The Home header is in the page flow on the paper: no bar, no break, and it scrolls away. */
+.v-home .home-header--inline {
+  position: relative;
+  z-index: auto;
+  background: transparent;
+  padding: calc(var(--status-bar) + 4px) 16px 2px;
+}
+
+.v-home .home-header--inline .home-logo,
+.v-home .home-header--inline .icon-btn--float {
+  background: transparent;
+  box-shadow: none;
 }
 
 .v-home .home-sheet {
@@ -1024,9 +1027,12 @@
   background: linear-gradient(to top, var(--base) 45%, rgba(246, 244, 240, 0));
 }
 
-/* The status bar takes the paper when the screen beneath it is on the canvas. */
-.phone-screen:has(> .tab-layer[aria-hidden='false'] .canvas):not(:has(> .route-layer)) > .status-bar--dark,
-.phone-screen:has(> .route-layer:not(:has(~ .route-layer)) .canvas) > .status-bar--dark {
+/*
+ * The status bar takes the paper when the top-level screen beneath it is on the canvas, so the
+ * status area, the header and the page read as one surface. (:has() cannot be nested, so this
+ * covers tab screens only; media-led detail screens keep their own status treatment.)
+ */
+.phone-screen:has(> .tab-layer[aria-hidden='false'] .canvas):not(:has(> .route-layer)) > .status-bar--dark {
   background: var(--base);
 }
 
