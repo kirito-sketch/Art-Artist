@@ -1,5 +1,5 @@
 import { Check, CircleCheck, PenLine, UserSearch } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
 import { findOpportunity, firstName, org, party, person } from '../../state/selectors';
@@ -56,29 +56,46 @@ function CreateMenu() {
 /* ----------------------------------------------------------- Notifications */
 
 function Notifications() {
-  const { notifications, markNotificationsRead, push, openSheet } = useStore();
-  useEffect(() => () => markNotificationsRead(), [markNotificationsRead]);
-  if (!notifications.length) return <EmptyState title="Nothing new" />;
+  const { notifications, markNotificationsRead, markNotificationRead, push, openSheet } = useStore();
+  if (!notifications.length) return <EmptyState title="No notifications yet" body="Replies, interest and credits will show up here." />;
+  const fresh = notifications.filter((n) => n.unread);
+  const earlier = notifications.filter((n) => !n.unread);
+  const row = (n: (typeof notifications)[number]) => (
+    <Pressable
+      key={n.id}
+      className="notif"
+      scale={0.99}
+      onClick={() => {
+        markNotificationRead(n.id);
+        if (n.route) push(n.route);
+        else if (n.kind === 'interest') openSheet({ name: 'reviewInterest' });
+      }}
+    >
+      <Avatar party={party(n.actorId)!} size={40} />
+      <span className="notif-text">
+        {n.text}
+        <span className="meta">{n.time}</span>
+      </span>
+      {n.unread && <span className="dot dot--inline" />}
+    </Pressable>
+  );
   return (
-    <div className="list list--flush">
-      {notifications.map((n) => (
-        <Pressable
-          key={n.id}
-          className="notif"
-          scale={0.99}
-          onClick={() => {
-            if (n.route) push(n.route);
-            else if (n.kind === 'interest') openSheet({ name: 'reviewInterest' });
-          }}
-        >
-          <Avatar party={party(n.actorId)!} size={40} />
-          <span className="notif-text">
-            {n.text}
-            <span className="meta">{n.time}</span>
-          </span>
-          {n.unread && <span className="dot dot--inline" />}
-        </Pressable>
-      ))}
+    <div className="stack">
+      <div className="notif-head">
+        <p className="section-title--sheet">{fresh.length ? `${fresh.length} new` : 'No new notifications'}</p>
+        {fresh.length > 0 && (
+          <button className="link" onClick={markNotificationsRead}>
+            Mark all as read
+          </button>
+        )}
+      </div>
+      {fresh.length > 0 && <div className="list list--flush">{fresh.map(row)}</div>}
+      {earlier.length > 0 && (
+        <>
+          <p className="meta">Earlier</p>
+          <div className="list list--flush notif-earlier">{earlier.map(row)}</div>
+        </>
+      )}
     </div>
   );
 }

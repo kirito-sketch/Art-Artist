@@ -13,6 +13,8 @@ export type Route =
   | { name: 'profile'; id: string }
   | { name: 'conversation'; id: string }
   | { name: 'network' }
+  | { name: 'editProfile' }
+  | { name: 'project'; id: string }
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
   | { name: 'media'; items: Media[]; index: number };
@@ -107,6 +109,9 @@ function useStoreValue() {
   const [publishing, setPublishing] = useState<Publishing | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
+  /** Exploration: acting on behalf of a production house instead of as yourself. */
+  const [acting, setActing] = useState<'self' | 'konark'>('self');
+  const [profileVersion, setProfileVersion] = useState(0);
   const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('slides');
   /** Prototype comparison: visual direction applied across the whole app. */
   const [look, setLook] = useState<Look>('minimal');
@@ -362,6 +367,15 @@ function useStoreValue() {
     heroUnderStatus,
     homeLayout,
     setHomeLayout,
+    acting,
+    setActing: (a: 'self' | 'konark') => {
+      setActing(a);
+      setStack([]);
+      setTabState('home');
+    },
+    profileVersion,
+    bumpProfile: () => setProfileVersion((v) => v + 1),
+    markNotificationRead: (id: string) => setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, unread: false } : n))),
     look,
     setLook,
     setHero,

@@ -3,7 +3,7 @@ import { Toggle } from '../ui/primitives';
 
 /** Evaluation panel outside the phone. Not part of the product. */
 export function PrototypeControls() {
-  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook } = useStore();
+  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing } = useStore();
   const rows: { key: keyof typeof scenario; label: string }[] = [
     { key: 'newUser', label: 'New user' },
     { key: 'loading', label: 'Slow network' },
@@ -15,11 +15,16 @@ export function PrototypeControls() {
     <aside className="proto" aria-label="Prototype controls">
       <p className="proto-h">Signed in as</p>
       <div className="proto-seg">
-        <button className={viewer.id === 'kiran' ? 'is-on' : ''} onClick={() => switchViewer('kiran')}>
+        <button className={acting === 'self' && viewer.id === 'kiran' ? 'is-on' : ''} onClick={() => { setActing('self'); switchViewer('kiran'); }}>
           Kiran · Cinematographer
         </button>
-        <button className={viewer.id === 'tara' ? 'is-on' : ''} onClick={() => switchViewer('tara')}>
+        <button className={acting === 'self' && viewer.id === 'tara' ? 'is-on' : ''} onClick={() => { setActing('self'); switchViewer('tara'); }}>
           Tara · Actor
+        </button>
+      </div>
+      <div className="proto-seg">
+        <button className={acting === 'konark' ? 'is-on' : ''} onClick={() => setActing('konark')}>
+          Konark Pictures · acting for the house (exploration)
         </button>
       </div>
       <p className="proto-h">Visual direction</p>

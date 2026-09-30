@@ -145,7 +145,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         <div className="profile-actions">
           {own ? (
-            <Button block variant="secondary" onClick={() => showToast({ text: 'Edit profile' })}>
+            <Button block variant="secondary" onClick={() => push({ name: 'editProfile' })}>
               Edit profile
             </Button>
           ) : (
