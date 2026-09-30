@@ -27,6 +27,7 @@
 | Interest model | Model A (one Interest, optional answers) is the default; Respond is kept as model B for comparison (VALIDATE). |
 | Withdrawal, poster side | Withdrawn people stay in the poster's list, greyed, "No longer interested". No notification. |
 | Filled roles | Can't be reopened; "Open a new role" keeps the filled record. Closed roles can be reopened. |
+| Consolidation (v18) | One project model for every project; legacy workspace removed; Aditi as house persona; profiles show verified credits and independent projects separately; privacy and identity audits (docs/CONSOLIDATION.md). |
 | Creation flows | Create project, workspace with Share on Ana, add role, add to project (and via Filled through Ana), added notification with This isn't right, issue credit, add and issue credit. End-to-end story tested in Minimal and Glass. |
 | Glass QA | Settings, withdrawal, edit and close role, failure and retry, notifications, credit accept and correct, message retry. Fixed: invisible Undo on white Glass toasts, unreadable notes, a stretched banner avatar, error contrast. |
 | Regression check | Notifications (mark all as read, Earlier) and Edit Profile (validation, dirty Save, discard) re-checked in Minimal and Glass after the latest changes. |
@@ -36,7 +37,7 @@
 
 - Settings rows are mostly read-only (account fields, security). Leaving an organisation isn't built.
 - Production-house loose ends are tracked in docs/PRODUCTION_HOUSE_EXPLORATION.md §8.
-- Creation-flow gaps: unsharing a project, editing a role's project, linking a person not on Ana once they join, independent projects on the maker's profile, and the older static Konark workspace (Neela, Neeli Raat) which predates the shared records.
+- Creation-flow gaps: publication lifecycle (proposed in docs/CONSOLIDATION.md, not built), linking a person not on Ana once they join, bulk credit issuance (deliberately not built).
 - Discover redesign from the scalability audit: not built.
 - Messaging a house opens a conversation, but the Inbox doesn't yet separate personal and house conversations.
 - Loading and error states exist only for "For you". Message send failure, withdrawing or editing a sent response, and editing or closing a published collaboration are missing.
@@ -50,8 +51,9 @@
 
 ## Postponed decisions (need a call)
 
-- Minimal vs Glass (both active per DECISIONS.md).
-- Home layout A (full-screen slides) vs B (large cards).
+- Minimal as the baseline for new work, with Glass archived (DECISIONS.md §10): needs confirmation.
+
+Decided since: Large Cards is the individual Home (Slides archived).
 
 ## Needs stakeholder or user validation
 

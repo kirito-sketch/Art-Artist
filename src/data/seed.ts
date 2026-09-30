@@ -70,6 +70,8 @@ const person = (p: Omit<Person, 'kind'>): Person => ({ kind: 'person', visibilit
 
 export const people: Person[] = [
   person({ id: 'kiran', name: 'Kiran Varma', role: 'Director of Photography', craft: 'cinematographer', city: 'Hyderabad', tone: 2, years: 11, languages: ['Telugu', 'Hindi', 'English'], identityVerified: true, gear: 'Alexa Mini LF, Sony Venice 2' }),
+  // A freelance line producer who works with two houses: the demo's "acting for an organisation" persona.
+  person({ id: 'aditi', name: 'Aditi Ghosh', role: 'Line Producer', craft: 'production', city: 'Hyderabad', tone: 4, years: 9, languages: ['Telugu', 'Bengali', 'English'], identityVerified: true }),
   person({ id: 'tara', name: 'Tara Menon', role: 'Actor', craft: 'actor', city: 'Mumbai', tone: 5, years: 4, languages: ['Hindi', 'Malayalam', 'English'], identityVerified: true }),
   person({ id: 'meera', name: 'Meera Krishnan', role: 'Film Editor', craft: 'editor', city: 'Kochi', tone: 1, years: 9 }),
   person({ id: 'arjun', name: 'Arjun Rao', role: 'Director', craft: 'director', city: 'Mumbai', tone: 3, years: 7 }),
@@ -469,10 +471,7 @@ export const credits: Record<string, Credit[]> = {
 };
 
 /** Credits a production has issued that the person hasn't accepted yet. Never created by the person. */
-export const pendingCredits: Record<string, Credit[]> = {
-  kiran: [{ id: 'pc1', title: 'Fault Lines · S1', year: '2024', role: 'DoP, Episode 6 (additional photography)', department: 'Camera', orgId: 'bluelotus', format: 'Web series', status: 'Released', media: m('poster-faultlines') }],
-  tara: [],
-};
+export const pendingCredits: Record<string, Credit[]> = { kiran: [], tara: [], aditi: [] };
 
 export const projects: Record<string, Project[]> = {
   kiran: [
@@ -485,6 +484,7 @@ export const projects: Record<string, Project[]> = {
 };
 
 export const portfolio: Record<string, Media[]> = {
+  aditi: [m('set-1'), m('pf-1')],
   kiran: [
     m('reel-kiran', { kind: 'video', duration: '2:41', caption: 'Showreel 2026' }),
     m('pf-1', { caption: 'Neeli Raat · night exterior' }),
@@ -503,6 +503,7 @@ export const portfolio: Record<string, Media[]> = {
 };
 
 export const about: Record<string, string> = {
+  aditi: 'Line producer on Telugu and Malayalam features. I work with Konark Pictures and Tidewater Films, mostly from prep to wrap.',
   kiran:
     'Cinematographer working across Telugu and Hindi features, series and brand films. I like available light, long lenses and crews that talk to each other. Most at home on nights and monsoon exteriors.',
   tara:
@@ -512,6 +513,17 @@ export const about: Record<string, string> = {
 /* ----------------------------------------------------------------- inbox */
 
 export const conversations: Record<string, Conversation[]> = {
+  /* The same conversation as Kiran's c-konark, seen from the house side. */
+  aditi: [
+    {
+      id: 'c-aditi-kiran', withId: 'kiran', asId: 'konark', unread: 0, updated: '12m', media: m('neela'),
+      context: { kind: 'crew', label: 'Crew job', detail: 'Director of Photography · Neela Akasham', refId: 'o-neela-dop' },
+      messages: [
+        { id: 'm1', from: 'them', text: 'Sent my profile, reel and answers for the DoP role. Happy to talk through the lookbook.', time: 'Yesterday 18:40' },
+        { id: 'm2', from: 'me', text: 'Hi Kiran, thanks for responding. Our director would like to meet. Could you do a recce with him in Araku on 12 Oct?', time: '12m' },
+      ],
+    },
+  ],
   kiran: [
     {
       id: 'c-konark', withId: 'konark', orgOwned: true, unread: 1, updated: '12m', media: m('neela'),
@@ -519,7 +531,7 @@ export const conversations: Record<string, Conversation[]> = {
       context: { kind: 'crew', label: 'Crew job', detail: 'Director of Photography · Neela Akasham', refId: 'o-neela-dop' },
       messages: [
         { id: 'm1', from: 'me', text: 'Sent my profile, reel and answers for the DoP role. Happy to talk through the lookbook.', time: 'Yesterday 18:40' },
-        { id: 'm2', from: 'them', senderName: 'Aditi Ghosh · Crew coordinator', text: 'Hi Kiran, thanks for responding. Our director would like to meet. Could you do a recce with him in Araku on 12 Oct?', time: '12m' },
+        { id: 'm2', from: 'them', senderName: 'Aditi Ghosh · Konark Pictures', text: 'Hi Kiran, thanks for responding. Our director would like to meet. Could you do a recce with him in Araku on 12 Oct?', time: '12m' },
       ],
     },
     {
@@ -574,18 +586,18 @@ export const interests: Record<string, Interest[]> = {
     { id: 'k5', personId: 'teja', opportunityId: 'o-neela-dop', withdrawn: true, time: '1d' },
   ],
   tidewater: [],
+  aditi: [],
 };
 
 export const notifications: Record<string, Notification[]> = {
   kiran: [
-    { id: 'nh1', forId: 'konark', kind: 'interest', actorId: 'vikram', text: 'Vikram Sen and 3 others are interested in roles on Neela Akasham', time: '1h', unread: true, route: { name: 'project', id: 'neela' } },
-    { id: 'nh2', forId: 'konark', kind: 'credit', actorId: 'sameer', text: 'Sameer Ali asked to correct a credit on Neeli Raat', time: '3h', unread: true, route: { name: 'project', id: 'neeliraat' } },
     { id: 'nt0', kind: 'credit', actorId: 'bluelotus', text: 'Blue Lotus Originals credited you on Fault Lines · S1. Accept it to show it on your profile.', time: '8m', unread: true, route: { name: 'profile', id: 'kiran' } },
     { id: 'nt1', kind: 'message', actorId: 'konark', text: 'Konark Pictures replied about Director of Photography', time: '12m', unread: true, route: { name: 'conversation', id: 'c-konark' } },
     { id: 'nt2', kind: 'interest', actorId: 'nikhil', text: '3 people are interested in your 1st AC collaboration', time: '2h', unread: true },
     { id: 'nt3', kind: 'credit', actorId: 'tidewater', text: 'Your credit from Tidewater Films is public: Additional Camera, Monsoon Letters', time: '1d', unread: false, route: { name: 'profile', id: 'kiran' } },
     { id: 'nt4', kind: 'follow', actorId: 'zoya', text: 'Zoya Khan followed you', time: '2d', unread: false, route: { name: 'profile', id: 'zoya' } },
   ],
+  aditi: [],
   tara: [
     { id: 'tn1', kind: 'message', actorId: 'saffron', text: 'Saffron Reel Studios invited you to audition for Paper Boats', time: '1h', unread: true, route: { name: 'conversation', id: 'c-saffron' } },
   ],
@@ -594,6 +606,7 @@ export const notifications: Record<string, Notification[]> = {
 /** People in the viewer's craft and city, used when a new user has no network yet. Generated, not curated. */
 export const suggestedFor: Record<string, string[]> = {
   kiran: ['vikram', 'anvi', 'sana', 'sameer', 'rhea'],
+  aditi: ['ishaan', 'sameer', 'rhea', 'kiran'],
   tara: ['lakshmi', 'devika', 'arjun'],
 };
 

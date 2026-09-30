@@ -1,3 +1,5 @@
+import * as seed from '../data/seed';
+import { SEED_WORKS, type Work, type WorkStage } from '../data/works';
 import type { Interest, Media, Notification, Opportunity } from '../data/types';
 
 /*
@@ -11,21 +13,27 @@ import type { Interest, Media, Notification, Opportunity } from '../data/types';
  * An association is never a credit, and adding someone never makes anything public.
  */
 
-export type Format = 'Feature' | 'Series' | 'Short' | 'Documentary' | 'Music video' | 'Ad film';
+export type Format = 'Feature' | 'Series' | 'Short' | 'Documentary' | 'Music video' | 'Ad film' | 'Theatre';
 export const FORMATS: Format[] = ['Feature', 'Series', 'Short', 'Documentary', 'Music video', 'Ad film'];
 export const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
 export const STAGES = ['Development', 'Pre-production', 'Shooting', 'Post-production', 'Released'] as const;
 
 export interface HouseProject {
   id: string;
-  /** Organisation that owns it, or a person for an independent project. */
+  /** Organisation that owns it (the lead production), or a person for an independent project. */
   houseId?: string;
+  /** Co-producing houses. They appear on the public page; credit authority for them is an open question. */
+  coHouseIds?: string[];
   ownerId?: string;
   workingTitle: string;
   format: Format;
   /** Projects can be multilingual; never assume exactly one. */
   languages: string[];
-  stage: (typeof STAGES)[number];
+  stage: WorkStage;
+  /** Display label for older records, e.g. "Short film · 18 min". */
+  formatLabel?: string;
+  year?: string;
+  stills?: Media[];
   /** Public-facing details, filled in over time. Nothing here is public until shared. */
   publicTitle?: string;
   logline?: string;
@@ -92,21 +100,101 @@ export const roleProject = (roleId: string) => project(world.roles.find((r) => r
 export const DEPTS = ['Direction', 'Camera', 'Lighting', 'Sound', 'Art', 'Costume', 'Post', 'Cast', 'Production', 'Writing'];
 
 /** The public page is built only from what the owner chose to reveal, plus accepted credits. */
-import type { Work } from '../data/works';
 const PLACEHOLDER: Media = { id: 'ph', kind: 'image', src: 'images/covers/neela.jpg' };
 export function toPublicWork(p: HouseProject): Work | undefined {
   if (!p.shared) return undefined;
   return {
     id: p.id,
     title: publicName(p),
-    year: '2026',
-    format: `${p.format === 'Feature' ? 'Feature film' : p.format} · ${p.languages.join(', ')}`,
+    year: p.year ?? '2026',
+    format: p.formatLabel ?? `${p.format === 'Feature' ? 'Feature film' : p.format} · ${p.languages.join(', ')}`,
     stage: p.stage,
-    orgIds: p.houseId ? [p.houseId] : [],
+    orgIds: p.houseId ? [p.houseId, ...(p.coHouseIds ?? [])] : [],
     ownerId: p.ownerId,
     logline: p.logline ?? '',
     media: p.artwork ?? PLACEHOLDER,
-    stills: p.artwork ? [p.artwork] : [],
+    stills: p.stills ?? (p.artwork ? [p.artwork] : []),
     credits: world.credits.filter((c) => c.projectId === p.id && c.status === 'accepted').map((c) => ({ personId: c.personId, role: c.line, dept: c.dept })),
   };
 }
+
+/* ------------------------------------------------------------ helpers screens use */
+
+export const work = (id: string) => {
+  const p = project(id);
+  return p ? toPublicWork(p) : undefined;
+};
+export const publicWorks = () => world.projects.map(toPublicWork).filter((w): w is Work => !!w);
+export const worksForOrg = (orgId: string) => publicWorks().filter((w) => w.orgIds.includes(orgId));
+
+/* ------------------------------------------------------------ seeding */
+
+/*
+ * The older sample films become the same kind of record as anything created in the prototype. Accepted
+ * credits come with the association they grew from; in-progress films have associations only.
+ */
+const FORMAT_OF = (label: string): Format =>
+  /^Web series|^Series/.test(label) ? 'Series' : /^Short/.test(label) ? 'Short' : /^Music video/.test(label) ? 'Music video' : /^Theatre/.test(label) ? 'Theatre' : /^Docu/.test(label) ? 'Documentary' : 'Feature';
+
+SEED_WORKS.forEach((w) => {
+  const langs = w.format.split(' · ').slice(1).filter((x) => LANGUAGES.includes(x));
+  world.projects.push({
+    id: w.id,
+    houseId: w.orgIds[0],
+    coHouseIds: w.orgIds.slice(1),
+    ownerId: w.ownerId,
+    workingTitle: w.workingTitle ?? w.title,
+    publicTitle: w.shared ? w.title : undefined,
+    format: FORMAT_OF(w.format),
+    formatLabel: w.format,
+    languages: langs,
+    stage: w.stage,
+    year: w.year,
+    logline: w.logline || undefined,
+    artwork: w.media,
+    stills: w.stills,
+    shared: w.shared,
+  });
+  const link = (c: { personId: string; role: string; dept: string }) => {
+    const a: Association = { id: `a-${w.id}-${c.personId}-${world.associations.length}`, projectId: w.id, personId: c.personId, workingRole: c.role, dept: c.dept, status: 'added' };
+    world.associations.push(a);
+    return a;
+  };
+  w.credits.forEach((c) => {
+    const a = link(c);
+    world.credits.push({ id: `c-${a.id}`, projectId: w.id, associationId: a.id, personId: c.personId, line: c.role, dept: c.dept, status: 'accepted' });
+  });
+  (w.added ?? []).forEach(link);
+  (w.proposed ?? []).forEach((c) => {
+    const a = link(c);
+    world.credits.push({ id: `c-${a.id}`, projectId: w.id, associationId: a.id, personId: c.personId, line: c.line, dept: c.dept, status: c.correction ? 'correction' : 'proposed', note: c.correction });
+  });
+});
+
+/* Roles that belong to the houses you can act for move onto their projects. Other houses' roles stay as plain listings. */
+const ROLE_PROJECT: Record<string, string> = { 'o-neela-dop': 'neela', 'o-neela-journalist': 'neela', 'o-backwaters': 'backwaters' };
+Object.entries(ROLE_PROJECT).forEach(([rid, pid]) => {
+  const i = seed.opportunities.findIndex((o) => o.id === rid);
+  if (i < 0) return;
+  const [o] = seed.opportunities.splice(i, 1);
+  world.roles.push({ ...o, projectId: pid, visibility: 'open' });
+});
+const neela = world.roles.find((r) => r.id === 'o-neela-dop')!;
+(
+  [
+    ['Colourist', 'Post'],
+    ['Gaffer', 'Lighting'],
+  ] as const
+).forEach(([role], k) =>
+  world.roles.push({ ...neela, id: `r-neela-private-${k}`, role, visibility: 'private', about: `${role} for a 38-day shoot in Araku. Not announced yet.`, questions: [], compensation: 'Paid', postedAgo: '2d' }),
+);
+
+world.interests.push(...(seed.interests.konark ?? []));
+seed.interests.konark = [];
+
+world.notifications.push(
+  { id: 'wn-seed-1', forId: 'konark', kind: 'interest', actorId: 'vikram', text: 'Vikram Sen and 2 others are interested in Director of Photography on Neela Akasham', time: '1h', unread: true, route: { name: 'hproject', id: 'neela' } },
+  { id: 'wn-seed-2', forId: 'konark', kind: 'credit', actorId: 'sameer', text: 'Sameer Ali asked to correct a credit on Neeli Raat: Chief Lighting Technician, not Gaffer', time: '3h', unread: true, route: { name: 'hproject', id: 'neeliraat' } },
+  { id: 'wn-seed-3', forId: 'konark', kind: 'credit', actorId: 'meera', text: 'Monsoon Letters: all 6 credits are now public', time: '2d', unread: false, route: { name: 'work', id: 'monsoon' } as never },
+  { id: 'wn-seed-4', toPersonId: 'kiran', kind: 'credit', actorId: 'bluelotus', text: 'Blue Lotus Originals issued you a credit on Fault Lines · S1. Accept it to make it official.', time: '8m', unread: true, route: { name: 'profile', id: 'kiran' } },
+);

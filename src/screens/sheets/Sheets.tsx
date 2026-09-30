@@ -212,7 +212,7 @@ function RespondForm({ id }: { id: string }) {
   const [failed, setFailed] = useState(false);
   const o = findOpportunity(id, userCollabs)!;
   const reel = seed.portfolio[viewer.id][0];
-  const credits = seed.credits[viewer.id].length;
+  const credits = world.credits.filter((c) => c.personId === viewer.id && c.status === 'accepted').length;
   const [answers, setAnswers] = useState<string[]>(() => (o.questions ?? []).map(() => ''));
   const [withReel, setWithReel] = useState(true);
   const [withCredits, setWithCredits] = useState(true);
@@ -315,8 +315,8 @@ function InterestForm({ id }: { id: string }) {
 }
 
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
-  const { interestsReceived, dismissInterest, startConversation, push, userCollabs, acting } = useStore();
-  const all = opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived;
+  const { interestsReceived, dismissInterest, startConversation, push, userCollabs, acting, blocked } = useStore();
+  const all = (opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived).filter((i) => !blocked.includes(i.personId));
   // Withdrawn people stay at the end, greyed, so a person you'd looked at doesn't silently vanish.
   const list = [...all.filter((i) => !i.withdrawn), ...all.filter((i) => i.withdrawn)];
   if (!list.length) return <EmptyState title="No one yet" />;

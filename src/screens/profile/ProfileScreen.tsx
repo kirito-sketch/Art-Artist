@@ -1,5 +1,4 @@
 import { Ban, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
-import { workIdForTitle, works } from '../../data/works';
 import { world, project as wproject, publicName } from '../../state/world';
 import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
@@ -10,29 +9,24 @@ import { Button, Row, EmptyState, IconButton, Photo, PressCard, Pressable, Secti
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 
-/** Other people's credits and work come from real activity on Ana, never invented for the profile. */
+/**
+ * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
+ * person, on a project the production has shared) and independent projects (shown by the person).
+ */
 function derive(p: Person) {
   const events = Object.values(seed.networkEvents).flat().filter((e) => e.actorIds.includes(p.id));
-  // Accepted credits on public projects are the source of truth; network events fill in the rest.
-  const fromWorks: Credit[] = works.flatMap((w) =>
-    w.credits.filter((c) => c.personId === p.id).map((c) => ({ id: `${w.id}-${p.id}`, title: w.title, year: w.year, role: c.role, department: c.dept, orgId: w.orgIds[0], format: w.format.split(' · ')[0], status: 'Released' as const, media: w.media })),
-  );
-  // Accepted credits on projects the production has shared. Accepted but unshared stays private.
-  const fromWorld: Credit[] = world.credits
+  const credits: Credit[] = world.credits
     .filter((c) => c.personId === p.id && c.status === 'accepted' && wproject(c.projectId)?.shared)
     .map((c) => {
       const w = wproject(c.projectId)!;
-      return { id: c.id, title: publicName(w), year: '2026', role: c.line, department: c.dept, orgId: w.houseId!, format: w.format, status: 'Filming' as const, media: w.artwork ?? seed.cameraRoll[0] };
-    });
-  const base: Credit[] =
-    seed.credits[p.id] ??
-    (fromWorks.length ? fromWorks : null) ??
-    events
-      .filter((e) => e.kind === 'credit')
-      .map((e) => ({ id: e.id, title: e.title!, year: '2025', role: e.detail!, department: '', orgId: e.orgId!, format: 'Feature film', status: 'Released' as const, media: e.media?.[0] ?? seed.portfolio.kiran[1] }));
-  const credits = [...fromWorld, ...base];
+      return { id: c.id, title: publicName(w), year: w.year ?? '2026', role: c.line, department: c.dept, orgId: w.houseId!, format: w.format, status: 'Released' as const, media: w.artwork ?? seed.cameraRoll[0] };
+    })
+    .sort((x, y) => y.year.localeCompare(x.year));
+  const projects = world.projects
+    .filter((w) => w.ownerId === p.id && w.shared)
+    .map((w) => ({ id: w.id, title: publicName(w), year: w.year ?? '2026', format: w.formatLabel ?? w.format, note: w.logline ?? '', media: w.artwork ?? seed.cameraRoll[0] }));
   const work: Media[] = seed.portfolio[p.id] ?? events.flatMap((e) => (e.kind !== 'credit' ? e.media ?? [] : []));
-  return { credits, work, projects: seed.projects[p.id] ?? [], about: seed.about[p.id] };
+  return { credits, work, projects, about: seed.about[p.id] };
 }
 
 function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
@@ -45,7 +39,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptedCredits, acceptCredit, creditBusy } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptedCredits, acceptCredit, creditBusy, acting, setActing } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -201,7 +195,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                   push({ name: 'conversation', id: cid });
                 }}
               >
-                Message
+                {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
               </Button>
             </>
           )}
@@ -237,7 +231,11 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                   </p>
                   <p className="item-title">{c.title}</p>
                   <p className="meta meta--dark">{c.role}</p>
-                  {c.correction ? (
+                  {acting !== 'self' ? (
+                    <button className="link link--small" onClick={() => setActing('self', true, true)}>
+                      Switch to you to respond
+                    </button>
+                  ) : c.correction ? (
                     <p className="meta">Correction sent. {org(c.orgId).name} will update it.</p>
                   ) : (
                     <div className="pending-credit-actions">
@@ -257,8 +255,15 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
         )}
 
         {own && (() => {
-          const mine = world.associations.filter((a) => a.personId === viewer.id && a.status !== 'removed');
-          if (!mine.length) return null;
+          // Private associations others made, plus the person's own unshared independent projects.
+          const mine = world.associations.filter((a) => {
+            if (a.personId !== viewer.id || a.status === 'removed' || wproject(a.projectId)?.ownerId === viewer.id) return false;
+            const c = [...world.credits].reverse().find((x) => x.associationId === a.id);
+            // Shown here only while there's no credit the person can see elsewhere (Waiting for you, or public Credits).
+            return !c || c.status === 'prepared' || (c.status === 'accepted' && !wproject(a.projectId)?.shared);
+          });
+          const drafts = world.projects.filter((w) => w.ownerId === viewer.id && !w.shared);
+          if (!mine.length && !drafts.length) return null;
           return (
             <section className="section section--flush">
               <SectionHeader title="Projects you're on" />
@@ -266,6 +271,17 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 <Lock size={11} /> Only you and each production see these. They aren't credits.
               </p>
               <div className="list list--flush">
+                {drafts.map((w) => (
+                  <PressCard key={w.id} className="prow" onPress={() => push({ name: 'hproject', id: w.id })} scale={0.99}>
+                    <span className="ph-initial">
+                      <Lock size={14} />
+                    </span>
+                    <div className="prow-text">
+                      <p className="item-title">{w.workingTitle}</p>
+                      <p className="meta">Your independent project · not shared</p>
+                    </div>
+                  </PressCard>
+                ))}
                 {mine.map((a) => {
                   const w = wproject(a.projectId)!;
                   const c = [...world.credits].reverse().find((x) => x.associationId === a.id);
@@ -292,10 +308,13 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         <section className="section section--flush">
           <SectionHeader title="Credits" />
+          <p className="meta evidence-note">
+            <Verified size={12} /> Issued by productions and accepted by {own ? 'you' : p.name.split(' ')[0]}
+          </p>
           {credits.length ? (
             <div className="rail">
               {credits.map((c) => (
-                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = workIdForTitle(c.title) ?? world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); else if (own) openSheet({ name: 'reportCredit', title: c.title }); }} aria-label={c.title}>
+                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={c.title}>
                   <Photo media={c.media} className="rail-poster" showPlay={false} />
                   <p className="item-title">{c.title}</p>
                   <p className="meta">{c.role}</p>
@@ -338,16 +357,17 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
         {d.projects.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Independent projects" />
+            <p className="meta evidence-note">Shared by {own ? 'you' : p.name.split(' ')[0]}. Roles on independent work aren't verified yet.</p>
             <div className="list list--flush">
               {d.projects.map((pr) => (
-                <PressCard key={pr.id} className="rrow" onPress={() => { const wid = workIdForTitle(pr.title); if (wid) push({ name: 'work', id: wid }); }} scale={0.985}>
+                <PressCard key={pr.id} className="rrow" onPress={() => push({ name: 'work', id: pr.id })} scale={0.985}>
                   <Photo media={pr.media} className="rrow-thumb" showPlay={false} />
                   <div className="rrow-text">
                     <p className="item-title">{pr.title}</p>
-                    <p className="meta meta--dark">{pr.role}</p>
                     <p className="meta">
                       {pr.format} · {pr.year}
                     </p>
+                    {pr.note && <p className="meta">{pr.note}</p>}
                   </div>
                 </PressCard>
               ))}

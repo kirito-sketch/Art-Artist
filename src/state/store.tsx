@@ -84,9 +84,13 @@ export interface Toast {
 
 export type PostDraft = { text: string; media: Media[]; addToPortfolio: boolean };
 
+/** Roles on an unannounced project never borrow its private artwork. */
+const GENERIC_ROLE_IMAGE: Media = { id: 'role-generic', kind: 'image', src: 'images/covers/coastline.jpg' };
+
 const VIEWERS: Record<string, Viewer> = {
   kiran: { id: 'kiran', craft: 'cinematographer', firstName: 'Kiran' },
   tara: { id: 'tara', craft: 'actor', firstName: 'Tara' },
+  aditi: { id: 'aditi', craft: 'production', firstName: 'Aditi' },
 };
 
 const DEFAULT_FOLLOWING = ['meera', 'arjun', 'rhea', 'vikram', 'devika', 'sameer', 'ishaan', 'nandini'];
@@ -94,10 +98,11 @@ const DEFAULT_FOLLOWING = ['meera', 'arjun', 'rhea', 'vikram', 'devika', 'sameer
 const DEFAULT_AVAILABILITY: Record<string, Availability> = {
   kiran: { open: true, from: '3 Oct', scope: 'Hyderabad · will travel' },
   tara: { open: true, from: 'Now', scope: 'Mumbai · self-tapes anywhere' },
+  aditi: { open: false, from: 'Now', scope: 'Hyderabad' },
 };
 
 function useStoreValue() {
-  const [viewerId, setViewerId] = useState<'kiran' | 'tara'>('kiran');
+  const [viewerId, setViewerId] = useState<'kiran' | 'tara' | 'aditi'>('kiran');
   const viewer = VIEWERS[viewerId];
 
   const [scenario, setScenarioState] = useState<Scenario>({
@@ -144,14 +149,14 @@ function useStoreValue() {
   /** Exploration: acting on behalf of a production house instead of as yourself. */
   const [acting, setActing] = useState<string>('self');
   /** Organisations the signed-in person may act for. Permission only; not a team product. */
-  const memberships = viewer.id === 'kiran' ? ['konark', 'tidewater'] : [];
+  const memberships = viewer.id === 'aditi' ? ['konark', 'tidewater'] : [];
   const [blocked, setBlocked] = useState<string[]>([]);
   const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
   const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
   /** VALIDATE: one Interest model everywhere (A) vs Interest for collaborations plus Respond for crew and casting (B). */
   const [roleModel, setRoleModel] = useState<'interest' | 'respond'>('interest');
   const [profileVersion, setProfileVersion] = useState(0);
-  const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('slides');
+  const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('cards');
   /** Prototype comparison: visual direction applied across the whole app. */
   const [look, setLook] = useState<Look>('minimal');
   /** Screens currently showing a full-bleed photo under the status bar, keyed by screen. */
@@ -169,7 +174,7 @@ function useStoreValue() {
   const dismissToast = useCallback(() => setToast(null), []);
 
   /* Switching persona resets per-account state, like signing into another account. */
-  const switchViewer = useCallback((id: 'kiran' | 'tara') => {
+  const switchViewer = useCallback((id: 'kiran' | 'tara' | 'aditi') => {
     setViewerId(id);
     setToast(null);
     setAvailabilityState(DEFAULT_AVAILABILITY[id]);
@@ -534,7 +539,7 @@ function useStoreValue() {
     setRoleModel,
     /** A filled role keeps its record. Hiring again for the same craft and project is a new role. */
     openAgain: (id: string) => {
-      const base = userCollabs.find((x) => x.id === id) ?? seed.opportunities.find((x) => x.id === id);
+      const base = userCollabs.find((x) => x.id === id) ?? seed.opportunities.find((x) => x.id === id) ?? world.roles.find((x) => x.id === id);
       if (!base) return id;
       const nid = `${id}-again-${Date.now()}`;
       setUserCollabs((cs) => [{ ...base, id: nid, postedAgo: 'now', closesInDays: 14 }, ...cs]);
@@ -626,7 +631,8 @@ function useStoreValue() {
       const p = wproject(id);
       if (!p) return;
       Object.assign(p, patch);
-      world.roles.forEach((r) => r.projectId === id && ((r.project = publicName(p)), (r.stage = p.stage), p.artwork && (r.media = p.artwork)));
+      // Artwork reaches public roles only once the project itself is shared.
+      world.roles.forEach((r) => r.projectId === id && ((r.project = publicName(p)), (r.stage = p.stage), p.shared && p.artwork && (r.media = p.artwork)));
       bump();
     },
     addRole: (projectId: string, f: { role: string; about: string; dates: string; city: string; paid: boolean; compensation: string; questions: string[]; visibility: 'private' | 'open' }) => {
@@ -635,7 +641,7 @@ function useStoreValue() {
         id: wid('wr'), projectId, visibility: f.visibility, kind: 'crew' as const, role: f.role, project: publicName(p), projectType: `${p.format} · ${p.languages.join(', ')}`,
         ...(p.houseId ? { orgId: p.houseId } : { authorId: p.ownerId }),
         city: f.city || 'To be confirmed', dates: f.dates || 'Dates to be confirmed', compensation: f.paid ? f.compensation || 'Paid' : 'Unpaid', paid: f.paid, closesInDays: 14, stage: p.stage, language: p.languages.join(', '),
-        about: f.about, lookingFor: [], questions: f.questions.filter(Boolean).slice(0, 3), match: [], forCrafts: [], media: p.artwork ?? seed.cameraRoll[(world.roles.length + 3) % seed.cameraRoll.length], postedAgo: 'now',
+        about: f.about, lookingFor: [], questions: f.questions.filter(Boolean).slice(0, 3), match: [], forCrafts: [], media: (p.shared && p.artwork) || GENERIC_ROLE_IMAGE, postedAgo: 'now',
       };
       world.roles.unshift(r);
       bump();

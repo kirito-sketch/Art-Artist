@@ -1,9 +1,11 @@
 import type { Media } from './types';
 
 /**
- * A Work is the public project record: the one object a credit, a poster, an open role and a
- * production's filmography all point to. Film calls it a project; fine arts would call it an
- * exhibition or a body of work. Same shape, different words.
+ * Seed input for the project model in src/state/world.ts. Every project in the prototype, including the
+ * older sample films, becomes the same kind of record there: a project, private "added to project"
+ * associations, and production-issued credits. Nothing here is read directly by screens.
+ *
+ * "Work" is the internal word. People only ever see Project, Film or Series (Exhibition or Show later).
  */
 export type WorkStage = 'Development' | 'Pre-production' | 'Shooting' | 'Post-production' | 'Released';
 
@@ -13,26 +15,48 @@ export interface WorkCredit {
   dept: string;
 }
 
+/** The public shape of a project page. Built by world.toPublicWork from what the owner revealed. */
 export interface Work {
   id: string;
   title: string;
   year: string;
   format: string;
   stage: WorkStage;
-  /** First is the lead production. More than one means a co-production; each is shown. Empty means independent. */
+  /** First is the lead production. More than one means a co-production. Empty means independent. */
   orgIds: string[];
-  /** Independent work: the person who made it. They can show it, but it carries no issued credits. */
   ownerId?: string;
   logline: string;
   media: Media;
   stills: Media[];
-  /** Only credits the person has accepted. Proposed or disputed credits are never public. */
+  /** Accepted credits only. */
   credits: WorkCredit[];
+}
+
+export interface SeedWork {
+  id: string;
+  title: string;
+  /** Internal name when it differs from the public one. */
+  workingTitle?: string;
+  year: string;
+  format: string;
+  stage: WorkStage;
+  orgIds: string[];
+  ownerId?: string;
+  logline: string;
+  media?: Media;
+  stills: Media[];
+  shared: boolean;
+  /** Accepted, production-issued credits (the work is done). */
+  credits: WorkCredit[];
+  /** Private associations with no credit yet (the work is in progress). */
+  added?: WorkCredit[];
+  /** Credits issued and waiting for the person, or sent back for correction. */
+  proposed?: (WorkCredit & { line: string; correction?: string })[];
 }
 
 const img = (src: string, fallback?: string): Media => ({ id: src, kind: 'image', src: `images/${src}.jpg`, fallback: fallback ? `images/${fallback}.jpg` : undefined });
 
-export const works: Work[] = [
+export const SEED_WORKS: SeedWork[] = [
   {
     id: 'neela',
     title: 'Neela Akasham',
@@ -43,10 +67,26 @@ export const works: Work[] = [
     logline: 'One monsoon in the Araku valley, and a family that stops talking to each other.',
     media: img('covers/neela'),
     stills: [img('covers/neela'), img('stills/reel-kiran', 'covers/neela')],
-    credits: [
+    shared: true,
+    // In pre-production: people are on the project, but nobody has earned a credit yet.
+    credits: [],
+    added: [
       { personId: 'ishaan', role: 'Production Designer', dept: 'Art' },
       { personId: 'lakshmi', role: 'Amma', dept: 'Cast' },
+      { personId: 'sana', role: '1st AC', dept: 'Camera' },
     ],
+  },
+  {
+    id: 'kaal',
+    title: 'Kaal',
+    year: '2027',
+    format: 'Web series · Hindi',
+    stage: 'Development',
+    orgIds: ['konark'],
+    logline: '',
+    stills: [],
+    shared: false,
+    credits: [],
   },
   {
     id: 'neeliraat',
@@ -58,16 +98,18 @@ export const works: Work[] = [
     logline: 'A night-shift nurse in old Hyderabad and the patient who knows her name.',
     media: img('posters/neeli-raat', 'covers/salt-2'),
     stills: [img('stills/kiran-neeli-raat', 'covers/salt-2'), img('stills/sameer-charminar', 'covers/salt-2')],
+    shared: true,
     credits: [
       { personId: 'arjun', role: 'Director', dept: 'Direction' },
+      { personId: 'aditi', role: 'Line Producer', dept: 'Production' },
       { personId: 'kiran', role: 'Camera Operator', dept: 'Camera' },
       { personId: 'raghu', role: 'Camera Operator, 2nd unit', dept: 'Camera' },
-      { personId: 'sameer', role: 'Gaffer', dept: 'Lighting' },
       { personId: 'ishaan', role: 'Production Designer', dept: 'Art' },
       { personId: 'zoya', role: 'Editor', dept: 'Post' },
       { personId: 'farhan', role: 'Sound Recordist', dept: 'Sound' },
       { personId: 'lakshmi', role: 'Sister Mary', dept: 'Cast' },
     ],
+    proposed: [{ personId: 'sameer', role: 'Gaffer', dept: 'Lighting', line: 'Gaffer', correction: 'Chief Lighting Technician, not Gaffer' }],
   },
   {
     id: 'monsoon',
@@ -79,13 +121,28 @@ export const works: Work[] = [
     logline: 'A postman on the backwaters starts answering letters no one will ever collect.',
     media: img('posters/monsoon-letters', 'covers/paper-boats'),
     stills: [img('stills/kiran-monsoon-letters', 'covers/backwaters'), img('covers/backwaters')],
+    shared: true,
     credits: [
       { personId: 'devika', role: 'Director', dept: 'Direction' },
+      { personId: 'aditi', role: 'Line Producer', dept: 'Production' },
       { personId: 'vikram', role: 'Director of Photography', dept: 'Camera' },
       { personId: 'kiran', role: 'Additional Camera', dept: 'Camera' },
       { personId: 'meera', role: 'Editor', dept: 'Post' },
       { personId: 'lakshmi', role: 'Annamma', dept: 'Cast' },
     ],
+  },
+  {
+    id: 'backwaters',
+    title: 'Backwaters',
+    year: '2027',
+    format: 'Docuseries · Malayalam',
+    stage: 'Development',
+    orgIds: ['tidewater'],
+    logline: 'Four episodes on the families who still live on the water.',
+    media: img('covers/backwaters'),
+    stills: [img('covers/backwaters')],
+    shared: true,
+    credits: [],
   },
   {
     id: 'kaaval',
@@ -97,6 +154,7 @@ export const works: Work[] = [
     logline: 'A night watchman guards a factory that closed ten years ago.',
     media: img('posters/kaaval', 'covers/journalist'),
     stills: [img('stills/nandini-kaaval', 'covers/journalist'), img('stills/kiran-kaaval-desert', 'covers/journalist'), img('stills/kiran-kaaval-test', 'covers/quiet-hours')],
+    shared: true,
     credits: [
       { personId: 'kabir', role: 'Writer-Director', dept: 'Direction' },
       { personId: 'kiran', role: 'Director of Photography', dept: 'Camera' },
@@ -114,38 +172,25 @@ export const works: Work[] = [
     logline: 'Eight days after an earthquake, one detective and a city that wants to forget.',
     media: img('posters/fault-lines', 'covers/faultlines'),
     stills: [img('stills/kiran-fault-lines', 'covers/faultlines'), img('stills/tara-faultlines', 'covers/quiet-hours')],
+    shared: true,
     credits: [
       { personId: 'vikram', role: 'DoP, Episodes 1–2', dept: 'Camera' },
       { personId: 'kiran', role: 'DoP, Episodes 3–5', dept: 'Camera' },
       { personId: 'priya', role: 'Focus Puller', dept: 'Camera' },
+      { personId: 'sana', role: '1st AC', dept: 'Camera' },
+      { personId: 'raghu', role: 'Camera Operator', dept: 'Camera' },
+      { personId: 'teja', role: 'Steadicam Operator', dept: 'Camera' },
+      { personId: 'anvi', role: '2nd Unit DoP', dept: 'Camera' },
       { personId: 'tara', role: 'Inspector Rao (recurring)', dept: 'Cast' },
       { personId: 'dev', role: 'ACP Khanna', dept: 'Cast' },
     ],
+    // Blue Lotus has issued Kiran a second credit that he hasn't answered yet.
+    proposed: [{ personId: 'kiran', role: 'Additional photography, Episode 6', dept: 'Camera', line: 'DoP, Episode 6 (additional photography)' }],
   },
+  /* Independent work: shown by the person who made it. No verified credits. */
+  { id: 'salt', title: 'Salt', year: '2022', format: 'Short film · 18 min', stage: 'Released', orgIds: [], ownerId: 'kiran', logline: 'Official selection at two regional festivals.', media: img('stills/kiran-salt', 'covers/salt-water'), stills: [img('stills/kiran-salt', 'covers/salt-water')], shared: true, credits: [] },
+  { id: 'chairain', title: 'Chai & Rain', year: '2021', format: 'Music video', stage: 'Released', orgIds: [], ownerId: 'kiran', logline: 'Independent release, 1.2M views.', media: img('stills/chai-rain', 'covers/morning-ritual'), stills: [img('stills/chai-rain', 'covers/morning-ritual')], shared: true, credits: [] },
+  { id: 'tworooms', title: 'Two Rooms', year: '2023', format: 'Theatre · Prithvi', stage: 'Released', orgIds: [], ownerId: 'tara', logline: '32 shows across Mumbai and Pune.', media: img('stills/tara-stage', 'covers/neon-monsoon'), stills: [img('stills/tara-stage', 'covers/neon-monsoon')], shared: true, credits: [] },
 ];
 
-const independent = (id: string, ownerId: string, title: string, year: string, format: string, logline: string, still: string, fallback: string): Work => ({
-  id, title, year, format, stage: 'Released', orgIds: [], ownerId, logline, media: img(still, fallback), stills: [img(still, fallback)], credits: [],
-});
-works.push(
-  independent('salt', 'kiran', 'Salt', '2022', 'Short film · 18 min', 'Official selection at two regional festivals.', 'stills/kiran-salt', 'covers/salt-water'),
-  independent('chairain', 'kiran', 'Chai & Rain', '2021', 'Music video', 'Independent release, 1.2M views.', 'stills/chai-rain', 'covers/morning-ritual'),
-  independent('tworooms', 'tara', 'Two Rooms', '2023', 'Theatre · Prithvi', '32 shows across Mumbai and Pune.', 'stills/tara-stage', 'covers/neon-monsoon'),
-);
-
-export const work = (id: string) => works.find((w) => w.id === id);
-
-const TITLE_TO_WORK: Record<string, string> = {
-  'Neela Akasham': 'neela',
-  'Neeli Raat': 'neeliraat',
-  'Monsoon Letters': 'monsoon',
-  Kaaval: 'kaaval',
-  Salt: 'salt',
-  'Chai & Rain': 'chairain',
-  'Two Rooms': 'tworooms',
-  'Fault Lines · S1': 'faultlines',
-  'Fault Lines · Season 1': 'faultlines',
-};
-export const workIdForTitle = (title: string) => TITLE_TO_WORK[title];
-export const worksForOrg = (orgId: string) => works.filter((w) => w.orgIds.includes(orgId));
-export const isLive = (w: Work) => w.stage !== 'Released';
+export const isLive = (w: { stage: WorkStage }) => w.stage !== 'Released';

@@ -1,8 +1,8 @@
 import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
-import { isLive, worksForOrg, type Work } from '../../data/works';
-import { world, toPublicWork } from '../../state/world';
+import { isLive, type Work } from '../../data/works';
+import { world, worksForOrg } from '../../state/world';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
@@ -35,7 +35,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   if (load.state === 'error' && !isTab) return <PageError what="page" retry={load.retry} />;
 
   if (!o) return <EmptyState title="Page unavailable" />;
-  const ws = [...world.projects.filter((p) => p.houseId === id).map(toPublicWork).filter((w): w is Work => !!w), ...worksForOrg(id)];
+  const ws = worksForOrg(id);
   const live = ws.filter(isLive);
   const made = ws.filter((w) => !isLive(w));
   const roles = [...world.roles.filter((r) => r.orgId === id && r.visibility === 'open' && !roleStatus[r.id]), ...seed.opportunities.filter((x) => x.orgId === id && !roleStatus[x.id])];

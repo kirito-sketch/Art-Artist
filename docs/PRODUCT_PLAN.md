@@ -48,7 +48,7 @@ Mental model:
 | Fine arts experience | Same model (organisation → work → person → participation → credit); pressure-test each concept, do not design screens. |
 | Film news | Undecided who publishes. The product works without it. |
 | Inbox split by identity | Only if members report mixing personal and house conversations. |
-| Visual direction final pick, Home A vs B | Postponed decisions; both kept intact. |
+| Visual direction final pick | Minimal is the working baseline for new work (see DECISIONS.md §10); Glass archived pending confirmation. Home is decided: Large Cards. |
 
 ## Decisions taken in this pass
 
@@ -122,6 +122,10 @@ The prototype defaults to A. B stays in the panel ("Crew and casting roles") for
 
 ## Decided vs hypotheses (current)
 
+**Phase status:** Version 18 consolidates the model. Feature expansion is paused until the first production-house interviews (docs/VALIDATION_PLAN.md).
+
 **Decided:** individuals can't self-claim credits · one account with separate personal and house contexts · the house profile is its public identity · comments removed · Mark all as read, not Clear all · members are permissions, not team management · Minimal and Glass active, Bold and Doodle archived.
 
-**Hypotheses:** Slate vs Pulse · Work first vs Hiring first · "Need" wording · private roles · Interest vs Respond · identity-aware notification behaviour · production-side credit authority · independent-project credit authority.
+**Decided since:** Large Cards is the individual Home · one primary design by default · Slate and Work first are the primary house designs (alternatives archived).
+
+**Hypotheses:** Slate and Work first still need validating with houses · "Need" wording · private roles · Interest vs structured responses · identity-aware notification behaviour · production-side credit authority · independent-project credit authority · project publication lifecycle.

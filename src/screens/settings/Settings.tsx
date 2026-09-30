@@ -64,7 +64,7 @@ function Personal() {
       <Group title="Account">
         <Row label="Name" value={me.name} chevron={false} />
         <Row label="Phone" value="+91 98••• ••210" chevron={false} />
-        <Row label="Email" value="kiran@••••.in" chevron={false} />
+        <Row label="Email" value={`${me.name.split(" ")[0].toLowerCase()}@••••.in`} chevron={false} />
       </Group>
 
       <Group title="Privacy and discoverability" note="Credits you've accepted are always public on the project. That's what makes them credible.">
@@ -118,12 +118,11 @@ function Personal() {
 const MEMBERS: Record<string, { name: string; role: string; credits: boolean; you?: boolean }[]> = {
   konark: [
     { name: 'Rajeev Menon', role: 'Owner', credits: true },
-    { name: 'Aditi Ghosh', role: 'Member', credits: true },
-    { name: 'Kiran Varma', role: 'Member', credits: false, you: true },
+    { name: 'Aditi Ghosh', role: 'Member', credits: true, you: true },
   ],
   tidewater: [
     { name: 'Susan Mathew', role: 'Owner', credits: true },
-    { name: 'Kiran Varma', role: 'Member', credits: false, you: true },
+    { name: 'Aditi Ghosh', role: 'Member', credits: false, you: true },
   ],
 };
 

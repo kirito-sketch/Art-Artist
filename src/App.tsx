@@ -12,7 +12,7 @@ import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
 import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
 import { EditProfile } from './screens/profile/EditProfile';
-import { ProductionHome, ProjectScreen } from './screens/production/Production';
+import { ProductionHome } from './screens/production/Production';
 import { WorkScreen } from './screens/org/WorkScreen';
 import { OrgScreen } from './screens/org/OrgScreen';
 import { SettingsScreen } from './screens/settings/Settings';
@@ -52,7 +52,7 @@ function RouteView({ r }: { r: Route }) {
     case 'editProfile':
       return <EditProfile />;
     case 'project':
-      return <ProjectScreen id={r.id} />;
+      return <HouseProjectScreen id={r.id} />;
     case 'work':
       return <WorkScreen id={r.id} />;
     case 'org':

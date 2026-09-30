@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Bell, CheckCircle2, Clapperboard, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
+import { world } from '../../state/world';
 import type { Opportunity } from '../../data/types';
 import { useStore } from '../../state/store';
 import { forYou, kindLabel, networkFor, person, postsFor } from '../../state/selectors';
@@ -110,7 +111,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
 
           {hasHero && (
             <div className="group">
-              <Row icon={<Clapperboard size={20} />} label="All open roles" value={String(seed.opportunities.length)} onPress={() => goDiscover('roles')} />
+              <Row icon={<Clapperboard size={20} />} label="All open roles" value={String(seed.opportunities.length + world.roles.filter((r) => r.visibility === 'open').length)} onPress={() => goDiscover('roles')} />
             </div>
           )}
 

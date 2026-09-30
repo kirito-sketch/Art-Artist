@@ -1,64 +1,25 @@
-import { Bell, ChevronDown, ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, ChevronDown, Lock, Plus } from 'lucide-react';
 import * as seed from '../../data/seed';
-import type { Media } from '../../data/types';
-import { isLive, work, worksForOrg, type Work } from '../../data/works';
 import { useStore } from '../../state/store';
-import { org, person } from '../../state/selectors';
-import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
-import { world, publicName } from '../../state/world';
+import { org, party } from '../../state/selectors';
+import { publicName, world, type HouseProject } from '../../state/world';
+import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
 
 /*
- * EXPLORATION, not confirmed architecture. See docs/PRODUCTION_HOUSE_EXPLORATION.md.
- * The public record (Work) is shared with the rest of Ana. What lives here is only what the house
- * sees privately: needs not yet opened, invitations not yet accepted, credits not yet public.
+ * House Home. Slate is the primary direction: the house's work is the visual centre and operational
+ * signals sit on the project they belong to. Pulse and Queue are archived references for stakeholder
+ * comparison only; new work is designed for Slate. Everything reads from the one project model.
  */
 
-type NeedState = 'private' | 'open' | 'filled';
-interface Need {
-  id: string;
-  position: string;
-  dept: string;
-  state: NeedState;
-  opportunityId?: string;
-}
-interface Invite {
-  personId: string;
-  position: string;
-  dept: string;
-}
-interface Workspace {
-  needs: Need[];
-  invites: Invite[];
-  disputes: { personId: string; asked: string }[];
-}
-
-const PRIVATE: Record<string, Workspace> = {
-  neela: {
-    needs: [
-      { id: 'n1', position: 'Director of Photography', dept: 'Camera', state: 'open', opportunityId: 'o-neela-dop' },
-      { id: 'n2', position: 'Journalist (supporting)', dept: 'Cast', state: 'open', opportunityId: 'o-neela-journalist' },
-      { id: 'n3', position: 'Colourist', dept: 'Post', state: 'private' },
-      { id: 'n4', position: 'Gaffer', dept: 'Lighting', state: 'private' },
-    ],
-    invites: [{ personId: 'sana', position: '1st AC', dept: 'Camera' }],
-    disputes: [],
-  },
-  neeliraat: { needs: [], invites: [], disputes: [{ personId: 'sameer', asked: 'Chief Lighting Technician, not Gaffer' }] },
-};
-/** A project only the house can see: no public page until they choose to share it. */
-const UNTITLED = { id: 'untitled', title: 'Untitled thriller', format: 'Web series · Hindi', stage: 'Development' };
-
-const ws = (id: string): Workspace => PRIVATE[id] ?? { needs: [], invites: [], disputes: [] };
-
-/** Who has responded to the house's open roles, via the same interest model individuals use. */
-function useSignals(house: string) {
-  const { interestsReceived: all } = useStore();
-  const interestsReceived = all.filter((i) => !i.withdrawn);
-  const works = worksForOrg(house);
-  const live = works.filter(isLive);
-  const interestFor = (w: Work) => interestsReceived.filter((i) => seed.opportunities.find((o) => o.id === i.opportunityId)?.project === w.title);
-  return { works, live, interestFor, interestsReceived };
+function useHouse() {
+  const { acting, interestsReceived, roleStatus, notifications } = useStore();
+  const mine = world.projects.filter((p) => p.houseId === acting);
+  const co = world.projects.filter((p) => p.coHouseIds?.includes(acting) && p.shared);
+  const live = mine.filter((p) => p.stage !== 'Released');
+  const rolesOf = (p: HouseProject) => world.roles.filter((r) => r.projectId === p.id && !roleStatus[r.id]);
+  const interestOf = (p: HouseProject) => interestsReceived.filter((i) => !i.withdrawn && rolesOf(p).some((r) => r.id === i.opportunityId));
+  const houseNotes = notifications.filter((n) => n.forId === acting);
+  return { acting, mine, co, live, rolesOf, interestOf, houseNotes };
 }
 
 function HouseTop() {
@@ -88,9 +49,6 @@ function HouseTop() {
   );
 }
 
-/* ------------------------------------------------------------- Home, A: Slate */
-
-/** A. Slate. Our work first, as artwork. Signals live on the project they belong to. */
 export function ProductionHome() {
   const { houseHome } = useStore();
   if (houseHome === 'pulse') return <PulseHome />;
@@ -98,36 +56,45 @@ export function ProductionHome() {
   return <SlateHome />;
 }
 
+/* ------------------------------------------------------------ Slate (primary) */
+
 function SlateHome() {
-  const { acting, push } = useStore();
-  const { works, live, interestFor } = useSignals(acting);
-  const lead = live[0];
+  const { push } = useStore();
+  const h = useHouse();
+  const lead = [...h.live].sort((a, b) => Number(!!b.artwork) - Number(!!a.artwork) || Number(b.shared) - Number(a.shared))[0];
   return (
     <div className="screen" data-scroll="home">
       <HouseTop />
       {lead ? (
-        <PressCard className="slate-hero" onPress={() => push({ name: 'project', id: lead.id })} scale={0.985}>
-          <Photo media={lead.stills[0] ?? lead.media} className="slate-hero-photo" showPlay={false} />
+        <PressCard className="slate-hero" onPress={() => push({ name: 'hproject', id: lead.id })} scale={0.985}>
+          {lead.artwork ? <Photo media={lead.artwork} className="slate-hero-photo" showPlay={false} /> : <div className="slate-hero-photo whero-empty" />}
           <div className="slate-hero-text">
-            <p className="now-card-kicker">{lead.stage}</p>
-            <p className="slate-hero-title">{lead.title}</p>
-            <Signals w={lead} interested={interestFor(lead).length} />
+            <p className="now-card-kicker">
+              {lead.stage}
+              {!lead.shared && ' · Not announced'}
+            </p>
+            <p className="slate-hero-title">{lead.workingTitle}</p>
+            <Signals p={lead} />
           </div>
         </PressCard>
-      ) : world.projects.some((p) => p.houseId === acting) ? null : (
+      ) : (
         <EmptyHouse />
       )}
       <Around />
-      <Slate works={works} />
-      <PeopleForNeeds />
+      <Slate />
+      <PeopleForRoles />
     </div>
   );
 }
 
-function Signals({ w, interested }: { w: Work; interested: number }) {
-  const s = ws(w.id);
-  const open = s.needs.filter((n) => n.state === 'open').length;
-  const items = [interested && `${interested} interested`, open && `${open} roles open`, s.invites.length && `${s.invites.length} added, no credit yet`].filter(Boolean);
+/** Live signals, written as what is happening on this project, not as counters. */
+function Signals({ p }: { p: HouseProject }) {
+  const h = useHouse();
+  const interested = h.interestOf(p).length;
+  const open = h.rolesOf(p).filter((r) => r.visibility === 'open').length;
+  const corrections = world.credits.filter((c) => c.projectId === p.id && c.status === 'correction').length;
+  const items = [interested && `${interested} interested`, open && `${open} ${open === 1 ? 'role' : 'roles'} open`, corrections && `${corrections} correction asked`].filter(Boolean);
+  if (!items.length) return null;
   return (
     <p className="slate-signals">
       {items.map((t) => (
@@ -142,58 +109,39 @@ function EmptyHouse() {
   return (
     <div className="house-empty">
       <p className="title-2">Nothing in production</p>
-      <p className="meta">Start a project when you're ready. {org(acting).name}'s past work already shows on your page.</p>
+      <p className="meta">Start a project when you're ready. It stays private until you share it. {org(acting).name}'s past work already shows on your page.</p>
       <Button onClick={() => openSheet({ name: 'newProject' })}>Start a project</Button>
     </div>
   );
 }
 
-/** What is happening around our work: people, credits, interest. Only real events, newest first. */
+/** What is happening around our work: the house's own notifications, with faces. */
 function Around({ expanded }: { expanded?: boolean }) {
-  const { acting, push, openSheet } = useStore();
-  const { live, interestFor } = useSignals(acting);
-  type Item = { key: string; faces: string[]; text: string; sub: string; poster?: Media; flag?: boolean; go: () => void };
-  const items: Item[] = [];
-  live.forEach((w) => {
-    const ints = interestFor(w);
-    if (ints.length)
-      items.push({
-        key: `i-${w.id}`,
-        faces: ints.map((i) => i.personId),
-        text: `${person(ints[0].personId).name}${ints.length > 1 ? ` and ${ints.length - 1} others` : ''} are interested`,
-        sub: `${w.title} · open roles`,
-        go: () => openSheet({ name: 'reviewInterest' }),
-      });
-  });
-  Object.entries(PRIVATE).forEach(([wid, s]) => {
-    const w = work(wid)!;
-    if (!w.orgIds.includes(acting)) return;
-    s.disputes.forEach((d) =>
-      items.push({ key: `d-${wid}`, faces: [d.personId], text: `${person(d.personId).name} asked to correct a credit`, sub: `${w.title} · "${d.asked}"`, flag: true, go: () => push({ name: 'project', id: wid }) }),
-    );
-  });
-  if (acting === 'konark') {
-    items.push({ key: 'acc', faces: ['lakshmi'], text: 'Lakshmi Pillai accepted the credit as Amma', sub: 'Neela Akasham · now on the public page', go: () => push({ name: 'work', id: 'neela' }), poster: work('neela')!.media });
-    items.push({ key: 'saw', faces: ['vikram', 'meera', 'devika'], text: 'Monsoon Letters credits are public', sub: 'Co-produced with Tidewater Films · 5 people', go: () => push({ name: 'work', id: 'monsoon' }), poster: work('monsoon')!.media });
-  }
+  const { push, markNotificationRead } = useStore();
+  const h = useHouse();
+  const items = h.houseNotes.slice(0, expanded ? 8 : 3);
   if (!items.length) return null;
-  const shown = expanded ? items : items.slice(0, 3);
   return (
     <section className="section">
       <SectionHeader title="Around your work" />
       <div className={`list list--flush ${expanded ? 'around--big' : ''}`}>
-        {shown.map((it) => (
-          <PressCard key={it.key} className={`around ${it.flag ? 'around--flag' : ''}`} onPress={it.go} scale={0.985}>
+        {items.map((n) => (
+          <PressCard
+            key={n.id}
+            className={`around ${n.kind === 'credit' && /correct|isn't right/.test(n.text) ? 'around--flag' : ''}`}
+            onPress={() => {
+              markNotificationRead(n.id);
+              if (n.route) push(n.route as never);
+            }}
+            scale={0.985}
+          >
             <span className="faces">
-              {it.faces.slice(0, 3).map((f) => (
-                <Avatar key={f} party={person(f)} size={expanded ? 40 : 32} />
-              ))}
+              <Avatar party={party(n.actorId)!} size={expanded ? 40 : 32} />
             </span>
             <span className="around-text">
-              <span className="item-title">{it.text}</span>
-              <span className="meta">{it.sub}</span>
+              <span className="item-title">{n.text}</span>
+              <span className="meta">{n.time}</span>
             </span>
-            {it.poster && expanded && <Photo media={it.poster} className="around-poster" showPlay={false} />}
           </PressCard>
         ))}
       </div>
@@ -201,64 +149,60 @@ function Around({ expanded }: { expanded?: boolean }) {
   );
 }
 
-function Slate({ works, compact }: { works: Work[]; compact?: boolean }) {
-  const { acting, push } = useStore();
+function Slate({ compact }: { compact?: boolean }) {
+  const { push } = useStore();
+  const h = useHouse();
+  const poster = (p: HouseProject) =>
+    p.artwork ? (
+      <Photo media={p.artwork} className={`rail-poster ${compact ? 'rail-poster--s' : ''}`} showPlay={false} />
+    ) : (
+      <span className={`rail-poster ph-noposter ${compact ? 'rail-poster--s' : ''}`}>{p.shared ? p.workingTitle[0] : <Lock size={20} />}</span>
+    );
   return (
     <section className="section">
       <SectionHeader title="Our slate" />
       <div className="rail">
-        {world.projects
-          .filter((p) => p.houseId === acting)
-          .map((p) => (
-            <Pressable key={p.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'hproject', id: p.id })}>
-              {p.artwork ? (
-                <Photo media={p.artwork} className={`rail-poster ${compact ? 'rail-poster--s' : ''}`} showPlay={false} />
-              ) : (
-                <span className={`rail-poster ph-noposter ${compact ? 'rail-poster--s' : ''}`}>{p.shared ? p.workingTitle[0] : <Lock size={20} />}</span>
-              )}
-              <p className="item-title">{p.workingTitle}</p>
-              <p className="meta">{p.shared ? `Shared as ${publicName(p)}` : 'Only your house sees this'}</p>
-            </Pressable>
-          ))}
-        {works.map((w) => (
-          <Pressable key={w.id} className="rail-item" scale={0.97} onClick={() => push({ name: isLive(w) || PRIVATE[w.id] ? 'project' : 'work', id: w.id })}>
-            <Photo media={w.media} className={`rail-poster ${compact ? 'rail-poster--s' : ''}`} showPlay={false} />
-            <p className="item-title">{w.title}</p>
-            <p className="meta">{isLive(w) ? w.stage : w.orgIds[0] !== acting ? `Co-production · ${w.year}` : w.year}</p>
+        {h.mine.map((p) => (
+          <Pressable key={p.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'hproject', id: p.id })}>
+            {poster(p)}
+            <p className="item-title">{p.workingTitle}</p>
+            <p className="meta">{!p.shared ? 'Only your house sees this' : p.stage === 'Released' ? p.year : p.stage}</p>
           </Pressable>
         ))}
-        {acting === 'konark' && (
-          <Pressable className="rail-item" scale={0.97} onClick={() => push({ name: 'project', id: UNTITLED.id })}>
-            <span className={`rail-poster ph-noposter ${compact ? 'rail-poster--s' : ''}`}>
-              <Lock size={20} />
-            </span>
-            <p className="item-title">{UNTITLED.title}</p>
-            <p className="meta">Only your house sees this</p>
+        {h.co.map((p) => (
+          <Pressable key={p.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'work', id: p.id })}>
+            {poster(p)}
+            <p className="item-title">{publicName(p)}</p>
+            <p className="meta">Co-production with {org(p.houseId!).name}</p>
           </Pressable>
-        )}
+        ))}
       </div>
     </section>
   );
 }
 
-/** Relevant people for needs the house hasn't opened yet: the network doing the work a job board would. */
-function PeopleForNeeds() {
-  const { acting, push } = useStore();
-  if (acting !== 'konark') return null;
-  const picks = [
-    { p: person('rhea'), why: 'Colourist · still private on Neela Akasham' },
-    { p: person('sameer'), why: 'Gaffer · lit Neeli Raat for you' },
-  ];
+/** People on Ana who fit roles the house hasn't opened yet: the network doing the work a job board would. */
+function PeopleForRoles() {
+  const { push } = useStore();
+  const h = useHouse();
+  const picks = h.mine
+    .flatMap((p) => h.rolesOf(p).filter((r) => r.visibility === 'private').map((r) => ({ r, p })))
+    .map(({ r, p }) => ({ r, p, who: seed.people.find((x) => x.visibility === 'public' && x.role.toLowerCase().includes(r.role.toLowerCase().split(' ')[0])) }))
+    .filter((x) => x.who)
+    .slice(0, 3);
+  if (!picks.length) return null;
   return (
     <section className="section">
-      <SectionHeader title="For your needs" />
+      <SectionHeader title="For roles you haven't opened" />
       <div className="list list--flush">
-        {picks.map(({ p, why }) => (
-          <PressCard key={p.id} className="prow" onPress={() => push({ name: 'profile', id: p.id })} scale={0.985}>
-            <Avatar party={p} size={44} available={!!p.availableFrom} />
+        {picks.map(({ r, p, who }) => (
+          <PressCard key={r.id} className="prow" onPress={() => push({ name: 'profile', id: who!.id })} scale={0.985}>
+            <Avatar party={who!} size={44} available={!!who!.availableFrom} />
             <div className="prow-text">
-              <p className="item-title">{p.name}</p>
-              <p className="meta">{why}</p>
+              <p className="item-title">{who!.name}</p>
+              <p className="meta">
+                {r.role} · still private on {p.workingTitle}
+              </p>
             </div>
           </PressCard>
         ))}
@@ -267,49 +211,39 @@ function PeopleForNeeds() {
   );
 }
 
-/* ------------------------------------------------------------- Home, B: Pulse */
+/* ------------------------------------------------------------ Archived references */
 
-/** B. Pulse. What is happening around our work first. The slate is a shelf underneath. */
+/** Archived: activity first, slate underneath. Reference only. */
 function PulseHome() {
-  const { acting } = useStore();
-  const { works, live } = useSignals(acting);
+  const h = useHouse();
   return (
     <div className="screen" data-scroll="home">
       <HouseTop />
-      {live.length ? null : <EmptyHouse />}
+      {!h.live.length && <EmptyHouse />}
       <Around expanded />
-      <PeopleForNeeds />
-      <Slate works={works} compact />
+      <PeopleForRoles />
+      <Slate compact />
     </div>
   );
 }
 
-/* ------------------------------------------------------------- Home, C: Queue */
-
-/** C. Queue. Decisions first, then a plain list. Kept as the reference for the work-queue model. */
+/** Archived: decisions first, then a plain list. Reference for what an admin dashboard would look like. */
 function QueueHome() {
-  const { acting, push } = useStore();
-  const { works, interestsReceived } = useSignals(acting);
-  const invites = works.reduce((n, w) => n + ws(w.id).invites.length, 0);
-  const disputes = works.reduce((n, w) => n + ws(w.id).disputes.length, 0);
-  const attention = [
-    interestsReceived.length && { label: 'Interest to review', n: `${interestsReceived.length}`, go: () => push({ name: 'project', id: 'neela' }) },
-    disputes && { label: 'Credit correction asked', n: `${disputes}`, go: () => push({ name: 'project', id: 'neeliraat' }) },
-    invites && { label: 'Added, no credit yet', n: `${invites}`, go: () => push({ name: 'project', id: 'neela' }) },
-  ].filter(Boolean) as { label: string; n: string; go: () => void }[];
+  const { push } = useStore();
+  const h = useHouse();
+  const unread = h.houseNotes.filter((n) => n.unread);
   return (
     <div className="screen" data-scroll="home">
       <HouseTop />
-      {attention.length > 0 && (
+      {unread.length > 0 && (
         <section className="section">
           <SectionHeader title="Needs a decision" />
           <div className="list list--flush">
-            {attention.map((a) => (
-              <PressCard key={a.label} className="prow" onPress={a.go} scale={0.985}>
+            {unread.map((n) => (
+              <PressCard key={n.id} className="prow" onPress={() => n.route && push(n.route as never)} scale={0.985}>
                 <div className="prow-text">
-                  <p className="item-title">{a.label}</p>
+                  <p className="item-title">{n.text}</p>
                 </div>
-                <span className="ph-count">{a.n}</span>
               </PressCard>
             ))}
           </div>
@@ -318,160 +252,22 @@ function QueueHome() {
       <section className="section">
         <SectionHeader title="Projects" />
         <div className="list list--flush">
-          {works.map((w) => (
-            <PressCard key={w.id} className="rrow" onPress={() => push({ name: 'project', id: w.id })} scale={0.985}>
-              <Photo media={w.media} className="rrow-thumb" showPlay={false} />
+          {h.mine.map((p) => (
+            <PressCard key={p.id} className="rrow" onPress={() => push({ name: 'hproject', id: p.id })} scale={0.985}>
+              {p.artwork ? <Photo media={p.artwork} className="rrow-thumb" showPlay={false} /> : <span className="rrow-thumb ph-noposter">{p.workingTitle[0]}</span>}
               <div className="rrow-text">
-                <p className="item-title">{w.title}</p>
-                <p className="meta">{w.stage}</p>
+                <p className="item-title">{p.workingTitle}</p>
+                <p className="meta">
+                  {p.stage}
+                  {!p.shared && ' · private'}
+                </p>
               </div>
             </PressCard>
           ))}
         </div>
       </section>
-      {!works.length && <EmptyHouse />}
+      {!h.mine.length && <EmptyHouse />}
     </div>
   );
 }
 
-/* --------------------------------------------------------- Private workspace */
-
-const NEED_LABEL: Record<NeedState, string> = { private: 'Only your house', open: 'Open on Ana', filled: 'Filled' };
-
-/** The house's private view of one project. The public page stays the source of what others see. */
-export function ProjectScreen({ id }: { id: string }) {
-  const { pop, push, showToast, openSheet, acting, interestsReceived, memberships, setActing } = useStore();
-  const w = work(id);
-  const s = ws(id);
-  const [needs, setNeeds] = useState(s.needs);
-  const title = w?.title ?? UNTITLED.title;
-  const meta = w ? `${w.format} · ${w.stage}` : `${UNTITLED.format} · ${UNTITLED.stage}`;
-  const people = [
-    ...(w?.credits ?? []).map((c) => ({ personId: c.personId, position: c.role, dept: c.dept, state: 'confirmed' as const })),
-    ...s.invites.map((i) => ({ ...i, state: 'invited' as const })),
-  ];
-  const depts = [...new Set(people.map((e) => e.dept))];
-  // Opened from a notification while acting as yourself: show whose workspace this is, and require a switch to act.
-  const houseId = w ? w.orgIds.find((x) => memberships.includes(x)) ?? w.orgIds[0] : 'konark';
-  const canAct = acting === houseId;
-
-  return (
-    <div className="screen">
-      <header className="topbar topbar--nav">
-        <IconButton label="Back" onClick={pop}>
-          <ChevronLeft size={26} />
-        </IconButton>
-        {w && (
-          <button className="link" onClick={() => push({ name: 'work', id })}>
-            View public page
-          </button>
-        )}
-      </header>
-      <div className="title-block">
-        <p className="kicker">{meta}</p>
-        <h1 className="large-title">{title}</h1>
-        <p className="meta">
-          {w ? `${w.orgIds.length > 1 ? 'Co-production' : 'Production'}: ${w.orgIds.map((o) => org(o).name).join(', ')}` : `Only ${org(acting).name} can see this project`}
-        </p>
-      </div>
-
-      {!canAct && (
-        <div className="acting-banner">
-          <Avatar party={org(houseId)} size={28} />
-          <span>
-            <b>{org(houseId).name}</b>
-            <span className="meta">You're viewing as yourself. Switch to act for the house.</span>
-          </span>
-          <Button size="s" onClick={() => setActing(houseId, false, true)}>
-            Switch
-          </Button>
-        </div>
-      )}
-
-      {(!w || isLive(w)) && (
-        <section className="section">
-          <SectionHeader title="Roles to fill" />
-          <p className="meta ph-note">Keep a role to your house, or open it on Ana so the right people can find it and show interest.</p>
-          <div className="list list--flush">
-            {needs.map((n) => {
-              const ints = n.opportunityId ? interestsReceived.filter((i) => i.opportunityId === n.opportunityId && !i.withdrawn).length : 0;
-              return (
-                <div key={n.id} className="prow">
-                  <div className="prow-text">
-                    <p className="item-title">{n.position}</p>
-                    <p className="meta">
-                      {n.state === 'open' ? <Globe2 size={12} /> : <Lock size={12} />} {NEED_LABEL[n.state]}
-                      {ints ? ` · ${ints} interested` : ''}
-                    </p>
-                  </div>
-                  {n.state === 'private' ? (
-                    <Button
-                      size="s"
-                      variant="outline"
-                      disabled={!canAct}
-                      onClick={() => {
-                        setNeeds((xs) => xs.map((x) => (x.id === n.id ? { ...x, state: 'open' } : x)));
-                        showToast({ text: `${n.position} is now open on Ana` });
-                      }}
-                    >
-                      Open on Ana
-                    </Button>
-                  ) : (
-                    <Button size="s" variant="secondary" disabled={!ints || !canAct} onClick={() => openSheet({ name: 'reviewInterest', opportunityId: n.opportunityId })}>
-                      {ints ? 'Review' : 'No one yet'}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-            {!needs.length && <p className="meta">No roles yet. Add one when you know what you need.</p>}
-          </div>
-        </section>
-      )}
-
-      {people.length > 0 && (
-        <section className="section">
-          <SectionHeader title="On this project" />
-          <p className="meta ph-note">Added people are private to your house and them. Issue a credit when it's earned; it's public only once they accept.</p>
-          {depts.map((d) => (
-            <div key={d} className="ph-dept">
-              <p className="meta">{d}</p>
-              <div className="list list--flush">
-                {people
-                  .filter((e) => e.dept === d)
-                  .map((e) => {
-                    const p = person(e.personId);
-                    const disputed = s.disputes.find((x) => x.personId === e.personId);
-                    return (
-                      <PressCard key={e.personId + e.position} className="prow" onPress={() => push({ name: 'profile', id: p.id })} scale={0.99}>
-                        <Avatar party={p} size={40} />
-                        <div className="prow-text">
-                          <p className="item-title">{p.name}</p>
-                          <p className="meta">{disputed ? `Asked for: ${disputed.asked}` : e.position}</p>
-                        </div>
-                        <span className={`ph-state ph-state--${disputed ? 'invited' : e.state}`}>{disputed ? 'Correction' : e.state === 'invited' ? 'Added' : 'Credited'}</span>
-                      </PressCard>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
-          {s.disputes.length > 0 && (
-            <Button block disabled={!canAct} onClick={() => showToast({ text: 'Credit updated. Sameer Ali will see the change.', tone: 'success' })}>
-              Accept correction
-            </Button>
-          )}
-        </section>
-      )}
-
-      {!w && (
-        <section className="section">
-          <p className="meta">Only a title so far. Share it on Ana when you want people to see it.</p>
-        </section>
-      )}
-      <p className="end">
-        <Verified size={12} /> Exploration: house workspace
-      </p>
-    </div>
-  );
-}

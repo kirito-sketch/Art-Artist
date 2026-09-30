@@ -1,8 +1,7 @@
 import { ChevronLeft, MoreHorizontal, Share } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
-import { work as staticWork } from '../../data/works';
-import { world, project as wproject, toPublicWork } from '../../state/world';
+import { world, project as wproject, work } from '../../state/world';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
@@ -17,7 +16,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
 export function WorkScreen({ id }: { id: string }) {
   const { pop, push, openSheet, viewer, acting, setHero, roleStatus } = useStore();
   const wp = wproject(id);
-  const w = staticWork(id) ?? (wp ? toPublicWork(wp) : undefined);
+  const w = work(id);
   const [scrollY, setScrollY] = useState(0);
   useEffect(() => {
     setHero('work', scrollY < 300);
@@ -43,7 +42,8 @@ export function WorkScreen({ id }: { id: string }) {
   const roles = [...seed.opportunities.filter((o) => o.project === w.title), ...world.roles.filter((r) => r.projectId === id && r.visibility === 'open')].filter((o) => !roleStatus[o.id]);
   const depts = [...new Set(w.credits.map((c) => c.dept))];
   const mine = acting === 'self' ? w.credits.find((c) => c.personId === viewer.id) : undefined;
-  const isLead = acting !== 'self' && w.orgIds.includes(acting);
+  // Only the lead production opens the workspace. Co-producers see the public page like everyone else (authority is an open question).
+  const isLead = acting !== 'self' && wp?.houseId === acting;
   const released = w.stage === 'Released';
 
   return (
@@ -112,7 +112,7 @@ export function WorkScreen({ id }: { id: string }) {
           </div>
         )}
         {isLead && (
-          <Button block variant="secondary" onClick={() => push({ name: wp ? 'hproject' : 'project', id: w.id })}>
+          <Button block variant="secondary" onClick={() => push({ name: 'hproject', id: w.id })}>
             Open in your workspace
           </Button>
         )}
@@ -132,7 +132,8 @@ export function WorkScreen({ id }: { id: string }) {
           <p className="meta work-foot">Credits for independent projects are not verified yet.</p>
         ) : (
         <section className="section section--flush">
-          <SectionHeader title={released ? 'Credits' : 'Attached so far'} />
+          <SectionHeader title="Credits" />
+          {!w.credits.length && <p className="meta">{released ? 'No credits issued on Ana yet.' : 'Credits appear once the production issues them and each person accepts.'}</p>}
           {depts.map((d) => (
             <div key={d} className="ph-dept">
               <p className="meta">{d}</p>

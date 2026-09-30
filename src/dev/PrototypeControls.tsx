@@ -3,35 +3,16 @@ import { Toggle } from '../ui/primitives';
 
 type Persona = 'kiran' | 'tara' | 'konark' | 'tidewater';
 const PERSONAS: { id: Persona; name: string; sub: string }[] = [
-  { id: 'kiran', name: 'Kiran Varma', sub: 'Cinematographer, busy profile' },
+  { id: 'kiran', name: 'Kiran Varma', sub: 'Cinematographer' },
   { id: 'tara', name: 'Tara Menon', sub: 'Actor, early career' },
-  { id: 'konark', name: 'Konark Pictures', sub: 'Kiran acting for a busy house' },
-  { id: 'tidewater', name: 'Tidewater Films', sub: 'Kiran acting for a quiet house' },
+  { id: 'konark', name: 'Konark Pictures', sub: 'Aditi Ghosh acting for a busy house' },
+  { id: 'tidewater', name: 'Tidewater Films', sub: 'Aditi Ghosh acting for a smaller house' },
 ];
-
-type Tag = 'working' | 'alt' | 'ref' | 'open' | 'validate';
-const TAG: Record<Tag, string> = { working: 'Working', alt: 'Alternative', ref: 'Reference', open: 'Undecided', validate: 'Validate' };
-
-function Choice<T extends string>({ title, note, value, onChange, options }: { title: string; note?: string; value: T; onChange: (v: T) => void; options: { id: T; label: string; tag: Tag }[] }) {
-  return (
-    <div className="proto-q">
-      <p className="proto-q-title">{title}</p>
-      {note && <p className="proto-q-note">{note}</p>}
-      {options.map((o) => (
-        <button key={o.id} className={`proto-opt ${value === o.id ? 'is-on' : ''}`} onClick={() => onChange(o.id)}>
-          <span className="proto-radio" />
-          <span className="proto-opt-label">{o.label}</span>
-          <span className={`proto-tag proto-tag--${o.tag}`}>{TAG[o.tag]}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
 
 /**
  * Evaluation panel outside the phone. Not part of the product.
- * Three steps: pick who is using Ana, compare the open questions that apply to them, then adjust
- * the look. Test states are tucked away because they are for checking edge cases, not reviewing.
+ * One primary path: pick who is using Ana. Earlier explorations live in one archive, for stakeholder
+ * comparison only; new product work is designed for the primary path.
  */
 export function PrototypeControls() {
   const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel, canIssue, setCanIssue } = useStore();
@@ -42,7 +23,7 @@ export function PrototypeControls() {
       setActing('self');
       switchViewer(p);
     } else {
-      switchViewer('kiran');
+      switchViewer('aditi');
       setActing(p);
     }
   };
@@ -55,11 +36,23 @@ export function PrototypeControls() {
     { key: 'actionsFail', label: 'Actions fail once (retry works)' },
   ];
   const activeStates = rows.filter((r) => scenario[r.key]).length;
-  const archived = look === 'bold' || look === 'doodle';
+  const archived = homeLayout === 'slides' || houseHome !== 'slate' || houseProfile !== 'work' || roleModel !== 'interest' || look !== 'minimal';
+  const reset = () => {
+    setHomeLayout('cards');
+    setHouseHome('slate');
+    setHouseProfile('work');
+    setRoleModel('interest');
+    setLook('minimal');
+  };
+  const Alt = ({ on, label, click }: { on: boolean; label: string; click: () => void }) => (
+    <button className={`proto-archive-btn ${on ? 'is-on' : ''}`} onClick={on ? reset : click}>
+      {label}
+    </button>
+  );
 
   return (
     <aside className="proto" aria-label="Prototype controls">
-      <p className="proto-step">1 · Who is using Ana</p>
+      <p className="proto-step">Who is using Ana</p>
       {PERSONAS.map((p) => (
         <button key={p.id} className={`proto-persona ${persona === p.id ? 'is-on' : ''}`} onClick={() => pick(p.id)}>
           <span className="proto-radio" />
@@ -69,101 +62,15 @@ export function PrototypeControls() {
           </span>
         </button>
       ))}
-
-      <p className="proto-step">2 · Compare for this person</p>
-      {isHouse ? (
-        <>
-          <Choice
-            title="House Home"
-            note="Slate: the work leads. Pulse: activity leads. Queue: a plain decisions list."
-            value={houseHome}
-            onChange={setHouseHome}
-            options={[
-              { id: 'slate', label: 'Slate', tag: 'working' },
-              { id: 'pulse', label: 'Pulse', tag: 'alt' },
-              { id: 'queue', label: 'Queue', tag: 'ref' },
-            ]}
-          />
-          <Choice
-            title="House page"
-            note="On the Profile tab"
-            value={houseProfile}
-            onChange={setHouseProfile}
-            options={[
-              { id: 'work', label: 'Work first', tag: 'working' },
-              { id: 'hiring', label: 'Hiring first', tag: 'alt' },
-            ]}
-          />
-        </>
-      ) : (
-        <>
-          <Choice
-            title="Home"
-            value={homeLayout}
-            onChange={setHomeLayout}
-            options={[
-              { id: 'slides', label: 'A · Slides', tag: 'open' },
-              { id: 'cards', label: 'B · Large cards', tag: 'open' },
-            ]}
-          />
-          <Choice
-            title="Crew and casting roles"
-            note="A: show interest, with optional answers. B: a separate Respond form."
-            value={roleModel}
-            onChange={setRoleModel}
-            options={[
-              { id: 'interest', label: 'A · One Interest model', tag: 'working' },
-              { id: 'respond', label: 'B · Interest + Respond', tag: 'validate' },
-            ]}
-          />
-          <Choice
-            title="Production pages"
-            note="Open any production from a role or credit"
-            value={houseProfile}
-            onChange={setHouseProfile}
-            options={[
-              { id: 'work', label: 'Work first', tag: 'working' },
-              { id: 'hiring', label: 'Hiring first', tag: 'alt' },
-            ]}
-          />
-        </>
-      )}
-
-      <p className="proto-step">3 · Look</p>
-      <div className="proto-seg">
-        {(
-          [
-            ['minimal', 'Minimal'],
-            ['glass', 'Glass'],
-          ] as const
-        ).map(([id, label]) => (
-          <button key={id} className={look === id ? 'is-on' : ''} onClick={() => setLook(id)}>
-            {label}
-          </button>
-        ))}
-      </div>
-      <details className="proto-more" open={archived}>
-        <summary>Archived looks, for stakeholders</summary>
-        <div className="proto-seg proto-seg--archived">
-          {(
-            [
-              ['bold', 'Bold'],
-              ['doodle', 'Doodle'],
-            ] as const
-          ).map(([id, label]) => (
-            <button key={id} className={look === id ? 'is-on' : ''} onClick={() => setLook(id)}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </details>
+      <p className="proto-q-note proto-primary-note">Primary design: Large Cards Home, Slate house Home, Work-first house page, one Interest model, Minimal visual.</p>
 
       {isHouse && (
         <div className="proto-row proto-row--solo">
-          <span>Kiran can issue credits</span>
-          <Toggle on={canIssue} onChange={setCanIssue} label="Kiran can issue credits" />
+          <span>Aditi can issue credits</span>
+          <Toggle on={canIssue} onChange={setCanIssue} label="Aditi can issue credits" />
         </div>
       )}
+
       <details className="proto-more" open={activeStates > 0}>
         <summary>Test states{activeStates ? ` · ${activeStates} on` : ''}</summary>
         {rows.map((r) => (
@@ -173,29 +80,49 @@ export function PrototypeControls() {
           </div>
         ))}
       </details>
+
+      <details className="proto-more" open={archived}>
+        <summary>Archive, for stakeholder comparison{archived ? ' · showing one' : ''}</summary>
+        <p className="proto-q-note">Earlier explorations. Not maintained; tap again to return to the primary design.</p>
+        <p className="proto-q-title">Individual Home</p>
+        <Alt on={homeLayout === 'slides'} label="Full-screen slides" click={() => setHomeLayout('slides')} />
+        <p className="proto-q-title">House Home</p>
+        <Alt on={houseHome === 'pulse'} label="Pulse · activity first" click={() => setHouseHome('pulse')} />
+        <Alt on={houseHome === 'queue'} label="Queue · decisions list" click={() => setHouseHome('queue')} />
+        <p className="proto-q-title">House page</p>
+        <Alt on={houseProfile === 'hiring'} label="Hiring first" click={() => setHouseProfile('hiring')} />
+        <p className="proto-q-title">Crew and casting roles (validate)</p>
+        <Alt on={roleModel === 'respond'} label="Separate Respond form" click={() => setRoleModel('respond')} />
+        <p className="proto-q-title">Visual</p>
+        <Alt on={look === 'glass'} label="Glass" click={() => setLook('glass')} />
+        <Alt on={look === 'bold'} label="Bold" click={() => setLook('bold')} />
+        <Alt on={look === 'doodle'} label="Doodle" click={() => setLook('doodle')} />
+      </details>
+
       <details className="proto-more">
         <summary>Decided vs still open</summary>
         <p className="proto-q-title">Decided</p>
         <ul className="proto-list">
+          <li>Large Cards is the individual Home</li>
           <li>People can't claim their own credits</li>
+          <li>Added to project is not a credit</li>
           <li>One account; acting for a house is a separate context</li>
           <li>A house's profile is its public page</li>
-          <li>No comments on posts</li>
-          <li>Mark all as read, not Clear all</li>
+          <li>No comments on posts; Mark all as read</li>
           <li>Members are permissions, not a team product</li>
-          <li>Minimal and Glass active; Bold and Doodle archived</li>
+          <li>One primary design; alternatives only when a real hypothesis needs it</li>
         </ul>
         <p className="proto-q-title">Still open</p>
         <ul className="proto-list">
-          <li>Slate vs Pulse; Work first vs Hiring first</li>
-          <li>"Need" wording; private roles</li>
-          <li>One Interest model vs Respond</li>
-          <li>Notifications per identity</li>
           <li>Who issues credits inside a house; co-productions</li>
           <li>Credits for independent projects</li>
+          <li>Interest vs structured responses</li>
+          <li>Project publication lifecycle</li>
+          <li>Linking people not yet on Ana</li>
+          <li>Slate and Work first (working hypotheses)</li>
         </ul>
       </details>
-      <p className="proto-foot">Prototype v2 · Esc goes back</p>
+      <p className="proto-foot">Prototype · Esc goes back</p>
     </aside>
   );
 }

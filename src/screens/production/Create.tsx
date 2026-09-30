@@ -107,6 +107,7 @@ const CREDIT_LABEL = { prepared: 'Credit prepared', proposed: 'Credit proposed',
 export function HouseProjectScreen({ id }: { id: string }) {
   const { pop, push, acting, viewer, interestsReceived, roleStatus, setRoleVisibility, showToast, canIssue, proposePrepared } = useStore();
   const p = project(id);
+  const [confirmRole, setConfirmRole] = useState<string | null>(null);
   const [sheet, setSheet] = useState<null | 'share' | 'details' | 'role' | 'person' | { issue: string } | { edit: string }>(null);
   if (!p) return <EmptyState title="Project not found" />;
   const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
@@ -160,6 +161,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
         <p className="meta settings-note">{p.shared ? 'Changes to these show on the public page.' : 'Private until you share.'}</p>
       </section>
 
+      {(p.stage !== 'Released' || roles.length > 0) && (
       <section className="section">
         <SectionHeader title="Roles" />
         <div className="list list--flush">
@@ -181,8 +183,10 @@ export function HouseProjectScreen({ id }: { id: string }) {
                     variant="outline"
                     disabled={!canAct}
                     onClick={() => {
+                      // On an unannounced project, opening a role is a deliberate, previewed disclosure.
+                      if (!p.shared) return setConfirmRole(r.id);
                       setRoleVisibility(r.id, 'open');
-                      showToast({ text: `${r.role} is open on Ana${p.shared ? '' : ` as part of "${publicName(p)}"`}` });
+                      showToast({ text: `${r.role} is open on Ana` });
                     }}
                   >
                     Open on Ana
@@ -201,6 +205,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
           <Plus size={16} /> Add role
         </Button>
       </section>
+      )}
 
       <section className="section">
         <SectionHeader title="On this project" />
@@ -242,6 +247,25 @@ export function HouseProjectScreen({ id }: { id: string }) {
             ))}
       </section>
 
+      <Sheet open={!!confirmRole} onClose={() => setConfirmRole(null)} title="Open on Ana?">
+        {confirmRole && (
+          <div className="stack">
+            <RoleDisclosure projectId={id} />
+            <Button
+              block
+              size="l"
+              onClick={() => {
+                const r = world.roles.find((x) => x.id === confirmRole)!;
+                setRoleVisibility(confirmRole, 'open');
+                setConfirmRole(null);
+                showToast({ text: `${r.role} is open on Ana as part of "${publicName(p)}"` });
+              }}
+            >
+              Open on Ana
+            </Button>
+          </div>
+        )}
+      </Sheet>
       <Sheet open={sheet === 'share'} onClose={() => setSheet(null)} title="Share on Ana" size="tall">
         {sheet === 'share' && <ShareProject id={id} done={() => setSheet(null)} />}
       </Sheet>
@@ -456,7 +480,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
             <Globe2 size={13} /> Open on Ana
           </button>
         </div>
-        {vis === 'open' && !p.shared && <p className="meta field-hint">The project isn't shared, so the role shows as part of "{publicName(p)}".</p>}
+        {vis === 'open' && !p.shared && <RoleDisclosure projectId={projectId} />}
       </div>
       <Button
         block
@@ -684,6 +708,8 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
   const [roleText, setRoleText] = useState(a.workingRole);
   const name = a.personId ? person(a.personId).name : a.pending!.name;
   const canCredit = !!a.personId && !!p.houseId && (!c || c.status === 'correction');
+  // An accepted credit is part of the person's record. The house can't erase it by removing them.
+  const locked = c?.status === 'accepted';
   return (
     <div className="stack">
       <p className="title-2">{name}</p>
@@ -709,15 +735,20 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
         {canCredit && <Row label={c?.status === 'correction' ? 'Issue corrected credit' : 'Issue credit'} onPress={issue} />}
         {!p.houseId && <Row label={<span className="meta">Credits for independent projects aren't available yet</span>} chevron={false} />}
         {a.pending && <Row label={<span className="meta">Can be credited once they join Ana</span>} chevron={false} />}
-        <Row
-          label={<span className="danger-text">Remove from project</span>}
-          chevron={false}
-          onPress={() => {
-            editAssociation(id, { status: 'removed' });
-            done();
-            showToast({ text: `${name} removed from the project` });
-          }}
-        />
+        {locked ? (
+          <Row label={<span className="meta">Credit accepted. It's part of {name.split(' ')[0]}'s record; changes go through a correction with them.</span>} chevron={false} />
+        ) : (
+          <Row
+            label={<span className="danger-text">Remove from project</span>}
+            chevron={false}
+            onPress={() => {
+              editAssociation(id, { status: 'removed' });
+              world.credits = world.credits.filter((x) => !(x.associationId === id && x.status !== 'accepted'));
+              done();
+              showToast({ text: `${name} removed from the project` });
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -790,6 +821,22 @@ export function AssociationScreen({ id }: { id: string }) {
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** What an open role on an unannounced project reveals, and what it doesn't. */
+function RoleDisclosure({ projectId }: { projectId: string }) {
+  const p = project(projectId)!;
+  const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
+  return (
+    <div className="disclosure">
+      <p className="meta">
+        <Globe2 size={12} /> People on Ana will see: <b>{publicName(p)}</b> by {owner}, {p.format.toLowerCase()}, {p.languages.join(', ')}, {p.stage.toLowerCase()}, and this role's details.
+      </p>
+      <p className="meta">
+        <Lock size={12} /> They won't see: the working title, artwork, people on the project, other roles or any credits. Keep the title out of the description.
+      </p>
     </div>
   );
 }

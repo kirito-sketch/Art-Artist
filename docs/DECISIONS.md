@@ -33,3 +33,19 @@ Still open:
 ## 7. Terminology
 
 "Work" is the shared data concept only. People see Project, Film or Series in film (Exhibition or Show in fine arts later). The system word never reaches the interface.
+
+## 8. Individual Home is Large Cards
+
+The Large Cards Home is the canonical individual Home. The full-screen Slides Home is archived in the prototype controls for stakeholder comparison only. Future work (discovery, recommendations, opportunities, project and production cards, posts) is designed for Large Cards. This is separate from the house Home.
+
+## 9. One primary design by default
+
+New product work gets one implementation. We reason through the problem, document uncertainty and alternatives in writing, build the strongest hypothesis, validate, and revisit only on evidence. A second built version needs a genuinely important hypothesis or an explicit request. Existing alternatives stay in the prototype archive and are not maintained.
+
+- House Home: **Slate** is primary. Pulse and Queue are archived references.
+- House profile: **Work first** is primary. Hiring first is an archived reference.
+- Responses to roles: **one Interest model** is primary. The separate Respond form is archived and marked *validate*.
+
+## 10. Visual implementation baseline (for confirmation)
+
+Minimal and Glass were both active. To avoid building everything twice, **new work is designed and checked in Minimal only**. Glass, Bold and Doodle stay in the archive, unmaintained. *Flagged for the product owner to confirm.* If Glass should be primary instead, new work moves to Glass, not to both.

@@ -21,7 +21,8 @@ export type Craft =
   | 'production-design'
   | 'sound'
   | 'costume'
-  | 'lighting';
+  | 'lighting'
+  | 'production';
 
 export interface Person {
   id: string;

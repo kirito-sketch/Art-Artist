@@ -13,7 +13,8 @@ export function findOpportunity(id: string, userCollabs: Opportunity[] = []) {
 
 /** Opportunities the recommendation layer would return for this viewer. */
 export function forYou(viewer: Viewer, scenario: Scenario): Opportunity[] {
-  const matches = seed.opportunities.filter((o) => o.forCrafts.includes(viewer.craft) && o.authorId !== viewer.id);
+  const open = [...world.roles.filter((r) => r.visibility === 'open'), ...seed.opportunities];
+  const matches = open.filter((o) => o.forCrafts.includes(viewer.craft) && o.authorId !== viewer.id);
   if (scenario.newUser) {
     // A brand-new profile only has role + city to go on, so we show fewer, broader matches and say so.
     return matches.slice(0, 2).map((o) => ({ ...o, match: ['Your role', o.city.split(' ')[0]] }));
