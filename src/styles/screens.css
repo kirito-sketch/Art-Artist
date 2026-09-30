@@ -1865,3 +1865,29 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .center-btn { display: block; margin: 0 auto; }
 .search-results { padding-bottom: 120px; }
 .title-2 { font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.pending-credit { display: flex; gap: 14px; padding: 14px; border-radius: var(--r-m); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); margin-bottom: 10px; }
+.pending-credit-poster { width: 64px; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; flex: none; }
+.pending-credit-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pending-credit-actions { display: flex; gap: 8px; margin-top: 8px; }
+.convo-as { display: flex; align-items: center; gap: 6px; margin: 0; padding: 6px var(--gutter) 0; font-size: 12px; color: var(--text-2, #666); }
+
+/* Prototype panel v3 */
+.proto { width: 272px; max-height: calc(100vh - 40px); overflow-y: auto; }
+.proto-step { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2, #777); margin: 18px 0 8px; }
+.proto-step:first-child { margin-top: 0; }
+.proto-persona, .proto-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.proto-persona:hover, .proto-opt:hover { background: rgba(0,0,0,.04); }
+.proto-persona.is-on, .proto-opt.is-on { background: rgba(0,0,0,.06); }
+.proto-persona > span:last-child { display: flex; flex-direction: column; }
+.proto-persona-name { font-weight: 600; font-size: 13px; }
+.proto-persona-sub { font-size: 11.5px; color: var(--text-2, #777); }
+.proto-radio { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #bbb; flex: none; }
+.is-on > .proto-radio { border: 4.5px solid var(--accent); }
+.proto-q { margin-bottom: 10px; }
+.proto-q-title { font-weight: 600; font-size: 13px; margin: 0 0 2px; }
+.proto-q-note { font-size: 11.5px; color: var(--text-2, #777); margin: 0 0 4px; }
+.proto-opt-label { flex: 1; font-size: 13px; }
+.proto-tag { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; white-space: nowrap; background: rgba(0,0,0,.06); color: #666; }
+.proto-tag--working { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.proto-more { margin-top: 12px; }
+.proto-more summary { cursor: pointer; font-size: 12px; color: var(--text-2, #777); margin-bottom: 8px; }

@@ -121,7 +121,7 @@ export function InboxScreen() {
 }
 
 export function ConversationScreen({ id }: { id: string }) {
-  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs } = useStore();
+  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer } = useStore();
   const c = conversations.find((x) => x.id === id);
   const [text, setText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -182,6 +182,11 @@ export function ConversationScreen({ id }: { id: string }) {
         </div>
       </div>
 
+      {memberships.length > 0 && c && (
+        <p className="convo-as">
+          <Avatar party={c.asId && c.asId !== 'self' ? party(c.asId)! : party(viewer.id)!} size={18} /> Replying as {c.asId && c.asId !== 'self' ? party(c.asId)!.name : 'yourself'}
+        </p>
+      )}
       <div className="convo-input">
         <input id="convo-field" className="convo-field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder={scenario.offline ? 'Sends when you reconnect' : 'Message'} aria-label="Message" />
         <motion.button className="convo-send" disabled={!text.trim()} onClick={send} whileTap={{ scale: 0.85 }} aria-label="Send" animate={{ opacity: text.trim() ? 1 : 0.3 }}>

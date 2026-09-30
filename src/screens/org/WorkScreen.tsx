@@ -68,6 +68,17 @@ export function WorkScreen({ id }: { id: string }) {
       <div className="psheet">
         <p className="body work-logline">{w.logline}</p>
 
+        {w.ownerId && (
+          <div className="list list--flush work-orgs">
+            <PressCard className="prow" onPress={() => push({ name: 'profile', id: w.ownerId! })} scale={0.985}>
+              <Avatar party={person(w.ownerId)} size={40} />
+              <div className="prow-text">
+                <p className="item-title">{person(w.ownerId).name}</p>
+                <p className="meta">Independent project</p>
+              </div>
+            </PressCard>
+          </div>
+        )}
         <div className="list list--flush work-orgs">
           {w.orgIds.map((oid, i) => {
             const o = org(oid);
@@ -110,6 +121,9 @@ export function WorkScreen({ id }: { id: string }) {
           </section>
         )}
 
+        {w.ownerId ? (
+          <p className="meta work-foot">Independent work is shown by the person who made it. It carries no credits, because only a production can issue a credit on Ana.</p>
+        ) : (
         <section className="section section--flush">
           <SectionHeader title={released ? 'Credits' : 'Attached so far'} />
           {depts.map((d) => (
@@ -137,6 +151,7 @@ export function WorkScreen({ id }: { id: string }) {
             <Verified size={12} /> Every credit here was issued by the production and accepted by the person.
           </p>
         </section>
+        )}
 
         {w.stills.length > 1 && (
           <section className="section section--flush">

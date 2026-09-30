@@ -10,14 +10,14 @@ Status: **hypotheses, not architecture.** Nothing here is a confirmed feature or
 | Concept | Does it need to exist? | Verdict (hypothesis) |
 |---|---|---|
 | Production House Home | Yes, a house acting on Ana needs a starting point. It is not a dashboard. | Kept, three models under test (section 4). |
-| Project (public) | Yes. Credits, posters, roles and filmographies all point to it. | **One object: Work.** Film calls it a project; fine arts would call it an exhibition. Built as the public project page. |
+| Project (public) | Yes. Credits, posters, roles and filmographies all point to it. | One object internally ("Work"). **Users only ever see Project, Film or Series** (Exhibition or Show in fine arts). Built as the public project page. |
 | Project workspace | Only the private layer of a Work: roles not yet open, invites not yet accepted, corrections asked. | Kept thin. Not a production-management tool: no schedules, call sheets, budgets or tasks. |
 | Members | Yes, as permission only. | People who may act for the house. Lives in settings, never a product surface. |
 | Team / Crew | No. | Dropped. "People on this project" is the credits list in progress. No roster, no HR. "Worked with" on the profile is derived from accepted credits, never managed. |
 | Requirement and Opportunity | One object. | A role on a Work, with visibility. Private → Open on Ana → Filled. |
 | "Need" | Working name only. | The house side says "Roles to fill"; individuals see a "Role". Validate the words with both sides. |
 | Applicants | No new system. | Responses reuse the existing **Interest** model: people show interest, the poster reviews profiles and chooses whom to message. The house review sheet is the same sheet individuals use. |
-| Credits | Yes, strategically central. | Proposed by the production, accepted or corrected by the person, public only once accepted (section 6). |
+| Credits | Yes, strategically central. | **Decided:** issued by the production, accepted or corrected by the person, public only once accepted. Never initiated by the person (section 6). |
 | Company page | Not separately. | **One organisation profile** serves visitors and members. |
 
 Test against Ana's purpose: every kept concept helps people discover each other, trust each other or build a record. Anything that only helps run a shoot stays out.
@@ -84,13 +84,26 @@ Rules: "Worked with" is derived from accepted credits only, so a house can't cur
 
 ## 6. Credits
 
-Flow: engagement (invited) → credited on the project → **proposed** credit → person **accepts** (public) or **asks for a correction** (back to the production) → public.
+**Decided (DECISIONS.md §6).** Credits originate from the production:
 
-Hypotheses and open questions:
-- The lead production proposes credits. *Validate:* co-productions: can either house propose? Probably the lead only, co-producers see them.
-- Independent work with no house: the person who created the Work acts as its production. Same flow.
-- A correction is a conversation, not a form: the prototype shows "Asked for: Chief Lighting Technician, not Gaffer" with "Accept correction". *Validate:* what if the house declines? Suggested: the credit stays unpublished for that person, never published against their will.
-- Only accepted credits appear anywhere public.
+Production adds the person to the project → assigns the role → the person receives the credit → **Accept** (public) or **Something wrong?** (correction or dispute, back to the production) → only accepted credits appear anywhere public.
+
+An ordinary user has no Add, Claim, Request or Verify credit action anywhere. They only react to credits that already exist. In the prototype: Kiran has a credit from Blue Lotus waiting on his profile ("Waiting for you": Accept or Something wrong?), a notification points to it, and "Something wrong?" also sits on every accepted credit on a project page.
+
+Still to validate, all on the production side:
+- Several companies on one film: can only the lead production issue credits, or co-producers too?
+- Which members of a house may publish credits?
+- If a house declines a correction: suggested rule, the credit stays unpublished for that person, never published against their will.
+
+**Independent work** (no traditional production) is a separate case. It is **not** solved by letting people credit themselves. For now, independent projects (Salt, Chai & Rain, Two Rooms) open a project page that shows who made it and states plainly that it carries no credits, because only a production can issue a credit on Ana.
+
+## 3b. Identity on actions
+
+Anything that publishes or communicates must say who it comes from:
+- Post and role composers show the author: your name, or the house's.
+- Conversations show "Replying as yourself" or "Replying as Konark Pictures"; the identity is stored with the conversation when it starts.
+- Reviewing interest as a house: "Message as Konark Pictures".
+- Responding to or showing interest in a role is always personal. Acting as a house, the role page shows "Responses are personal" with **Switch to you**, which switches without leaving the page.
 
 ## 7. Not built on purpose
 

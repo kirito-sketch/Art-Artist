@@ -5,7 +5,7 @@ import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
-import { Button, Row, EmptyState, IconButton, Photo, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Button, Row, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 
@@ -36,7 +36,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero, memberships, blocked, unblock } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero, memberships, blocked, unblock, pendingCredits, acceptedCredits, acceptCredit } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -80,6 +80,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   }
 
   const d = derive(p);
+  const credits = own ? [...acceptedCredits, ...d.credits] : d.credits;
   const work = own ? [...userPortfolio, ...d.work] : d.work;
   const reel = work.find((m) => m.kind === 'video');
   const stills = work.filter((m) => m !== reel);
@@ -138,7 +139,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </p>
           <p className="pid-stats">
             <span>
-              <b>{d.credits.length}</b> credits
+              <b>{credits.length}</b> credits
             </span>
             {p.years && (
               <span>
@@ -215,11 +216,42 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </section>
         )}
 
+        {own && pendingCredits.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Waiting for you" />
+            {pendingCredits.map((c) => (
+              <div key={c.id} className="pending-credit">
+                <Photo media={c.media} className="pending-credit-poster" showPlay={false} />
+                <div className="pending-credit-text">
+                  <p className="meta">
+                    {org(c.orgId).name} <Verified size={12} /> credited you
+                  </p>
+                  <p className="item-title">{c.title}</p>
+                  <p className="meta meta--dark">{c.role}</p>
+                  {c.correction ? (
+                    <p className="meta">Correction sent. {org(c.orgId).name} will update it.</p>
+                  ) : (
+                    <div className="pending-credit-actions">
+                      <Button size="s" onClick={() => acceptCredit(c.id)}>
+                        Accept
+                      </Button>
+                      <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: c.title, creditId: c.id })}>
+                        Something wrong?
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <p className="meta">Only credits you accept appear on your profile.</p>
+          </section>
+        )}
+
         <section className="section section--flush">
           <SectionHeader title="Credits" />
-          {d.credits.length ? (
+          {credits.length ? (
             <div className="rail">
-              {d.credits.map((c) => (
+              {credits.map((c) => (
                 <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = workIdForTitle(c.title); if (wid) push({ name: 'work', id: wid }); else if (own) openSheet({ name: 'reportCredit', title: c.title }); }} aria-label={c.title}>
                   <Photo media={c.media} className="rail-poster" showPlay={false} />
                   <p className="item-title">{c.title}</p>
@@ -237,7 +269,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title="Work" />
+            <SectionHeader title="Portfolio" />
             <div className="grid-3">
               {stills.map((m, i) => (
                 <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i })} scale={0.97}>
@@ -262,10 +294,10 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         {d.projects.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title="Projects" />
+            <SectionHeader title="Independent projects" />
             <div className="list list--flush">
               {d.projects.map((pr) => (
-                <div key={pr.id} className="rrow">
+                <PressCard key={pr.id} className="rrow" onPress={() => { const wid = workIdForTitle(pr.title); if (wid) push({ name: 'work', id: wid }); }} scale={0.985}>
                   <Photo media={pr.media} className="rrow-thumb" showPlay={false} />
                   <div className="rrow-text">
                     <p className="item-title">{pr.title}</p>
@@ -274,7 +306,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                       {pr.format} · {pr.year}
                     </p>
                   </div>
-                </div>
+                </PressCard>
               ))}
             </div>
           </section>

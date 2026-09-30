@@ -23,7 +23,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting } = useStore();
+  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing } = useStore();
   const o = findOpportunity(id, userCollabs);
   const [scrollY, setScrollY] = useState(0);
   const tint = useImageTint(o?.media);
@@ -63,6 +63,19 @@ export function OpportunityScreen({ id }: { id: string }) {
   let action: ReactNode;
   if (mine) {
     action = <Button onClick={() => openSheet({ name: 'reviewInterest', opportunityId: o.id })}>{received ? `Review ${received}` : 'Review interest'}</Button>;
+  } else if (acting !== 'self') {
+    // Responding is always personal. A house never applies for a role, so make the switch explicit.
+    left = (
+      <>
+        <p className="item-title">Responses are personal</p>
+        <p className="meta">You're acting as the house</p>
+      </>
+    );
+    action = (
+      <Button variant="secondary" onClick={() => setActing('self', true, true)}>
+        Switch to you
+      </Button>
+    );
   } else if (response) {
     left = (
       <>

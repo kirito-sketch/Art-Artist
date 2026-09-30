@@ -19,8 +19,10 @@ export interface Work {
   year: string;
   format: string;
   stage: WorkStage;
-  /** First is the lead production. More than one means a co-production; each is shown. */
+  /** First is the lead production. More than one means a co-production; each is shown. Empty means independent. */
   orgIds: string[];
+  /** Independent work: the person who made it. They can show it, but it carries no issued credits. */
+  ownerId?: string;
   logline: string;
   media: Media;
   stills: Media[];
@@ -122,6 +124,15 @@ export const works: Work[] = [
   },
 ];
 
+const independent = (id: string, ownerId: string, title: string, year: string, format: string, logline: string, still: string, fallback: string): Work => ({
+  id, title, year, format, stage: 'Released', orgIds: [], ownerId, logline, media: img(still, fallback), stills: [img(still, fallback)], credits: [],
+});
+works.push(
+  independent('salt', 'kiran', 'Salt', '2022', 'Short film · 18 min', 'Official selection at two regional festivals.', 'stills/kiran-salt', 'covers/salt-water'),
+  independent('chairain', 'kiran', 'Chai & Rain', '2021', 'Music video', 'Independent release, 1.2M views.', 'stills/chai-rain', 'covers/morning-ritual'),
+  independent('tworooms', 'tara', 'Two Rooms', '2023', 'Theatre · Prithvi', '32 shows across Mumbai and Pune.', 'stills/tara-stage', 'covers/neon-monsoon'),
+);
+
 export const work = (id: string) => works.find((w) => w.id === id);
 
 const TITLE_TO_WORK: Record<string, string> = {
@@ -129,6 +140,9 @@ const TITLE_TO_WORK: Record<string, string> = {
   'Neeli Raat': 'neeliraat',
   'Monsoon Letters': 'monsoon',
   Kaaval: 'kaaval',
+  Salt: 'salt',
+  'Chai & Rain': 'chairain',
+  'Two Rooms': 'tworooms',
   'Fault Lines · S1': 'faultlines',
   'Fault Lines · Season 1': 'faultlines',
 };

@@ -468,6 +468,12 @@ export const credits: Record<string, Credit[]> = {
   ],
 };
 
+/** Credits a production has issued that the person hasn't accepted yet. Never created by the person. */
+export const pendingCredits: Record<string, Credit[]> = {
+  kiran: [{ id: 'pc1', title: 'Fault Lines · S1', year: '2024', role: 'DoP, Episode 6 (additional photography)', department: 'Camera', orgId: 'bluelotus', format: 'Web series', status: 'Released', media: m('poster-faultlines') }],
+  tara: [],
+};
+
 export const projects: Record<string, Project[]> = {
   kiran: [
     { id: 'pr1', title: 'Salt', year: '2022', role: 'Director of Photography', format: 'Short film · 18 min', note: 'Official selection at two regional festivals.', media: m('salt') },
@@ -571,9 +577,10 @@ export const interests: Record<string, Interest[]> = {
 
 export const notifications: Record<string, Notification[]> = {
   kiran: [
+    { id: 'nt0', kind: 'credit', actorId: 'bluelotus', text: 'Blue Lotus Originals credited you on Fault Lines · S1. Accept it to show it on your profile.', time: '8m', unread: true, route: { name: 'profile', id: 'kiran' } },
     { id: 'nt1', kind: 'message', actorId: 'konark', text: 'Konark Pictures replied about Director of Photography', time: '12m', unread: true, route: { name: 'conversation', id: 'c-konark' } },
     { id: 'nt2', kind: 'interest', actorId: 'nikhil', text: '3 people are interested in your 1st AC collaboration', time: '2h', unread: true },
-    { id: 'nt3', kind: 'credit', actorId: 'tidewater', text: 'Tidewater Films added a credit to your profile: Additional Camera, Monsoon Letters', time: '1d', unread: false, route: { name: 'profile', id: 'kiran' } },
+    { id: 'nt3', kind: 'credit', actorId: 'tidewater', text: 'Your credit from Tidewater Films is public: Additional Camera, Monsoon Letters', time: '1d', unread: false, route: { name: 'profile', id: 'kiran' } },
     { id: 'nt4', kind: 'follow', actorId: 'zoya', text: 'Zoya Khan followed you', time: '2d', unread: false, route: { name: 'profile', id: 'zoya' } },
   ],
   tara: [

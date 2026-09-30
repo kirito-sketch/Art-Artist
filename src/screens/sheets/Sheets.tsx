@@ -31,7 +31,7 @@ export function SheetHost() {
         <ReviewInterest opportunityId={sheet?.name === 'reviewInterest' ? sheet.opportunityId : undefined} />
       </Sheet>
       <Sheet open={is('reportCredit')} onClose={closeSheet} title="Report credit">
-        {sheet?.name === 'reportCredit' && <ReportCredit title={sheet.title} />}
+        {sheet?.name === 'reportCredit' && <ReportCredit title={sheet.title} creditId={sheet.creditId} />}
       </Sheet>
       <Sheet open={is('activity')} onClose={closeSheet} title="Your activity" size="tall">
         <Activity />
@@ -245,7 +245,7 @@ function InterestForm({ id }: { id: string }) {
 }
 
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
-  const { interestsReceived, dismissInterest, startConversation, push, userCollabs } = useStore();
+  const { interestsReceived, dismissInterest, startConversation, push, userCollabs, acting } = useStore();
   const list = opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived;
   if (!list.length) return <EmptyState title="No one yet" />;
   return (
@@ -274,7 +274,7 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
                   push({ name: 'conversation', id: cid });
                 }}
               >
-                Message
+                {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
               </Button>
               <Button size="s" variant="plain" onClick={() => dismissInterest(it.id)}>
                 Not now
@@ -289,8 +289,8 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
 
 /* ------------------------------------------------------------------ Report */
 
-function ReportCredit({ title }: { title: string }) {
-  const { closeSheet, showToast } = useStore();
+function ReportCredit({ title, creditId }: { title: string; creditId?: string }) {
+  const { closeSheet, showToast, requestCorrection } = useStore();
   const [reason, setReason] = useState('');
   const reasons = ['Wrong role', 'Wrong episodes or dates', "I didn't work on this", 'Name misspelled'];
   return (
@@ -306,8 +306,9 @@ function ReportCredit({ title }: { title: string }) {
         size="l"
         disabled={!reason}
         onClick={() => {
+          if (creditId) requestCorrection(creditId);
           closeSheet();
-          showToast({ text: 'Sent for review' });
+          showToast({ text: 'Sent to the production. Nothing is public until you accept.' });
         }}
       >
         Send

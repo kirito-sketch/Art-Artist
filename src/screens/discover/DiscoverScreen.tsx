@@ -97,7 +97,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
     .filter((p) => !blocked.includes(p.id))
     .filter((p) => (craft ? p.craft === craft || (craft === 'cinematographer' && p.craft === 'camera') : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
-  const projects = works.filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')}`.toLowerCase().includes(q) : true));
+  const projects = works.filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const houses = q ? seed.orgs.filter((o) => !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
   const grouped = !!q && !narrowed;
   const seeAll = (sc: Scope) => {
@@ -179,7 +179,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
                     <div className="rrow-text">
                       <p className="item-title">{w.title}</p>
                       <p className="meta">{w.format}</p>
-                      <p className="meta">{org(w.orgIds[0]).name}</p>
+                      <p className="meta">{w.ownerId ? `${person(w.ownerId).name} · independent` : org(w.orgIds[0]).name}</p>
                     </div>
                   </PressCard>
                 ))}
@@ -259,7 +259,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
                   <Photo media={w.media} className="poster" />
                   <p className="item-title">{w.title}</p>
                   <p className="meta">
-                    {org(w.orgIds[0]).name} <Verified size={12} />
+                    {w.ownerId ? person(w.ownerId).name : <>{org(w.orgIds[0]).name} <Verified size={12} /></>}
                   </p>
                 </Pressable>
               ))}

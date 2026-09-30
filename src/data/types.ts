@@ -153,6 +153,8 @@ export interface Conversation {
   withId: string;
   context: { kind: ContextKind; label: string; detail: string; refId?: string };
   orgOwned?: boolean;
+  /** The identity the viewer uses in this conversation: 'self' or an organisation id. */
+  asId?: string;
   /** One suggested next step shown in the inbox row, e.g. confirming a recce. */
   action?: { label: string; reply: string };
   media?: Media;

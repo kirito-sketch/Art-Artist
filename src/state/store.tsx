@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
-import type { Conversation, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
+import type { Conversation, Credit, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
 
 /* ------------------------------------------------------------ navigation */
 
@@ -28,7 +28,7 @@ export type Sheet =
   | { name: 'respond'; id: string }
   | { name: 'showInterest'; id: string }
   | { name: 'reviewInterest'; opportunityId?: string }
-  | { name: 'reportCredit'; title: string }
+  | { name: 'reportCredit'; title: string; creditId?: string }
   | { name: 'activity' }
   | { name: 'identity' }
   | { name: 'share'; label: string }
@@ -103,6 +103,9 @@ function useStoreValue() {
   const [toast, setToast] = useState<Toast | null>(null);
 
   const [saved, setSaved] = useState<string[]>([]);
+  /** Credits issued by a production, waiting for the person to accept or correct. */
+  const [pendingCredits, setPendingCredits] = useState<(Credit & { correction?: boolean })[]>(seed.pendingCredits.kiran);
+  const [acceptedCredits, setAcceptedCredits] = useState<Credit[]>([]);
   const [following, setFollowing] = useState<string[]>(DEFAULT_FOLLOWING);
   const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
@@ -149,6 +152,8 @@ function useStoreValue() {
     setConversations(seed.conversations[id]);
     setInterestsReceived(seed.interests[id]);
     setNotifications(seed.notifications[id]);
+    setPendingCredits(seed.pendingCredits[id]);
+    setAcceptedCredits([]);
     setSaved([]);
     setResponses({});
     setInterestsSent({});
@@ -253,6 +258,7 @@ function useStoreValue() {
         id,
         withId,
         context,
+        asId: acting,
         unread: 0,
         updated: 'now',
         messages: opener ? [{ id: 'm0', from: 'me', text: opener, time: 'now' }] : [],
@@ -260,7 +266,7 @@ function useStoreValue() {
       setConversations((cs) => [convo, ...cs]);
       return id;
     },
-    [conversations],
+    [conversations, acting],
   );
 
   const sendMessage = useCallback((convId: string, text: string) => {
@@ -324,7 +330,7 @@ function useStoreValue() {
       runUpload(
         { id, kind: 'post', label: draft.media.length ? `Posting ${draft.media.length} ${draft.media.length === 1 ? 'item' : 'items'}` : 'Posting', progress: 0, state: 'uploading', thumb: draft.media[0] },
         () => {
-          setUserPosts((ps) => [{ id, authorId: viewer.id, time: 'now', text: draft.text, media: draft.media, likes: 0, comments: 0 }, ...ps]);
+          setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, likes: 0, comments: 0 }, ...ps]);
           if (draft.addToPortfolio) setUserPortfolio((pf) => [...draft.media, ...pf]);
           showToast({ text: draft.addToPortfolio ? 'Posted and added to your portfolio' : 'Posted', tone: 'success' });
         },
@@ -381,11 +387,21 @@ function useStoreValue() {
     setHomeLayout,
     acting,
     memberships,
+    pendingCredits,
+    acceptedCredits,
+    acceptCredit: (cid: string) => {
+      const c = pendingCredits.find((x) => x.id === cid);
+      if (!c) return;
+      setPendingCredits((xs) => xs.filter((x) => x.id !== cid));
+      setAcceptedCredits((xs) => [c, ...xs]);
+      showToast({ text: `Credit accepted. It now shows on your profile and on ${c.title}.`, tone: 'success' });
+    },
+    requestCorrection: (cid: string) => setPendingCredits((xs) => xs.map((x) => (x.id === cid ? { ...x, correction: true } : x))),
     /** Switching identity keeps you on the tab you were on, so the change is visible where you made it. */
-    setActing: (a: string, keepTab = false) => {
+    setActing: (a: string, keepTab = false, keepStack = false) => {
       setActing(a);
       setInterestsReceived(seed.interests[a === 'self' ? viewer.id : a] ?? []);
-      setStack([]);
+      if (!keepStack) setStack([]);
       setSheet(null);
       if (!keepTab) setTabState('home');
     },

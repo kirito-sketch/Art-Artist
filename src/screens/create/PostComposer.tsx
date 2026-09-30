@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Media } from '../../data/types';
 import { useStore } from '../../state/store';
-import { person } from '../../state/selectors';
+import { org, person } from '../../state/selectors';
 import { spring } from '../../ui/motion';
 import { Avatar, Button, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
@@ -13,8 +13,9 @@ const MEDIA_LIMIT = 10;
 
 /** One composer for text, photos and video. */
 export function PostComposer() {
-  const { pop, viewer, publishPost, lastDraft } = useStore();
-  const me = person(viewer.id);
+  const { pop, viewer, publishPost, lastDraft, acting } = useStore();
+  // Publishing always shows who it comes from: the person, or the house they act for.
+  const me = acting !== 'self' ? org(acting) : person(viewer.id);
   const prev = lastDraft.current?.kind === 'post' ? lastDraft.current.draft : null;
   const [text, setText] = useState(prev?.text ?? '');
   const [media, setMedia] = useState<Media[]>(prev?.media ?? []);

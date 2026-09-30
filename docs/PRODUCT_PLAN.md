@@ -21,7 +21,7 @@ Mental model:
 
 | Item | Why next |
 |---|---|
-| Glass check of every new screen | Both directions stay active until one is chosen. |
+| ~~Glass check of every new screen~~ | Done. |
 | Loading and error states on search, project, organisation and send-message | Only where a real person would hit them. |
 | Withdraw or edit a sent response; edit or close a published collaboration | Real, frequent, but depends on the interest model staying as is. |
 | Settings shell (privacy, blocked people, notifications, signed-in organisations) | Needed once Block exists, but nothing else depends on it. |
@@ -35,7 +35,8 @@ Mental model:
 | One object for requirement and opportunity, with visibility Private, Open, Filled | If no house would ever keep a need private inside Ana, drop Private. |
 | The word "Need" (house side) vs "Role" (creative side) for the same object | Card-sort with both sides. |
 | Responses to a house role reuse the existing Interest model (no ATS) | If houses receive 100+ responses per role, they may need sorting and shortlisting. |
-| Credit authority: the lead production proposes, each person confirms, disputes go back to the proposer | Co-productions and independent films with no house. |
+| Production-side credit authority: when several companies are attached, can only the lead issue credits or co-producers too; which members may publish | Talking to houses that co-produce. (That individuals never self-claim credits is **decided**, see DECISIONS.md §6.) |
+| Independent work without a production | A separate trust design. Not solved by self-claiming. For now, independent projects show as the person's own work with no credits. |
 | Who acts for a house (owner, line producer, coordinator) and on whose phone | Decides whether switching must be one tap. |
 
 ## LATER
@@ -50,6 +51,9 @@ Mental model:
 | Visual direction final pick, Home A vs B | Postponed decisions; both kept intact. |
 
 ## Decisions taken in this pass
+
+- **Credits originate from the production.** Individuals receive, accept or correct. They never add, claim, request or ask to verify a credit. See DECISIONS.md §6.
+- **Any action that publishes or communicates shows who it comes from.** Composers show the author (you or the house), conversations say "Replying as", review actions say "Message as Konark Pictures", and responding to a role is personal only: acting as a house, the role page offers "Switch to you" instead of Respond.
 
 - **Comments: removed from posts.** Public comment threads are a social-media pattern that invites performance and noise, not collaboration. The professional needs they cover are served elsewhere: appreciation (Like), a private reaction (Message the author), and interest in work (Show interest on roles). *Validate:* whether people miss public praise on work posts; if yes, consider "Notes from collaborators" on projects, not comments on posts.
 - **Report** always leads to a reason, an optional detail, a clear promise (Ana reviews it, the person is not told who reported), and an offer to block. **Block** hides both sides from each other everywhere (profiles, search, interest, messages) and is undone from Settings or the blocked profile.

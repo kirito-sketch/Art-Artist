@@ -3,7 +3,7 @@ import { useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Media, Opportunity } from '../../data/types';
 import { useStore } from '../../state/store';
-import { person } from '../../state/selectors';
+import { org, person } from '../../state/selectors';
 import { Avatar, Button, IconButton, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { MediaPicker } from './PostComposer';
@@ -17,10 +17,11 @@ const PAY = ['Paid', 'Unpaid', 'Deferred', 'Negotiable'];
  * The intent (looking / available) was chosen in the Create sheet, so it is not asked again.
  */
 export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'available' }) {
-  const { pop, viewer, publishCollab } = useStore();
-  const me = person(viewer.id);
+  const { pop, viewer, publishCollab, acting } = useStore();
+  // Publishing always shows who it comes from: the person, or the house they act for.
+  const me = acting !== 'self' ? org(acting) : person(viewer.id);
   const available = intent === 'available';
-  const [role, setRole] = useState(available ? me.role : '');
+  const [role, setRole] = useState(available ? person(viewer.id).role : '');
   const [project, setProject] = useState('');
   const [type, setType] = useState(TYPES[0]);
   const [start, setStart] = useState('');
@@ -45,8 +46,8 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
       collabIntent: intent,
       role: role.trim(),
       project: available ? me.name : project.trim(),
-      projectType: available ? me.role : type,
-      authorId: viewer.id,
+      projectType: available ? person(viewer.id).role : type,
+      ...(acting !== 'self' ? { orgId: acting } : { authorId: viewer.id }),
       allowDM,
       city: city.trim(),
       dates,
