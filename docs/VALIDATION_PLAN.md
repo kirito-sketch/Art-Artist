@@ -1,5 +1,7 @@
 # Production house validation plan (Version 18)
 
+The exact script, observation sheet, participant record and synthesis table are in docs/research/. Set up with **Start research session** in the prototype controls (or add `?research` to the URL): it opens clean as Aditi acting for Konark, with no controls. Reload between participants.
+
 ## Setup
 
 - **Who:** 5 to 6 people from 3 to 4 Telugu, Malayalam or Hindi production houses. Mix owners/producers with the people who actually handle crew and credits (line producers, production executives, coordinators).

@@ -159,6 +159,7 @@ export const SEED_WORKS: SeedWork[] = [
       { personId: 'kabir', role: 'Writer-Director', dept: 'Direction' },
       { personId: 'kiran', role: 'Director of Photography', dept: 'Camera' },
       { personId: 'nandini', role: 'Costume Designer', dept: 'Costume' },
+      { personId: 'sameer', role: 'Gaffer', dept: 'Lighting' },
       { personId: 'rhea', role: 'Colourist', dept: 'Post' },
     ],
   },

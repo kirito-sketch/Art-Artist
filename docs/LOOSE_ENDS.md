@@ -27,6 +27,7 @@
 | Interest model | Model A (one Interest, optional answers) is the default; Respond is kept as model B for comparison (VALIDATE). |
 | Withdrawal, poster side | Withdrawn people stay in the poster's list, greyed, "No longer interested". No notification. |
 | Filled roles | Can't be reopened; "Open a new role" keeps the filled record. Closed roles can be reopened. |
+| Freeze prep | Minimal confirmed; Follow/Save/Report/Block labelled as personal while acting; research mode (clean start as Aditi for Konark, no controls, reload to reset, Shift+E to leave); Minimal regression pass (Settings, Report, Block, Follow, Save, Notifications, identity, profiles, project pages, workspace); fixed a duplicate credit notification. |
 | Consolidation (v18) | One project model for every project; legacy workspace removed; Aditi as house persona; profiles show verified credits and independent projects separately; privacy and identity audits (docs/CONSOLIDATION.md). |
 | Creation flows | Create project, workspace with Share on Ana, add role, add to project (and via Filled through Ana), added notification with This isn't right, issue credit, add and issue credit. End-to-end story tested in Minimal and Glass. |
 | Glass QA | Settings, withdrawal, edit and close role, failure and retry, notifications, credit accept and correct, message retry. Fixed: invisible Undo on white Glass toasts, unreadable notes, a stretched banner avatar, error contrast. |
@@ -51,7 +52,7 @@
 
 ## Postponed decisions (need a call)
 
-- Minimal as the baseline for new work, with Glass archived (DECISIONS.md §10): needs confirmation.
+- None. Minimal confirmed as the primary visual (DECISIONS.md §10).
 
 Decided since: Large Cards is the individual Home (Slides archived).
 

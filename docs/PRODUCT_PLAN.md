@@ -48,7 +48,7 @@ Mental model:
 | Fine arts experience | Same model (organisation → work → person → participation → credit); pressure-test each concept, do not design screens. |
 | Film news | Undecided who publishes. The product works without it. |
 | Inbox split by identity | Only if members report mixing personal and house conversations. |
-| Visual direction final pick | Minimal is the working baseline for new work (see DECISIONS.md §10); Glass archived pending confirmation. Home is decided: Large Cards. |
+| Visual direction | Decided: Minimal (Glass, Bold, Doodle archived). Home decided: Large Cards. |
 
 ## Decisions taken in this pass
 
@@ -122,7 +122,7 @@ The prototype defaults to A. B stays in the panel ("Crew and casting roles") for
 
 ## Decided vs hypotheses (current)
 
-**Phase status:** Version 18 consolidates the model. Feature expansion is paused until the first production-house interviews (docs/VALIDATION_PLAN.md).
+**Phase status: frozen at Version 18.** No new features until research. Research kit: docs/research/ (interview script, observation sheet, participant record, synthesis table).
 
 **Decided:** individuals can't self-claim credits · one account with separate personal and house contexts · the house profile is its public identity · comments removed · Mark all as read, not Clear all · members are permissions, not team management · Minimal and Glass active, Bold and Doodle archived.
 

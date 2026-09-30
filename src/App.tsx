@@ -24,6 +24,7 @@ import { StatusBar, ToastHost } from './ui/chrome';
 import { spring } from './ui/motion';
 import { IconButton, Photo } from './ui/primitives';
 import { PrototypeControls } from './dev/PrototypeControls';
+import { RESEARCH, exitResearch } from './research';
 
 /* Transition per route type: composers rise like sheets, media zooms, detail pushes from the right. */
 function transitionFor(r: Route) {
@@ -206,11 +207,18 @@ function Phone() {
 }
 
 export default function App() {
+  // Research mode: Shift+E leaves it (for the researcher; participants never see a control).
+  useEffect(() => {
+    if (!RESEARCH) return;
+    const k = (e: KeyboardEvent) => e.shiftKey && e.key.toLowerCase() === 'e' && exitResearch();
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, []);
   return (
     <StoreProvider>
       <div className="stage">
         <Phone />
-        <PrototypeControls />
+        {!RESEARCH && <PrototypeControls />}
       </div>
     </StoreProvider>
   );

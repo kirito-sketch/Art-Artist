@@ -1,5 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
+import { RESEARCH } from '../research';
+
+/** Research sessions start as Aditi acting for Konark; everything else starts as Kiran. */
+const START = RESEARCH ? 'aditi' : 'kiran';
 import { party, person } from './selectors';
 import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject } from './world';
 import type { Conversation, Credit, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
@@ -102,7 +106,7 @@ const DEFAULT_AVAILABILITY: Record<string, Availability> = {
 };
 
 function useStoreValue() {
-  const [viewerId, setViewerId] = useState<'kiran' | 'tara' | 'aditi'>('kiran');
+  const [viewerId, setViewerId] = useState<'kiran' | 'tara' | 'aditi'>(START);
   const viewer = VIEWERS[viewerId];
 
   const [scenario, setScenarioState] = useState<Scenario>({
@@ -121,7 +125,7 @@ function useStoreValue() {
 
   const [saved, setSaved] = useState<string[]>([]);
   /** Credits issued by a production, waiting for the person to accept or correct. */
-  const [pendingCredits, setPendingCredits] = useState<(Credit & { correction?: boolean })[]>(seed.pendingCredits.kiran);
+  const [pendingCredits, setPendingCredits] = useState<(Credit & { correction?: boolean })[]>(seed.pendingCredits[START]);
   const [acceptedCredits, setAcceptedCredits] = useState<Credit[]>([]);
   const [creditBusy, setCreditBusy] = useState<string | null>(null);
   /** Poster-side changes to published roles. Title and project stay fixed once published. */
@@ -136,10 +140,10 @@ function useStoreValue() {
   const [following, setFollowing] = useState<string[]>(DEFAULT_FOLLOWING);
   const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
-  const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY.kiran);
-  const [conversations, setConversations] = useState<Conversation[]>(seed.conversations.kiran);
-  const [interestsReceived, setInterestsReceived] = useState<Interest[]>(seed.interests.kiran);
-  const [notifications, setNotifications] = useState<Notification[]>(seed.notifications.kiran);
+  const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY[START]);
+  const [conversations, setConversations] = useState<Conversation[]>(seed.conversations[START]);
+  const [interestsReceived, setInterestsReceived] = useState<Interest[]>(RESEARCH ? [] : seed.interests.kiran);
+  const [notifications, setNotifications] = useState<Notification[]>(seed.notifications[START]);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userCollabs, setUserCollabs] = useState<Opportunity[]>([]);
   const [userPortfolio, setUserPortfolio] = useState<Media[]>([]);
@@ -147,7 +151,7 @@ function useStoreValue() {
   const [reloadKey, setReloadKey] = useState(0);
   /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
   /** Exploration: acting on behalf of a production house instead of as yourself. */
-  const [acting, setActing] = useState<string>('self');
+  const [acting, setActing] = useState<string>(RESEARCH ? 'konark' : 'self');
   /** Organisations the signed-in person may act for. Permission only; not a team product. */
   const memberships = viewer.id === 'aditi' ? ['konark', 'tidewater'] : [];
   const [blocked, setBlocked] = useState<string[]>([]);
@@ -227,16 +231,22 @@ function useStoreValue() {
       setSaved((s) => (on ? [id, ...s.filter((i) => i !== id)] : s.filter((i) => i !== id)));
       showToast(
         on
-          ? { text: 'Saved to your list', action: { label: 'Undo', run: () => setSaved((x) => x.filter((i) => i !== id)) } }
+          ? { text: acting !== 'self' ? 'Saved to your account' : 'Saved to your list', action: { label: 'Undo', run: () => setSaved((x) => x.filter((i) => i !== id)) } }
           : { text: 'Removed from saved' },
       );
     },
-    [saved, showToast],
+    [saved, showToast, acting],
   );
 
-  const toggleFollow = useCallback((id: string) => {
-    setFollowing((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
-  }, []);
+  const toggleFollow = useCallback(
+    (id: string) => {
+      const on = !following.includes(id);
+      setFollowing((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
+      // Following is personal even while acting for a house; say so only then.
+      if (on && acting !== 'self') showToast({ text: 'Following from your personal account' });
+    },
+    [following, acting, showToast],
+  );
 
   const respond = useCallback(
     (id: string, items: string[]) => {

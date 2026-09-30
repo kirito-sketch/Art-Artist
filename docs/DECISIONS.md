@@ -46,6 +46,26 @@ New product work gets one implementation. We reason through the problem, documen
 - House profile: **Work first** is primary. Hiring first is an archived reference.
 - Responses to roles: **one Interest model** is primary. The separate Respond form is archived and marked *validate*.
 
-## 10. Visual implementation baseline (for confirmation)
+## 10. Minimal is the primary visual direction (confirmed)
 
-Minimal and Glass were both active. To avoid building everything twice, **new work is designed and checked in Minimal only**. Glass, Bold and Doodle stay in the archive, unmaintained. *Flagged for the product owner to confirm.* If Glass should be primary instead, new work moves to Glass, not to both.
+Minimal is the only active visual direction. Glass, Bold and Doodle are archived for stakeholder comparison and are not maintained or QA'd. New work is designed and checked in Minimal only.
+
+## 11. Follow, Save, Report and Block are personal actions
+
+They belong to the signed-in person even while acting for a house. When acting for a house, the moment of action says so lightly: "Following from your personal account", "Saved to your account", and a one-line "This is a personal action" in Report and Block. No house-level follow, saved list, reporting or blocking until research shows a real need (what would it mean for other members, credits, projects, conversations and roles?).
+
+## 12. Version 18 is the baseline; feature development is frozen
+
+The lifecycle (private project → role → interest → selection → added to project → credit issued later → accepted or corrected → public record) is the canonical model. No new house functionality until research: no bulk credits, larger permissions, scheduling, crew management, call sheets, payroll, tasks, extra project statuses, complex organisation roles, independent-credit authority, or linking for people who join later. Changes now come from evidence.
+
+## 13. Design baseline
+
+- Individual Home: **Large Cards** (Slides archived).
+- House Home: **Slate** (Pulse, Queue archived).
+- House profile: **Work first** (Hiring first archived).
+- Visual: **Minimal** (Glass, Bold, Doodle archived).
+- New work gets one primary design, unless the product owner asks for exploration or a major hypothesis genuinely needs comparison.
+
+## 14. Working title visible to people added to a project (validate)
+
+Someone added to a project sees its internal working title, because they're inside the project relationship. This is marked for validation (codenames, secrecy even from crew, who controls what collaborators see). No extra permissions layer until research shows the need.

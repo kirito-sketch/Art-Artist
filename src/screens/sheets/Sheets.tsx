@@ -552,7 +552,7 @@ const REPORT_REASONS = ['Fake profile or impersonation', 'Asking for money to ap
 
 /** Report: reason, optional detail, a clear promise, and the offer to block. */
 function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }) {
-  const { openSheet, closeSheet } = useStore();
+  const { openSheet, closeSheet, acting, viewer } = useStore();
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
   const [step, setStep] = useState<'form' | 'sending' | 'done'>('form');
@@ -574,6 +574,7 @@ function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }
   return (
     <div className="stack">
       <p className="meta">What's wrong with {subject}?</p>
+      {acting !== 'self' && <p className="meta">This is a personal action: the report comes from you, {person(viewer.id).name.split(' ')[0]}, not {org(acting).name}.</p>}
       <div className="group">
         {REPORT_REASONS.map((r) => (
           <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} value={reason === r ? <Check size={18} className="accent" /> : undefined} />
@@ -598,7 +599,7 @@ function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }
 
 /** Block: say exactly what changes before it happens. */
 function BlockSheet({ id }: { id: string }) {
-  const { block, closeSheet, showToast } = useStore();
+  const { block, closeSheet, showToast, acting } = useStore();
   const p = party(id)!;
   return (
     <div className="stack">
@@ -609,6 +610,7 @@ function BlockSheet({ id }: { id: string }) {
         <li>Shared credits stay on both profiles. Credits are a record, not a connection.</li>
         <li>They aren't told. You can unblock from their page.</li>
       </ul>
+      {acting !== 'self' && <p className="meta">This is a personal action. It blocks them for your account, not for {org(acting).name}.</p>}
       <Button
         block
         size="l"

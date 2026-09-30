@@ -1,5 +1,6 @@
 import { useStore } from '../state/store';
-import { Toggle } from '../ui/primitives';
+import { Button, Toggle } from '../ui/primitives';
+import { startResearch } from '../research';
 
 type Persona = 'kiran' | 'tara' | 'konark' | 'tidewater';
 const PERSONAS: { id: Persona; name: string; sub: string }[] = [
@@ -62,6 +63,10 @@ export function PrototypeControls() {
           </span>
         </button>
       ))}
+      <Button block size="s" variant="secondary" onClick={startResearch}>
+        Start research session
+      </Button>
+      <p className="proto-q-note">Opens clean as Aditi acting for Konark, without these controls. Reload to reset between participants; Shift+E to leave.</p>
       <p className="proto-q-note proto-primary-note">Primary design: Large Cards Home, Slate house Home, Work-first house page, one Interest model, Minimal visual.</p>
 
       {isHouse && (
