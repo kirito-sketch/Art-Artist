@@ -126,7 +126,7 @@ function SlateHome() {
 function Signals({ w, interested }: { w: Work; interested: number }) {
   const s = ws(w.id);
   const open = s.needs.filter((n) => n.state === 'open').length;
-  const items = [interested && `${interested} interested`, open && `${open} roles open`, s.invites.length && `${s.invites.length} invite pending`].filter(Boolean);
+  const items = [interested && `${interested} interested`, open && `${open} roles open`, s.invites.length && `${s.invites.length} added, no credit yet`].filter(Boolean);
   return (
     <p className="slate-signals">
       {items.map((t) => (
@@ -281,7 +281,7 @@ function QueueHome() {
   const attention = [
     interestsReceived.length && { label: 'Interest to review', n: `${interestsReceived.length}`, go: () => push({ name: 'project', id: 'neela' }) },
     disputes && { label: 'Credit correction asked', n: `${disputes}`, go: () => push({ name: 'project', id: 'neeliraat' }) },
-    invites && { label: 'Invites not yet accepted', n: `${invites}`, go: () => push({ name: 'project', id: 'neela' }) },
+    invites && { label: 'Added, no credit yet', n: `${invites}`, go: () => push({ name: 'project', id: 'neela' }) },
   ].filter(Boolean) as { label: string; n: string; go: () => void }[];
   return (
     <div className="screen" data-scroll="home">
@@ -418,7 +418,7 @@ export function ProjectScreen({ id }: { id: string }) {
       {people.length > 0 && (
         <section className="section">
           <SectionHeader title="On this project" />
-          <p className="meta ph-note">People accept their credit before it appears on the public page.</p>
+          <p className="meta ph-note">Added people are private to your house and them. Issue a credit when it's earned; it's public only once they accept.</p>
           {depts.map((d) => (
             <div key={d} className="ph-dept">
               <p className="meta">{d}</p>
@@ -435,7 +435,7 @@ export function ProjectScreen({ id }: { id: string }) {
                           <p className="item-title">{p.name}</p>
                           <p className="meta">{disputed ? `Asked for: ${disputed.asked}` : e.position}</p>
                         </div>
-                        <span className={`ph-state ph-state--${disputed ? 'invited' : e.state}`}>{disputed ? 'Correction' : e.state === 'invited' ? 'Invited' : 'Credited'}</span>
+                        <span className={`ph-state ph-state--${disputed ? 'invited' : e.state}`}>{disputed ? 'Correction' : e.state === 'invited' ? 'Added' : 'Credited'}</span>
                       </PressCard>
                     );
                   })}

@@ -26,7 +26,8 @@ Test against Ana's purpose: every kept concept helps people discover each other,
 
 ```
 Organisation ─┬─ Work (project) ── Role (private | open | filled) ── Interest ── Person
-   │          └─ Work ── Engagement (invited → credited) ── Credit (proposed → accepted | correction asked)
+   │          └─ Work ── Association (added to project; private) ── Credit (proposed → accepted | correction asked; public once accepted)
+   Selected is not credited: association and credit are separate records.
    └─ Membership (person may act for organisation; permission only)
 Person owns their identity, portfolio and accepted credits, across any number of organisations and crafts.
 ```
@@ -86,7 +87,7 @@ Rules: "Worked with" is derived from accepted credits only, so a house can't cur
 
 **Decided (DECISIONS.md §6).** Credits originate from the production:
 
-Production adds the person to the project → assigns the role → the person receives the credit → **Accept** (public) or **Something wrong?** (correction or dispute, back to the production) → only accepted credits appear anywhere public.
+Production adds the person to the project (private association) → later issues the credit with the final credit line → the person **accepts** (public) or says **Something wrong?** (correction or dispute, back to the production) → only accepted credits appear anywhere public. Being added to a project never counts as a credit. See docs/CREATION_FLOWS.md.
 
 An ordinary user has no Add, Claim, Request or Verify credit action anywhere. They only react to credits that already exist. In the prototype: Kiran has a credit from Blue Lotus waiting on his profile ("Waiting for you": Accept or Something wrong?), a notification points to it, and "Something wrong?" also sits on every accepted credit on a project page.
 
