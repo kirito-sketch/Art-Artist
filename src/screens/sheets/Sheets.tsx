@@ -48,6 +48,12 @@ export function SheetHost() {
       <Sheet open={is('report')} onClose={closeSheet} title="Report">
         {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} />}
       </Sheet>
+      <Sheet open={is('editRole')} onClose={closeSheet} title="Edit role" size="tall">
+        {sheet?.name === 'editRole' && <EditRole id={sheet.id} />}
+      </Sheet>
+      <Sheet open={is('closeRole')} onClose={closeSheet} title="Close role">
+        {sheet?.name === 'closeRole' && <CloseRole id={sheet.id} />}
+      </Sheet>
       <Sheet open={is('block')} onClose={closeSheet} title="">
         {sheet?.name === 'block' && <BlockSheet id={sheet.id} />}
       </Sheet>
@@ -78,11 +84,22 @@ function CreateMenu() {
 
 /* ----------------------------------------------------------- Notifications */
 
+/**
+ * One notification surface. Every item belongs to the identity that has to act on it: you, or a house
+ * you act for. The list opens filtered to whoever you're acting as; "All" shows everything with owner
+ * labels. Opening a house item switches you to that house first, so the action is never taken as the
+ * wrong identity. (Hypothesis: one surface with filters, not separate centres. Validate.)
+ */
 function Notifications() {
-  const { notifications, markNotificationsRead, markNotificationRead, push, openSheet } = useStore();
+  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, setActing, memberships, showToast } = useStore();
+  const [filter, setFilter] = useState<string>(acting);
   if (!notifications.length) return <EmptyState title="No notifications yet" body="Replies, interest and credits will show up here." />;
-  const fresh = notifications.filter((n) => n.unread);
-  const earlier = notifications.filter((n) => !n.unread);
+  const owner = (n: (typeof notifications)[number]) => n.forId ?? 'self';
+  const shown = filter === 'all' ? notifications : notifications.filter((n) => owner(n) === filter);
+  const fresh = shown.filter((n) => n.unread);
+  const earlier = shown.filter((n) => !n.unread);
+  const identities = ['self', ...memberships.filter((m) => notifications.some((n) => n.forId === m))];
+  const unreadFor = (id: string) => notifications.filter((n) => n.unread && (id === 'all' || owner(n) === id)).length;
   const row = (n: (typeof notifications)[number]) => (
     <Pressable
       key={n.id}
@@ -90,12 +107,17 @@ function Notifications() {
       scale={0.99}
       onClick={() => {
         markNotificationRead(n.id);
+        if (owner(n) !== acting) {
+          setActing(owner(n));
+          showToast({ text: owner(n) === 'self' ? 'Switched back to you' : `Now acting for ${org(owner(n)).name}` });
+        }
         if (n.route) push(n.route);
         else if (n.kind === 'interest') openSheet({ name: 'reviewInterest' });
       }}
     >
       <Avatar party={party(n.actorId)!} size={40} />
       <span className="notif-text">
+        {n.forId && filter === 'all' && <span className="notif-for">For {org(n.forId).name}</span>}
         {n.text}
         <span className="meta">{n.time}</span>
       </span>
@@ -104,10 +126,20 @@ function Notifications() {
   );
   return (
     <div className="stack">
+      {identities.length > 1 && (
+        <div className="chips chips--scroll">
+          {[...identities, 'all'].map((id) => (
+            <button key={id} className={`chip ${filter === id ? 'is-on' : ''}`} onClick={() => setFilter(id)}>
+              {id === 'all' ? 'All' : id === 'self' ? 'You' : org(id).name}
+              {unreadFor(id) > 0 && id !== filter ? ` · ${unreadFor(id)}` : ''}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="notif-head">
         <p className="section-title--sheet">{fresh.length ? `${fresh.length} new` : 'No new notifications'}</p>
         {fresh.length > 0 && (
-          <button className="link" onClick={markNotificationsRead}>
+          <button className="link" onClick={() => markNotificationsReadWhere(fresh.map((n) => n.id))}>
             Mark all as read
           </button>
         )}
@@ -119,6 +151,7 @@ function Notifications() {
           <div className="list list--flush notif-earlier">{earlier.map(row)}</div>
         </>
       )}
+      {!shown.length && <p className="meta">Nothing here yet.</p>}
     </div>
   );
 }
@@ -169,7 +202,8 @@ function AvailabilityForm() {
 /* ----------------------------------------------------------------- Respond */
 
 function RespondForm({ id }: { id: string }) {
-  const { respond, userCollabs, viewer } = useStore();
+  const { respond, userCollabs, viewer, attempt } = useStore();
+  const [failed, setFailed] = useState(false);
   const o = findOpportunity(id, userCollabs)!;
   const reel = seed.portfolio[viewer.id][0];
   const credits = seed.credits[viewer.id].length;
@@ -209,6 +243,7 @@ function RespondForm({ id }: { id: string }) {
       ))}
 
       <div className="sheet-sticky">
+        {failed && <p className="field-error">Couldn't send. Your answers are kept, try again.</p>}
         <Button
           block
           size="l"
@@ -216,10 +251,19 @@ function RespondForm({ id }: { id: string }) {
           disabled={remaining > 0}
           onClick={() => {
             setSending(true);
-            window.setTimeout(() => respond(id, ['Profile', ...(withReel ? ['Showreel'] : []), ...(withCredits ? ['Credits'] : [])]), 800);
+            setFailed(false);
+            attempt(
+              `respond-${id}`,
+              () => respond(id, ['Profile', ...(withReel ? ['Showreel'] : []), ...(withCredits ? ['Credits'] : [])]),
+              () => {
+                setSending(false);
+                setFailed(true);
+              },
+              800,
+            );
           }}
         >
-          {remaining ? `${remaining} ${remaining === 1 ? 'answer' : 'answers'} to go` : 'Send'}
+          {remaining ? `${remaining} ${remaining === 1 ? 'answer' : 'answers'} to go` : failed ? 'Try again' : 'Send'}
         </Button>
       </div>
     </div>
@@ -229,16 +273,27 @@ function RespondForm({ id }: { id: string }) {
 /* ---------------------------------------------------------------- Interest */
 
 function InterestForm({ id }: { id: string }) {
-  const { sendInterest, userCollabs } = useStore();
+  const { sendInterest, userCollabs, attempt } = useStore();
   const o = findOpportunity(id, userCollabs)!;
-  const author = person(o.authorId!);
+  const author = o.authorId ? person(o.authorId) : org(o.orgId!);
   const [note, setNote] = useState('');
+  const [state, setState] = useState<'idle' | 'sending' | 'failed'>('idle');
   return (
     <div className="stack">
       <p className="meta">{firstName(author)} sees your profile and can message you.</p>
       <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" />
-      <Button block size="l" onClick={() => sendInterest(id, note)}>
-        Send interest
+      <p className="meta">You can withdraw it any time before they message you.</p>
+      {state === 'failed' && <p className="field-error">Couldn't send your interest. Nothing was shared.</p>}
+      <Button
+        block
+        size="l"
+        loading={state === 'sending'}
+        onClick={() => {
+          setState('sending');
+          attempt(`interest-${id}`, () => sendInterest(id, note), () => setState('failed'));
+        }}
+      >
+        {state === 'failed' ? 'Try again' : 'Send interest'}
       </Button>
     </div>
   );
@@ -290,8 +345,9 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
 /* ------------------------------------------------------------------ Report */
 
 function ReportCredit({ title, creditId }: { title: string; creditId?: string }) {
-  const { closeSheet, showToast, requestCorrection } = useStore();
+  const { closeSheet, showToast, requestCorrection, attempt } = useStore();
   const [reason, setReason] = useState('');
+  const [state, setState] = useState<'idle' | 'sending' | 'failed'>('idle');
   const reasons = ['Wrong role', 'Wrong episodes or dates', "I didn't work on this", 'Name misspelled'];
   return (
     <div className="stack">
@@ -301,17 +357,26 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
           <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} value={reason === r ? <Check size={18} className="accent" /> : undefined} />
         ))}
       </div>
+      {state === 'failed' && <p className="field-error">Couldn't send. Try again.</p>}
       <Button
         block
         size="l"
         disabled={!reason}
+        loading={state === 'sending'}
         onClick={() => {
-          if (creditId) requestCorrection(creditId);
-          closeSheet();
-          showToast({ text: 'Sent to the production. Nothing is public until you accept.' });
+          setState('sending');
+          attempt(
+            `correct-${title}`,
+            () => {
+              if (creditId) requestCorrection(creditId);
+              closeSheet();
+              showToast({ text: 'Sent to the production. Nothing is public until you accept.' });
+            },
+            () => setState('failed'),
+          );
         }}
       >
-        Send
+        {state === 'failed' ? 'Try again' : 'Send'}
       </Button>
     </div>
   );
@@ -530,6 +595,110 @@ function BlockSheet({ id }: { id: string }) {
       </Button>
       <Button block size="l" variant="secondary" onClick={closeSheet}>
         Cancel
+      </Button>
+    </div>
+  );
+}
+
+/* --------------------------------------------------------- Edit / close role */
+
+/**
+ * After publishing, the poster can fix details but not change what the role is. Title, craft and
+ * project are fixed: people showed interest in that. Material changes are listed to everyone who
+ * already showed interest, so nobody is surprised.
+ */
+function EditRole({ id }: { id: string }) {
+  const { userCollabs, roleEdits, editRole, closeSheet, showToast, interestsReceived, attempt } = useStore();
+  const base = findOpportunity(id, userCollabs)!;
+  const o = { ...base, ...roleEdits[id] };
+  const [about, setAbout] = useState(o.about);
+  const [city, setCity] = useState(o.city);
+  const [dates, setDates] = useState(o.dates);
+  const [state, setState] = useState<'idle' | 'saving' | 'failed'>('idle');
+  const material = [city !== o.city && 'location', dates !== o.dates && 'dates'].filter(Boolean) as string[];
+  const dirty = material.length > 0 || about !== o.about;
+  const told = interestsReceived.filter((i) => i.opportunityId === id).length;
+  return (
+    <div className="stack">
+      <div className="group">
+        <Row label="Role" value={o.role} chevron={false} />
+        <Row label="Project" value={o.project} chevron={false} />
+      </div>
+      <p className="meta">Role and project can't change once people have seen it. Close this role and open a new one instead.</p>
+      <div>
+        <label className="field-label" htmlFor="er-city">Location</label>
+        <input id="er-city" className="field" value={city} onChange={(e) => setCity(e.target.value)} />
+      </div>
+      <div>
+        <label className="field-label" htmlFor="er-dates">Dates</label>
+        <input id="er-dates" className="field" value={dates} onChange={(e) => setDates(e.target.value)} />
+      </div>
+      <div>
+        <label className="field-label" htmlFor="er-about">About the role</label>
+        <textarea id="er-about" className="field field--area" rows={5} value={about} onChange={(e) => setAbout(e.target.value)} />
+      </div>
+      {material.length > 0 && told > 0 && (
+        <p className="inline-note">
+          {told} {told === 1 ? 'person' : 'people'} who showed interest will see that the {material.join(' and ')} changed.
+        </p>
+      )}
+      {state === 'failed' && <p className="field-error">Couldn't save. Your edits are kept.</p>}
+      <Button
+        block
+        size="l"
+        disabled={!dirty}
+        loading={state === 'saving'}
+        onClick={() => {
+          setState('saving');
+          attempt(
+            `edit-${id}`,
+            () => {
+              editRole(id, { about, city, dates }, material);
+              closeSheet();
+              showToast({ text: 'Role updated', tone: 'success' });
+            },
+            () => setState('failed'),
+          );
+        }}
+      >
+        {state === 'failed' ? 'Try again' : 'Save changes'}
+      </Button>
+    </div>
+  );
+}
+
+const CLOSE_REASONS: { state: 'filled' | 'closed'; label: string; tells: string }[] = [
+  { state: 'filled', label: 'Filled through Ana', tells: 'Filled' },
+  { state: 'filled', label: 'Filled another way', tells: 'Filled' },
+  { state: 'closed', label: 'No longer needed', tells: 'No longer needed' },
+  { state: 'closed', label: 'Project paused', tells: 'Project paused' },
+];
+
+/** Closing keeps the role and its history. Everyone who showed interest learns the outcome instead of silence. */
+function CloseRole({ id }: { id: string }) {
+  const { closeRole, closeSheet, showToast, interestsReceived } = useStore();
+  const [pick, setPick] = useState<number | null>(null);
+  const waiting = interestsReceived.filter((i) => i.opportunityId === id).length;
+  return (
+    <div className="stack">
+      <div className="group">
+        {CLOSE_REASONS.map((r, i) => (
+          <Row key={r.label} label={r.label} onPress={() => setPick(i)} chevron={false} value={pick === i ? <Check size={18} className="accent" /> : undefined} />
+        ))}
+      </div>
+      <p className="meta">{waiting ? `${waiting} ${waiting === 1 ? 'person' : 'people'} who showed interest will be told the role is ${pick !== null ? CLOSE_REASONS[pick].tells.toLowerCase() : 'closed'}. ` : ''}The role stops appearing on Ana. You can reopen it.</p>
+      <Button
+        block
+        size="l"
+        disabled={pick === null}
+        onClick={() => {
+          const r = CLOSE_REASONS[pick!];
+          closeRole(id, r.state, r.label);
+          closeSheet();
+          showToast({ text: r.state === 'filled' ? 'Role marked as filled' : 'Role closed' });
+        }}
+      >
+        Close role
       </Button>
     </div>
   );

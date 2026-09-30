@@ -6,6 +6,8 @@ import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
+import { useLoad } from '../../ui/useLoad';
+import { PageError, PageSkeleton } from '../../ui/PageStates';
 
 /**
  * Public project page. What anyone on Ana sees: what it is, who made it, who is credited, whether it
@@ -19,6 +21,9 @@ export function WorkScreen({ id }: { id: string }) {
     setHero('work', scrollY < 300);
     return () => setHero('work', false);
   }, [scrollY, setHero]);
+  const load = useLoad(`work-${id}`);
+  if (load.state === 'loading') return <PageSkeleton />;
+  if (load.state === 'error') return <PageError what="project" retry={load.retry} />;
 
   if (!w) {
     return (
@@ -122,7 +127,7 @@ export function WorkScreen({ id }: { id: string }) {
         )}
 
         {w.ownerId ? (
-          <p className="meta work-foot">Independent work is shown by the person who made it. It carries no credits, because only a production can issue a credit on Ana.</p>
+          <p className="meta work-foot">Credits for independent projects are not verified yet.</p>
         ) : (
         <section className="section section--flush">
           <SectionHeader title={released ? 'Credits' : 'Attached so far'} />

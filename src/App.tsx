@@ -15,6 +15,7 @@ import { EditProfile } from './screens/profile/EditProfile';
 import { ProductionHome, ProjectScreen } from './screens/production/Production';
 import { WorkScreen } from './screens/org/WorkScreen';
 import { OrgScreen } from './screens/org/OrgScreen';
+import { SettingsScreen } from './screens/settings/Settings';
 import { SheetHost } from './screens/sheets/Sheets';
 import { networkFor } from './state/selectors';
 import { StoreProvider, useStore, type Route } from './state/store';
@@ -55,6 +56,8 @@ function RouteView({ r }: { r: Route }) {
       return <WorkScreen id={r.id} />;
     case 'org':
       return <OrgScreen id={r.id} />;
+    case 'settings':
+      return <SettingsScreen />;
   }
 }
 

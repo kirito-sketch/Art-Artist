@@ -121,7 +121,7 @@ export function InboxScreen() {
 }
 
 export function ConversationScreen({ id }: { id: string }) {
-  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer } = useStore();
+  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage } = useStore();
   const c = conversations.find((x) => x.id === id);
   const [text, setText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -175,7 +175,13 @@ export function ConversationScreen({ id }: { id: string }) {
               transition={{ type: 'spring', stiffness: 420, damping: 32 }}
             >
               {m.senderName && m.from === 'them' && <p className="meta bubble-sender">{m.senderName.split(' · ')[0]}</p>}
-              <div className="bubble">{m.text}</div>
+              <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`}>{m.text}</div>
+              {m.status === 'sending' && <p className="meta bubble-status">Sending…</p>}
+              {m.status === 'failed' && (
+                <button className="bubble-status bubble-retry" onClick={() => retryMessage(c.id, m.id)}>
+                  Not delivered · Tap to retry
+                </button>
+              )}
             </motion.div>
           ))}
           <div ref={endRef} />

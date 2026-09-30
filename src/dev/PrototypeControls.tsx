@@ -52,6 +52,7 @@ export function PrototypeControls() {
     { key: 'forYouError', label: 'For you fails' },
     { key: 'offline', label: 'Offline' },
     { key: 'failPublish', label: 'Posting fails' },
+    { key: 'actionsFail', label: 'Actions fail once (retry works)' },
   ];
   const activeStates = rows.filter((r) => scenario[r.key]).length;
   const archived = look === 'bold' || look === 'doodle';

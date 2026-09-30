@@ -36,7 +36,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero, memberships, blocked, unblock, pendingCredits, acceptedCredits, acceptCredit } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptedCredits, acceptCredit, creditBusy } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -112,7 +112,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <IconButton label="Share profile" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
             <Share size={18} />
           </IconButton>
-          <IconButton label={own ? 'Settings' : 'More'} className="icon-btn--float" onClick={() => (own ? showToast({ text: 'Settings come next: privacy, blocked people, notifications' }) : openSheet({ name: 'more', id }))}>
+          <IconButton label={own ? 'Settings' : 'More'} className="icon-btn--float" onClick={() => (own ? push({ name: 'settings' }) : openSheet({ name: 'more', id }))}>
             {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
           </IconButton>
         </div>
@@ -232,7 +232,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                     <p className="meta">Correction sent. {org(c.orgId).name} will update it.</p>
                   ) : (
                     <div className="pending-credit-actions">
-                      <Button size="s" onClick={() => acceptCredit(c.id)}>
+                      <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)}>
                         Accept
                       </Button>
                       <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: c.title, creditId: c.id })}>

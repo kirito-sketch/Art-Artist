@@ -16,7 +16,7 @@ const ABOUT_MAX = 400;
  * productions, so the screen points to where corrections happen instead.
  */
 export function EditProfile() {
-  const { viewer, pop, availability, openSheet, showToast, bumpProfile, userPortfolio } = useStore();
+  const { viewer, pop, availability, openSheet, showToast, bumpProfile, userPortfolio, attempt } = useStore();
   const me = person(viewer.id);
   const [name, setName] = useState(me.name);
   const [role, setRole] = useState(me.role);
@@ -29,6 +29,7 @@ export function EditProfile() {
   const [discard, setDiscard] = useState(false);
   const [saving, setSaving] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const dirty =
     name !== me.name || role !== me.role || city !== me.city || gear !== (me.gear ?? '') || about !== (seed.about[viewer.id] ?? '') || photo !== me.photo || langs.join() !== (me.languages ?? []).join();
@@ -39,14 +40,18 @@ export function EditProfile() {
     setTouched(true);
     if (!name.trim() || !role.trim()) return;
     setSaving(true);
-    window.setTimeout(() => {
+    setSaveFailed(false);
+    attempt('profile-save', () => {
       // Prototype: write straight into the seed so every screen picks it up.
       Object.assign(me, { name: name.trim(), role: role.trim(), city: city.trim(), languages: langs, gear: gear.trim() || undefined, photo });
       seed.about[viewer.id] = about.trim();
       bumpProfile();
       pop();
       showToast({ text: 'Profile updated' });
-    }, 700);
+    }, () => {
+      setSaving(false);
+      setSaveFailed(true);
+    });
   };
 
   const preview = { ...me, name: name || me.name, photo };
@@ -64,6 +69,7 @@ export function EditProfile() {
       </header>
 
       <div className="composer-body stack stack--loose">
+        {saveFailed && <p className="inline-error">Couldn't save. Your changes are still here. Tap Save to try again.</p>}
         <div className="edit-photo">
           <Avatar party={preview} size={96} />
           <button className="link" onClick={() => setPicker(true)}>

@@ -18,13 +18,19 @@
 | Block | Confirmation that states consequences; blocked profile shows "You blocked X" with Unblock; hidden from search. |
 | Active identity | Tab avatar shows the house while acting; switch from the house name or your own name. Composers, conversations and interest review say who the action comes from; responding while acting offers "Switch to you". |
 | Receiving a credit | "Waiting for you" on your own profile: Accept or Something wrong? (correction). Nothing is public until accepted. No self-claim action exists anywhere. |
-| Independent projects | Salt, Chai & Rain and Two Rooms open a project page marked independent, with no credits. |
+| Independent projects | Salt, Chai & Rain and Two Rooms open a project page marked independent: "Credits for independent projects are not verified yet." Who issues credits without a house is an open question. |
+| Key action states | Sending, failure and retry on interest, respond, accept credit, correction, messages, role edit, profile save; loading and error on search, project and production pages. |
+| Interest after sending | Withdraw with undo until a conversation starts or the role closes; nothing to edit; poster not notified. |
+| Edit and close a role | Title and project fixed; location, dates, description editable; material changes shown to interested people; close with an outcome; reopen. |
+| Settings | Personal and house settings shells, kept separate. |
+| Notifications | Owned by an identity, filtered by who you're acting as, All with owner labels, opening a house item switches identity. |
 | Regression check | Notifications (mark all as read, Earlier) and Edit Profile (validation, dirty Save, discard) re-checked in Minimal and Glass after the latest changes. |
 | Prototype panel | Rebuilt as three steps: who is using Ana, what to compare for that person (each option tagged Working, Alternative, Reference or Undecided), look. Archived looks and test states are collapsed. |
 
 ## Unfinished (dead ends or toasts standing in for a screen)
 
-- Settings: toast only (next: privacy, blocked people, notifications, organisations you act for). "Edit page" for a house: toast.
+- Settings rows are mostly read-only (account fields, security). Leaving an organisation isn't built.
+- Production-house loose ends are tracked in docs/PRODUCTION_HOUSE_EXPLORATION.md §8.
 - Discover redesign from the scalability audit: not built.
 - Messaging a house opens a conversation, but the Inbox doesn't yet separate personal and house conversations.
 - Loading and error states exist only for "For you". Message send failure, withdrawing or editing a sent response, and editing or closing a published collaboration are missing.

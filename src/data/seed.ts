@@ -577,6 +577,8 @@ export const interests: Record<string, Interest[]> = {
 
 export const notifications: Record<string, Notification[]> = {
   kiran: [
+    { id: 'nh1', forId: 'konark', kind: 'interest', actorId: 'vikram', text: 'Vikram Sen and 3 others are interested in roles on Neela Akasham', time: '1h', unread: true, route: { name: 'project', id: 'neela' } },
+    { id: 'nh2', forId: 'konark', kind: 'credit', actorId: 'sameer', text: 'Sameer Ali asked to correct a credit on Neeli Raat', time: '3h', unread: true, route: { name: 'project', id: 'neeliraat' } },
     { id: 'nt0', kind: 'credit', actorId: 'bluelotus', text: 'Blue Lotus Originals credited you on Fault Lines · S1. Accept it to show it on your profile.', time: '8m', unread: true, route: { name: 'profile', id: 'kiran' } },
     { id: 'nt1', kind: 'message', actorId: 'konark', text: 'Konark Pictures replied about Director of Photography', time: '12m', unread: true, route: { name: 'conversation', id: 'c-konark' } },
     { id: 'nt2', kind: 'interest', actorId: 'nikhil', text: '3 people are interested in your 1st AC collaboration', time: '2h', unread: true },

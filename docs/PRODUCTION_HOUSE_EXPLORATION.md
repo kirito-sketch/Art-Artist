@@ -95,7 +95,7 @@ Still to validate, all on the production side:
 - Which members of a house may publish credits?
 - If a house declines a correction: suggested rule, the credit stays unpublished for that person, never published against their will.
 
-**Independent work** (no traditional production) is a separate case. It is **not** solved by letting people credit themselves. For now, independent projects (Salt, Chai & Rain, Two Rooms) open a project page that shows who made it and states plainly that it carries no credits, because only a production can issue a credit on Ana.
+**Independent work** (no formal production house) is an open product problem, not a "no credits" rule. Open question: **who becomes the trusted credit issuer when there is no formal production house?** Possible models (to explore later, not implement): the project's director or producer acting as the issuer once their own identity is verified; issuance that needs a second credited person to confirm; a festival, school or label as issuer. Fixed constraint: nobody creates a project and awards themselves credits. For now, independent project pages (Salt, Chai & Rain, Two Rooms) show who made the project and say "Credits for independent projects are not verified yet."
 
 ## 3b. Identity on actions
 
@@ -108,3 +108,22 @@ Anything that publishes or communicates must say who it comes from:
 ## 7. Not built on purpose
 
 Creating a project or role flow (toast), adding people to a project, member management, editing the house page, Inbox and notifications per identity, credit publishing at wrap.
+
+## 8. Production-house loose ends (tracked, not designed)
+
+Each is a separate question. None is filled in silently.
+
+| Question | Current prototype | Status |
+|---|---|---|
+| Editing the house page | "Edit page" says it isn't designed yet | Open |
+| Creating a project (production side) | "+" says it isn't designed yet | Open |
+| Opening a role as a house | Uses the collaboration composer, posted as the house | Placeholder; needs its own look at what a house role must say |
+| Adding people to a project (engagement) | Not built | Open. Must stay credits-in-progress, never crew management |
+| Publishing credits at wrap | Not built | Open |
+| Co-production credit authority | Not built | Validate |
+| Member permissions | Settings shows owner, members, and a separate "can issue credits" grant, read-only | Hypothesis. Validate with houses |
+| Inbox separated by identity | Conversations remember which identity started them and say "Replying as"; one Inbox | Validate |
+
+## 9. Creep guard
+
+Before adding anything for houses: does it help them **discover people, collaborate, establish trusted credits or present their work**? If it mainly helps run production (schedules, tasks, budgets, payroll, call sheets, internal operations), it stays out. Ana understands the structure of a production without becoming software for running one.

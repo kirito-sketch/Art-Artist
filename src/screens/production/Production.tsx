@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
+import { Bell, ChevronDown, ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Media } from '../../data/types';
@@ -60,8 +60,9 @@ function useSignals(house: string) {
 }
 
 function HouseTop() {
-  const { acting, openSheet, showToast } = useStore();
+  const { acting, openSheet, showToast, notifications } = useStore();
   const house = org(acting);
+  const unread = notifications.some((n) => n.unread && n.forId === acting);
   return (
     <header className="topbar">
       <button className="ph-house" onClick={() => openSheet({ name: 'identity' })} aria-label={`Acting as ${house.name}. Switch`}>
@@ -73,7 +74,12 @@ function HouseTop() {
           <span className="meta ph-acting">Acting for the house</span>
         </span>
       </button>
-      <IconButton label="New project" onClick={() => showToast({ text: 'New project: a title is enough to start' })}>
+      <span className="flex" />
+      <IconButton label="Notifications" onClick={() => openSheet({ name: 'notifications' })}>
+        <Bell size={21} />
+        {unread && <span className="tab-dot ph-bell-dot" />}
+      </IconButton>
+      <IconButton label="New project" onClick={() => showToast({ text: 'Creating a project is not designed yet' })}>
         <Plus size={22} />
       </IconButton>
     </header>

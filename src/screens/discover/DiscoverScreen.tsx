@@ -1,13 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newspaper, Palette, Scissors, Search, Shirt, SlidersHorizontal, Sparkles, Theater, Users, Video, X } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { works } from '../../data/works';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { OfflineBanner } from '../../ui/chrome';
-import { Avatar, Button, Chip, EmptyState, PressCard, Pressable, Photo, SectionHeader, Tabs, Verified } from '../../ui/primitives';
+import { Avatar, Button, Chip, EmptyState, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from './RoleRow';
@@ -70,7 +70,8 @@ interface Filters {
 }
 
 export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s: Scope) => void }) {
-  const { viewer, following, userPosts, userCollabs, blocked, push } = useStore();
+  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt } = useStore();
+  const [searchState, setSearchState] = useState<'ready' | 'loading' | 'error'>('ready');
   const [query, setQuery] = useState('');
   /** Typing shows results across everything; "See all" narrows to one kind and brings the tabs back. */
   const [narrowed, setNarrowed] = useState(false);
@@ -85,6 +86,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
 
   const applyRoleFilters = (list: Opportunity[], f: Filters, k: typeof kind) =>
     list
+      .filter((o) => !roleStatus[o.id])
       .filter((o) => (k === 'all' ? true : o.kind === k))
       .filter((o) => (f.paid ? o.paid : true))
       .filter((o) => (f.verified ? !!o.orgId : true))
@@ -100,6 +102,13 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const projects = works.filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const houses = q ? seed.orgs.filter((o) => !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
   const grouped = !!q && !narrowed;
+  const runSearch = () => {
+    if (!q || !(scenario.loading || scenario.actionsFail)) return setSearchState('ready');
+    setSearchState('loading');
+    attempt('search', () => setSearchState('ready'), () => setSearchState('error'), scenario.loading ? 900 : 300);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(runSearch, [q]);
   const seeAll = (sc: Scope) => {
     setScope(sc);
     setNarrowed(true);
@@ -139,7 +148,26 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
       </div>
       <OfflineBanner />
 
-      {grouped ? (
+      {grouped && searchState === 'loading' ? (
+        <div className="search-results" aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skel-row">
+              <Skeleton w={48} h={48} r={12} />
+              <span className="skel-lines">
+                <Skeleton w="55%" />
+                <Skeleton w="35%" h={11} />
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : grouped && searchState === 'error' ? (
+        <div className="search-results">
+          <EmptyState title="Search didn't load" body="Your search is kept. Try again." />
+          <Button variant="secondary" className="center-btn" onClick={runSearch}>
+            Try again
+          </Button>
+        </div>
+      ) : grouped ? (
         <div className="search-results">
           {houses.length > 0 && (
             <section className="section">

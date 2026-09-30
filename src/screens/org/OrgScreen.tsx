@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Share } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
 import { isLive, worksForOrg, type Work } from '../../data/works';
@@ -6,6 +6,8 @@ import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
+import { useLoad } from '../../ui/useLoad';
+import { PageError, PageSkeleton } from '../../ui/PageStates';
 
 /**
  * The organisation's public identity. One page: visitors see it from a byline, a credit or search;
@@ -27,6 +29,9 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
     setHero(heroKey, scrollY < 300);
     return () => setHero(heroKey, false);
   }, [heroKey, scrollY, setHero]);
+  const load = useLoad(`org-${id}`);
+  if (load.state === 'loading' && !isTab) return <PageSkeleton />;
+  if (load.state === 'error' && !isTab) return <PageError what="page" retry={load.retry} />;
 
   if (!o) return <EmptyState title="Page unavailable" />;
   const ws = worksForOrg(id);
@@ -114,7 +119,11 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <IconButton label="Share" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name })}>
             <Share size={18} />
           </IconButton>
-          {!own && (
+          {own ? (
+            <IconButton label="House settings" className="icon-btn--float" onClick={() => push({ name: 'settings' })}>
+              <Settings size={19} />
+            </IconButton>
+          ) : (
             <IconButton label="More" className="icon-btn--float" onClick={() => openSheet({ name: 'more', id })}>
               <MoreHorizontal size={20} />
             </IconButton>

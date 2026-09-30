@@ -23,8 +23,11 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing } = useStore();
-  const o = findOpportunity(id, userCollabs);
+  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse } = useStore();
+  const base = findOpportunity(id, userCollabs);
+  const o = base && { ...base, ...roleEdits[id] };
+  const status = roleStatus[id];
+  const changed = roleEdits[id]?.changed ?? [];
   const [scrollY, setScrollY] = useState(0);
   const tint = useImageTint(o?.media);
 
@@ -61,7 +64,21 @@ export function OpportunityScreen({ id }: { id: string }) {
     </>
   );
   let action: ReactNode;
-  if (mine) {
+  const talking = conversations.find((c) => c.context.refId === o.id);
+  if (status) {
+    left = (
+      <>
+        <p className="item-title">{status.state === 'filled' ? 'Role filled' : 'Role closed'}</p>
+        <p className="meta">{status.reason}</p>
+      </>
+    );
+    if (mine)
+      action = (
+        <Button variant="secondary" onClick={() => reopenRole(o.id)}>
+          Reopen
+        </Button>
+      );
+  } else if (mine) {
     action = <Button onClick={() => openSheet({ name: 'reviewInterest', opportunityId: o.id })}>{received ? `Review ${received}` : 'Review interest'}</Button>;
   } else if (acting !== 'self') {
     // Responding is always personal. A house never applies for a role, so make the switch explicit.
@@ -76,12 +93,26 @@ export function OpportunityScreen({ id }: { id: string }) {
         Switch to you
       </Button>
     );
+  } else if ((response || interested) && talking) {
+    // Once the poster has started a conversation, interest has done its job. Changing your mind happens in the chat.
+    left = (
+      <>
+        <p className="item-title">In conversation</p>
+        <p className="meta">Changed your mind? Say so in the chat</p>
+      </>
+    );
+    action = <Button onClick={() => push({ name: 'conversation', id: talking.id })}>Open chat</Button>;
   } else if (response) {
     left = (
       <>
         <p className="item-title">Response sent</p>
         <p className="meta">{response.sentAt}</p>
       </>
+    );
+    action = (
+      <Button variant="secondary" onClick={() => withdrawResponse(o.id)}>
+        Withdraw
+      </Button>
     );
   } else if (interested) {
     left = (
@@ -132,6 +163,19 @@ export function OpportunityScreen({ id }: { id: string }) {
             <Byline o={o} />
             <span className="meta">· {o.project}</span>
           </Pressable>
+
+          {mine && !status && (
+            <div className="owner-bar">
+              <button className="link" onClick={() => openSheet({ name: 'editRole', id: o.id })}>
+                Edit role
+              </button>
+              <button className="link link--muted" onClick={() => openSheet({ name: 'closeRole', id: o.id })}>
+                Close role
+              </button>
+            </div>
+          )}
+          {!mine && changed.length > 0 && (response || interested) && <p className="inline-note">Updated since you showed interest: {changed.join(', ')}</p>}
+          {status && !mine && <p className="inline-note">This role is no longer open. Anything you sent stays in your activity.</p>}
 
           <ul className="facts">
             <Fact icon={<MapPin size={20} />}>{o.city}</Fact>

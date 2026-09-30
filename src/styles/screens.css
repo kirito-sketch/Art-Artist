@@ -1891,3 +1891,24 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .proto-tag--working { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
 .proto-more { margin-top: 12px; }
 .proto-more summary { cursor: pointer; font-size: 12px; color: var(--text-2, #777); margin-bottom: 8px; }
+.bubble--failed { opacity: .6; }
+.bubble-status { font-size: 11px; margin: 2px 4px 0; text-align: right; }
+.bubble-retry { background: none; border: 0; color: #c0392b; font-weight: 600; padding: 0; cursor: pointer; }
+.inline-error { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: color-mix(in srgb, #c0392b 10%, var(--surface)); color: #a93226; }
+.owner-bar { display: flex; gap: 18px; margin: 4px 0 8px; }
+.inline-note { margin: 8px 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: var(--surface-2, #f2f2f2); }
+.skel-hero { height: 320px; background: var(--surface-2, #eee); position: relative; animation: skel 1.2s ease-in-out infinite; }
+.skel-back { position: absolute; top: calc(var(--status-bar) + 6px); left: 16px; }
+.skel-body { padding: 24px var(--gutter); display: flex; flex-direction: column; gap: 12px; }
+.skel-row { display: flex; gap: 12px; align-items: center; padding: 10px var(--gutter); }
+.skel-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+@keyframes skel { 50% { opacity: .6; } }
+.settings { padding: 0 var(--gutter) 120px; }
+.settings-group { margin-bottom: 26px; }
+.settings-h { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-2, #777); margin: 0 0 8px; }
+.settings-note { margin: 8px 2px 0; font-size: 13px; }
+.settings-label { display: flex; flex-direction: column; gap: 1px; }
+.inline-verified { display: inline-flex; align-items: center; gap: 4px; }
+.notif-for { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+.ph-bell-dot { position: absolute; top: 8px; right: 8px; }
+.topbar .icon-btn { position: relative; }

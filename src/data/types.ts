@@ -146,6 +146,7 @@ export interface Message {
   text: string;
   time: string;
   senderName?: string;
+  status?: 'sending' | 'failed';
 }
 
 export interface Conversation {
@@ -178,7 +179,9 @@ export interface Notification {
   actorId: string;
   time: string;
   unread: boolean;
-  route?: { name: 'conversation' | 'profile' | 'opportunity'; id: string };
+  route?: { name: 'conversation' | 'profile' | 'opportunity' | 'project'; id: string };
+  /** The organisation this belongs to. Absent means it's for the person. */
+  forId?: string;
 }
 
 export interface Viewer {

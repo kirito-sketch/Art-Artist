@@ -16,6 +16,7 @@ export type Route =
   | { name: 'editProfile' }
   | { name: 'project'; id: string }
   | { name: 'work'; id: string }
+  | { name: 'settings' }
   | { name: 'org'; id: string }
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
@@ -34,7 +35,9 @@ export type Sheet =
   | { name: 'share'; label: string }
   | { name: 'more'; id: string }
   | { name: 'report'; subject: string; partyId?: string }
-  | { name: 'block'; id: string };
+  | { name: 'block'; id: string }
+  | { name: 'editRole'; id: string }
+  | { name: 'closeRole'; id: string };
 
 export interface Scenario {
   newUser: boolean;
@@ -42,6 +45,8 @@ export interface Scenario {
   offline: boolean;
   failPublish: boolean;
   forYouError: boolean;
+  /** Test state: the next attempt of each key action fails; retrying succeeds. */
+  actionsFail: boolean;
 }
 
 export interface Availability {
@@ -94,6 +99,7 @@ function useStoreValue() {
     loading: false,
     offline: false,
     failPublish: false,
+    actionsFail: false,
     forYouError: false,
   });
 
@@ -106,6 +112,11 @@ function useStoreValue() {
   /** Credits issued by a production, waiting for the person to accept or correct. */
   const [pendingCredits, setPendingCredits] = useState<(Credit & { correction?: boolean })[]>(seed.pendingCredits.kiran);
   const [acceptedCredits, setAcceptedCredits] = useState<Credit[]>([]);
+  const [creditBusy, setCreditBusy] = useState<string | null>(null);
+  /** Poster-side changes to published roles. Title and project stay fixed once published. */
+  const [roleEdits, setRoleEdits] = useState<Record<string, Partial<Opportunity> & { changed?: string[] }>>({});
+  const [roleStatus, setRoleStatus] = useState<Record<string, { state: 'filled' | 'closed'; reason: string }>>({});
+  const failedOnce = useRef(new Set<string>());
   const [following, setFollowing] = useState<string[]>(DEFAULT_FOLLOWING);
   const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
@@ -234,9 +245,11 @@ function useStoreValue() {
         delete next[id];
         return next;
       });
-      showToast({ text: 'Interest withdrawn' });
+      // Quiet by design: the poster isn't notified, the person simply leaves their list. Undo covers a mis-tap.
+      const note = interestsSent[id];
+      showToast({ text: 'Interest withdrawn', action: { label: 'Undo', run: () => setInterestsSent((s) => ({ ...s, [id]: note ?? '' })) } });
     },
-    [showToast],
+    [showToast, interestsSent],
   );
 
   const setAvailability = useCallback(
@@ -269,14 +282,48 @@ function useStoreValue() {
     [conversations, acting],
   );
 
-  const sendMessage = useCallback((convId: string, text: string) => {
-    setConversations((cs) => {
-      const c = cs.find((x) => x.id === convId);
-      if (!c) return cs;
-      const updated = { ...c, updated: 'now', messages: [...c.messages, { id: `m${Date.now()}`, from: 'me' as const, text, time: nowTime() }] };
-      return [updated, ...cs.filter((x) => x.id !== convId)];
-    });
+  /** Runs a key action after a short delay. With "Actions fail" on, the first try of each key fails and a retry succeeds. */
+  const attempt = useCallback(
+    (key: string, onDone: () => void, onFail: () => void, ms = 700) => {
+      window.setTimeout(() => {
+        if (scenario.actionsFail && !failedOnce.current.has(key)) {
+          failedOnce.current.add(key);
+          onFail();
+        } else {
+          failedOnce.current.delete(key);
+          onDone();
+        }
+      }, ms);
+    },
+    [scenario.actionsFail],
+  );
+  const setMessageStatus = useCallback((convId: string, msgId: string, status?: 'sending' | 'failed') => {
+    setConversations((cs) => cs.map((c) => (c.id === convId ? { ...c, messages: c.messages.map((m) => (m.id === msgId ? { ...m, status } : m)) } : c)));
   }, []);
+  const deliver = useCallback(
+    (convId: string, msgId: string) => attempt(`msg-${msgId}`, () => setMessageStatus(convId, msgId, undefined), () => setMessageStatus(convId, msgId, 'failed'), 600),
+    [attempt, setMessageStatus],
+  );
+  const sendMessage = useCallback(
+    (convId: string, text: string) => {
+      const msgId = `m${Date.now()}`;
+      setConversations((cs) => {
+        const c = cs.find((x) => x.id === convId);
+        if (!c) return cs;
+        const updated = { ...c, updated: 'now', messages: [...c.messages, { id: msgId, from: 'me' as const, text, time: nowTime(), status: 'sending' as const }] };
+        return [updated, ...cs.filter((x) => x.id !== convId)];
+      });
+      deliver(convId, msgId);
+    },
+    [deliver],
+  );
+  const retryMessage = useCallback(
+    (convId: string, msgId: string) => {
+      setMessageStatus(convId, msgId, 'sending');
+      deliver(convId, msgId);
+    },
+    [deliver, setMessageStatus],
+  );
 
   const markConversationRead = useCallback((convId: string) => {
     setConversations((cs) => cs.map((c) => (c.id === convId && c.unread ? { ...c, unread: 0 } : c)));
@@ -389,13 +436,32 @@ function useStoreValue() {
     memberships,
     pendingCredits,
     acceptedCredits,
-    acceptCredit: (cid: string) => {
+    creditBusy,
+    acceptCredit: function accept(cid: string) {
       const c = pendingCredits.find((x) => x.id === cid);
       if (!c) return;
-      setPendingCredits((xs) => xs.filter((x) => x.id !== cid));
-      setAcceptedCredits((xs) => [c, ...xs]);
-      showToast({ text: `Credit accepted. It now shows on your profile and on ${c.title}.`, tone: 'success' });
+      setCreditBusy(cid);
+      attempt(
+        `credit-${cid}`,
+        () => {
+          setCreditBusy(null);
+          setPendingCredits((xs) => xs.filter((x) => x.id !== cid));
+          setAcceptedCredits((xs) => [c, ...xs]);
+          showToast({ text: `Credit accepted. It now shows on your profile and on ${c.title}.`, tone: 'success' });
+        },
+        () => {
+          setCreditBusy(null);
+          showToast({ text: "Couldn't accept the credit. Nothing changed.", tone: 'error', action: { label: 'Retry', run: () => accept(cid) } });
+        },
+      );
     },
+    attempt,
+    retryMessage,
+    roleEdits,
+    roleStatus,
+    editRole: (id: string, patch: Partial<Opportunity>, changed: string[]) => setRoleEdits((r) => ({ ...r, [id]: { ...r[id], ...patch, changed: [...new Set([...(r[id]?.changed ?? []), ...changed])] } })),
+    closeRole: (id: string, state: 'filled' | 'closed', reason: string) => setRoleStatus((r) => ({ ...r, [id]: { state, reason } })),
+    reopenRole: (id: string) => setRoleStatus((r) => { const n = { ...r }; delete n[id]; return n; }),
     requestCorrection: (cid: string) => setPendingCredits((xs) => xs.map((x) => (x.id === cid ? { ...x, correction: true } : x))),
     /** Switching identity keeps you on the tab you were on, so the change is visible where you made it. */
     setActing: (a: string, keepTab = false, keepStack = false) => {
@@ -414,6 +480,7 @@ function useStoreValue() {
     setHouseProfile,
     profileVersion,
     bumpProfile: () => setProfileVersion((v) => v + 1),
+    markNotificationsReadWhere: (ids: string[]) => setNotifications((ns) => ns.map((n) => (ids.includes(n.id) ? { ...n, unread: false } : n))),
     markNotificationRead: (id: string) => setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, unread: false } : n))),
     look,
     setLook,
@@ -438,6 +505,11 @@ function useStoreValue() {
     toggleFollow,
     responses,
     respond,
+    withdrawResponse: (id: string) => {
+      const prev = responses[id];
+      setResponses((r) => { const n = { ...r }; delete n[id]; return n; });
+      showToast({ text: 'Response withdrawn', action: { label: 'Undo', run: () => setResponses((r) => ({ ...r, [id]: prev })) } });
+    },
     interestsSent,
     sendInterest,
     withdrawInterest,
