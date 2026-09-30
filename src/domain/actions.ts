@@ -1,7 +1,7 @@
 import * as seed from '../data/seed';
 import type { Opportunity } from '../data/types';
 import { party, person } from '../state/selectors';
-import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject } from '../state/world';
+import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from '../state/world';
 
 /*
  * The actions that change Ana's shared records (projects, roles, associations, credits, interests and
@@ -63,8 +63,28 @@ export function setRoleVisibility(_actor: Actor, id: string, v: 'private' | 'ope
   if (r) (r.visibility = v), (r.postedAgo = 'now');
 }
 
-export function closeRole(_actor: Actor, id: string, state: 'filled' | 'closed', reason: string) {
+/** Closing keeps the role and its history. Everyone still interested learns the outcome instead of silence. */
+export function closeRole(_actor: Actor, id: string, state: 'filled' | 'closed', reason: string, chosenId?: string) {
+  if (world.roleStatus[id]) return;
   world.roleStatus[id] = { state, reason };
+  const r = world.roles.find((x) => x.id === id);
+  if (!r) return;
+  const by = r.orgId ? party(r.orgId)!.name : person(r.authorId!).name;
+  const told = new Set<string>();
+  world.interests
+    .filter((i) => i.opportunityId === id && !i.withdrawn && i.personId !== chosenId)
+    .forEach((i) => {
+      if (told.has(i.personId)) return;
+      told.add(i.personId);
+      // The public name only: someone who showed interest never learns the working title this way.
+      world.notifications.unshift({ id: wid('wn'), toPersonId: i.personId, kind: 'interest', actorId: r.orgId ?? r.authorId!, text: `${by} ${state === 'filled' ? 'filled' : 'closed'} ${r.role} on ${r.project}. Thanks for your interest.`, time: 'now', unread: true, route: { name: 'opportunity', id } });
+    });
+}
+
+/** After publishing, details can change but not what the role is. Material changes are listed to people who showed interest. */
+export function editRole(_actor: Actor, id: string, patch: Partial<Opportunity>, changed: string[]) {
+  const r = world.roleEdits[id];
+  world.roleEdits[id] = { ...r, ...patch, changed: [...new Set([...(r?.changed ?? []), ...changed])] };
 }
 
 export function reopenRole(_actor: Actor, id: string) {
@@ -111,10 +131,12 @@ export function issueCredit(actor: Actor, associationId: string, line: string, d
   const a = world.associations.find((x) => x.id === associationId)!;
   const p = wproject(a.projectId)!;
   const status = actor.canIssue ? 'proposed' : 'prepared';
+  const corrected = world.credits.some((c) => c.associationId === associationId && c.status === 'correction');
   world.credits = world.credits.filter((c) => c.associationId !== associationId || c.status === 'accepted');
   const c = { id: wid('wc'), projectId: a.projectId, associationId, personId: a.personId!, line, dept, status } as const;
   world.credits.push({ ...c });
-  if (status === 'proposed') world.notifications.unshift({ id: wid('wn'), toPersonId: a.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)?.name} issued you a credit on ${p.workingTitle}: ${line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'profile', id: a.personId! } });
+  // The notification opens the person's own view of the project, where the credit waits for them.
+  if (status === 'proposed') world.notifications.unshift({ id: wid('wn'), toPersonId: a.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)?.name} issued you ${corrected ? 'a corrected credit' : 'a credit'} on ${p.workingTitle}: ${line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'association', id: associationId } });
   return status;
 }
 
@@ -123,7 +145,7 @@ export function proposePrepared(_actor: Actor, creditId: string) {
   if (!c) return;
   const p = wproject(c.projectId)!;
   c.status = 'proposed';
-  world.notifications.unshift({ id: wid('wn'), toPersonId: c.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} issued you a credit on ${p.workingTitle}: ${c.line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'profile', id: c.personId } });
+  world.notifications.unshift({ id: wid('wn'), toPersonId: c.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} issued you a credit on ${p.workingTitle}: ${c.line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'association', id: c.associationId } });
 }
 
 /** The person accepts a credit a production issued to them. Returns the project, or nothing if there was no such credit. */
@@ -150,7 +172,8 @@ export function requestCorrection(actor: Actor, cid: string, reason?: string) {
 
 /** Roles created in the prototype reach their house through the shared world. Returns false for plain listings. */
 export function sendInterest(actor: Actor, id: string, note: string, answers?: string[]) {
-  if (!world.roles.some((r) => r.id === id)) return false;
+  const role = world.roles.find((r) => r.id === id);
+  if (!role || blockedBetween(actor.viewerId, role.orgId ?? role.authorId ?? '')) return false;
   world.interests = world.interests.filter((i) => !(i.opportunityId === id && i.personId === actor.viewerId));
   world.interests.push({ id: wid('wi'), personId: actor.viewerId, opportunityId: id, note: note || undefined, answers: answers?.some(Boolean) ? answers : undefined, time: 'now' });
   const r = world.roles.find((x) => x.id === id)!;
@@ -158,8 +181,75 @@ export function sendInterest(actor: Actor, id: string, note: string, answers?: s
   return true;
 }
 
+/** Withdrawing keeps the record. The house sees "No longer interested" in its review, never a silent gap. */
 export function withdrawInterest(actor: Actor, id: string) {
   world.interests.forEach((i) => i.opportunityId === id && i.personId === actor.viewerId && (i.withdrawn = true));
+}
+
+export function undoWithdrawInterest(actor: Actor, id: string) {
+  world.interests.forEach((i) => i.opportunityId === id && i.personId === actor.viewerId && (i.withdrawn = false));
+}
+
+/** The house's side of reviewing one Interest. The person is never told "Not now". */
+export function reviewInterest(_actor: Actor, interestId: string, review: 'messaged' | 'notNow' | undefined) {
+  const i = world.interests.find((x) => x.id === interestId);
+  if (i) i.review = review;
+}
+
+/* ------------------------------------------------------------ conversations */
+
+/** The identity this actor speaks as: themselves, or the house they are acting for. */
+export const speakingAs = (actor: Actor) => (actor.acting === 'self' ? actor.viewerId : actor.acting);
+
+/** A block by either person closes contact between the two identities. Houses don't block; people do. */
+export const blockedBetween = (a: string, b: string) => world.blocks.some((x) => (x.by === a && x.target === b) || (x.by === b && x.target === a));
+
+/** One thread per pair of identities and context. Direct messages share one context per pair. */
+export function startThread(actor: Actor, withId: string, context: Thread['context'], media?: Thread['media']) {
+  const me = speakingAs(actor);
+  const found = world.threads.find((t) => t.sides.includes(me) && t.sides.includes(withId) && t.context.refId === context.refId);
+  if (found) return found.id;
+  const t: Thread = { id: wid('th'), sides: [me, withId], context, media, messages: [], unreadFor: [], updated: 'now' };
+  world.threads.unshift(t);
+  return t.id;
+}
+
+export function sendThreadMessage(actor: Actor, threadId: string, text: string, time: string) {
+  const t = world.threads.find((x) => x.id === threadId);
+  if (!t) return false;
+  const me = t.sides.includes(speakingAs(actor)) ? speakingAs(actor) : t.sides.find((s) => s === actor.viewerId || actor.memberships.includes(s))!;
+  const other = t.sides.find((s) => s !== me)!;
+  if (blockedBetween(me, other)) return false;
+  const first = !t.messages.some((m) => m.from === me);
+  t.messages.push({ id: wid('m'), from: me, text, time });
+  t.unreadFor = [other];
+  t.updated = 'now';
+  if (t.action?.side === me) t.action = undefined;
+  world.threads = [t, ...world.threads.filter((x) => x !== t)];
+  // The first message from one side tells the other side, addressed to the identity that owns the thread.
+  if (first) {
+    const about = t.context.kind === 'project' ? '' : ` about ${t.context.detail.split(' · ')[0]}`;
+    const to = seed.orgs.some((o) => o.id === other) ? { forId: other } : { toPersonId: other };
+    world.notifications.unshift({ id: wid('wn'), ...to, kind: 'message', actorId: me, text: `${party(me)!.name} messaged you${about}`, time: 'now', unread: true, route: { name: 'conversation', id: t.id } });
+  }
+  return true;
+}
+
+export function markThreadRead(actor: Actor, threadId: string) {
+  const t = world.threads.find((x) => x.id === threadId);
+  if (!t) return;
+  t.unreadFor = t.unreadFor.filter((s) => s !== actor.viewerId && !actor.memberships.includes(s));
+}
+
+/* ------------------------------------------------------------ blocking */
+
+/** Personal: a member acting for a house still blocks for their own account only. Records are untouched. */
+export function block(actor: Actor, target: string) {
+  if (!world.blocks.some((b) => b.by === actor.viewerId && b.target === target)) world.blocks.push({ by: actor.viewerId, target });
+}
+
+export function unblock(actor: Actor, target: string) {
+  world.blocks = world.blocks.filter((b) => !(b.by === actor.viewerId && b.target === target));
 }
 
 /** A filled role keeps its record. Hiring again for the same craft and project is a new role. */

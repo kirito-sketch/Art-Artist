@@ -8,10 +8,12 @@ import { notificationsFor } from '../domain/discovery';
 /** Research sessions start as Aditi acting for Konark; an edge-case scenario starts where it says; everything else starts as Kiran. */
 const START = RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran';
 const START_ACTING = RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
+// A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
+BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { party } from './selectors';
-import { world, publicName, project as wproject, type Association, type Format, type HouseProject } from './world';
+import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
-import type { Conversation, Credit, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
+import type { Conversation, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
 
 /* ------------------------------------------------------------ navigation */
 
@@ -130,12 +132,8 @@ function useStoreValue() {
   const [toast, setToast] = useState<Toast | null>(null);
 
   const [saved, setSaved] = useState<string[]>([]);
-  /** Credits issued by a production, waiting for the person to accept or correct. */
-  const [pendingCredits, setPendingCredits] = useState<(Credit & { correction?: boolean })[]>(seed.pendingCredits[START]);
-  const [acceptedCredits, setAcceptedCredits] = useState<Credit[]>([]);
   const [creditBusy, setCreditBusy] = useState<string | null>(null);
   /** Poster-side changes to published roles. Title and project stay fixed once published. */
-  const [roleEdits, setRoleEdits] = useState<Record<string, Partial<Opportunity> & { changed?: string[] }>>({});
   const failedOnce = useRef(new Set<string>());
   /** Bumped whenever the shared world changes, so every screen re-reads it. */
   const [worldVersion, setWorldVersion] = useState(0);
@@ -163,6 +161,8 @@ function useStoreValue() {
   const memberships = memberMap[viewer.id] ?? [];
   /** Who is doing things right now. Every change to shared records goes through the domain actions with this. */
   const actor: act.Actor = { viewerId: viewer.id, acting, memberships, canIssue };
+  const actorRef = useRef(actor);
+  actorRef.current = actor;
   /** Entry layer: splash → entry → auth → consent → onboarding (and a house invite). Null means the app. */
   const [entry, setEntry] = useState<null | { mode: 'new' | 'invite' | 'signin'; notice?: string }>(BOOT?.entry ? { mode: BOOT.entry } : null);
   /** Consent records: which document, which version, when. */
@@ -172,7 +172,6 @@ function useStoreValue() {
   ]);
   const [policyUpdate, setPolicyUpdate] = useState(BOOT?.policyUpdate ?? false);
   const [newPeople, setNewPeople] = useState<string[]>([]);
-  const [blocked, setBlocked] = useState<string[]>(BOOT?.blocked ?? []);
   const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
   const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
   /** VALIDATE: one Interest model everywhere (A) vs Interest for collaborations plus Respond for crew and casting (B). */
@@ -203,8 +202,6 @@ function useStoreValue() {
     setConversations(seed.conversations[id]);
     setInterestsReceived(seed.interests[id]);
     setNotifications(seed.notifications[id]);
-    setPendingCredits(seed.pendingCredits[id]);
-    setAcceptedCredits([]);
     setSaved([]);
     setResponses({});
     setInterestsSent({});
@@ -307,25 +304,21 @@ function useStoreValue() {
     [showToast],
   );
 
-  /** Opens an existing conversation with this party about this context, or starts one. */
+  /**
+   * Opens an existing conversation with this party about this context, or starts one. New conversations
+   * are shared records: the other side reads the same thread, addressed to the identity that started it.
+   */
   const startConversation = useCallback(
     (withId: string, context: Conversation['context'], opener?: string) => {
-      const existing = conversations.find((c) => c.withId === withId && c.context.refId === context.refId);
+      const existing = conversations.find((c) => c.withId === withId && c.context.refId === context.refId && (c.asId ?? 'self') === acting);
       if (existing) return existing.id;
-      const id = `c-${withId}-${Date.now()}`;
-      const convo: Conversation = {
-        id,
-        withId,
-        context,
-        asId: acting,
-        unread: 0,
-        updated: 'now',
-        messages: opener ? [{ id: 'm0', from: 'me', text: opener, time: 'now' }] : [],
-      };
-      setConversations((cs) => [convo, ...cs]);
+      const media = context.refId ? findRole(context.refId)?.media : undefined;
+      const id = act.startThread(actorRef.current, withId, context as Thread['context'], media);
+      if (opener) act.sendThreadMessage(actorRef.current, id, opener, nowTime());
+      bump();
       return id;
     },
-    [conversations, acting],
+    [conversations, acting, bump],
   );
 
   /** Runs a key action after a short delay. With "Actions fail" on, the first try of each key fails and a retry succeeds. */
@@ -352,6 +345,11 @@ function useStoreValue() {
   );
   const sendMessage = useCallback(
     (convId: string, text: string) => {
+      if (world.threads.some((t) => t.id === convId)) {
+        if (!act.sendThreadMessage(actorRef.current, convId, text, nowTime())) showToast({ text: "Couldn't send. You can't message each other.", tone: 'error' });
+        bump();
+        return;
+      }
       const msgId = `m${Date.now()}`;
       setConversations((cs) => {
         const c = cs.find((x) => x.id === convId);
@@ -361,7 +359,7 @@ function useStoreValue() {
       });
       deliver(convId, msgId);
     },
-    [deliver],
+    [deliver, bump, showToast],
   );
   const retryMessage = useCallback(
     (convId: string, msgId: string) => {
@@ -372,6 +370,13 @@ function useStoreValue() {
   );
 
   const markConversationRead = useCallback((convId: string) => {
+    const t = world.threads.find((x) => x.id === convId);
+    if (t) {
+      const before = t.unreadFor.length;
+      act.markThreadRead(actorRef.current, convId);
+      if (t.unreadFor.length !== before) bump();
+      return;
+    }
     setConversations((cs) => cs.map((c) => (c.id === convId && c.unread ? { ...c, unread: 0 } : c)));
   }, []);
 
@@ -530,46 +535,24 @@ function useStoreValue() {
       act.verifyPendingHouses();
       bump();
     },
-    pendingCredits: [
-      ...world.credits
-        .filter((c) => c.personId === viewer.id && (c.status === 'proposed' || c.status === 'correction'))
-        .map((c) => {
-          const p = wproject(c.projectId)!;
-          return { id: c.id, title: p.workingTitle, year: '2026', role: c.line, department: c.dept, orgId: p.houseId ?? 'konark', format: p.format, status: 'Filming' as const, media: p.artwork ?? seed.cameraRoll[0], correction: c.status === 'correction' };
-        }),
-      ...pendingCredits,
-    ],
-    acceptedCredits,
+    /** Credits waiting for the signed-in person. Read from the one shared Credit record, never a copy. */
+    pendingCredits: world.credits
+      .filter((c) => c.personId === viewer.id && (c.status === 'proposed' || c.status === 'correction'))
+      .map((c) => {
+        const p = wproject(c.projectId)!;
+        return { id: c.id, associationId: c.associationId, title: p.workingTitle, year: '2026', role: c.line, department: c.dept, orgId: p.houseId ?? 'konark', format: p.format, status: 'Filming' as const, media: p.artwork ?? seed.cameraRoll[0], correction: c.status === 'correction', note: c.note };
+      }),
     creditBusy,
     acceptCredit: function accept(cid: string) {
-      const wc = world.credits.find((x) => x.id === cid);
-      if (wc) {
-        setCreditBusy(cid);
-        attempt(
-          `credit-${cid}`,
-          () => {
-            setCreditBusy(null);
-            const p = act.acceptCredit(actor, cid)!;
-            bump();
-            showToast({ text: p.shared ? `Credit accepted. It now shows on your profile and on ${publicName(p)}.` : `Credit accepted. It becomes public when ${party(p.houseId!)!.name} shares the project.`, tone: 'success' });
-          },
-          () => {
-            setCreditBusy(null);
-            showToast({ text: "Couldn't accept the credit. Nothing changed.", tone: 'error', action: { label: 'Retry', run: () => accept(cid) } });
-          },
-        );
-        return;
-      }
-      const c = pendingCredits.find((x) => x.id === cid);
-      if (!c) return;
+      if (!world.credits.some((x) => x.id === cid)) return;
       setCreditBusy(cid);
       attempt(
         `credit-${cid}`,
         () => {
           setCreditBusy(null);
-          setPendingCredits((xs) => xs.filter((x) => x.id !== cid));
-          setAcceptedCredits((xs) => [c, ...xs]);
-          showToast({ text: `Credit accepted. It now shows on your profile and on ${c.title}.`, tone: 'success' });
+          const p = act.acceptCredit(actor, cid)!;
+          bump();
+          showToast({ text: p.shared ? `Credit accepted. It now shows on your profile and on ${publicName(p)}.` : `Credit accepted. It becomes public when ${party(p.houseId!)!.name} shares the project.`, tone: 'success' });
         },
         () => {
           setCreditBusy(null);
@@ -579,17 +562,13 @@ function useStoreValue() {
     },
     attempt,
     retryMessage,
-    roleEdits,
+    roleEdits: world.roleEdits,
     roleStatus: world.roleStatus,
-    editRole: (id: string, patch: Partial<Opportunity>, changed: string[]) => setRoleEdits((r) => ({ ...r, [id]: { ...r[id], ...patch, changed: [...new Set([...(r[id]?.changed ?? []), ...changed])] } })),
-    closeRole: (id: string, state: 'filled' | 'closed', reason: string) => (act.closeRole(actor, id, state, reason), bump()),
+    editRole: (id: string, patch: Partial<Opportunity>, changed: string[]) => (act.editRole(actor, id, patch, changed), bump()),
+    closeRole: (id: string, state: 'filled' | 'closed', reason: string, chosenId?: string) => (act.closeRole(actor, id, state, reason, chosenId), bump()),
     reopenRole: (id: string) => (act.reopenRole(actor, id), bump()),
     requestCorrection: (cid: string, reason?: string) => {
-      if (act.requestCorrection(actor, cid, reason)) {
-        bump();
-        return;
-      }
-      setPendingCredits((xs) => xs.map((x) => (x.id === cid ? { ...x, correction: true } : x)));
+      if (act.requestCorrection(actor, cid, reason)) bump();
     },
     /** Switching identity keeps you on the tab you were on, so the change is visible where you made it. */
     setActing: (a: string, keepTab = false, keepStack = false) => {
@@ -599,9 +578,12 @@ function useStoreValue() {
       setSheet(null);
       if (!keepTab) setTabState('home');
     },
-    blocked,
-    block: (id: string) => setBlocked((b) => (b.includes(id) ? b : [...b, id])),
-    unblock: (id: string) => setBlocked((b) => b.filter((x) => x !== id)),
+    /** Who the signed-in person blocked. Personal, even while acting for a house. */
+    blocked: world.blocks.filter((b) => b.by === viewer.id).map((b) => b.target),
+    /** Whether the identity in use and this party can't reach each other, because either person blocked the other. */
+    cannotReach: (id: string) => act.blockedBetween(viewer.id, id) || act.blockedBetween(act.speakingAs(actor), id),
+    block: (id: string) => (act.block(actor, id), bump()),
+    unblock: (id: string) => (act.unblock(actor, id), bump()),
     houseHome,
     setHouseHome,
     houseProfile,
@@ -656,30 +638,50 @@ function useStoreValue() {
       setResponses((r) => { const n = { ...r }; delete n[id]; return n; });
       showToast({ text: 'Response withdrawn', action: { label: 'Undo', run: () => setResponses((r) => ({ ...r, [id]: prev })) } });
     },
-    interestsSent,
+    /** Roles this person showed interest in: the shared Interest records, plus plain listings kept locally. */
+    interestsSent: {
+      ...interestsSent,
+      ...Object.fromEntries(world.interests.filter((i) => i.personId === viewer.id && !i.withdrawn).map((i) => [i.opportunityId, i.note ?? ''])),
+    } as Record<string, string>,
     sendInterest: (id: string, note: string, answers?: string[]) => {
-      if (act.sendInterest(actor, id, note, answers)) bump();
+      if (act.sendInterest(actor, id, note, answers)) return bump(), sendInterest(id, note);
+      // A project role refused the Interest (for example, a block between the two). Nothing was shared.
+      if (world.roles.some((r) => r.id === id)) return setSheet(null), showToast({ text: "Couldn't send your interest. Nothing was shared.", tone: 'error' });
       sendInterest(id, note);
     },
     withdrawInterest: (id: string) => {
-      act.withdrawInterest(actor, id);
-      bump();
+      if (world.interests.some((i) => i.opportunityId === id && i.personId === viewer.id)) {
+        act.withdrawInterest(actor, id);
+        bump();
+        setInterestsSent((s) => { const n = { ...s }; delete n[id]; return n; });
+        showToast({ text: 'Interest withdrawn', action: { label: 'Undo', run: () => (act.undoWithdrawInterest(actorRef.current, id), bump()) } });
+        return;
+      }
       withdrawInterest(id);
     },
     availability,
     setAvailability,
-    conversations,
+    /** Shared threads for every identity this person holds, then their own older conversations. The Inbox shows the ones for the identity in use. */
+    conversations: [
+      ...world.threads.flatMap((t) => {
+        const own = [acting === 'self' ? viewer.id : acting, viewer.id, ...memberships].find((x) => t.sides.includes(x));
+        // An empty thread exists only for the side that opened it, until the first message.
+        if (!own || (!t.messages.length && t.sides[0] !== own)) return [];
+        return [threadAs(t, own, viewer.id)];
+      }),
+      ...conversations,
+    ],
     startConversation,
     sendMessage,
     markConversationRead,
     interestsReceived: [
       ...interestsReceived,
-      ...(acting !== 'self' ? world.interests.filter((i) => !i.dismissed && world.roles.find((r) => r.id === i.opportunityId)?.orgId === acting) : []),
+      ...(acting !== 'self' ? world.interests.filter((i) => world.roles.find((r) => r.id === i.opportunityId)?.orgId === acting) : []),
     ],
-    dismissInterest: (id: string) => {
-      const w = world.interests.find((i) => i.id === id);
-      if (w) (w.dismissed = true), bump();
-      else dismissInterest(id);
+    /** The house's review of one Interest: messaged, set aside, or moved back. The record itself stays. */
+    reviewInterest: (id: string, review: 'messaged' | 'notNow' | undefined) => {
+      if (world.interests.some((i) => i.id === id)) return act.reviewInterest(actor, id, review), bump();
+      if (review) dismissInterest(id);
     },
     notifications: notificationsFor(viewer.id, memberships, notifications),
     worldVersion,
@@ -721,6 +723,25 @@ function useStoreValue() {
     retryPublish,
     cancelPublish,
     lastDraft,
+  };
+}
+
+const findRole = (id: string) => world.roles.find((r) => r.id === id) ?? seed.opportunities.find((o) => o.id === id);
+
+/** One shared thread, as one identity sees it. "me" is whichever side this person speaks as in it. */
+function threadAs(t: Thread, own: string, viewerId: string): Conversation {
+  const other = t.sides.find((x) => x !== own)!;
+  return {
+    id: t.id,
+    withId: other,
+    asId: own === viewerId ? 'self' : own,
+    orgOwned: seed.orgs.some((o) => o.id === other),
+    context: t.context,
+    media: t.media,
+    action: t.action?.side === own ? { label: t.action.label, reply: t.action.reply } : undefined,
+    unread: t.unreadFor.includes(own) ? 1 : 0,
+    updated: t.updated,
+    messages: t.messages.map((m) => ({ id: m.id, from: m.from === own ? ('me' as const) : ('them' as const), text: m.text, time: m.time })),
   };
 }
 

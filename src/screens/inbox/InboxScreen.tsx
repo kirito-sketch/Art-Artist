@@ -23,9 +23,11 @@ function ThreadThumb({ c }: { c: Conversation }) {
 }
 
 export function InboxScreen() {
-  const { conversations, interestsReceived, push, openSheet, userCollabs, sendMessage, showToast } = useStore();
+  const { conversations, interestsReceived: allInterest, push, openSheet, userCollabs, sendMessage, showToast } = useStore();
   const [filter, setFilter] = useState<Filter>('all');
   const [done, setDone] = useState<string[]>([]);
+  // Only Interest nobody has reviewed yet. Reviewed records stay in the review sheet.
+  const interestsReceived = allInterest.filter((i) => !i.withdrawn && !i.review);
 
   const list = conversations.filter((c) => (filter === 'productions' ? c.orgOwned : filter === 'collabs' ? c.context.kind === 'collab' : true));
   const interestFor = interestsReceived[0] ? findOpportunity(interestsReceived[0].opportunityId, userCollabs) : null;
@@ -58,7 +60,7 @@ export function InboxScreen() {
             </span>
             <div className="thread-text">
               <p className="thread-top">
-                <span className="item-title">{interestsReceived.length} people interested</span>
+                <span className="item-title">{interestsReceived.length} {interestsReceived.length === 1 ? 'person' : 'people'} interested</span>
               </p>
               <p className="meta">
                 {interestFor.role} · {interestFor.project}
@@ -121,7 +123,7 @@ export function InboxScreen() {
 }
 
 export function ConversationScreen({ id }: { id: string }) {
-  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage } = useStore();
+  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage, cannotReach, blocked, unblock } = useStore();
   const c = conversations.find((x) => x.id === id);
   const [text, setText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -144,7 +146,7 @@ export function ConversationScreen({ id }: { id: string }) {
         <IconButton label="Back" onClick={pop}>
           <ChevronLeft size={26} />
         </IconButton>
-        <button className="convo-who" onClick={() => p.kind === 'person' && push({ name: 'profile', id: p.id })}>
+        <button className="convo-who" onClick={() => push(p.kind === 'person' ? { name: 'profile', id: p.id } : { name: 'org', id: p.id })}>
           <span className="item-title">
             {p.name} {p.kind === 'org' && p.verified && <Verified size={14} />}
           </span>
@@ -188,6 +190,22 @@ export function ConversationScreen({ id }: { id: string }) {
         </div>
       </div>
 
+      {/* A block closes the conversation for both sides and keeps its history. Only the person who blocked is told why. */}
+      {cannotReach(c.withId) ? (
+        <div className="convo-closed">
+          {blocked.includes(c.withId) ? (
+            <>
+              <p className="meta">You blocked {p.name}. Messages stay here; neither of you can send more.</p>
+              <button className="link link--small" onClick={() => unblock(c.withId)}>
+                Unblock
+              </button>
+            </>
+          ) : (
+            <p className="meta">You can't reply to this conversation.</p>
+          )}
+        </div>
+      ) : (
+      <>
       {memberships.length > 0 && c && (
         <p className="convo-as">
           <Avatar party={c.asId && c.asId !== 'self' ? party(c.asId)! : party(viewer.id)!} size={18} /> Replying as {c.asId && c.asId !== 'self' ? party(c.asId)!.name : 'yourself'}
@@ -199,6 +217,8 @@ export function ConversationScreen({ id }: { id: string }) {
           <ArrowUp size={20} strokeWidth={2.6} />
         </motion.button>
       </div>
+      </>
+      )}
     </div>
   );
 }

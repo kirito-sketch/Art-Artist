@@ -12,7 +12,7 @@ Last automated run: 2026-09-30.
 |---|---|---|---|---|---|---|---|---|---|---|
 | 515 | 177 | 221 | 117 | 246 | 80 | 145 | 308 | 62 | 8 | 142 |
 
-Status counts: Rule defined 99 · Needs product decision 120 · Implemented 104 · Needs UI 43 · Not reviewed 54 · Needs legal 29 · Failed 25 · Passed 40 · Needs user validation 1
+Status counts: Rule defined 99 · Needs product decision 120 · Implemented 106 · Needs UI 40 · Not reviewed 54 · Needs legal 29 · Failed 25 · Passed 41 · Needs user validation 1
 
 ## Automated checks
 
@@ -48,6 +48,11 @@ Status counts: Rule defined 99 · Needs product decision 120 · Implemented 104 
 | AC-28 | Every notification has exactly one owner | Pass | One owner each. |
 | AC-29 | Blocking never removes anyone from a film's credits | Pass | Records are independent of blocks. |
 | AC-30 | Every credit points to a real association and project | Pass | 30 credits, none orphaned. |
+| AC-31 | A house message reaches the person from the house, in one shared thread | Pass | One thread, Konark on one side, Tara on the other; the member is never named. |
+| AC-32 | Reviewing or withdrawing Interest never deletes the record | Pass | One record; the house sees "No longer interested". |
+| AC-33 | Filling a role tells everyone else, by public name only | Pass | Konark Pictures filled Script Supervisor on Untitled Telugu feature. Thanks for your interest. |
+| AC-34 | A block closes a thread both ways and leaves shared records in place | Pass | Closed both ways; history, credits, associations and Interest unchanged. |
+| AC-35 | A credit notification opens the person's own project view, and a correction reissue is one record | Pass | Notification → project view; one record from issue to acceptance, read by the project page and the profile. |
 
 Statuses: Not reviewed · Rule defined · Needs product decision · Needs user validation · Needs legal · Needs UI · Implemented (handled in the prototype, checked by hand) · Automated · Passed (automated checks pass) · Failed (an automated check fails, or checked by hand and wrong) · Blocked.
 
@@ -145,7 +150,7 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-PROF-011 | Profile | Availability changes after Interest | P2 | Data integrity | The poster sees current availability, with the Interest date for context. | Kiran | Personal | Profile |  |  |  | Yes |  |  | Needs product decision |  |
 | EC-PROF-012 | Profile | Craft taxonomy changes | P2 | Data integrity, Future architecture | See EC-ONB-018. | Kiran | Personal | Profile |  |  |  | Yes |  |  | Not reviewed |  |
 | EC-PROF-013 | Profile | Profile blocked by the viewer | P0 | Safety, Privacy | Viewer sees "You blocked Vikram". No work, no contact. Shared film credits still show the name. | Kiran | Personal | Profile | Yes |  | Yes |  |  |  | Implemented | Lab: reproducible |
-| EC-PROF-014 | Profile | Viewer is blocked by the profile owner | P0 | Safety, Privacy | The viewer sees an unavailable profile, indistinguishable from a private one. They are never told they were blocked. | Kiran | Personal | Profile | Yes |  | Yes | Yes |  |  | Needs UI | Lab: Blocks are one-directional in the prototype. |
+| EC-PROF-014 | Profile | Viewer is blocked by the profile owner | P0 | Safety, Privacy | The viewer sees an unavailable profile, indistinguishable from a private one. They are never told they were blocked. | Kiran | Personal | Profile | Yes |  | Yes | Yes |  |  | Implemented | Lab: Implemented: blocks are shared records, and the blocked identity sees "This profile is private". A fixture can only start with blocks made by the persona it opens as; walk it through as in PERSONA_BRIDGES.md W6. |
 
 ## 06 Identity switching
 
@@ -466,8 +471,8 @@ Statuses: Not reviewed · Rule defined · Needs product decision · Needs user v
 | EC-MSG-002 | Messaging | Duplicate message after retry | P0 | Data integrity | Retrying sends the same message, not a copy. | Kiran | Personal | Inbox |  | Yes | Yes |  |  |  | Implemented | Checks: AC-14 · Lab: reproducible |
 | EC-MSG-003 | Messaging | Offline while composing | P1 | Recovery | Draft kept; sends when back. | Kiran | Personal | Inbox | Yes | Yes |  |  |  |  | Rule defined | Lab: reproducible |
 | EC-MSG-004 | Messaging | Attachment failure | P2 | Recovery | Not at launch. | Kiran | Personal | Inbox | Yes |  |  |  |  |  | Not reviewed |  |
-| EC-MSG-005 | Messaging | Block mid-conversation | P0 | Safety | Conversation closes for both; history kept for reports. | Kiran | Personal | Inbox | Yes | Yes |  | Yes |  |  | Needs UI | Lab: Block does not touch conversations in the prototype. |
-| EC-MSG-006 | Messaging | House member loses access | P0 | Permission, Privacy | House conversations disappear from their inbox immediately. | Kiran | Personal | Inbox |  |  | Yes | Yes |  |  | Needs UI | Lab: Conversations are per persona in the prototype. |
+| EC-MSG-005 | Messaging | Block mid-conversation | P0 | Safety | Conversation closes for both; history kept for reports. | Kiran | Personal | Inbox | Yes | Yes |  | Yes |  |  | Passed | Checks: AC-34 · Lab: Implemented: conversations are shared threads; a block closes sending on both sides and keeps the history. See PERSONA_BRIDGES.md W6. |
+| EC-MSG-006 | Messaging | House member loses access | P0 | Permission, Privacy | House conversations disappear from their inbox immediately. | Kiran | Personal | Inbox |  |  | Yes | Yes |  |  | Implemented | Lab: Implemented: house threads are read through current memberships, so they leave the inbox with the membership. No console control removes a membership yet. |
 | EC-MSG-007 | Messaging | Several house members reply | P2 | Usability | Each message shows the member's first name. | Kiran | Personal | Inbox | Yes |  |  |  |  |  | Needs product decision |  |
 | EC-MSG-008 | Messaging | Wrong identity sends | P0 | Identity | See EC-ID-008. | Aditi | Konark Pictures | Inbox |  |  | Yes | Yes |  |  | Rule defined | Lab: reproducible |
 | EC-MSG-009 | Messaging | Role closes while conversation continues | P2 | Usability | Context shows "Role closed". | Kiran | Personal | Inbox | Yes |  |  |  |  |  | Not reviewed |  |

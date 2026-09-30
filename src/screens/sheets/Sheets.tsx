@@ -315,61 +315,103 @@ function InterestForm({ id }: { id: string }) {
   );
 }
 
+/**
+ * One Interest record per person and role, seen by the house. Reviewing never deletes it: messaged
+ * people move to "In conversation", "Not now" sets someone aside (they aren't told), and a withdrawal
+ * stays as "No longer interested", so nobody the house looked at silently vanishes.
+ */
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
-  const { interestsReceived, dismissInterest, startConversation, push, userCollabs, acting, blocked } = useStore();
+  const { interestsReceived, reviewInterest, startConversation, push, userCollabs, acting, blocked, conversations } = useStore();
   const all = (opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived).filter((i) => !blocked.includes(i.personId));
-  // Withdrawn people stay at the end, greyed, so a person you'd looked at doesn't silently vanish.
-  const list = [...all.filter((i) => !i.withdrawn), ...all.filter((i) => i.withdrawn)];
-  if (!list.length) return <EmptyState title="No one yet" />;
+  if (!all.length) return <EmptyState title="No one yet" />;
+  const groups: { title?: string; items: typeof all }[] = [
+    { items: all.filter((i) => !i.withdrawn && !i.review) },
+    { title: 'In conversation', items: all.filter((i) => !i.withdrawn && i.review === 'messaged') },
+    { title: 'Not now', items: all.filter((i) => !i.withdrawn && i.review === 'notNow') },
+    { title: 'No longer interested', items: all.filter((i) => i.withdrawn) },
+  ];
+  const as = acting !== 'self' ? org(acting).name : null;
   return (
-    <div className="list list--flush">
-      {list.map((it) => {
-        const p = person(it.personId);
-        const o = findOpportunity(it.opportunityId, userCollabs)!;
-        return (
-          <div key={it.id} className={`interest ${it.withdrawn ? 'interest--withdrawn' : ''}`}>
-            <Pressable className="interest-who" onClick={() => push({ name: 'profile', id: p.id })} scale={0.98}>
-              <Avatar party={p} size={48} />
-              <span>
-                <span className="item-title">{p.name}</span>
-                <span className="meta">
-                  {p.role} · {p.city}
-                </span>
-              </span>
-            </Pressable>
-            {it.withdrawn && <p className="meta">No longer interested</p>}
-            {it.note && <p className="body">{it.note}</p>}
-            {it.answers && (
-              <ul className="interest-answers">
-                {(o.questions ?? []).slice(0, it.answers.length).map((q, qi) => (
-                  <li key={q}>
-                    <span className="meta">{q}</span>
-                    <span>{it.answers![qi]}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {!it.withdrawn && <div className="interest-actions">
-              <Button
-                size="s"
-                onClick={() => {
-                  const cid = startConversation(p.id, { kind: 'collab', label: 'Collaboration', detail: `${o.role} · ${o.project}`, refId: o.id });
-                  dismissInterest(it.id);
-                  push({ name: 'conversation', id: cid });
-                }}
-              >
-                {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
-              </Button>
-              <Button size="s" variant="plain" onClick={() => dismissInterest(it.id)}>
-                Not now
-              </Button>
-            </div>}
-          </div>
-        );
-      })}
+    <div className="stack">
+      {groups.map((g, gi) =>
+        g.items.length ? (
+          <section key={gi} className="stack">
+            {g.title ? <p className="meta">{g.title}</p> : null}
+            <div className="list list--flush">
+              {g.items.map((it) => {
+                const p = person(it.personId);
+                const o = findOpportunity(it.opportunityId, userCollabs)!;
+                const talk = conversations.find((c) => c.withId === p.id && c.context.refId === o.id);
+                return (
+                  <div key={it.id} className={`interest ${it.withdrawn || it.review === 'notNow' ? 'interest--withdrawn' : ''}`}>
+                    <Pressable className="interest-who" onClick={() => push({ name: 'profile', id: p.id })} scale={0.98}>
+                      <Avatar party={p} size={48} />
+                      <span>
+                        <span className="item-title">{p.name}</span>
+                        <span className="meta">
+                          {p.role} · {p.city}
+                        </span>
+                      </span>
+                    </Pressable>
+                    {it.withdrawn && <p className="meta">No longer interested</p>}
+                    {!opportunityId && <p className="meta">{o.role} · {o.project}</p>}
+                    {it.note && <p className="body">{it.note}</p>}
+                    {it.answers && (
+                      <ul className="interest-answers">
+                        {(o.questions ?? []).slice(0, it.answers.length).map((q, qi) => (
+                          <li key={q}>
+                            <span className="meta">{q}</span>
+                            <span>{it.answers![qi]}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {!it.withdrawn && (
+                      <div className="interest-actions">
+                        {it.review === 'messaged' && talk ? (
+                          <Button size="s" variant="secondary" onClick={() => push({ name: 'conversation', id: talk.id })}>
+                            Open chat
+                          </Button>
+                        ) : (
+                          <Button
+                            size="s"
+                            onClick={() => {
+                              const cid = startConversation(p.id, { kind: o.kind === 'casting' ? 'casting' : o.kind === 'collab' ? 'collab' : 'crew', label: o.kind === 'casting' ? 'Casting' : o.kind === 'collab' ? 'Collaboration' : 'Crew job', detail: `${o.role} · ${o.project}`, refId: o.id });
+                              reviewInterest(it.id, 'messaged');
+                              push({ name: 'conversation', id: cid });
+                            }}
+                          >
+                            {as ? `Message as ${as}` : 'Message'}
+                          </Button>
+                        )}
+                        {!it.review && (
+                          <Button size="s" variant="plain" onClick={() => reviewInterest(it.id, 'notNow')}>
+                            Not now
+                          </Button>
+                        )}
+                        {it.review === 'notNow' && (
+                          <Button size="s" variant="plain" onClick={() => reviewInterest(it.id, undefined)}>
+                            Move back
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null,
+      )}
+      <p className="meta">{p0(all)} People aren't told when you choose Not now.</p>
     </div>
   );
 }
+
+const p0 = (all: { withdrawn?: boolean }[]) => {
+  const n = all.filter((i) => !i.withdrawn).length;
+  return `${n} ${n === 1 ? 'person' : 'people'} interested.`;
+};
 
 /* ------------------------------------------------------------------ Report */
 
@@ -719,7 +761,7 @@ function CloseRole({ id }: { id: string }) {
         <p className="meta">Who did you choose? Everyone else who showed interest is told the role is filled.</p>
         <div className="list list--flush">
           {waiting.map((i) => (
-            <PressCard key={i.id} className="prow" onPress={() => { closeRole(id, 'filled', 'Filled through Ana'); setWho(i.personId); setStep('add'); }} scale={0.985}>
+            <PressCard key={i.id} className="prow" onPress={() => { closeRole(id, 'filled', 'Filled through Ana', i.personId); setWho(i.personId); setStep('add'); }} scale={0.985}>
               <Avatar party={person(i.personId)} size={40} />
               <div className="prow-text">
                 <p className="item-title">{person(i.personId).name}</p>

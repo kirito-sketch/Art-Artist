@@ -21,7 +21,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  *   hiring  Open roles first. The page as a front door for hiring.
  */
 export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked, roleStatus } = useStore();
+  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked, roleStatus, memberships, setActing } = useStore();
   const o = org(id);
   const own = acting === id;
   const [scrollY, setScrollY] = useState(0);
@@ -171,6 +171,11 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                     Open a role
                   </Button>
                 </>
+              ) : memberships.includes(id) ? (
+                // A member visiting as themselves: the page is theirs to manage, but only as the house.
+                <Button block variant="secondary" onClick={() => setActing(id, true, true)}>
+                  Switch to {o.name}
+                </Button>
               ) : (
                 <>
                   <Button block variant={isFollowing ? 'secondary' : 'primary'} onClick={() => toggleFollow(id)}>
@@ -180,7 +185,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                     block
                     variant="outline"
                     onClick={() => {
-                      const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: `org-${id}` });
+                      const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                       push({ name: 'conversation', id: cid });
                     }}
                   >

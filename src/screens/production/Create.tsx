@@ -105,7 +105,7 @@ export function PickProject() {
 const CREDIT_LABEL = { prepared: 'Credit prepared', proposed: 'Credit proposed', accepted: 'Credited', correction: 'Correction asked' } as const;
 
 export function HouseProjectScreen({ id }: { id: string }) {
-  const { pop, push, acting, viewer, interestsReceived, roleStatus, setRoleVisibility, showToast, canIssue, proposePrepared } = useStore();
+  const { pop, push, acting, viewer, interestsReceived, roleStatus, setRoleVisibility, showToast, canIssue, proposePrepared, memberships, setActing } = useStore();
   const p = project(id);
   const [confirmRole, setConfirmRole] = useState<string | null>(null);
   const [sheet, setSheet] = useState<null | 'share' | 'details' | 'role' | 'person' | { issue: string } | { edit: string }>(null);
@@ -140,7 +140,18 @@ export function HouseProjectScreen({ id }: { id: string }) {
         </p>
       </div>
 
-      {!canAct && <p className="inline-note ws-pad">You're viewing as yourself. Switch to {owner} to make changes.</p>}
+      {!canAct && (
+        <p className="inline-note ws-pad">
+          You're viewing as yourself.{' '}
+          {p.houseId && memberships.includes(p.houseId) ? (
+            <button className="link" onClick={() => setActing(p.houseId!, true, true)}>
+              Switch to {owner}
+            </button>
+          ) : (
+            `Only ${owner} can make changes.`
+          )}
+        </p>
+      )}
       {!verified && <p className="inline-note ws-pad">Verification pending. You can prepare this project privately; opening roles, sharing and credits unlock once Ana verifies {owner}.</p>}
 
       {!p.shared && (
@@ -761,51 +772,107 @@ function PersonActions({ id, issue, done }: { id: string; issue: () => void; don
 
 /* ============================================================ Person side */
 
-/** What the person sees after being added: transparency, not permission. Nothing to accept. */
+/**
+ * Project you're on: the person's own view of one association. Transparency, not permission: there is
+ * nothing to accept about being added. It shows only what this person may see: the working title, the
+ * house, their own working role, where their credit stands and who can see it. Never other people on the
+ * project, other roles, anyone else's credits or the house's notes.
+ */
 export function AssociationScreen({ id }: { id: string }) {
-  const { pop, flagAssociation, showToast, push } = useStore();
+  const { pop, flagAssociation, showToast, push, viewer, acting, setActing, acceptCredit, creditBusy, openSheet } = useStore();
   const a = world.associations.find((x) => x.id === id);
   const [confirm, setConfirm] = useState(false);
-  if (!a) return <EmptyState title="Not found" />;
+  const back = (
+    <header className="topbar topbar--nav">
+      <IconButton label="Back" onClick={pop}>
+        <ChevronLeft size={26} />
+      </IconButton>
+    </header>
+  );
+  // Only the person it is about opens this view. The house manages the same record in its workspace.
+  if (!a || a.personId !== viewer.id)
+    return (
+      <div className="screen">
+        {back}
+        <EmptyState icon={<Lock />} title="This isn't available" body="It's private to the person and the production." />
+      </div>
+    );
   const p = project(a.projectId)!;
   const owner = p.houseId ? org(p.houseId) : person(p.ownerId!);
   const credit = [...world.credits].reverse().find((c) => c.associationId === id);
+  const shown = credit && credit.status !== 'prepared' ? credit : undefined;
+  const isPublic = shown?.status === 'accepted' && p.shared;
+  const creditValue = !shown ? 'Not issued' : shown.status === 'proposed' ? 'Waiting for you' : shown.status === 'correction' ? 'Correction sent' : 'Accepted';
   return (
     <div className="screen">
-      <header className="topbar topbar--nav">
-        <IconButton label="Back" onClick={pop}>
-          <ChevronLeft size={26} />
-        </IconButton>
-      </header>
+      {back}
       <div className="title-block">
         <p className="kicker">
-          <Lock size={12} /> Private to you and {owner.name}
+          {isPublic ? <Globe2 size={12} /> : <Lock size={12} />} {isPublic ? 'Your credit is public' : `Private to you and ${owner.name}`}
         </p>
         <h1 className="large-title">{p.workingTitle}</h1>
         <p className="meta">
-          {p.format} · {p.languages.join(', ')}
+          {p.format} · {p.languages.join(', ')} · {p.stage}
         </p>
       </div>
-      <div className="assoc-card">
+      <PressCard className="assoc-card" onPress={() => push(p.houseId ? { name: 'org', id: p.houseId } : { name: 'profile', id: p.ownerId! })} scale={0.99}>
         <Avatar party={owner} size={40} />
         <span>
-          <span className="meta">{owner.name} added you as</span>
+          <span className="meta">{a.status === 'removed' ? `${owner.name} had added you as` : `${owner.name} added you as`}</span>
           <span className="item-title">{a.workingRole}</span>
         </span>
-      </div>
-      <p className="body ws-pad">This means {owner.name} currently associates you with this project. It isn't a credit, and nothing about it is public.</p>
-      {credit && credit.status === 'proposed' && (
-        <p className="inline-note ws-pad">
-          A credit is waiting for you.{' '}
-          <button className="link" onClick={() => push({ name: 'profile', id: credit.personId })}>
-            Review it
-          </button>
-        </p>
+      </PressCard>
+
+      <section className="section assoc-section">
+        <SectionHeader title="Where this stands" />
+        <div className="group">
+          <Row label="On the project" value={a.status === 'removed' ? 'Removed' : a.status === 'flagged' ? "You said it isn't right" : 'Added'} chevron={false} />
+          <Row label="Credit" value={creditValue} chevron={false} />
+          <Row label="Public" value={isPublic ? publicName(p) : 'No'} onPress={isPublic ? () => push({ name: 'work', id: p.id }) : undefined} />
+        </div>
+        <p className="meta settings-note">Being added isn't a credit. A credit is issued by {owner.name}, and shows publicly only once you accept it and the project is shared.</p>
+      </section>
+
+      {shown?.status === 'proposed' && (
+        <section className="section assoc-section">
+          <SectionHeader title="Waiting for you" />
+          <div className="assoc-credit">
+            <p className="meta">
+              {owner.name} {p.houseId && <Verified size={12} />} credited you as
+            </p>
+            <p className="item-title">{shown.line}</p>
+            {acting !== 'self' ? (
+              <button className="link link--small" onClick={() => setActing('self', true, true)}>
+                Switch to you to respond
+              </button>
+            ) : (
+              <div className="pending-credit-actions">
+                <Button size="s" loading={creditBusy === shown.id} onClick={() => acceptCredit(shown.id)}>
+                  Accept
+                </Button>
+                <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: p.workingTitle, creditId: shown.id })}>
+                  Something wrong?
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
       )}
-      {a.status === 'removed' && <p className="inline-note ws-pad">{owner.name} removed this association.</p>}
+      {shown?.status === 'correction' && <p className="inline-note ws-pad">You asked: {shown.note ?? 'a correction'}. {owner.name} will send a corrected credit for you to accept.</p>}
+      {shown?.status === 'accepted' && !p.shared && <p className="inline-note ws-pad">Credit accepted. It becomes public when {owner.name} shares the project.</p>}
+      {isPublic && (
+        <div className="ws-pad assoc-actions">
+          <Button block variant="secondary" onClick={() => push({ name: 'work', id: p.id })}>
+            View public project
+          </Button>
+        </div>
+      )}
+
+      {a.status === 'removed' && <p className="inline-note ws-pad">{owner.name} removed this association. Nothing about it was public.</p>}
       {a.status === 'flagged' && <p className="inline-note ws-pad">You told {owner.name} this isn't right. They can correct or remove it.</p>}
-      {a.status === 'added' && !confirm && (
-        <div className="ws-pad">
+      {/* Once a credit exists, "Something wrong?" on the credit is the one way to correct it. */}
+      {a.status === 'added' && !shown && !confirm && (
+        <div className="ws-pad assoc-actions">
           <Button variant="secondary" block onClick={() => setConfirm(true)}>
             This isn't right
           </Button>

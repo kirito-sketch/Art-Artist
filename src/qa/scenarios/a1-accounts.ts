@@ -86,7 +86,7 @@ export const accounts = [
     [11, 'Availability changes after Interest', 'P2', 'Da', 'L', 'The poster sees current availability, with the Interest date for context.', 'B', 'PD', {}],
     [12, 'Craft taxonomy changes', 'P2', 'Da Fu', 'L', 'See EC-ONB-018.', 'B', 'NR', {}],
     [13, 'Profile blocked by the viewer', 'P0', 'Sa Pv', 'V', 'Viewer sees "You blocked Vikram". No work, no contact. Shared film credits still show the name.', 'UA', 'IM', { why: 'Blocking must actually separate people.', do: 'Open Vikram\'s profile.', not: ['Content or Message visible'], fx: asKiran({ blocked: ['vikram'], stack: [{ name: 'profile', id: 'vikram' }] }) }],
-    [14, 'Viewer is blocked by the profile owner', 'P0', 'Sa Pv', 'VL', 'The viewer sees an unavailable profile, indistinguishable from a private one. They are never told they were blocked.', 'UAB', 'NU', { why: 'Telling someone they were blocked can escalate harassment.', not: ['"This person blocked you"'], nofx: 'Blocks are one-directional in the prototype.' }],
+    [14, 'Viewer is blocked by the profile owner', 'P0', 'Sa Pv', 'VL', 'The viewer sees an unavailable profile, indistinguishable from a private one. They are never told they were blocked.', 'UAB', 'IM', { why: 'Telling someone they were blocked can escalate harassment.', not: ['"This person blocked you"'], nofx: 'Implemented: blocks are shared records, and the blocked identity sees "This profile is private". A fixture can only start with blocks made by the persona it opens as; walk it through as in PERSONA_BRIDGES.md W6.' }],
   ]),
 
   ...area(6, 'ID', 'Identity switching', ['Aditi', 'Konark Pictures', 'House Home'], [

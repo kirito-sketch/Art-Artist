@@ -183,6 +183,8 @@ export interface Interest {
   answers?: string[];
   /** The person withdrew. They stay in the list, greyed, so nothing silently disappears. */
   withdrawn?: boolean;
+  /** The house's side of the review: messaged, or set aside for now. Never shown to the person. */
+  review?: 'messaged' | 'notNow';
   time: string;
 }
 

@@ -120,6 +120,26 @@
   "AC-30": {
    "result": "pass",
    "detail": "30 credits, none orphaned."
+  },
+  "AC-31": {
+   "result": "pass",
+   "detail": "One thread, Konark on one side, Tara on the other; the member is never named."
+  },
+  "AC-32": {
+   "result": "pass",
+   "detail": "One record; the house sees \"No longer interested\"."
+  },
+  "AC-33": {
+   "result": "pass",
+   "detail": "Konark Pictures filled Script Supervisor on Untitled Telugu feature. Thanks for your interest."
+  },
+  "AC-34": {
+   "result": "pass",
+   "detail": "Closed both ways; history, credits, associations and Interest unchanged."
+  },
+  "AC-35": {
+   "result": "pass",
+   "detail": "Notification → project view; one record from issue to acceptance, read by the project page and the profile."
   }
  }
 }

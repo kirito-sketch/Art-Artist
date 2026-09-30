@@ -2,6 +2,7 @@ import { CalendarDays, ChevronLeft, Clock, Languages, MapPin, Share, Sparkles, U
 import { useEffect, useState, type ReactNode } from 'react';
 import { useImageTint } from '../../ui/useImageTint';
 import { useStore } from '../../state/store';
+import { world } from '../../state/world';
 import { findOpportunity, firstName, kindLabel, org, person } from '../../state/selectors';
 import { Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
 import { Byline, SaveButton } from '../home/OpportunityCard';
@@ -191,7 +192,20 @@ export function OpportunityScreen({ id }: { id: string }) {
             </div>
           )}
           {!mine && changed.length > 0 && (response || interested) && <p className="inline-note">Updated since you showed interest: {changed.join(', ')}</p>}
-          {status && !mine && <p className="inline-note">This role is no longer open. Anything you sent stays in your activity.</p>}
+          {status && !mine && (() => {
+            // The person chosen for a filled role finds their way to the project they're now on.
+            const onIt = world.associations.find((a) => a.fromRoleId === o.id && a.personId === viewer.id && a.status !== 'removed');
+            return onIt ? (
+              <p className="inline-note">
+                {poster} added you to the project for this role.{' '}
+                <button className="link" onClick={() => push({ name: 'association', id: onIt.id })}>
+                  See project
+                </button>
+              </p>
+            ) : (
+              <p className="inline-note">This role is no longer open. Anything you sent stays in your activity.</p>
+            );
+          })()}
 
           <ul className="facts">
             <Fact icon={<MapPin size={20} />}>{o.city}</Fact>

@@ -29,6 +29,14 @@ function derive(p: Person) {
   return { credits, work, projects, about: seed.about[p.id] };
 }
 
+/** Where one association stands, in the person's words. Being added is never called a credit. */
+export function associationStage(credit?: 'prepared' | 'proposed' | 'accepted' | 'correction') {
+  if (credit === 'proposed') return 'Credit waiting for you';
+  if (credit === 'correction') return 'Correction sent';
+  if (credit === 'accepted') return 'Credit accepted · public when the project is shared';
+  return 'Added · not a credit';
+}
+
 function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <li className="fact">
@@ -39,7 +47,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptedCredits, acceptCredit, creditBusy, acting, setActing } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, acting, setActing, cannotReach } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -53,7 +61,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   }, [heroKey, overHero, setHero, p?.visibility]);
 
   if (!p) return <EmptyState title="Profile unavailable" />;
-  if (!own && p.visibility !== 'public') {
+  // Someone who blocked the identity in use sees exactly what a private profile looks like. They are never told.
+  if (!own && (p.visibility !== 'public' || (cannotReach(id) && !blocked.includes(id)))) {
     return (
       <div className="screen">
         <header className="topbar topbar--nav">
@@ -83,7 +92,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   }
 
   const d = derive(p);
-  const credits = own ? [...acceptedCredits, ...d.credits] : d.credits;
+  const credits = d.credits;
   const work = own ? [...userPortfolio, ...d.work] : d.work;
   const reel = work.find((m) => m.kind === 'video');
   const stills = work.filter((m) => m !== reel);
@@ -192,7 +201,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 block
                 variant="outline"
                 onClick={() => {
-                  const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: `profile-${id}` });
+                  const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                   push({ name: 'conversation', id: cid });
                 }}
               >
@@ -230,14 +239,16 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                   <p className="meta">
                     {org(c.orgId).name} <Verified size={12} /> credited you
                   </p>
-                  <p className="item-title">{c.title}</p>
+                  <button className="item-title pending-credit-title" onClick={() => push({ name: 'association', id: c.associationId })}>
+                    {c.title}
+                  </button>
                   <p className="meta meta--dark">{c.role}</p>
                   {acting !== 'self' ? (
                     <button className="link link--small" onClick={() => setActing('self', true, true)}>
                       Switch to you to respond
                     </button>
                   ) : c.correction ? (
-                    <p className="meta">Correction sent. {org(c.orgId).name} will update it.</p>
+                    <p className="meta">You asked: {c.note ?? 'a correction'}. {org(c.orgId).name} will send a corrected credit.</p>
                   ) : (
                     <div className="pending-credit-actions">
                       <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)}>
@@ -260,8 +271,8 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           const mine = world.associations.filter((a) => {
             if (a.personId !== viewer.id || a.status === 'removed' || wproject(a.projectId)?.ownerId === viewer.id) return false;
             const c = [...world.credits].reverse().find((x) => x.associationId === a.id);
-            // Shown here only while there's no credit the person can see elsewhere (Waiting for you, or public Credits).
-            return !c || c.status === 'prepared' || (c.status === 'accepted' && !wproject(a.projectId)?.shared);
+            // Once the credit is accepted on a shared project it lives under Credits, the public record.
+            return !(c?.status === 'accepted' && wproject(a.projectId)?.shared);
           });
           const drafts = world.projects.filter((w) => w.ownerId === viewer.id && !w.shared);
           if (!mine.length && !drafts.length) return null;
@@ -296,8 +307,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                         <p className="meta">
                           {a.workingRole} · {w.houseId ? org(w.houseId).name : 'Independent'}
                         </p>
-                        {c?.status === 'accepted' && !w.shared && <p className="meta">Credit accepted · public when the project is shared</p>}
-                        {a.status === 'flagged' && <p className="meta accent">You said this isn't right</p>}
+                        <p className="meta">{a.status === 'flagged' ? <span className="accent">You said this isn't right</span> : associationStage(c?.status)}</p>
                       </div>
                     </PressCard>
                   );

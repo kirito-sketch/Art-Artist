@@ -342,9 +342,11 @@ export const CHECKS: Check[] = [
     id: 'AC-29',
     title: 'Blocking never removes anyone from a film\'s credits',
     run: () => {
+      act.block(person('kiran'), 'vikram');
+      act.block(person('tara'), 'bluelotus');
       const w = toPublicWork(wproject('monsoon')!)!;
       const tara = publicCreditsFor('tara');
-      // Blocking is personal state and never touches records; the public film and profile are unchanged.
+      // Blocks are records of their own and never touch credits; the public film and profile are unchanged.
       if (!w.credits.some((c) => c.personId === 'vikram')) return fail('Vikram missing from Monsoon Letters.');
       if (!tara.some((c) => c.projectId === 'faultlines')) return fail('Tara\'s Blue Lotus credit missing.');
       return pass('Records are independent of blocks.');
@@ -356,6 +358,92 @@ export const CHECKS: Check[] = [
     run: () => {
       const orphans = world.credits.filter((c) => !wproject(c.projectId) || !world.associations.some((a) => a.id === c.associationId));
       return orphans.length ? fail(`${orphans.length} orphan credit(s).`) : pass(`${world.credits.length} credits, none orphaned.`);
+    },
+  },
+  {
+    id: 'AC-31',
+    title: 'A house message reaches the person from the house, in one shared thread',
+    run: () => {
+      const t = act.startThread(member('konark'), 'tara', { kind: 'casting', label: 'Casting', detail: 'Supporting · Journalist · Neela Akasham', refId: 'o-neela-journalist' });
+      act.sendThreadMessage(member('konark'), t, 'Can you do a reading on Friday?', '10:00');
+      const th = world.threads.find((x) => x.id === t)!;
+      if (!th.sides.includes('konark') || th.sides.includes('aditi')) return fail(`Thread sides are ${th.sides.join(' and ')}; the house, not the member, is the identity.`);
+      if (th.messages[0].from !== 'konark') return fail(`Message is from ${th.messages[0].from}.`);
+      const n = notificationsFor('tara', []).find((x) => x.route?.id === t);
+      if (!n || n.actorId !== 'konark' || n.text.includes('Aditi')) return fail('Tara is not told by Konark Pictures, or the member is named.');
+      act.sendThreadMessage(person('tara'), t, 'Yes, Friday works.', '10:05');
+      if (world.threads.find((x) => x.id === t)!.messages.length !== 2) return fail('The reply did not land in the same thread.');
+      return pass('One thread, Konark on one side, Tara on the other; the member is never named.');
+    },
+  },
+  {
+    id: 'AC-32',
+    title: 'Reviewing or withdrawing Interest never deletes the record',
+    run: () => {
+      act.sendInterest(person('tara'), 'o-neela-journalist', 'Free all of November.');
+      const rec = () => world.interests.filter((i) => i.personId === 'tara' && i.opportunityId === 'o-neela-journalist');
+      const id = rec()[0].id;
+      act.reviewInterest(member('konark'), id, 'messaged');
+      act.reviewInterest(member('konark'), id, 'notNow');
+      act.withdrawInterest(person('tara'), 'o-neela-journalist');
+      const r = rec();
+      if (r.length !== 1) return fail(`${r.length} records for one person and role.`);
+      if (!r[0].withdrawn) return fail('Withdrawal not recorded.');
+      return pass('One record; the house sees "No longer interested".');
+    },
+  },
+  {
+    id: 'AC-33',
+    title: 'Filling a role tells everyone else, by public name only',
+    run: () => {
+      const id = privateProject();
+      const rid = act.addRole(member('konark'), id, ROLE);
+      act.sendInterest(person('tara'), rid, '');
+      act.sendInterest(person('kiran'), rid, '');
+      act.closeRole(member('konark'), rid, 'filled', 'Filled through Ana', 'tara');
+      const kiran = world.notifications.filter((n) => n.toPersonId === 'kiran' && n.route?.id === rid);
+      const tara = world.notifications.filter((n) => n.toPersonId === 'tara' && n.route?.id === rid);
+      if (kiran.length !== 1) return fail(`Kiran got ${kiran.length} outcome notifications.`);
+      if (tara.length) return fail('The chosen person was told the role is filled.');
+      if (kiran[0].text.includes(PRIVATE_TITLE)) return fail('The outcome names the working title.');
+      return pass(kiran[0].text);
+    },
+  },
+  {
+    id: 'AC-34',
+    title: 'A block closes a thread both ways and leaves shared records in place',
+    run: () => {
+      const t = act.startThread(member('konark'), 'kiran', { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+      act.sendThreadMessage(member('konark'), t, 'Hello', '10:00');
+      const before = { credits: world.credits.length, assoc: world.associations.length, interests: world.interests.length };
+      act.block(person('kiran'), 'konark');
+      if (act.sendThreadMessage(member('konark'), t, 'Still there?', '10:01')) return fail('The house can still send.');
+      if (act.sendThreadMessage(person('kiran'), t, 'Bye', '10:02')) return fail('The person who blocked can still send.');
+      if (act.sendInterest(person('kiran'), 'o-neela-dop', '')) return fail('Interest still reaches a blocked house.');
+      if (world.threads.find((x) => x.id === t)!.messages.length !== 1) return fail('History changed.');
+      const after = { credits: world.credits.length, assoc: world.associations.length, interests: world.interests.length };
+      if (JSON.stringify(before) !== JSON.stringify(after)) return fail(`Records changed: ${JSON.stringify(before)} → ${JSON.stringify(after)}`);
+      return pass('Closed both ways; history, credits, associations and Interest unchanged.');
+    },
+  },
+  {
+    id: 'AC-35',
+    title: 'A credit notification opens the person\'s own project view, and a correction reissue is one record',
+    run: () => {
+      const aid = act.addToProject(member('konark'), 'neela', { personId: 'tara' }, 'Journalist', 'Cast');
+      act.issueCredit(member('konark'), aid, 'Anjali (Sister)', 'Cast');
+      const c1 = world.credits.find((c) => c.associationId === aid)!;
+      const n = notificationsFor('tara', []).find((x) => x.text.includes('Anjali (Sister)'));
+      if (n?.route?.name !== 'association' || n.route.id !== aid) return fail(`Credit notification routes to ${n?.route?.name}.`);
+      act.requestCorrection(person('tara'), c1.id, 'Wrong role');
+      act.issueCredit(member('konark'), aid, 'Anjali (Journalist)', 'Cast');
+      const all = world.credits.filter((c) => c.associationId === aid);
+      if (all.length !== 1 || all[0].status !== 'proposed') return fail(`${all.length} credit records after reissue.`);
+      act.acceptCredit(person('tara'), all[0].id);
+      const pub = toPublicWork(wproject('neela')!)!.credits.filter((c) => c.personId === 'tara');
+      if (pub.length !== 1 || pub[0].role !== 'Anjali (Journalist)') return fail('Public project does not show exactly the accepted line.');
+      if (!publicCreditsFor('tara').some((c) => c.id === all[0].id)) return fail('Profile does not read the same record.');
+      return pass('Notification → project view; one record from issue to acceptance, read by the project page and the profile.');
     },
   },
 ];

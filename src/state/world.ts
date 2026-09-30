@@ -64,8 +64,31 @@ export interface WorldCredit {
   note?: string;
 }
 
-export interface WorldInterest extends Interest {
-  dismissed?: boolean;
+/** The record never disappears: withdrawn, messaged or set aside, it stays the history of this role. */
+export type WorldInterest = Interest;
+
+/**
+ * A conversation between two identities (a person, or a house acting through its members). Both sides
+ * read the same record, so what the house sends as Konark is what the person receives from Konark.
+ */
+export interface Thread {
+  id: string;
+  /** One suggested next step for one side, e.g. confirming a recce. */
+  action?: { side: string; label: string; reply: string };
+  /** Party ids: a person id or a house id. */
+  sides: [string, string];
+  context: { kind: 'crew' | 'casting' | 'collab' | 'project'; label: string; detail: string; refId?: string };
+  media?: Media;
+  messages: { id: string; from: string; text: string; time: string }[];
+  /** Sides with something unread. */
+  unreadFor: string[];
+  updated: string;
+}
+
+/** One person blocking a person or a house. Personal: it never blocks on behalf of a house. */
+export interface Block {
+  by: string;
+  target: string;
 }
 
 export interface WorldNotification extends Notification {
@@ -85,6 +108,10 @@ export const world = {
   credits: [] as WorldCredit[],
   interests: [] as WorldInterest[],
   notifications: [] as WorldNotification[],
+  threads: [] as Thread[],
+  /** A poster's changes to a published role, and which material details changed. Everyone reads the same edits. */
+  roleEdits: {} as Record<string, Partial<Opportunity> & { changed?: string[] }>,
+  blocks: [] as Block[],
   /** Filled or closed roles, by role id. A filled role is a record; hiring again is a new role. */
   roleStatus: {} as Record<string, { state: 'filled' | 'closed'; reason: string }>,
 };
@@ -200,3 +227,23 @@ world.notifications.push(
   { id: 'wn-seed-3', forId: 'konark', kind: 'credit', actorId: 'meera', text: 'Monsoon Letters: all 6 credits are now public', time: '2d', unread: false, route: { name: 'work', id: 'monsoon' } as never },
   { id: 'wn-seed-4', toPersonId: 'kiran', kind: 'credit', actorId: 'bluelotus', text: 'Blue Lotus Originals issued you a credit on Fault Lines · S1. Accept it to make it official.', time: '8m', unread: true, route: { name: 'profile', id: 'kiran' } },
 );
+
+/*
+ * Kiran and Konark already talk about the DoP role. It is one shared thread: Kiran reads it from Konark
+ * Pictures, and anyone acting for Konark reads the same messages as the house.
+ */
+{
+  const i = seed.conversations.kiran.findIndex((c) => c.id === 'c-konark');
+  const [c] = seed.conversations.kiran.splice(i, 1);
+  seed.conversations.aditi = seed.conversations.aditi.filter((x) => x.id !== 'c-aditi-kiran');
+  world.threads.push({
+    id: 'th-konark-kiran',
+    sides: ['konark', 'kiran'],
+    context: c.context as Thread['context'],
+    media: c.media,
+    action: c.action && { side: 'kiran', ...c.action },
+    messages: c.messages.map((m) => ({ id: m.id, from: m.from === 'me' ? 'kiran' : 'konark', text: m.text, time: m.time })),
+    unreadFor: ['kiran'],
+    updated: '12m',
+  });
+}

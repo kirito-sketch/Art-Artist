@@ -26,6 +26,9 @@ export function restoreCanonical() {
   world.credits = w.credits;
   world.interests = w.interests;
   world.notifications = w.notifications;
+  world.threads = w.threads;
+  world.blocks = w.blocks;
+  world.roleEdits = w.roleEdits;
   for (const k of Object.keys(world.roleStatus)) delete world.roleStatus[k];
   Object.assign(world.roleStatus, w.roleStatus);
   seed.people.length = 0;

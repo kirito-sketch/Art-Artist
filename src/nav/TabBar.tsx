@@ -15,7 +15,7 @@ const ITEMS: { id: Tab; label: string }[] = [
 /** Light floating pill. Icons only; the active tab is black, the rest grey. Create is the one filled control. */
 export function TabBar() {
   const { tab, setTab, openSheet, sheet, closeSheet, conversations, interestsReceived, viewer, acting } = useStore();
-  const unread = conversations.some((c) => c.unread) || interestsReceived.length > 0;
+  const unread = conversations.some((c) => c.unread) || interestsReceived.some((i) => !i.withdrawn && !i.review);
   const createOpen = sheet?.name === 'create';
 
   const item = (it: (typeof ITEMS)[number]) => {
