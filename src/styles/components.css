@@ -391,8 +391,12 @@
 }
 
 .avatar img {
+  /* Out of flow, so a non-square photo can never stretch the circle. */
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
   border-radius: inherit;
   object-fit: cover;
 }

@@ -1,0 +1,158 @@
+/* Specimen page chrome only. Everything inside .spec-block-body is the real system. */
+.spec {
+  min-height: 100vh;
+  background: #e9e6e0;
+  padding: 32px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  font-family: var(--font);
+  color: var(--text);
+}
+.spec-head {
+  width: min(100%, 390px);
+}
+.spec-head h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.spec-head p,
+.spec-block-note {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: 4px 0 0;
+}
+.spec-block {
+  width: min(100%, 390px);
+}
+.spec-block-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+.spec-block-body {
+  margin-top: 12px;
+  padding: 20px var(--gutter) 24px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+.spec-display + .spec-display {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hairline);
+}
+.spec-size {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 6px;
+  display: block;
+}
+.spec-lead {
+  background: var(--dark);
+  color: #fff;
+  border-radius: var(--r-xl);
+  padding: 20px;
+}
+.spec-lead + .spec-lead {
+  margin-top: 10px;
+}
+.spec-lead .slate-lead-title {
+  margin: 0;
+}
+.spec-block-body > .portrait-rail,
+.spec-block-body > .poster-rail {
+  margin-top: 20px;
+}
+.spec-photo {
+  position: relative;
+  height: 220px;
+  border-radius: var(--r-l);
+  overflow: hidden;
+}
+.spec-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spec-labels {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.spec-labels--low {
+  top: auto;
+  bottom: 14px;
+}
+.spec-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 14px 0;
+}
+.spec-row--faces {
+  gap: 10px;
+}
+.spec-band {
+  margin: -20px calc(-1 * var(--gutter)) -24px;
+}
+.spec-slots .object-tile-slot {
+  outline: 1px dashed rgba(40, 30, 20, 0.35);
+  outline-offset: -1px;
+}
+.spec-surfaces {
+  display: grid;
+  gap: 8px;
+}
+.spec-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: var(--r-m);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.spec-surface--base { background: var(--base); }
+.spec-surface--raised { background: var(--raised); box-shadow: var(--shadow-2); }
+.spec-surface--tint { background: var(--tint); }
+.spec-surface--sand { background: var(--sand); --text-2: color-mix(in srgb, var(--text) 70%, var(--sand)); }
+.spec-surface--dark { background: var(--dark); color: #f4efe6; --text-2: rgba(244, 239, 230, 0.72); }
+.spec-caps {
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+.spec-states {
+  display: flex;
+  flex-direction: column;
+}
+.spec-state {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  font-size: var(--t-4);
+  color: var(--text);
+}
+.spec-state + .spec-state {
+  border-top: 1px solid var(--hairline);
+}
+.spec-state > svg {
+  flex: none;
+  color: var(--text-2);
+}
+.spec-state--error > svg {
+  color: var(--accent);
+}

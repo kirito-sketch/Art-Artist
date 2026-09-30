@@ -5,7 +5,7 @@ import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { spring } from '../../ui/motion';
 import { Avatar, PressCard, Photo, Verified } from '../../ui/primitives';
-import { FrameLabel } from '../../ui/compose';
+import { displayTitle, keepSeparators, FrameLabel } from '../../ui/compose';
 
 export function SaveButton({ id, floating }: { id: string; floating?: boolean }) {
   const { saved, toggleSave } = useStore();
@@ -91,7 +91,9 @@ export function FeaturedCard({ o, onOpen }: { o: Opportunity; onOpen: () => void
       {pill && <FrameLabel tone={sent ? 'paper' : (o.closesInDays ?? 9) <= 5 ? 'urgent' : 'plate'}>{pill}</FrameLabel>}
       <SaveButton id={o.id} floating />
       <div className="feature-text">
-        <p className="feature-title">{o.role}</p>
+        <p className="feature-title display-title" {...displayTitle(o.role, 36)}>
+          {keepSeparators(o.role)}
+        </p>
         <p className="feature-line">
           <Byline o={o} />
         </p>

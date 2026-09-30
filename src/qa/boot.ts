@@ -27,6 +27,9 @@ const requested = params.has('scenario') ? scenarioById(params.get('scenario') ?
 /** The Lab opens for ?lab, and also for a scenario link that cannot be reproduced yet (it shows why). */
 export const LAB = !RESEARCH && (params.has('lab') || (params.has('scenario') && !requested?.fixture));
 
+/** The Visual Composition System specimen (?specimen): a design-system test page, never a product surface. */
+export const SPECIMEN = !RESEARCH && params.has('specimen');
+
 export const SCENARIO: Scenario | undefined = !RESEARCH && !LAB ? requested : undefined;
 
 /** A scenario's starting state, or null for the normal prototype. */

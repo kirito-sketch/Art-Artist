@@ -103,12 +103,14 @@ export function Photo({ media, className = '', alt = '', showPlay = true }: { me
 /* ---------------------------------------------------------------- Avatar */
 
 export function initials(name: string) {
-  return name
-    .split(' ')
-    .filter((w) => /[A-Za-z]/.test(w[0]))
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('');
+  const words = name.split(/\s+/).filter(Boolean);
+  const latin = words.filter((w) => /[A-Za-z]/.test(w[0]));
+  if (latin.length) return latin.slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+  // Scripts without capitals (Telugu and other Indic scripts): one whole akshara, never a split glyph.
+  const first = words[0] ?? '';
+  const Seg = (Intl as unknown as { Segmenter?: new (l?: string, o?: { granularity: string }) => { segment: (s: string) => Iterable<{ segment: string }> } }).Segmenter;
+  if (Seg) for (const g of new Seg(undefined, { granularity: 'grapheme' }).segment(first)) return g.segment;
+  return Array.from(first)[0] ?? '';
 }
 
 /** Headshot when delivered, otherwise a neutral monogram. Organisations are rounded squares. */

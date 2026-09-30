@@ -9,6 +9,7 @@ import { publicCreditsFor } from '../../domain/discovery';
 import { Button, Row, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
+import { displayTitle, scriptLang } from '../../ui/compose';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -135,20 +136,24 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
       <div className="psheet">
         <header className="pid">
-          <p className="pid-craft">{CRAFT_LABEL[p.craft] ?? p.role}</p>
+          <p className="pid-craft" lang={scriptLang(CRAFT_LABEL[p.craft] ?? p.role)}>
+            {CRAFT_LABEL[p.craft] ?? p.role}
+          </p>
           {own && isTab && memberships.length > 0 ? (
-            <button className="large-title org-name--switch" onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
+            <button className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
               {p.name}
               {p.identityVerified && <Verified size={22} label="Identity verified" />}
               <ChevronDown size={20} />
             </button>
           ) : (
-            <h1 className="large-title">
+            <h1 className="large-title display-title display-title--name" {...displayTitle(p.name)}>
               {p.name}
               {p.identityVerified && <Verified size={22} label="Identity verified" />}
             </h1>
           )}
-          <p className="pid-role">{p.role}</p>
+          <p className="pid-role" lang={scriptLang(p.role)}>
+            {p.role}
+          </p>
           <p className="meta">
             {p.city}
             {p.languages ? ` · ${p.languages.join(', ')}` : ''}
@@ -367,7 +372,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                         <p className="meta">
                           {a.workingRole} · {w.houseId ? org(w.houseId).name : 'Independent'}
                         </p>
-                        <p className="meta">{a.status === 'flagged' ? <span className="accent">You said this isn't right</span> : associationStage(cs.pending?.status ?? cs.current?.status)}</p>
+                        <p className="meta">{a.status === 'flagged' ? "You said this isn't right. Waiting on the house." : associationStage(cs.pending?.status ?? cs.current?.status)}</p>
                       </div>
                     </PressCard>
                   );

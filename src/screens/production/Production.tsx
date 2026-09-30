@@ -4,7 +4,7 @@ import { useStore } from '../../state/store';
 import { org, party } from '../../state/selectors';
 import { publicName, world, type HouseProject } from '../../state/world';
 import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
-import { Faces, FrameLabel, PortraitCard, PosterTile, TitleCard } from '../../ui/compose';
+import { displayTitle, keepSeparators, Faces, FrameLabel, PortraitCard, PosterTile, TitleCard } from '../../ui/compose';
 import { publicCreditsFor } from '../../domain/discovery';
 import { person } from '../../state/selectors';
 
@@ -104,7 +104,9 @@ function LeadProject({ p, onOpen }: { p: HouseProject; onOpen: () => void }) {
         {!p.shared && <FrameLabel icon={<Lock size={11} strokeWidth={2.6} />}>Not announced</FrameLabel>}
       </span>
       <div className="slate-lead-text">
-        <p className="slate-lead-title">{p.workingTitle}</p>
+        <p className="slate-lead-title display-title" {...displayTitle(p.workingTitle)}>
+          {keepSeparators(p.workingTitle)}
+        </p>
         {(faces.length > 0 || open > 0 || corrections > 0) && (
           <div className="slate-strip">
             {faces.length > 0 && (

@@ -136,6 +136,10 @@ Use the approved spacing scale from the design system.
 
 Page margins should remain consistent within the same breakpoint/device.
 
+**Approved scale (hardening pass):** 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 36, 48. Gutter is 20, section rhythm is 36. Overlaps are derived from the element they overlap (half an avatar, an object slot's overhang), never picked by eye. 22, 26, 30, 34 and 46 were removed from the four screens.
+
+**Clearance:** scrolling screens with the tab bar end with `--tabbar-clearance` (116). A screen with the floating action bar ends under a 132 px paper fade, so the last line (the "never charges" note) always clears the bar. Floating controls over a hero get a paper bar once the hero has scrolled away.
+
 ---
 
 ## 3.3 Radius family
@@ -154,6 +158,8 @@ For example:
 - Full
 
 A cinematic card may use a larger radius than a compact record card, but both should still feel related.
+
+**Approved family:** xs 6 (frame labels only), s 10 (compact media, record marks), m 14 (records, posters, highlights), l 20 (cards, tiles, stills), xl 28 (lead media, sheets, the floating action bar), pill, full (faces). No other values.
 
 ---
 
@@ -208,10 +214,38 @@ Composition may vary. Meaning must not.
 
 ## 3.8 Added cohesion constraints
 
-- **One display title per screen.** Display (40 px) names the one piece of work or person the screen is about. Section titles stay at 22 px.
-- **At most one expressive band per screen.** Sand is for craft objects and relationship highlights. Everything else sits on the base.
-- **Red is a mark, never a sentence.** Attention is a small dot or Urgent frame-label text. Whole lines of red text are not allowed.
+- **One display title per screen.** Display names the one piece of work or person the screen is about: the lead project (Slate), the role (Role Detail), the person (Profile), the featured role (Home, capped at 36 inside its card; a carousel repeats one slot, it does not add titles). Section titles stay at 22 px. Tested on the four screens: each has exactly one.
+- **At most one expressive field per screen, and none is required.** Sand appears once at most: the craft band on Home, the relationship highlight on Role Detail. Slate and Profile have none, and are better for it. Everything else sits on the base.
+- **Red is a mark, never a field or a sentence.** See 3.9 for the five states it has to tell apart.
 - **Faces sit on the work.** People connected to a project (interested, on the project) appear as overlapping faces on or beside its image, not as a separate list, wherever space allows.
+
+## 3.9 Hardening rules (locked with the system)
+
+**Title responsiveness.** The display title steps down by length, never by screen: 40 px up to 16 characters, 36 up to 26, 32 up to 38, then 30, the floor (`displayTitle()` in `src/ui/compose.tsx`). Telugu starts one step down. It wraps balanced to at most three lines; a work or role title is clamped after three, a person's name is never clamped. The next element follows at the same distance whatever the line count. A " · " never starts a line. Rail titles take two lines then an ellipsis; title cards hold four. Card names and meta take one line; card context takes two.
+
+**Caps labels.** Small caps are for labels that name a field or state on or beside media: Frame Labels, call-sheet field names, the profile craft kicker, the title-card "Private". They are never used for titles, names, sentences, buttons, anything longer than three words, or body metadata.
+
+**Non-Latin labels.** Telugu has no capitals, and tracking breaks conjuncts. A Telugu label keeps the label's slot, weight, colour and hierarchy, drops the case transform and the tracking, and is set 1 px larger to match the optical height of Latin small caps. Telugu titles lose negative tracking and take 1.24 line height (item text 1.4) for vowel signs above and below. Content carries `lang="te"` automatically (`scriptLang()`); Noto Sans Telugu is the fallback face. Initials for a Telugu name are one whole akshara, never a split glyph. The localisation fixture is `?specimen`.
+
+**Colour balance.** Paper is the ground; raised white is visibly whiter than paper and always carries shadow-2, so the two never merge into "beige". Graphite (title cards, lead media, the dark strip) anchors each screen. Sand appears once at most. Media is never tinted onto the page (the Role sheet's image tint was removed). No new colours: secondary text on sand is a mix of ink and sand, not a new grey.
+
+**Red.** Five states, told apart by structure and language first:
+
+| State | Structure | Language | Red |
+|---|---|---|---|
+| Waiting (on someone else) | quiet meta line, clock | "Waiting for Kiran" | none |
+| Attention (your decision) | row with a dot; a count on the lead strip | "2 to review" | a dot |
+| Correction (you asked for one) | record row, record mark | "You said this isn't right. Waiting on the house." | none |
+| Error (it failed) | inline, beside the thing that failed, with an icon | "Couldn't send. Try again." | icon and text |
+| Destructive | only inside a confirmation | "Delete project" | the one red button |
+
+Urgent time ("Closes in 4 days") is red text on a white Frame Label: a mark. Red never fills a band, a card or a background.
+
+**Surfaces and shadows.** Two shadow levels only: shadow-2 for raised content (cards, tiles, posters, stills rails, the reel) and shadow-3 for floating chrome (tab bar, action bar). Object shadows are separate: a contact shadow belonging to the Object Tile's asset slot, never a box-shadow. Records carry a hairline and no shadow. Sheets over media carry no shadow; their radius and the paper do the work.
+
+**Portraits.** Faces are cropped square and circular, face centre at about 36 % height (`object-position: 50% 30%`), shown at 26, 40, 64 and 96. A portrait never carries text over it. Over a still, the face sits on a white ring so it separates from any background. No photo is a normal state: initials in ink on the quiet tint with a hairline, never a grey silhouette. Below 24 px (face stacks) the fallback is a plain tint disc.
+
+**Full-scroll cohesion.** Every section of the four screens, down to the last, uses the families in section 5. Old pills, grey grouped boxes and settings-style icon lists do not reappear below the fold.
 
 ---
 
@@ -494,15 +528,26 @@ The work still carries the image while portrait photography is missing. It must 
 - Colour — grading wheels
 - Writing — bound screenplay
 
-### Rendering decision
+### Object Tile and Craft Object Asset
 
-Objects are **pseudo-3D layered vector**, not flat illustration, rendered bitmaps or real-time 3D. They are sharp at every size, light, themable, and animatable by layer (shadow, body and back are separate groups, so motion can tilt, lift or parallax them without new art). Rendered 3D is reserved as a later production upgrade for hero moments, and must follow the same art spec.
+Two different things, owned by different people:
 
-### Art spec
+- **Object Tile** is a UI component owned by Ana's design system (`ObjectTile` in `src/ui/compose.tsx`). It owns size, padding, surface, text, grid, focus, accessibility and motion hooks.
+- **Craft Object Asset** is visual artwork supplied separately as a controlled Ana asset family. It owns only the object's pixels.
+
+The objects in the prototype are **placeholders**: their concept and placement are approved, their drawing is not final and is not refined in code.
+
+**Tile spec.** Raised white, radius l (20), shadow-2, padding 16 (top padding clears the slot). The asset sits in a fixed square slot (`--object-size` 112) that overhangs the tile top by `--object-overhang` (48), centred. The slot's size never depends on the asset, so replacing the placeholder with the supplied file changes no layout. The label takes two lines at most, then an ellipsis; tiles in a row share a height and their text aligns to the bottom. Grid: two columns on a phone, one below about 290 px of content, four on wide canvases. The whole tile is one button; its accessible name is the label and meta; the asset is decorative (`alt=""`, `aria-hidden`).
+
+**Asset spec (for the supplier).** Transparent WebP (PNG fallback), 512 × 512, sRGB, under 60 KB. The object sits inside the central 80 %, horizontally centred, its base resting at about 85 % of the height. No background, no baked shadow (the tile draws the contact shadow), no text. Three-quarter view from slightly above, key light top-left, the family's materials. Files go in `public/images/craft/{kind}.webp` and are registered in `CRAFT_OBJECTS` (`asset`).
+
+**Motion (V1).** Assets are single raster objects animated as a whole: small tilt, lift, scale, and a shadow that answers the lift. The tile exposes `--object-tilt`, `--object-lift`, `--object-scale`, `--object-shadow` and `--object-duration`, with the contact shadow as its own element; reduced motion pins them at rest. V1 does not require separated vector layers. Layered, Rive or true 3D assets are reserved for specific future signature interactions where they demonstrably add value, and must match the same art spec.
+
+### Art spec (for the supplied family)
 
 - **Perspective:** three-quarter, seen slightly from above.
 - **Key light:** top-left.
-- **Shadow:** one soft contact shadow, below and slightly right.
+- **Shadow:** none in the file; the tile draws one soft contact shadow.
 - **Materials:** graphite, aluminium, glass, amber `#c99a4e`, clay `#b8735a`, sage `#6f8b83`.
 - **Red:** Ana red appears only as one small indicator.
 - **Detail:** readable at 64 px, with no outlines.
@@ -584,7 +629,7 @@ Tokens (proven on the four representative screens):
 |---|---|---|
 | 0 Base | `--base` | warm paper `#f6f4f0` |
 | 1 Content | none | unboxed on the base; hairlines `--hairline` |
-| 2 Elevated | `--raised` + `--shadow-2` | white, one warm soft shadow |
+| 2 Elevated | `--raised` + `--shadow-2` | white, one warm soft shadow (the only content shadow) |
 | 3 Floating | `--shadow-3` + blur | tab bar, action bar, float buttons, sheets |
 
 ## Level 0 — Base

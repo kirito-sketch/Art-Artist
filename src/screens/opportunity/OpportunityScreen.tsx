@@ -1,11 +1,10 @@
 import { ChevronLeft, Clock, MapPin, Share, Sparkles, Users } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
-import { useImageTint } from '../../ui/useImageTint';
 import { useStore } from '../../state/store';
 import { world } from '../../state/world';
 import { findOpportunity, firstName, kindLabel, org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
-import { CallSheet, FrameLabel } from '../../ui/compose';
+import { CallSheet, displayTitle, keepSeparators, FrameLabel } from '../../ui/compose';
 import { Byline, SaveButton } from '../home/OpportunityCard';
 
 const TODAY = new Date(2026, 8, 29);
@@ -31,7 +30,6 @@ export function OpportunityScreen({ id }: { id: string }) {
   const status = roleStatus[id];
   const changed = roleEdits[id]?.changed ?? [];
   const [scrollY, setScrollY] = useState(0);
-  const tint = useImageTint(o?.media);
 
   // Light status bar while the photo is under it.
   useEffect(() => {
@@ -185,9 +183,11 @@ export function OpportunityScreen({ id }: { id: string }) {
           </span>
         </div>
 
-        <div className="detail-body osheet" style={tint ? { background: `linear-gradient(to bottom, rgba(${tint}, 0.12), rgba(246, 244, 240, 0) 320px), var(--base)` } : undefined}>
+        <div className="detail-body osheet">
           <p className="kicker">{o.projectType}</p>
-          <h1 className="large-title">{o.role}</h1>
+          <h1 className="large-title display-title" {...displayTitle(o.role)}>
+            {keepSeparators(o.role)}
+          </h1>
           <Pressable className="detail-by" onClick={() => (author ? push({ name: 'profile', id: author.id }) : push({ name: 'org', id: o.orgId! }))} scale={0.98}>
             {o.orgId && <Avatar party={org(o.orgId)} size={26} />}
             <Byline o={o} />
@@ -280,7 +280,7 @@ export function OpportunityScreen({ id }: { id: string }) {
         </div>
       </div>
 
-      <div className="float-bar">
+      <div className={`float-bar ${scrollY > 400 ? 'is-solid' : ''}`}>
         <IconButton label="Back" className="icon-btn--float" onClick={pop}>
           <ChevronLeft size={24} />
         </IconButton>

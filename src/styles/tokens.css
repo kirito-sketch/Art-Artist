@@ -38,7 +38,7 @@
   --title-case: none;
 
   /* Type: SF on Apple devices, Inter elsewhere. Five sizes, nothing below 13. */
-  --font: -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font: -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter Variable', 'Inter', 'Noto Sans Telugu', system-ui, sans-serif;
   --t-1: 34px; /* screen or object title, once per screen */
   --t-2: 22px; /* section */
   --t-3: 17px; /* item title, body */

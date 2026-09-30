@@ -1,15 +1,11 @@
 import { useId } from 'react';
 
 /*
- * Ana craft objects. One family, drawn as layered vector "pseudo-3D":
- *   perspective  three-quarter, seen slightly from above
- *   key light    top-left; highlights on upper-left edges, shade on lower-right faces
- *   shadow       one soft contact shadow, offset down-right, same on every object
- *   materials    graphite (anodised), aluminium (brushed), glass, and three warm neutrals
- *                (amber, clay, sage); the Ana red appears only as a tiny indicator
- *   detail       enough to read the tool at 64px, never photographic
- * They are expressive content, never interface icons. Layers are separate groups so the
- * motion system can later give them depth (parallax, a small tilt on press) without new art.
+ * PLACEHOLDER craft objects. The concept and placement are approved; the artwork is not final.
+ * The Craft Object Asset family is supplied externally as transparent WebP/PNG files (see
+ * docs/VISUAL_COMPOSITION_SYSTEM.md, "Object Tile and Craft Object Asset"). These drawings only
+ * hold the slot until then: do not refine them. The Object Tile hides their built-in shadow and
+ * draws its own, exactly as it will for the supplied assets.
  */
 
 export type CraftObjectKind = 'lens' | 'timeline' | 'microphone' | 'swatches';
@@ -258,8 +254,12 @@ export function CraftObject({ kind, size = 120, className = '' }: { kind: CraftO
   );
 }
 
-/** The crafts Home offers as objects. Labels are Ana's craft names; routes go to existing Discover. */
-export const CRAFT_OBJECTS: { kind: CraftObjectKind; label: string; crafts: string[] }[] = [
+/**
+ * The crafts Home offers as objects. Labels are Ana's craft names; routes go to existing Discover.
+ * `asset` is the supplied Craft Object Asset (e.g. 'images/craft/lens.webp'). While it is unset
+ * the Object Tile shows the placeholder drawing in the same slot, so layout never changes.
+ */
+export const CRAFT_OBJECTS: { kind: CraftObjectKind; label: string; crafts: string[]; asset?: string }[] = [
   { kind: 'lens', label: 'Cinematography', crafts: ['cinematographer', 'camera'] },
   { kind: 'timeline', label: 'Editing', crafts: ['editor'] },
   { kind: 'microphone', label: 'Sound', crafts: ['sound'] },

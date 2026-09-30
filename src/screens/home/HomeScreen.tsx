@@ -384,7 +384,7 @@ function ExploreCraft({ goDiscover }: { goDiscover: (scope?: string) => void }) 
       <div className="object-grid">
         {CRAFT_OBJECTS.map((c) => {
           const n = roles.filter((r) => r.forCrafts.some((f) => c.crafts.includes(f))).length;
-          return <ObjectTile key={c.kind} kind={c.kind} label={c.label} meta={n ? `${n} open ${n === 1 ? 'role' : 'roles'}` : 'People and work'} onPress={() => goDiscover('roles')} />;
+          return <ObjectTile key={c.kind} kind={c.kind} label={c.label} asset={c.asset} meta={n ? `${n} open ${n === 1 ? 'role' : 'roles'}` : 'People and work'} onPress={() => goDiscover('roles')} />;
         })}
       </div>
     </section>

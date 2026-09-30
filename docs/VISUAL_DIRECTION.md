@@ -145,21 +145,19 @@ The before and after sequences are in the review page and in the scratch capture
 
 ## 5. Craft objects
 
-**Decision: pseudo-3D layered vector.** Not flat illustration, not rendered bitmaps, not real-time 3D.
-- It reads as tactile at 64 to 150 px.
-- It is tiny, sharp at every density, and themable.
-- It is animatable by layer: the shadow, body and background groups are separate. The motion system can give an object a 2 to 4 degree tilt, a lift on press, or a parallax offset without new art.
-- Real-time 3D would add weight and cost for no task benefit.
-- Rendered 3D is the right *production* upgrade for hero moments (onboarding, empty states). It should follow the same art spec, below.
+**Status after the hardening pass:** the objects in the prototype are **placeholders**. Their concept (a craft shown by its tool) and placement (on the Home sand band, breaking the tile top) are approved. The final artwork is a **Craft Object Asset** family supplied externally; it is not drawn or refined in code.
+
+- **Object Tile** (UI component, owned by the design system) and **Craft Object Asset** (artwork, supplied separately) are different things. The tile holds the asset in a fixed square slot, so the supplied transparent WebP/PNG drops in without layout change. See VISUAL_COMPOSITION_SYSTEM.md 5.5 for the tile and asset specs.
+- **Motion (V1):** assets are single raster objects, animated as a whole with small tilt, lift, scale and a contact shadow that answers the lift. No separated vector layers are required. Layered, Rive or true 3D assets are reserved for specific future signature interactions where they demonstrably add value.
 
 **The family spec (applies to every future object):**
 - **Perspective:** three-quarter, seen slightly from above.
 - **Key light:** top-left. Highlights sit on upper-left edges; lower-right faces fall into shade.
-- **Shadow:** one soft contact shadow below and slightly right. Same blur and opacity on every object.
+- **Shadow:** none in the file. The tile draws one soft contact shadow, the same for every object.
 - **Materials:** graphite (anodised), aluminium (brushed), glass, and three warm neutrals (amber `#c99a4e`, clay `#b8735a`, sage `#6f8b83`). The Ana red appears only as one tiny indicator (tally light, playhead, index dot).
 - **Detail:** readable at 64 px, never photographic, no outlines.
 
-**The first four:**
+**The first four (placeholders now, supplied later):**
 - **Cinematography:** cine prime with a focus ring and a red index dot.
 - **Editing:** a timeline slab with three tracks and a red playhead.
 - **Sound:** a capsule microphone with a waveform behind it.
@@ -247,9 +245,10 @@ A combination, not a mascot:
 - **Code:**
   - `src/styles/expression.css` holds the tokens and families, scoped with `.canvas` and the `v-*` screen classes.
   - `src/ui/compose.tsx` holds FrameLabel, PortraitCard, PosterTile, TitleCard, ObjectTile, HouseFeature, CallSheet and Faces.
-  - `src/ui/craft.tsx` holds the object family.
+  - `src/ui/craft.tsx` holds the placeholder drawings and the `CRAFT_OBJECTS` list, where supplied assets are registered.
+  - `?specimen` is the design-system test page: typography stress test, Telugu fixture, the Object Tile slot, surfaces and the red states.
 - **One direction only:** no console switch was added. Archived Home and Slate variants are unchanged references.
-- **Content gap:** person portrait photography does not exist in the prototype (every person falls back to initials), so Portrait Cards pair each person's credited work with their monogram. Real portraits will strengthen them without layout changes.
+- **Content gap:** person portrait photography still does not exist in the prototype (every person falls back to initials). The hardening pass could not generate fixtures (no image-generation credit was available), so crop and scale were proven with neutral crop targets on the specimen page. Supplying `public/images/people/{id}.jpg` per docs/IMAGE_PROMPTS.md makes portraits appear with no code change.
 
 ### Components and tokens to update when Figma resumes
 
@@ -262,7 +261,7 @@ A combination, not a mascot:
   - Portrait Card
   - Poster Tile (Standard, Lead)
   - Title Card (Locked on or off)
-  - Object Tile, plus a Craft Object set (4 variants)
+  - Object Tile (with a fixed asset slot; the Craft Object Assets are imported as images, not built as components)
   - House Feature
   - Call Sheet (and Cell)
   - Faces Stack
@@ -280,3 +279,16 @@ A combination, not a mascot:
 - **Retired:** the Pill usage on media (Pill remains for non-media chips); the grey locked poster.
 
 Product architecture is unchanged. This pass touched only presentation files and section order. The Figma migration remains paused on Page 03, after Flows B and C; it resumes at Flow D once this direction is approved.
+
+---
+
+## 11. Hardening pass (summary)
+
+The rules are in VISUAL_COMPOSITION_SYSTEM.md 3.2, 3.3, 3.8, 3.9 and 5.5. What changed in code:
+
+- **Object Tile:** fixed asset slot, tokens for size and overhang, separate contact shadow, motion hooks, responsive grid, two-line label, the whole tile as one named button.
+- **Type:** the display title steps 40, 36, 32, 30 by length (Telugu one step down), with three lines at most; separators never start a line; rail titles take two lines.
+- **Telugu:** Noto Sans Telugu fallback, automatic `lang="te"`, caps labels without transform or tracking, whole-akshara initials.
+- **Colour:** Role sheet image tint removed; secondary text darkened on sand (3.8:1 to about 6:1); the Slate's pink "to review" text became white with a red dot; the correction line on Profile is no longer red.
+- **Consistency:** local shadows replaced with shadow-2 or removed; radii 6, 12 and 26 moved into the family (xs, s, xl); spacing 22, 26, 30, 34 and 46 moved onto the scale.
+- **Accessibility:** the plate label is darker (0.52 to 0.62, 4.3:1 to 5.9:1 on the brightest stills); the Role Detail's floating controls get a paper bar once the hero has scrolled away, so they never sit on text; portrait-card context wraps to two lines instead of cutting mid-word.

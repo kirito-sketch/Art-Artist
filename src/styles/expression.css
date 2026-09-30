@@ -10,9 +10,12 @@
   --base: #f6f4f0;
   --raised: #ffffff;
   --tint: #efebe4; /* quiet section */
-  --sand: #e8dfcf; /* expressive section: craft objects only */
+  --sand: #e8dfcf; /* the one expressive field per screen, never a page ground */
   --dark: #151413; /* rare cinematic surface: title cards, media */
   --hairline: rgba(40, 30, 20, 0.1);
+
+  /* Radius: the Figma family's xs, used only by frame labels. */
+  --r-xs: 6px;
 
   /* Depth: one shadow per level. Warm-tinted so it sits in the paper, not on it. */
   --shadow-2: 0 18px 36px -18px rgba(46, 30, 12, 0.42), 0 2px 6px rgba(30, 20, 10, 0.06);
@@ -55,11 +58,17 @@
 
 .band {
   margin: var(--section) calc(-1 * var(--gutter)) 0;
-  padding: 28px var(--gutter) 30px;
+  padding: 28px var(--gutter);
 }
 
 .band--sand {
   background: var(--sand);
+}
+
+/* Secondary text darkens on the sand field so it keeps AA contrast (about 6:1, not 3.8:1). */
+.band--sand,
+.role-highlight {
+  --text-2: color-mix(in srgb, var(--text) 70%, var(--sand));
 }
 
 .band--tint {
@@ -84,7 +93,7 @@
   gap: 6px;
   height: 24px;
   padding: 0 10px;
-  border-radius: 6px;
+  border-radius: var(--r-xs);
   font-size: var(--label);
   font-weight: 700;
   letter-spacing: var(--label-track);
@@ -94,7 +103,7 @@
 }
 
 .frame-label--plate {
-  background: rgba(18, 16, 14, 0.52);
+  background: rgba(18, 16, 14, 0.62);
   color: #fff;
   backdrop-filter: blur(14px) saturate(1.3);
   -webkit-backdrop-filter: blur(14px) saturate(1.3);
@@ -136,7 +145,7 @@
   gap: 14px;
   overflow-x: auto;
   margin: 0 calc(-1 * var(--gutter));
-  padding: 4px var(--gutter) 22px;
+  padding: 4px var(--gutter) 24px;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
   scroll-padding: 0 var(--gutter);
@@ -250,13 +259,12 @@
   border-radius: var(--r-m);
   overflow: hidden;
   background: var(--dark);
-  box-shadow: 0 10px 22px -14px rgba(46, 30, 12, 0.5);
+  box-shadow: var(--shadow-2);
 }
 
 .poster-tile--lead .poster-tile-media {
   aspect-ratio: 4 / 5;
   border-radius: var(--r-l);
-  box-shadow: var(--shadow-2);
 }
 
 .poster-tile-media > .photo {
@@ -333,42 +341,118 @@
 }
 
 /* ------------------------------------------------------------ object tile */
+/*
+ * Object Tile (UI component) holds a Craft Object Asset (supplied artwork) in a fixed square slot.
+ * Slot size and overhang are tokens, so a transparent WebP/PNG replaces the placeholder drawing
+ * without any layout change. The tile never depends on the asset's pixels: the asset is contained,
+ * centred, and decorative. Motion moves the whole asset through the --object-* properties.
+ */
 
 .object-grid {
+  --object-size: 112px;
+  --object-overhang: 48px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding-top: 34px;
-  row-gap: 46px;
+  /* Two columns on a phone, one below ~290px of content, four on wide canvases. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(136px, (100% - 42px) / 4)), 1fr));
+  column-gap: 14px;
+  row-gap: calc(var(--object-overhang) + 14px);
+  padding-top: var(--object-overhang);
 }
 
 .object-tile {
+  --object-tilt: 0deg;
+  --object-lift: 0px;
+  --object-scale: 1;
+  --object-shadow: 1;
+  --object-duration: 0ms;
   position: relative;
-  background: rgba(255, 255, 255, 0.72);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: calc(var(--object-size) - var(--object-overhang) + 64px);
+  padding: calc(var(--object-size) - var(--object-overhang) + 12px) 16px 16px;
   border-radius: var(--r-l);
-  padding: 72px 14px 14px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 12px 24px -18px rgba(46, 30, 12, 0.5);
-  min-height: 132px;
+  background: var(--raised);
+  box-shadow: var(--shadow-2);
 }
 
-.object-tile-object {
+.object-tile:focus-visible {
+  border-radius: var(--r-l);
+  outline-offset: 3px;
+}
+
+.object-tile-slot {
   position: absolute;
-  top: -40px;
+  top: calc(-1 * var(--object-overhang));
   left: 50%;
-  transform: translateX(-50%);
+  width: var(--object-size);
+  height: var(--object-size);
+  margin-left: calc(var(--object-size) / -2);
   pointer-events: none;
+}
+
+/* The object's own shadow: separate from UI elevation, and from the asset, so it answers the lift. */
+.object-tile-shadow {
+  position: absolute;
+  left: 20%;
+  right: 14%;
+  bottom: 5%;
+  height: 11%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(46, 30, 12, 0.3), rgba(46, 30, 12, 0));
+  opacity: var(--object-shadow);
+  transition: opacity var(--object-duration) var(--ease-out);
+}
+
+.object-tile-asset {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 50% 85%;
+  transform: translateY(calc(-1 * var(--object-lift))) rotate(var(--object-tilt)) scale(var(--object-scale));
+  transition: transform var(--object-duration) var(--ease-out);
+}
+
+.object-tile-asset > img,
+.object-tile-asset > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Placeholder drawings carry a baked shadow; the tile draws the shadow for every asset instead. */
+.object-tile .craft-shadow {
+  display: none;
 }
 
 .object-tile-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+
+.object-tile-label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .object-tile {
+    --object-tilt: 0deg !important;
+    --object-lift: 0px !important;
+    --object-scale: 1 !important;
+  }
 }
 
 /* ---------------------------------------------------------- house feature */
 
 .house-feature + .house-feature {
-  margin-top: 26px;
+  margin-top: 28px;
 }
 
 .house-feature-still {
@@ -388,7 +472,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: -22px 0 0 14px;
+  margin: -24px 0 0 14px;
   position: relative;
 }
 
@@ -399,7 +483,7 @@
 .house-feature-text {
   display: flex;
   flex-direction: column;
-  padding-top: 22px;
+  padding-top: 24px;
   min-width: 0;
 }
 
@@ -437,7 +521,7 @@
 .record-mark {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--r-s);
   flex: none;
   display: grid;
   place-items: center;
@@ -457,7 +541,7 @@
 }
 
 .v-home .greeting {
-  margin: 0 0 22px;
+  margin: 0 0 24px;
 }
 
 .v-home .greeting-kicker {
@@ -566,8 +650,13 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-.slate-strip-flag {
-  color: #ffb4a6;
+.slate-strip-flag::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
 }
 
 .v-slate .around {
@@ -612,7 +701,7 @@
 .role-compact-media {
   width: 64px;
   height: 80px;
-  border-radius: 12px;
+  border-radius: var(--r-s);
   overflow: hidden;
   flex: none;
   position: relative;
@@ -663,7 +752,7 @@
 .v-profile .psheet {
   margin-top: -40px;
   border-radius: var(--r-xl) var(--r-xl) 0 0;
-  padding-top: 26px;
+  padding-top: 24px;
 }
 
 .v-profile .pid {
@@ -792,8 +881,7 @@
 .v-role .osheet {
   margin-top: -40px;
   border-radius: var(--r-xl) var(--r-xl) 0 0;
-  padding-top: 26px;
-  box-shadow: 0 -12px 30px -18px rgba(0, 0, 0, 0.35);
+  padding-top: 24px;
 }
 
 .v-role .large-title {
@@ -874,8 +962,8 @@
 .v-role .booking {
   left: 12px;
   right: 12px;
-  bottom: 26px;
-  border-radius: 26px;
+  bottom: 24px;
+  border-radius: var(--r-xl);
   border-top: 0;
   padding: 12px 12px 12px 20px;
   background: color-mix(in srgb, var(--raised) 92%, transparent);
@@ -916,7 +1004,7 @@
 }
 
 .v-profile .rail-poster {
-  box-shadow: 0 10px 22px -14px rgba(46, 30, 12, 0.5);
+  box-shadow: var(--shadow-2);
 }
 
 .v-profile .pending-credit {
@@ -940,4 +1028,124 @@
 .phone-screen:has(> .tab-layer[aria-hidden='false'] .canvas):not(:has(> .route-layer)) > .status-bar--dark,
 .phone-screen:has(> .route-layer:not(:has(~ .route-layer)) .canvas) > .status-bar--dark {
   background: var(--base);
+}
+
+/* =========================================== Title responsiveness */
+/*
+ * One display title per screen (the lead project, the role, the person, the featured role on
+ * Home). Its size comes from displayTitle(): 40, 36, 32, then the 30 floor. It wraps balanced to
+ * at most three lines; a fourth is clamped with an ellipsis. Names are never clamped.
+ */
+.display-title[data-display] {
+  font-size: var(--display-size) !important;
+  line-height: 1.02;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.display-title[data-display]:not(.display-title--name) {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-bottom: 0.04em;
+}
+
+.display-title[data-display='32'],
+.display-title[data-display='30'] {
+  letter-spacing: -0.035em !important;
+}
+
+/* Rail titles: two lines, then an ellipsis, on every poster size. */
+.poster-tile .poster-tile-title {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-wrap: balance;
+}
+
+.title-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* =============================================== Non-Latin labels */
+/*
+ * Telugu has no capitals, and tracking breaks its conjuncts. A caps label in Telugu keeps the
+ * label's slot, weight and colour but drops the transform and the tracking, and is set 1px larger
+ * so its aksharas match the optical height of Latin small caps. Display and item titles lose the
+ * negative tracking and gain line height for vowel signs above and below the line.
+ */
+.frame-label:lang(te),
+.title-card-lock:lang(te),
+.call-sheet dt:lang(te),
+.v-profile .pid-craft:lang(te),
+.greeting-kicker:lang(te),
+.label-caps:lang(te) {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: calc(var(--label) + 1px);
+}
+
+.display-title:lang(te),
+.title-card-title:lang(te) {
+  letter-spacing: 0 !important;
+  line-height: 1.24;
+}
+
+.item-title:lang(te),
+.meta:lang(te),
+.pid-role:lang(te) {
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+/* ================================================ Portrait fallback */
+/* No photo is a normal state, not an error: initials sit on the quiet tint, in ink, with a hairline. */
+.canvas .avatar:not(.avatar--org) {
+  background: var(--tint);
+  color: var(--text-2);
+  outline: 1px solid var(--hairline);
+  outline-offset: -1px;
+}
+
+.canvas .avatar img {
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
+/* Once the hero has scrolled away, the floating controls get a paper bar so they never sit on text. */
+.v-role .float-bar::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * (var(--status-bar) + 6px));
+  left: -16px;
+  right: -16px;
+  height: calc(var(--status-bar) + 58px);
+  z-index: -1;
+  background: color-mix(in srgb, var(--base) 90%, transparent);
+  backdrop-filter: saturate(1.4) blur(18px);
+  -webkit-backdrop-filter: saturate(1.4) blur(18px);
+  box-shadow: 0 1px 0 var(--hairline);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-out);
+  pointer-events: none;
+}
+
+.v-role .float-bar.is-solid::before {
+  opacity: 1;
+}
+
+/* Portrait card context may take two lines rather than cut a project name mid-word. */
+.portrait-card-text .portrait-card-context {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  align-items: initial;
 }

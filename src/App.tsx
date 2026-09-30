@@ -32,7 +32,8 @@ import { EntryFlow } from './entry/Entry';
 import { PolicyUpdate } from './legal/PolicyUpdate';
 import { ADMIN } from './admin/adminMode';
 import { AdminConsole } from './admin/Admin';
-import { LAB, SCENARIO } from './qa/boot';
+import { LAB, SCENARIO, SPECIMEN } from './qa/boot';
+import { Specimen } from './qa/Specimen';
 import { EdgeCaseLab } from './qa/Lab';
 import { ScenarioBar } from './qa/ScenarioBar';
 
@@ -235,6 +236,7 @@ export default function App() {
   // The moderation console is a separate internal tool, never part of the app's identities.
   // The Edge Case Lab is an internal page; a scenario replaces the console with its own bar.
   if (LAB) return <EdgeCaseLab />;
+  if (SPECIMEN) return <Specimen />;
   if (SCENARIO?.fixture?.surface === 'admin')
     return (
       <>
