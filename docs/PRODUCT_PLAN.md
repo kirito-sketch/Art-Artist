@@ -83,26 +83,45 @@ Publishing a post or role already had its own progress bar and failure. No separ
 - **Nothing to edit.** Interest is your live profile plus an optional note. To change what they see, update your profile. To change the note, withdraw and show interest again. This keeps Interest from turning into an application form.
 - **Once they've messaged you**, Withdraw disappears: the role page says "In conversation · Changed your mind? Say so in the chat" with "Open chat". Silent withdrawal mid-conversation would be rude and confusing.
 - **The poster isn't notified** of a withdrawal. The person simply leaves the interested list.
-- **Crew and casting "Respond"** (profile, reel, answers) follows the same rules and gets Withdraw too. *Validate:* Respond with questions is closer to an application than Interest. Should house roles use plain Interest instead?
+- **The poster sees withdrawals, quietly.** No notification, but the person stays in the list, greyed, as "No longer interested". Nobody the poster reviewed or saved silently vanishes.
 
 ### Editing vs closing a role (decided, simple)
 - **Can't change:** role title, craft, project. People showed interest in *that*. To change them, close and open a new role.
 - **Can change:** location, dates, description (and pay once it's editable).
 - **Material changes** (location, dates, pay) are shown to everyone who already showed interest: the poster sees "3 people who showed interest will see that the dates changed", and those people see "Updated since you showed interest: dates" on the role.
-- **Closing** asks for an outcome: Filled through Ana, Filled another way, No longer needed, Project paused. States stay **Open → Filled / Closed**. Everyone who showed interest is told the outcome instead of hearing nothing. Closed roles leave Discover and search, keep their history, and can be reopened.
+- **Closing** asks for an outcome: Filled through Ana, Filled another way, No longer needed, Project paused. States stay **Open → Filled / Closed**. Everyone who showed interest is told the outcome instead of hearing nothing. Closed roles leave Discover and search and keep their history.
+- **Closed can be reopened. Filled cannot.** Filled records who was chosen; changing it would rewrite history. "Open a new role" creates a fresh role for the same craft and project, and the filled one stays on record.
 - No ATS statuses (shortlisted, interviewing, rejected).
 
 ### Settings (shell)
 - **Personal** (acting as yourself): Account, Privacy and discoverability, Notifications, Blocked, Organisations you can act for, Security and sign out.
 - **House** (acting for a house): Page (view, edit, verification), Who can act for this house (owner, members, "can issue credits"), House notifications.
-- They never mix. Members live in house settings, not a "team" product. *Hypothesis:* the owner-plus-members model with a separate credit permission.
+- They never mix. Members live in house settings, not a "team" product.
+- **Credit authority is its own group**, separating the fixed rule (credits come from the house, never from the person credited) from the open question (who inside the house holds it: owner only, chosen members, or a person per project, and how co-productions work). No permissions matrix yet.
 
 ### Notifications and identity (hypothesis, validate)
 - **Ownership:** each notification belongs to the identity that must act on it. Personal: credits issued to you, messages, your collaborations. House: interest in the house's roles, credit corrections, member or project actions.
 - **One surface, filtered.** It opens filtered to whoever you're acting as; chips switch between You, each house, and All. In All, house items say "For Konark Pictures".
-- **Opening a house item switches identity first** (with a toast), so you can't act as the wrong identity.
+- **Opening an item never changes your identity.** Compared: (A) tap switches identity automatically, then opens; (B) tap opens the destination with a clear "viewing as yourself" banner, and any action needs an explicit Switch. **B is kept:** it never acts as the wrong identity *and* never changes identity unexpectedly. In the house workspace, actions stay disabled until you switch.
 - House Home has its own bell, which shows a dot only for that house's items.
 - *Validate:* do members want house notifications at all when acting as themselves, or only inside the house?
 
 ### Identity-safe creation (kept)
 Every consequential action shows who is performing it before you commit: composers show the author, conversations say "Replying as", interest review says "Message as" the house, and responding to a role is personal only.
+
+## Interest vs Respond (VALIDATE)
+
+| | A. One Interest model everywhere (working hypothesis) | B. Interest for collaborations + Respond for crew and casting |
+|---|---|---|
+| What the person sends | Their profile, an optional note, optional short answers to up to 3 role questions | Collaborations: profile + note. Crew/casting: a form with required answers, reel and credits toggles |
+| What the poster does | Reviews profiles (answers shown if given), decides whether to message | Same, but reads structured responses |
+| Risk | Posters may get less signal on busy roles | Slides toward an application system: required forms, then stages, shortlists, rejections |
+| What would justify B | Evidence that houses receive so many responses that they can't decide without required, comparable answers. We don't have that evidence. |
+
+The prototype defaults to A. B stays in the panel ("Crew and casting roles") for comparison. Neither has resumes, stages, pipelines, shortlists or rejected statuses.
+
+## Decided vs hypotheses (current)
+
+**Decided:** individuals can't self-claim credits · one account with separate personal and house contexts · the house profile is its public identity · comments removed · Mark all as read, not Clear all · members are permissions, not team management · Minimal and Glass active, Bold and Doodle archived.
+
+**Hypotheses:** Slate vs Pulse · Work first vs Hiring first · "Need" wording · private roles · Interest vs Respond · identity-aware notification behaviour · production-side credit authority · independent-project credit authority.

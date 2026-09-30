@@ -52,7 +52,8 @@ const ws = (id: string): Workspace => PRIVATE[id] ?? { needs: [], invites: [], d
 
 /** Who has responded to the house's open roles, via the same interest model individuals use. */
 function useSignals(house: string) {
-  const { interestsReceived } = useStore();
+  const { interestsReceived: all } = useStore();
+  const interestsReceived = all.filter((i) => !i.withdrawn);
   const works = worksForOrg(house);
   const live = works.filter(isLive);
   const interestFor = (w: Work) => interestsReceived.filter((i) => seed.opportunities.find((o) => o.id === i.opportunityId)?.project === w.title);
@@ -325,7 +326,7 @@ const NEED_LABEL: Record<NeedState, string> = { private: 'Only your house', open
 
 /** The house's private view of one project. The public page stays the source of what others see. */
 export function ProjectScreen({ id }: { id: string }) {
-  const { pop, push, showToast, openSheet, acting, interestsReceived } = useStore();
+  const { pop, push, showToast, openSheet, acting, interestsReceived, memberships, setActing } = useStore();
   const w = work(id);
   const s = ws(id);
   const [needs, setNeeds] = useState(s.needs);
@@ -336,6 +337,9 @@ export function ProjectScreen({ id }: { id: string }) {
     ...s.invites.map((i) => ({ ...i, state: 'invited' as const })),
   ];
   const depts = [...new Set(people.map((e) => e.dept))];
+  // Opened from a notification while acting as yourself: show whose workspace this is, and require a switch to act.
+  const houseId = w ? w.orgIds.find((x) => memberships.includes(x)) ?? w.orgIds[0] : 'konark';
+  const canAct = acting === houseId;
 
   return (
     <div className="screen">
@@ -357,13 +361,26 @@ export function ProjectScreen({ id }: { id: string }) {
         </p>
       </div>
 
+      {!canAct && (
+        <div className="acting-banner">
+          <Avatar party={org(houseId)} size={28} />
+          <span>
+            <b>{org(houseId).name}</b>
+            <span className="meta">You're viewing as yourself. Switch to act for the house.</span>
+          </span>
+          <Button size="s" onClick={() => setActing(houseId, false, true)}>
+            Switch
+          </Button>
+        </div>
+      )}
+
       {(!w || isLive(w)) && (
         <section className="section">
           <SectionHeader title="Roles to fill" />
           <p className="meta ph-note">Keep a role to your house, or open it on Ana so the right people can find it and show interest.</p>
           <div className="list list--flush">
             {needs.map((n) => {
-              const ints = n.opportunityId ? interestsReceived.filter((i) => i.opportunityId === n.opportunityId).length : 0;
+              const ints = n.opportunityId ? interestsReceived.filter((i) => i.opportunityId === n.opportunityId && !i.withdrawn).length : 0;
               return (
                 <div key={n.id} className="prow">
                   <div className="prow-text">
@@ -377,6 +394,7 @@ export function ProjectScreen({ id }: { id: string }) {
                     <Button
                       size="s"
                       variant="outline"
+                      disabled={!canAct}
                       onClick={() => {
                         setNeeds((xs) => xs.map((x) => (x.id === n.id ? { ...x, state: 'open' } : x)));
                         showToast({ text: `${n.position} is now open on Ana` });
@@ -385,7 +403,7 @@ export function ProjectScreen({ id }: { id: string }) {
                       Open on Ana
                     </Button>
                   ) : (
-                    <Button size="s" variant="secondary" disabled={!ints} onClick={() => openSheet({ name: 'reviewInterest', opportunityId: n.opportunityId })}>
+                    <Button size="s" variant="secondary" disabled={!ints || !canAct} onClick={() => openSheet({ name: 'reviewInterest', opportunityId: n.opportunityId })}>
                       {ints ? 'Review' : 'No one yet'}
                     </Button>
                   )}
@@ -425,7 +443,7 @@ export function ProjectScreen({ id }: { id: string }) {
             </div>
           ))}
           {s.disputes.length > 0 && (
-            <Button block onClick={() => showToast({ text: 'Credit updated. Sameer Ali will see the change.', tone: 'success' })}>
+            <Button block disabled={!canAct} onClick={() => showToast({ text: 'Credit updated. Sameer Ali will see the change.', tone: 'success' })}>
               Accept correction
             </Button>
           )}

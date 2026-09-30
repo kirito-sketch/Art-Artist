@@ -2,7 +2,7 @@ import { CalendarDays, ChevronLeft, Clock, Languages, MapPin, Share, Sparkles, U
 import { useEffect, useState, type ReactNode } from 'react';
 import { useImageTint } from '../../ui/useImageTint';
 import { useStore } from '../../state/store';
-import { findOpportunity, firstName, kindLabel, person } from '../../state/selectors';
+import { findOpportunity, firstName, kindLabel, org, person } from '../../state/selectors';
 import { Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
 import { Byline, SaveButton } from '../home/OpportunityCard';
 
@@ -23,7 +23,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse } = useStore();
+  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse, roleModel, openAgain, showToast } = useStore();
   const base = findOpportunity(id, userCollabs);
   const o = base && { ...base, ...roleEdits[id] };
   const status = roleStatus[id];
@@ -54,7 +54,9 @@ export function OpportunityScreen({ id }: { id: string }) {
   const mine = o.authorId === viewer.id || (!!o.orgId && o.orgId === acting);
   const response = responses[o.id];
   const interested = interestsSent[o.id] !== undefined;
-  const received = interestsReceived.filter((i) => i.opportunityId === o.id).length;
+  const received = interestsReceived.filter((i) => i.opportunityId === o.id && !i.withdrawn).length;
+  const poster = author ? firstName(author) : org(o.orgId!).name;
+  const respondModel = o.kind !== 'collab' && roleModel === 'respond';
 
   /* Footer: what it pays and when it closes on the left, the one action on the right. */
   let left: ReactNode = (
@@ -72,10 +74,24 @@ export function OpportunityScreen({ id }: { id: string }) {
         <p className="meta">{status.reason}</p>
       </>
     );
-    if (mine)
+    // Closed can be reopened. Filled is a record of who was chosen, so hiring again is a new role.
+    if (mine && status.state === 'closed')
       action = (
         <Button variant="secondary" onClick={() => reopenRole(o.id)}>
           Reopen
+        </Button>
+      );
+    if (mine && status.state === 'filled')
+      action = (
+        <Button
+          variant="secondary"
+          onClick={() => {
+            const nid = openAgain(o.id);
+            push({ name: 'opportunity', id: nid });
+            showToast({ text: 'New role opened. The filled one stays on record.' });
+          }}
+        >
+          Open a new role
         </Button>
       );
   } else if (mine) {
@@ -118,7 +134,7 @@ export function OpportunityScreen({ id }: { id: string }) {
     left = (
       <>
         <p className="item-title">Interest sent</p>
-        <p className="meta">{firstName(author!)} will message you if it's a fit</p>
+        <p className="meta">{poster} will message you if it's a fit</p>
       </>
     );
     action = (
@@ -128,7 +144,7 @@ export function OpportunityScreen({ id }: { id: string }) {
     );
   } else if (scenario.offline) {
     action = <Button disabled>Offline</Button>;
-  } else if (o.kind !== 'collab') {
+  } else if (respondModel) {
     action = <Button onClick={() => openSheet({ name: 'respond', id: o.id })}>Respond</Button>;
   } else if (o.allowDM) {
     action = (
@@ -182,7 +198,7 @@ export function OpportunityScreen({ id }: { id: string }) {
             <Fact icon={<CalendarDays size={20} />}>{o.dates}</Fact>
             {o.language && <Fact icon={<Languages size={20} />}>{o.language}</Fact>}
             {o.highlight && <Fact icon={<Sparkles size={20} />}>{o.highlight}</Fact>}
-            {o.kind === 'collab' && !o.allowDM && !mine && <Fact icon={<Users size={20} />}>{firstName(author!)} reviews interest before messaging</Fact>}
+            {!respondModel && !o.allowDM && !mine && <Fact icon={<Users size={20} />}>{poster} sees your profile and decides whether to message you</Fact>}
           </ul>
 
           <section className="detail-section">
@@ -208,7 +224,7 @@ export function OpportunityScreen({ id }: { id: string }) {
 
           {o.questions && !response && (
             <section className="detail-section">
-              <h2 className="section-title">You'll be asked</h2>
+              <h2 className="section-title">{respondModel ? "You'll be asked" : 'They may ask (optional)'}</h2>
               <ol className="numbered">
                 {o.questions.map((q) => (
                   <li key={q}>{q}</li>

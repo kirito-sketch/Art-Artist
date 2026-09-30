@@ -87,11 +87,11 @@ function CreateMenu() {
 /**
  * One notification surface. Every item belongs to the identity that has to act on it: you, or a house
  * you act for. The list opens filtered to whoever you're acting as; "All" shows everything with owner
- * labels. Opening a house item switches you to that house first, so the action is never taken as the
- * wrong identity. (Hypothesis: one surface with filters, not separate centres. Validate.)
+ * labels. Opening an item never changes who you are acting as: the destination shows which identity
+ * it belongs to and asks for an explicit switch before any action. (Hypothesis: validate.)
  */
 function Notifications() {
-  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, setActing, memberships, showToast } = useStore();
+  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships } = useStore();
   const [filter, setFilter] = useState<string>(acting);
   if (!notifications.length) return <EmptyState title="No notifications yet" body="Replies, interest and credits will show up here." />;
   const owner = (n: (typeof notifications)[number]) => n.forId ?? 'self';
@@ -107,10 +107,6 @@ function Notifications() {
       scale={0.99}
       onClick={() => {
         markNotificationRead(n.id);
-        if (owner(n) !== acting) {
-          setActing(owner(n));
-          showToast({ text: owner(n) === 'self' ? 'Switched back to you' : `Now acting for ${org(owner(n)).name}` });
-        }
         if (n.route) push(n.route);
         else if (n.kind === 'interest') openSheet({ name: 'reviewInterest' });
       }}
@@ -278,9 +274,18 @@ function InterestForm({ id }: { id: string }) {
   const author = o.authorId ? person(o.authorId) : org(o.orgId!);
   const [note, setNote] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'failed'>('idle');
+  // Model A: a role may ask up to three short questions. Answers are optional; this is not an application.
+  const qs = (o.questions ?? []).slice(0, 3);
+  const [answers, setAnswers] = useState<string[]>(() => qs.map(() => ''));
   return (
     <div className="stack">
-      <p className="meta">{firstName(author)} sees your profile and can message you.</p>
+      <p className="meta">{firstName(author)} sees your profile and decides whether to message you.</p>
+      {qs.map((q, i) => (
+        <div key={q}>
+          <label className="field-label">{q} <span className="meta">(optional)</span></label>
+          <input className="field" value={answers[i]} maxLength={120} onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
+        </div>
+      ))}
       <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" />
       <p className="meta">You can withdraw it any time before they message you.</p>
       {state === 'failed' && <p className="field-error">Couldn't send your interest. Nothing was shared.</p>}
@@ -301,7 +306,9 @@ function InterestForm({ id }: { id: string }) {
 
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
   const { interestsReceived, dismissInterest, startConversation, push, userCollabs, acting } = useStore();
-  const list = opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived;
+  const all = opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived;
+  // Withdrawn people stay at the end, greyed, so a person you'd looked at doesn't silently vanish.
+  const list = [...all.filter((i) => !i.withdrawn), ...all.filter((i) => i.withdrawn)];
   if (!list.length) return <EmptyState title="No one yet" />;
   return (
     <div className="list list--flush">
@@ -309,7 +316,7 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
         const p = person(it.personId);
         const o = findOpportunity(it.opportunityId, userCollabs)!;
         return (
-          <div key={it.id} className="interest">
+          <div key={it.id} className={`interest ${it.withdrawn ? 'interest--withdrawn' : ''}`}>
             <Pressable className="interest-who" onClick={() => push({ name: 'profile', id: p.id })} scale={0.98}>
               <Avatar party={p} size={48} />
               <span>
@@ -319,8 +326,19 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
                 </span>
               </span>
             </Pressable>
+            {it.withdrawn && <p className="meta">No longer interested</p>}
             {it.note && <p className="body">{it.note}</p>}
-            <div className="interest-actions">
+            {it.answers && (
+              <ul className="interest-answers">
+                {(o.questions ?? []).slice(0, it.answers.length).map((q, qi) => (
+                  <li key={q}>
+                    <span className="meta">{q}</span>
+                    <span>{it.answers![qi]}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!it.withdrawn && <div className="interest-actions">
               <Button
                 size="s"
                 onClick={() => {
@@ -334,7 +352,7 @@ function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
               <Button size="s" variant="plain" onClick={() => dismissInterest(it.id)}>
                 Not now
               </Button>
-            </div>
+            </div>}
           </div>
         );
       })}

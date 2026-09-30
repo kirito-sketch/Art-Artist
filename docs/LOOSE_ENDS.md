@@ -23,7 +23,11 @@
 | Interest after sending | Withdraw with undo until a conversation starts or the role closes; nothing to edit; poster not notified. |
 | Edit and close a role | Title and project fixed; location, dates, description editable; material changes shown to interested people; close with an outcome; reopen. |
 | Settings | Personal and house settings shells, kept separate. |
-| Notifications | Owned by an identity, filtered by who you're acting as, All with owner labels, opening a house item switches identity. |
+| Notifications | Owned by an identity, filtered by who you're acting as, All with owner labels. Opening an item never switches identity; the house workspace shows "viewing as yourself" with an explicit Switch, and actions stay disabled until then. |
+| Interest model | Model A (one Interest, optional answers) is the default; Respond is kept as model B for comparison (VALIDATE). |
+| Withdrawal, poster side | Withdrawn people stay in the poster's list, greyed, "No longer interested". No notification. |
+| Filled roles | Can't be reopened; "Open a new role" keeps the filled record. Closed roles can be reopened. |
+| Glass QA | Settings, withdrawal, edit and close role, failure and retry, notifications, credit accept and correct, message retry. Fixed: invisible Undo on white Glass toasts, unreadable notes, a stretched banner avatar, error contrast. |
 | Regression check | Notifications (mark all as read, Earlier) and Edit Profile (validation, dirty Save, discard) re-checked in Minimal and Glass after the latest changes. |
 | Prototype panel | Rebuilt as three steps: who is using Ana, what to compare for that person (each option tagged Working, Alternative, Reference or Undecided), look. Archived looks and test states are collapsed. |
 

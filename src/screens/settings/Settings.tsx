@@ -139,7 +139,7 @@ function House({ id }: { id: string }) {
         <Row label="Verification" value={<span className="inline-verified">Verified <Verified size={13} /></span>} chevron={false} />
       </Group>
 
-      <Group title="Who can act for this house" note="Members can open roles, review interest and message as the house. Only people with credit permission can issue credits. You can't change members: only the owner can.">
+      <Group title="Who can act for this house" note="Members can open roles, review interest and message as the house. Only the owner can change members.">
         {members.map((m) => (
           <Row
             key={m.name}
@@ -149,15 +149,25 @@ function House({ id }: { id: string }) {
                   {m.name}
                   {m.you ? ' (you)' : ''}
                 </span>
-                <span className="meta">
-                  {m.role}
-                  {m.credits ? ' · can issue credits' : ''}
-                </span>
+                <span className="meta">{m.role}</span>
               </span>
             }
             chevron={false}
           />
         ))}
+      </Group>
+
+      <Group
+        title="Credit authority"
+        note={
+          <>
+            <b>Fixed:</b> credits on this house's projects come from the house, never from the person credited.
+            <br />
+            <b>Open question:</b> who inside the house holds this (owner only, chosen members, or a person per project), and how it works with co-productions. The list above is a prototype assumption.
+          </>
+        }
+      >
+        <Row label="Can issue credits" value={members.filter((m) => m.credits).map((m) => m.name.split(' ')[0]).join(', ')} chevron={false} />
       </Group>
 
       <Group title="House notifications" note="These go to everyone who acts for the house.">

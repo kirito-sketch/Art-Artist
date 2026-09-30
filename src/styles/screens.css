@@ -1896,7 +1896,7 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .bubble-retry { background: none; border: 0; color: #c0392b; font-weight: 600; padding: 0; cursor: pointer; }
 .inline-error { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: color-mix(in srgb, #c0392b 10%, var(--surface)); color: #a93226; }
 .owner-bar { display: flex; gap: 18px; margin: 4px 0 8px; }
-.inline-note { margin: 8px 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: var(--surface-2, #f2f2f2); }
+.inline-note { margin: 8px 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
 .skel-hero { height: 320px; background: var(--surface-2, #eee); position: relative; animation: skel 1.2s ease-in-out infinite; }
 .skel-back { position: absolute; top: calc(var(--status-bar) + 6px); left: 16px; }
 .skel-body { padding: 24px var(--gutter); display: flex; flex-direction: column; gap: 12px; }
@@ -1912,3 +1912,13 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .notif-for { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
 .ph-bell-dot { position: absolute; top: 8px; right: 8px; }
 .topbar .icon-btn { position: relative; }
+.interest--withdrawn { opacity: .5; }
+.interest-answers { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.interest-answers li { display: flex; flex-direction: column; }
+.acting-banner { display: flex; align-items: center; gap: 10px; margin: 0 var(--gutter) 12px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.acting-banner > span:not(.avatar) { display: flex; flex-direction: column; flex: 1; font-size: 14px; }
+.proto-tag--validate { background: #fff3d6; color: #8a5a00; }
+.proto-list { margin: 0 0 10px; padding-left: 16px; font-size: 12px; color: var(--text-2, #666); display: flex; flex-direction: column; gap: 3px; }
+
+.toast-action { color: inherit; }
+.inline-error, .field-error { color: color-mix(in srgb, #d6453a 75%, var(--text)); }

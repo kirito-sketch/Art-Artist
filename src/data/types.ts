@@ -169,6 +169,10 @@ export interface Interest {
   personId: string;
   opportunityId: string;
   note?: string;
+  /** Optional short answers to the role's questions. Never required. */
+  answers?: string[];
+  /** The person withdrew. They stay in the list, greyed, so nothing silently disappears. */
+  withdrawn?: boolean;
   time: string;
 }
 

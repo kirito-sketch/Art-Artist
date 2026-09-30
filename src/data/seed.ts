@@ -568,9 +568,10 @@ export const interests: Record<string, Interest[]> = {
   /* The house reviews people who responded to its roles with the same interest model as individuals. */
   konark: [
     { id: 'k1', personId: 'vikram', opportunityId: 'o-neela-dop', note: 'Shot Monsoon Letters with your team. Araku in the rain is exactly my kind of light.', time: '1h' },
-    { id: 'k2', personId: 'anvi', opportunityId: 'o-neela-dop', note: 'Two features on available light, reel attached to my profile.', time: '3h' },
+    { id: 'k2', personId: 'anvi', opportunityId: 'o-neela-dop', note: 'Two features on available light, reel attached to my profile.', answers: ['ARRI Alexa Mini LF, Sony Venice', 'The rooftop scene in Kaagaz, on my profile', 'Yes, free 12–15 Oct'], time: '3h' },
     { id: 'k3', personId: 'raghu', opportunityId: 'o-neela-dop', time: '6h' },
     { id: 'k4', personId: 'dev', opportunityId: 'o-neela-journalist', note: 'Free for the full schedule.', time: '1d' },
+    { id: 'k5', personId: 'teja', opportunityId: 'o-neela-dop', withdrawn: true, time: '1d' },
   ],
   tidewater: [],
 };

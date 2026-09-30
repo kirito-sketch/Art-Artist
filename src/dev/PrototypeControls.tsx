@@ -9,8 +9,8 @@ const PERSONAS: { id: Persona; name: string; sub: string }[] = [
   { id: 'tidewater', name: 'Tidewater Films', sub: 'Kiran acting for a quiet house' },
 ];
 
-type Tag = 'working' | 'alt' | 'ref' | 'open';
-const TAG: Record<Tag, string> = { working: 'Working', alt: 'Alternative', ref: 'Reference', open: 'Undecided' };
+type Tag = 'working' | 'alt' | 'ref' | 'open' | 'validate';
+const TAG: Record<Tag, string> = { working: 'Working', alt: 'Alternative', ref: 'Reference', open: 'Undecided', validate: 'Validate' };
 
 function Choice<T extends string>({ title, note, value, onChange, options }: { title: string; note?: string; value: T; onChange: (v: T) => void; options: { id: T; label: string; tag: Tag }[] }) {
   return (
@@ -34,7 +34,7 @@ function Choice<T extends string>({ title, note, value, onChange, options }: { t
  * the look. Test states are tucked away because they are for checking edge cases, not reviewing.
  */
 export function PrototypeControls() {
-  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile } = useStore();
+  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel } = useStore();
   const persona: Persona = acting === 'konark' || acting === 'tidewater' ? acting : (viewer.id as Persona);
   const isHouse = persona === 'konark' || persona === 'tidewater';
   const pick = (p: Persona) => {
@@ -107,6 +107,16 @@ export function PrototypeControls() {
             ]}
           />
           <Choice
+            title="Crew and casting roles"
+            note="A: show interest, with optional answers. B: a separate Respond form."
+            value={roleModel}
+            onChange={setRoleModel}
+            options={[
+              { id: 'interest', label: 'A · One Interest model', tag: 'working' },
+              { id: 'respond', label: 'B · Interest + Respond', tag: 'validate' },
+            ]}
+          />
+          <Choice
             title="Production pages"
             note="Open any production from a role or credit"
             value={houseProfile}
@@ -156,6 +166,28 @@ export function PrototypeControls() {
             <Toggle on={scenario[r.key]} onChange={(v) => setScenario({ [r.key]: v })} label={r.label} />
           </div>
         ))}
+      </details>
+      <details className="proto-more">
+        <summary>Decided vs still open</summary>
+        <p className="proto-q-title">Decided</p>
+        <ul className="proto-list">
+          <li>People can't claim their own credits</li>
+          <li>One account; acting for a house is a separate context</li>
+          <li>A house's profile is its public page</li>
+          <li>No comments on posts</li>
+          <li>Mark all as read, not Clear all</li>
+          <li>Members are permissions, not a team product</li>
+          <li>Minimal and Glass active; Bold and Doodle archived</li>
+        </ul>
+        <p className="proto-q-title">Still open</p>
+        <ul className="proto-list">
+          <li>Slate vs Pulse; Work first vs Hiring first</li>
+          <li>"Need" wording; private roles</li>
+          <li>One Interest model vs Respond</li>
+          <li>Notifications per identity</li>
+          <li>Who issues credits inside a house; co-productions</li>
+          <li>Credits for independent projects</li>
+        </ul>
       </details>
       <p className="proto-foot">Prototype v2 · Esc goes back</p>
     </aside>

@@ -137,6 +137,8 @@ function useStoreValue() {
   const [blocked, setBlocked] = useState<string[]>([]);
   const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
   const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
+  /** VALIDATE: one Interest model everywhere (A) vs Interest for collaborations plus Respond for crew and casting (B). */
+  const [roleModel, setRoleModel] = useState<'interest' | 'respond'>('interest');
   const [profileVersion, setProfileVersion] = useState(0);
   const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('slides');
   /** Prototype comparison: visual direction applied across the whole app. */
@@ -478,6 +480,16 @@ function useStoreValue() {
     setHouseHome,
     houseProfile,
     setHouseProfile,
+    roleModel,
+    setRoleModel,
+    /** A filled role keeps its record. Hiring again for the same craft and project is a new role. */
+    openAgain: (id: string) => {
+      const base = userCollabs.find((x) => x.id === id) ?? seed.opportunities.find((x) => x.id === id);
+      if (!base) return id;
+      const nid = `${id}-again-${Date.now()}`;
+      setUserCollabs((cs) => [{ ...base, id: nid, postedAgo: 'now', closesInDays: 14 }, ...cs]);
+      return nid;
+    },
     profileVersion,
     bumpProfile: () => setProfileVersion((v) => v + 1),
     markNotificationsReadWhere: (ids: string[]) => setNotifications((ns) => ns.map((n) => (ids.includes(n.id) ? { ...n, unread: false } : n))),
