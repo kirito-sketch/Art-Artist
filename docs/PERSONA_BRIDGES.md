@@ -370,6 +370,11 @@ Run in Chromium against the prototype. Personas were switched through the consol
 | W5 | Correction loop on a private project (Kiran, Kaal) → corrected reissue → accept → share → public | 14 | Pass |
 | W6 | Tara blocks Konark: credit, public project and thread history remain; both sides are closed for sending; Konark sees a private profile | 7 | Pass |
 | Extra | Interest survives a persona switch; withdraw → "No longer interested"; a house's role edit reaches the person ("Updated since you showed interest: location"); Research Mode, Lab and scenario links load | 6 | Pass |
+| WA | Accepted credit → "Something wrong with this credit?" → stays public while open → house proposes a revision → Tara accepts → public shows the revision, old version kept under Earlier versions → second request → house keeps it → Report to Ana offered | 14 | Pass |
+| WB | Konark messages Tara → Tara blocks Aditi personally → Tara still has the Konark thread, never sees the member → Aditi, as Konark, can't reply and sees Tara as private → message kept as Konark, sent by Aditi internally | 5 | Pass |
+| WC | Kiran blocks Konark → Home stops recommending Konark roles → search shows no Konark house, roles or live projects → Kiran's Konark credit and the Neeli Raat page stay | 5 | Pass |
+
+After the hardening pass, W1 to W6 and the extras were rerun: 66 of 66 steps pass.
 
 ---
 
