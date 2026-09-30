@@ -1,4 +1,4 @@
-import { Check, CircleCheck, PenLine, UserSearch } from 'lucide-react';
+import { Ban, Check, CircleCheck, Flag, Link2, PenLine, Send, UserSearch } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
@@ -36,6 +36,21 @@ export function SheetHost() {
       <Sheet open={is('activity')} onClose={closeSheet} title="Your activity" size="tall">
         <Activity />
       </Sheet>
+      <Sheet open={is('identity')} onClose={closeSheet} title="Acting as">
+        <Identity />
+      </Sheet>
+      <Sheet open={is('share')} onClose={closeSheet} title="Share">
+        {sheet?.name === 'share' && <ShareSheet label={sheet.label} />}
+      </Sheet>
+      <Sheet open={is('more')} onClose={closeSheet} title="">
+        {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
+      </Sheet>
+      <Sheet open={is('report')} onClose={closeSheet} title="Report">
+        {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} />}
+      </Sheet>
+      <Sheet open={is('block')} onClose={closeSheet} title="">
+        {sheet?.name === 'block' && <BlockSheet id={sheet.id} />}
+      </Sheet>
     </>
   );
 }
@@ -43,7 +58,15 @@ export function SheetHost() {
 /* ------------------------------------------------------------------ Create */
 
 function CreateMenu() {
-  const { push } = useStore();
+  const { push, acting } = useStore();
+  // Acting for a house: it posts updates and opens roles. It is never "available for work".
+  if (acting !== 'self')
+    return (
+      <div className="group">
+        <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
+        <Row icon={<PenLine size={22} />} label={`Post as ${org(acting).name}`} onPress={() => push({ name: 'composePost' })} />
+      </div>
+    );
   return (
     <div className="group">
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
@@ -320,6 +343,193 @@ function Activity() {
           )}
         </section>
       ))}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Identity */
+
+/** Who am I acting as. One person, the organisations they may act for, one tap to switch. */
+function Identity() {
+  const { viewer, acting, setActing, memberships, tab } = useStore();
+  const me = person(viewer.id);
+  const rows = [{ id: 'self', party: me, sub: 'Your personal profile' }, ...memberships.map((m) => ({ id: m, party: org(m), sub: 'You can open roles and issue credits' }))];
+  return (
+    <div className="stack">
+      <div className="list list--flush">
+        {rows.map((r) => (
+          <Pressable key={r.id} className="prow identity-row" onClick={() => setActing(r.id, tab === 'profile')} scale={0.985}>
+            <Avatar party={r.party} size={44} />
+            <span className="prow-text">
+              <span className="item-title">{r.party.name}</span>
+              <span className="meta">{r.sub}</span>
+            </span>
+            {acting === r.id && <Check size={20} className="accent" />}
+          </Pressable>
+        ))}
+      </div>
+      <p className="meta">The house's owner decides who can act for it. Your own profile and credits always stay yours.</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------- Share */
+
+function ShareSheet({ label }: { label: string }) {
+  const { closeSheet, showToast, conversations } = useStore();
+  const recent = conversations.slice(0, 3);
+  return (
+    <div className="stack">
+      <p className="meta">{label}</p>
+      {recent.length > 0 && (
+        <div className="share-people">
+          {recent.map((c) => {
+            const p = party(c.withId);
+            if (!p) return null;
+            return (
+              <Pressable
+                key={c.id}
+                className="org-person"
+                onClick={() => {
+                  closeSheet();
+                  showToast({ text: `Sent to ${firstName(p)}`, tone: 'success' });
+                }}
+                scale={0.95}
+              >
+                <Avatar party={p} size={52} />
+                <span className="org-person-name">{firstName(p)}</span>
+              </Pressable>
+            );
+          })}
+        </div>
+      )}
+      <div className="group">
+        <Row
+          icon={<Link2 size={22} />}
+          label="Copy link"
+          chevron={false}
+          onPress={() => {
+            closeSheet();
+            showToast({ text: 'Link copied' });
+          }}
+        />
+        <Row
+          icon={<Send size={22} />}
+          label="Share outside Ana"
+          chevron={false}
+          onPress={() => {
+            closeSheet();
+            showToast({ text: 'Opens the phone share sheet' });
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------- More / Report / Block */
+
+function MoreSheet({ id }: { id: string }) {
+  const { openSheet, blocked, unblock, closeSheet, showToast } = useStore();
+  const p = party(id)!;
+  const isBlocked = blocked.includes(id);
+  return (
+    <div className="group">
+      <Row icon={<Flag size={22} />} label={`Report ${p.name}`} onPress={() => openSheet({ name: 'report', subject: p.name, partyId: id })} />
+      {isBlocked ? (
+        <Row
+          icon={<Ban size={22} />}
+          label={`Unblock ${p.name}`}
+          chevron={false}
+          onPress={() => {
+            unblock(id);
+            closeSheet();
+            showToast({ text: `${p.name} unblocked` });
+          }}
+        />
+      ) : (
+        <Row icon={<Ban size={22} />} label={<span className="danger-text">Block {p.name}</span>} onPress={() => openSheet({ name: 'block', id })} />
+      )}
+    </div>
+  );
+}
+
+const REPORT_REASONS = ['Fake profile or impersonation', 'Asking for money to apply or audition', 'Harassment or unsafe behaviour', 'Misleading role or project', 'Stolen or misused work', 'Something else'];
+
+/** Report: reason, optional detail, a clear promise, and the offer to block. */
+function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }) {
+  const { openSheet, closeSheet } = useStore();
+  const [reason, setReason] = useState('');
+  const [detail, setDetail] = useState('');
+  const [step, setStep] = useState<'form' | 'sending' | 'done'>('form');
+  if (step === 'done')
+    return (
+      <div className="stack">
+        <p className="title-2">Thanks. We'll look at it.</p>
+        <p className="body">Ana reviews reports within 24 hours. {subject} won't be told who reported. If we act, you'll get a notification.</p>
+        {partyId && (
+          <Button block size="l" variant="danger" onClick={() => openSheet({ name: 'block', id: partyId })}>
+            Also block
+          </Button>
+        )}
+        <Button block size="l" variant="secondary" onClick={closeSheet}>
+          Done
+        </Button>
+      </div>
+    );
+  return (
+    <div className="stack">
+      <p className="meta">What's wrong with {subject}?</p>
+      <div className="group">
+        {REPORT_REASONS.map((r) => (
+          <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} value={reason === r ? <Check size={18} className="accent" /> : undefined} />
+        ))}
+      </div>
+      {reason && <textarea className="field field--area" rows={3} value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Anything that helps us check (optional)" />}
+      <Button
+        block
+        size="l"
+        disabled={!reason}
+        loading={step === 'sending'}
+        onClick={() => {
+          setStep('sending');
+          window.setTimeout(() => setStep('done'), 700);
+        }}
+      >
+        Send report
+      </Button>
+    </div>
+  );
+}
+
+/** Block: say exactly what changes before it happens. */
+function BlockSheet({ id }: { id: string }) {
+  const { block, closeSheet, showToast } = useStore();
+  const p = party(id)!;
+  return (
+    <div className="stack">
+      <p className="title-2">Block {p.name}?</p>
+      <ul className="block-list">
+        <li>You won't see each other's profile, work or roles.</li>
+        <li>They can't message you or show interest in your roles.</li>
+        <li>Shared credits stay on both profiles. Credits are a record, not a connection.</li>
+        <li>They aren't told. You can unblock from their page.</li>
+      </ul>
+      <Button
+        block
+        size="l"
+        variant="danger"
+        onClick={() => {
+          block(id);
+          closeSheet();
+          showToast({ text: `${p.name} blocked` });
+        }}
+      >
+        Block
+      </Button>
+      <Button block size="l" variant="secondary" onClick={closeSheet}>
+        Cancel
+      </Button>
     </div>
   );
 }

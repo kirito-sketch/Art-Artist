@@ -1,4 +1,5 @@
-import { Camera, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { Ban, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { workIdForTitle, works } from '../../data/works';
 import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
@@ -11,8 +12,13 @@ import { RoleRow } from '../discover/RoleRow';
 /** Other people's credits and work come from real activity on Ana, never invented for the profile. */
 function derive(p: Person) {
   const events = Object.values(seed.networkEvents).flat().filter((e) => e.actorIds.includes(p.id));
+  // Accepted credits on public projects are the source of truth; network events fill in the rest.
+  const fromWorks: Credit[] = works.flatMap((w) =>
+    w.credits.filter((c) => c.personId === p.id).map((c) => ({ id: `${w.id}-${p.id}`, title: w.title, year: w.year, role: c.role, department: c.dept, orgId: w.orgIds[0], format: w.format.split(' · ')[0], status: 'Released' as const, media: w.media })),
+  );
   const credits: Credit[] =
     seed.credits[p.id] ??
+    (fromWorks.length ? fromWorks : null) ??
     events
       .filter((e) => e.kind === 'credit')
       .map((e) => ({ id: e.id, title: e.title!, year: '2025', role: e.detail!, department: '', orgId: e.orgId!, format: 'Feature film', status: 'Released' as const, media: e.media?.[0] ?? seed.portfolio.kiran[1] }));
@@ -30,7 +36,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, showToast, setHero, memberships, blocked, unblock } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -53,6 +59,22 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </IconButton>
         </header>
         <EmptyState icon={<Lock />} title={p.visibility === 'removed' ? 'This profile has been removed' : 'This profile is private'} />
+      </div>
+    );
+  }
+
+  if (!own && blocked.includes(id)) {
+    return (
+      <div className="screen">
+        <header className="topbar topbar--nav">
+          <IconButton label="Back" onClick={pop}>
+            <ChevronLeft size={26} />
+          </IconButton>
+        </header>
+        <EmptyState icon={<Ban />} title={`You blocked ${p.name}`} body="You won't see each other on Ana. They haven't been told." />
+        <Button variant="secondary" onClick={() => unblock(id)} className="center-btn">
+          Unblock
+        </Button>
       </div>
     );
   }
@@ -86,10 +108,10 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </IconButton>
           )}
           <span className="flex" />
-          <IconButton label="Share profile" className="icon-btn--float" onClick={() => showToast({ text: 'Profile link copied' })}>
+          <IconButton label="Share profile" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
             <Share size={18} />
           </IconButton>
-          <IconButton label={own ? 'Settings' : 'More'} className="icon-btn--float" onClick={() => showToast({ text: own ? 'Settings' : 'Report or block' })}>
+          <IconButton label={own ? 'Settings' : 'More'} className="icon-btn--float" onClick={() => (own ? showToast({ text: 'Settings come next: privacy, blocked people, notifications' }) : openSheet({ name: 'more', id }))}>
             {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
           </IconButton>
         </div>
@@ -97,10 +119,18 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
       <div className="psheet">
         <header className="pid">
-          <h1 className="large-title">
-            {p.name}
-            {p.identityVerified && <Verified size={22} label="Identity verified" />}
-          </h1>
+          {own && isTab && memberships.length > 0 ? (
+            <button className="large-title org-name--switch" onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
+              {p.name}
+              {p.identityVerified && <Verified size={22} label="Identity verified" />}
+              <ChevronDown size={20} />
+            </button>
+          ) : (
+            <h1 className="large-title">
+              {p.name}
+              {p.identityVerified && <Verified size={22} label="Identity verified" />}
+            </h1>
+          )}
           <p className="pid-role">{p.role}</p>
           <p className="meta">
             {p.city}
@@ -190,7 +220,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           {d.credits.length ? (
             <div className="rail">
               {d.credits.map((c) => (
-                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => own && openSheet({ name: 'reportCredit', title: c.title })} aria-label={own ? `${c.title}, report a problem` : c.title}>
+                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = workIdForTitle(c.title); if (wid) push({ name: 'work', id: wid }); else if (own) openSheet({ name: 'reportCredit', title: c.title }); }} aria-label={c.title}>
                   <Photo media={c.media} className="rail-poster" showPlay={false} />
                   <p className="item-title">{c.title}</p>
                   <p className="meta">{c.role}</p>

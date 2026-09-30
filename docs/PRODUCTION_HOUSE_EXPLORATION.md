@@ -1,57 +1,97 @@
-# Production house: exploration
+# Organisations on Ana: exploration
 
-Status: hypotheses, not architecture. The lifecycle doc (docs/production-lifecycle.html) is an input, not a spec. Prototype: panel option "Konark Pictures · acting for the house". Code: src/screens/production/Production.tsx.
+Status: **hypotheses, not architecture.** Nothing here is a confirmed feature or navigation item until a real production house has used it. Prototype panel: "Kiran, acting for Konark" (busy house) and "Kiran, acting for Tidewater" (quiet house), with House Home A/B/C and House profile A/B toggles.
 
-## Jobs to be done
+**Individual Ana:** my career, my work, people and opportunities around me.
+**Organisation Ana:** our projects, our presence, people and opportunities around our work.
 
-When a house acts on Ana, a person is doing one of these:
+## 1. Concept audit
 
-1. **Find someone for a gap on a project.** "We lost our DoP two weeks before the shoot."
-2. **Decide on people who responded.** Review interest, shortlist, reply.
-3. **Know who is on a project** so credits are right at the end.
-4. **Publish and fix credits** after release, including disputes.
-5. **Look credible** to people deciding whether to respond (house page, past work).
-6. **Let the right colleagues act** for the house without sharing one login.
-
-Not a job: running payroll, schedules, contracts or HR. Other tools do that. Ana is where the house meets people and where credits become true.
-
-## Concept decisions (each a hypothesis)
-
-### H1. "Team" is two unrelated things, and neither is a product
-- **Members** are people allowed to act for the house. That is a permission, set once in settings. No screen beyond a list and a role.
-- **People on a project** are collaborators for that project only. This is the credits list in progress: invited, then confirmed, then published at wrap.
-- Dropped: "Team Management" and "Crew Management". Nobody is employed by the house between projects.
-- *Validate:* do houses think of "our people" across projects (a roster) or only per project? If a roster matters, it is probably just "people we've credited before", derived, not managed.
-
-### H2. Requirement and opportunity are one object: a Need
-- A need is a position on a project. Visibility is a state: **Private** (house only) → **Open on Ana** (discoverable, people respond) → **Filled** (becomes a person on the project).
-- Most needs are filled by phone. Private needs still matter because they become credits.
-- *Validate:* will houses list private needs at all, or only when they want to open them? If only the latter, "Private" disappears and a need is just an opportunity.
-
-### H3. The house lands on its projects, not a dashboard
-- Prototyped: a project list, with a "Needs a decision" strip above it that appears only when something is waiting (interest to review, a disputed credit, unaccepted invites).
-- *Validate:* with 1 to 3 active projects the list is enough. A house with 10+ in flight may need a queue first.
-
-### H4. Acting as the house is a mode of the same app, not a separate app
-- Switching changes Home only. Discover, Inbox and Profile are unchanged in this pass.
-- *Validate:* who actually uses it? If it's a line producer on their own phone, they need fast switching between self and house, and an Inbox that separates the two.
-
-## Home options considered
-
-| Option | Assumption | Question to validate |
+| Concept | Does it need to exist? | Verdict (hypothesis) |
 |---|---|---|
-| **A. Project-first with conditional attention strip** (prototyped) | Houses think in projects; urgent items are few. | Do they open the app to check a project or to clear decisions? |
-| B. Work queue / dashboard first | Volume of responses is high and daily. | How many responses does an open need get per day in reality? |
-| C. Ana Home adapted (same feed, house lens) | The house also browses talent like an individual. | Does anyone at a house browse without a specific gap? |
+| Production House Home | Yes, a house acting on Ana needs a starting point. It is not a dashboard. | Kept, three models under test (section 4). |
+| Project (public) | Yes. Credits, posters, roles and filmographies all point to it. | **One object: Work.** Film calls it a project; fine arts would call it an exhibition. Built as the public project page. |
+| Project workspace | Only the private layer of a Work: roles not yet open, invites not yet accepted, corrections asked. | Kept thin. Not a production-management tool: no schedules, call sheets, budgets or tasks. |
+| Members | Yes, as permission only. | People who may act for the house. Lives in settings, never a product surface. |
+| Team / Crew | No. | Dropped. "People on this project" is the credits list in progress. No roster, no HR. "Worked with" on the profile is derived from accepted credits, never managed. |
+| Requirement and Opportunity | One object. | A role on a Work, with visibility. Private → Open on Ana → Filled. |
+| "Need" | Working name only. | The house side says "Roles to fill"; individuals see a "Role". Validate the words with both sides. |
+| Applicants | No new system. | Responses reuse the existing **Interest** model: people show interest, the poster reviews profiles and chooses whom to message. The house review sheet is the same sheet individuals use. |
+| Credits | Yes, strategically central. | Proposed by the production, accepted or corrected by the person, public only once accepted (section 6). |
+| Company page | Not separately. | **One organisation profile** serves visitors and members. |
 
-## What is prototyped vs not
+Test against Ana's purpose: every kept concept helps people discover each other, trust each other or build a record. Anything that only helps run a shoot stays out.
 
-Prototyped: house Home, project page (needs with Open on Ana, Review into the existing opportunity screen, people by department with invited/confirmed, credits with a dispute), switching in the panel.
+## 2. Model
 
-Not prototyped (on purpose): creating a project or need (toast), adding a person (toast), member permissions, house profile page, Inbox split, credit publishing flow, identity switcher inside the app.
+```
+Organisation ─┬─ Work (project) ── Role (private | open | filled) ── Interest ── Person
+   │          └─ Work ── Engagement (invited → credited) ── Credit (proposed → accepted | correction asked)
+   └─ Membership (person may act for organisation; permission only)
+Person owns their identity, portfolio and accepted credits, across any number of organisations and crafts.
+```
 
-## Next validation (cheapest first)
+Fine-arts check: Gallery → Exhibition → Artist → Participation. Same shape: organisation, work, person, engagement, credit. Only the words shown change.
 
-1. Show A to two line producers or production managers; ask them to find the dispute and open the Colourist need. Watch where they look first.
-2. Ask three houses how many needs per project they would list, and whether any would stay private.
-3. Ask who in the house would hold the phone.
+## 3. Active identity
+
+- **One person, many organisations.** The account is always a person. Organisations are identities that person may act as.
+- **The switch lives on the identity itself.** Tap the house name on Home, or your own name on your profile (a chevron shows there's more than one identity). One sheet lists you and each house, with a check on the current one.
+- **Always visible.** The tab bar avatar becomes the house logo (rounded square, not a circle) while you act for it. Switching from the Profile tab keeps you on Profile, so you see the change happen.
+- **Your identity never becomes the house's.** The sheet says so.
+
+| Surface | Changes when acting for a house? | Why |
+|---|---|---|
+| Home | Yes | Different job: our work, not my career. |
+| Profile tab | Yes: opens the house's public page | You are presenting as the house. |
+| Tab bar avatar | Yes | Always answers "who am I acting as". |
+| Create | Yes: "Open a role", "Post as house"; no "Available for work" | A house is never available for work. |
+| Interest review | Yes: the house's roles | Same sheet, different owner. |
+| Role pages | Yes: house roles show "Review" instead of "Respond" | Ownership follows the identity. |
+| Discover and search | No | A house discovers people the same way a person does. |
+| Inbox | Not yet | Split only if members report mixing personal and house conversations. **Validate.** |
+| Notifications | Not yet | Likely per identity; wait until Inbox is decided. |
+| Saved | Not yet | Probably personal. **Validate.** |
+
+## 4. House Home: three models
+
+All share the header (house identity + switch) and never show personal content.
+
+| | A. Slate (recommended) | B. Pulse | C. Queue |
+|---|---|---|---|
+| Philosophy | Our work first, as artwork. Signals sit on the project they belong to. | What is happening around our work first. | Decisions first. |
+| First thing | The most active project, full-bleed, with its live signals (interested, roles open, invites pending). | "Around your work": interest with faces, credit corrections, credits going public. | "Needs a decision" counts, then a plain project list. |
+| Then | Around your work (3 items), our slate (posters, including a private project), people for roles not yet opened. | People for your roles, then the slate as a small shelf. | Nothing else. |
+| Left out | Counters, charts, task lists. | A featured project. | Artwork, activity, people. |
+| Assumes | Houses have 1 to 3 live projects and think in projects. | Response volume is high enough that activity is the reason to open the app. | Houses open Ana only to clear decisions. |
+| Validate | Do they open it to check a project or to act on people? | How many responses per open role per day? | Would a house miss the network feeling? (If not, Ana is a tool to them.) |
+
+**Why A:** it's project-first without being a list. It feels like a film company's wall, not a back office, and still surfaces everything that needs a decision on the project it belongs to. B is the fallback if real response volume is high. C stays as the stakeholder reference for "what an admin dashboard would look like".
+
+Quiet state (Tidewater): nothing in production. Home says so plainly, offers "Start a project", and the slate still shows past work.
+
+## 5. House profile: public identity
+
+What a creative wants to know when they land here, in order: **Who are they? What are they making now? Have people like me worked with them, and did it go well? Are they hiring?**
+
+| | A. Work first (recommended) | B. Hiring first | C. Reputation first (not built) |
+|---|---|---|---|
+| Order | Identity → Now making → Made by us → Worked with → Hiring | Identity → Hiring → Now making → Made by us → Worked with | Identity → Worked with → Made by us → Now making → Hiring |
+| Assumes | Creatives judge a house by its work before its roles. | Most visits come from a role and want more roles. | Trust (who has worked there) is the deciding factor. |
+| Validate | Where do visits come from: roles, credits or search? | Same. | Would creatives read "Worked with" as endorsement? It isn't one, it's accepted credits. |
+
+Rules: "Worked with" is derived from accepted credits only, so a house can't curate its reputation. Members see the same page with "Edit page" and "Open a role" instead of Follow and Message, plus a line saying "This is how people on Ana see us". Co-productions show on both houses' pages, labelled.
+
+## 6. Credits
+
+Flow: engagement (invited) → credited on the project → **proposed** credit → person **accepts** (public) or **asks for a correction** (back to the production) → public.
+
+Hypotheses and open questions:
+- The lead production proposes credits. *Validate:* co-productions: can either house propose? Probably the lead only, co-producers see them.
+- Independent work with no house: the person who created the Work acts as its production. Same flow.
+- A correction is a conversation, not a form: the prototype shows "Asked for: Chief Lighting Technician, not Gaffer" with "Accept correction". *Validate:* what if the house declines? Suggested: the credit stays unpublished for that person, never published against their will.
+- Only accepted credits appear anywhere public.
+
+## 7. Not built on purpose
+
+Creating a project or role flow (toast), adding people to a project, member management, editing the house page, Inbox and notifications per identity, credit publishing at wrap.

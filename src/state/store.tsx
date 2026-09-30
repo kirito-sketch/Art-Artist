@@ -15,6 +15,8 @@ export type Route =
   | { name: 'network' }
   | { name: 'editProfile' }
   | { name: 'project'; id: string }
+  | { name: 'work'; id: string }
+  | { name: 'org'; id: string }
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
   | { name: 'media'; items: Media[]; index: number };
@@ -27,7 +29,12 @@ export type Sheet =
   | { name: 'showInterest'; id: string }
   | { name: 'reviewInterest'; opportunityId?: string }
   | { name: 'reportCredit'; title: string }
-  | { name: 'activity' };
+  | { name: 'activity' }
+  | { name: 'identity' }
+  | { name: 'share'; label: string }
+  | { name: 'more'; id: string }
+  | { name: 'report'; subject: string; partyId?: string }
+  | { name: 'block'; id: string };
 
 export interface Scenario {
   newUser: boolean;
@@ -110,7 +117,12 @@ function useStoreValue() {
   const [reloadKey, setReloadKey] = useState(0);
   /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
   /** Exploration: acting on behalf of a production house instead of as yourself. */
-  const [acting, setActing] = useState<'self' | 'konark'>('self');
+  const [acting, setActing] = useState<string>('self');
+  /** Organisations the signed-in person may act for. Permission only; not a team product. */
+  const memberships = viewer.id === 'kiran' ? ['konark', 'tidewater'] : [];
+  const [blocked, setBlocked] = useState<string[]>([]);
+  const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
+  const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
   const [profileVersion, setProfileVersion] = useState(0);
   const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('slides');
   /** Prototype comparison: visual direction applied across the whole app. */
@@ -368,11 +380,22 @@ function useStoreValue() {
     homeLayout,
     setHomeLayout,
     acting,
-    setActing: (a: 'self' | 'konark') => {
+    memberships,
+    /** Switching identity keeps you on the tab you were on, so the change is visible where you made it. */
+    setActing: (a: string, keepTab = false) => {
       setActing(a);
+      setInterestsReceived(seed.interests[a === 'self' ? viewer.id : a] ?? []);
       setStack([]);
-      setTabState('home');
+      setSheet(null);
+      if (!keepTab) setTabState('home');
     },
+    blocked,
+    block: (id: string) => setBlocked((b) => (b.includes(id) ? b : [...b, id])),
+    unblock: (id: string) => setBlocked((b) => b.filter((x) => x !== id)),
+    houseHome,
+    setHouseHome,
+    houseProfile,
+    setHouseProfile,
     profileVersion,
     bumpProfile: () => setProfileVersion((v) => v + 1),
     markNotificationRead: (id: string) => setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, unread: false } : n))),

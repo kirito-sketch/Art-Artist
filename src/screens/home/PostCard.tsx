@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useState } from 'react';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -44,10 +44,6 @@ export function PostCard({ post }: { post: Post }) {
           <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
           {post.likes + (liked ? 1 : 0) || null}
         </motion.button>
-        <button className="post-action" aria-label="Comments">
-          <MessageCircle size={20} />
-          {post.comments || null}
-        </button>
       </div>
     </article>
   );

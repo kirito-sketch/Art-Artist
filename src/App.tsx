@@ -13,6 +13,8 @@ import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
 import { EditProfile } from './screens/profile/EditProfile';
 import { ProductionHome, ProjectScreen } from './screens/production/Production';
+import { WorkScreen } from './screens/org/WorkScreen';
+import { OrgScreen } from './screens/org/OrgScreen';
 import { SheetHost } from './screens/sheets/Sheets';
 import { networkFor } from './state/selectors';
 import { StoreProvider, useStore, type Route } from './state/store';
@@ -49,6 +51,10 @@ function RouteView({ r }: { r: Route }) {
       return <EditProfile />;
     case 'project':
       return <ProjectScreen id={r.id} />;
+    case 'work':
+      return <WorkScreen id={r.id} />;
+    case 'org':
+      return <OrgScreen id={r.id} />;
   }
 }
 
@@ -155,10 +161,10 @@ function Phone() {
             style={{ pointerEvents: tab === t ? 'auto' : 'none', zIndex: tab === t ? 1 : 0 }}
             aria-hidden={tab !== t}
           >
-            {t === 'home' && (store.acting === 'konark' ? <ProductionHome /> : <HomeScreen goDiscover={goDiscover} />)}
+            {t === 'home' && (store.acting !== 'self' ? <ProductionHome /> : <HomeScreen goDiscover={goDiscover} />)}
             {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} />}
             {t === 'inbox' && <InboxScreen />}
-            {t === 'profile' && <ProfileScreen id={viewer.id} isTab />}
+            {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab />)}
           </motion.div>
         ))}
 

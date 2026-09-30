@@ -2,11 +2,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newspaper, Palette, Scissors, Search, Shirt, SlidersHorizontal, Sparkles, Theater, Users, Video, X } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
+import { works } from '../../data/works';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { OfflineBanner } from '../../ui/chrome';
-import { Avatar, Button, Chip, EmptyState, PressCard, Photo, Tabs, Verified } from '../../ui/primitives';
+import { Avatar, Button, Chip, EmptyState, PressCard, Pressable, Photo, SectionHeader, Tabs, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from './RoleRow';
@@ -34,12 +35,6 @@ const KINDS: { id: 'all' | Opportunity['kind']; label: string }[] = [
 /* Only adult, public profiles are searchable. Guardian-managed profiles never enter this index. */
 const searchablePeople = (viewerId: string) => seed.people.filter((p) => p.id !== viewerId && p.visibility === 'public');
 
-const allProjects = () => {
-  const seen = new Set<string>();
-  return Object.values(seed.credits)
-    .flat()
-    .filter((c) => (seen.has(c.title) ? false : (seen.add(c.title), true)));
-};
 
 function PersonRow({ p }: { p: Person }) {
   const { push, following, toggleFollow } = useStore();
@@ -75,8 +70,10 @@ interface Filters {
 }
 
 export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s: Scope) => void }) {
-  const { viewer, following, userPosts, userCollabs } = useStore();
+  const { viewer, following, userPosts, userCollabs, blocked, push } = useStore();
   const [query, setQuery] = useState('');
+  /** Typing shows results across everything; "See all" narrows to one kind and brings the tabs back. */
+  const [narrowed, setNarrowed] = useState(false);
   const [kind, setKind] = useState<'all' | Opportunity['kind']>('all');
   const [craft, setCraft] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({ paid: false, verified: false, travel: false, near: false });
@@ -97,9 +94,16 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
 
   const shownRoles = applyRoleFilters(roles, filters, kind);
   const people = searchablePeople(viewer.id)
+    .filter((p) => !blocked.includes(p.id))
     .filter((p) => (craft ? p.craft === craft || (craft === 'cinematographer' && p.craft === 'camera') : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
-  const projects = allProjects().filter((c) => (q ? `${c.title} ${org(c.orgId).name}`.toLowerCase().includes(q) : true));
+  const projects = works.filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')}`.toLowerCase().includes(q) : true));
+  const houses = q ? seed.orgs.filter((o) => !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
+  const grouped = !!q && !narrowed;
+  const seeAll = (sc: Scope) => {
+    setScope(sc);
+    setNarrowed(true);
+  };
   const posts = [...userPosts, ...seed.posts.filter((p) => following.includes(p.authorId))].filter((p) => (q ? p.text.toLowerCase().includes(q) : true));
   const activeFilters = Object.values(filters).filter(Boolean).length;
 
@@ -112,16 +116,16 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
       <div className="search-wrap">
         <label className="search">
           <Search size={18} />
-          <input id="discover-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Roles, people, projects" enterKeyHint="search" aria-label="Search" />
+          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder="People, productions, projects, roles" enterKeyHint="search" aria-label="Search" />
           <AnimatePresence>
             {query && (
-              <motion.button className="search-clear" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} onClick={() => setQuery('')} aria-label="Clear search">
+              <motion.button className="search-clear" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} onClick={() => { setQuery(''); setNarrowed(false); }} aria-label="Clear search">
                 <X size={14} strokeWidth={2.6} />
               </motion.button>
             )}
           </AnimatePresence>
         </label>
-        <Tabs
+        {!grouped && <Tabs
           id="discover"
           value={scope}
           onChange={setScope}
@@ -131,10 +135,72 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
             { value: 'projects', label: 'Projects', icon: <Film size={22} /> },
             { value: 'posts', label: 'Posts', icon: <Newspaper size={22} /> },
           ]}
-        />
+        />}
       </div>
       <OfflineBanner />
 
+      {grouped ? (
+        <div className="search-results">
+          {houses.length > 0 && (
+            <section className="section">
+              <SectionHeader title="Productions" />
+              <div className="list list--flush">
+                {houses.map((o) => (
+                  <PressCard key={o.id} className="prow" onPress={() => push({ name: 'org', id: o.id })} scale={0.985}>
+                    <Avatar party={o} size={48} />
+                    <div className="prow-text">
+                      <p className="item-title">
+                        {o.name} {o.verified && <Verified size={13} />}
+                      </p>
+                      <p className="meta">Production house · {o.city}</p>
+                    </div>
+                  </PressCard>
+                ))}
+              </div>
+            </section>
+          )}
+          {people.length > 0 && (
+            <section className="section">
+              <SectionHeader title="People" action={people.length > 3 ? 'See all' : undefined} onAction={() => seeAll('people')} />
+              <div className="list list--flush">
+                {people.slice(0, 3).map((p) => (
+                  <PersonRow key={p.id} p={p} />
+                ))}
+              </div>
+            </section>
+          )}
+          {projects.length > 0 && (
+            <section className="section">
+              <SectionHeader title="Projects" action={projects.length > 3 ? 'See all' : undefined} onAction={() => seeAll('projects')} />
+              <div className="list list--flush">
+                {projects.slice(0, 3).map((w) => (
+                  <PressCard key={w.id} className="rrow" onPress={() => push({ name: 'work', id: w.id })} scale={0.985}>
+                    <Photo media={w.media} className="rrow-thumb" showPlay={false} />
+                    <div className="rrow-text">
+                      <p className="item-title">{w.title}</p>
+                      <p className="meta">{w.format}</p>
+                      <p className="meta">{org(w.orgIds[0]).name}</p>
+                    </div>
+                  </PressCard>
+                ))}
+              </div>
+            </section>
+          )}
+          {shownRoles.length > 0 && (
+            <section className="section">
+              <SectionHeader title="Roles" action={shownRoles.length > 3 ? 'See all' : undefined} onAction={() => seeAll('roles')} />
+              <div className="list list--flush">
+                {shownRoles.slice(0, 3).map((o) => (
+                  <RoleRow key={o.id} o={o} />
+                ))}
+              </div>
+            </section>
+          )}
+          {!houses.length && !people.length && !projects.length && !shownRoles.length && (
+            <EmptyState title={`Nothing for "${query}"`} body="Try a name, a craft like colourist, a city or a film title." />
+          )}
+        </div>
+      ) : (
       <AnimatePresence mode="wait">
         <motion.div key={scope} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.16 }}>
           {scope === 'roles' && (
@@ -188,14 +254,14 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
 
           {scope === 'projects' && (
             <div className="posters">
-              {projects.map((c) => (
-                <div key={c.id} className="poster-item">
-                  <Photo media={c.media} className="poster" />
-                  <p className="item-title">{c.title}</p>
+              {projects.map((w) => (
+                <Pressable key={w.id} className="poster-item" onClick={() => push({ name: 'work', id: w.id })} scale={0.97}>
+                  <Photo media={w.media} className="poster" />
+                  <p className="item-title">{w.title}</p>
                   <p className="meta">
-                    {org(c.orgId).name} <Verified size={12} />
+                    {org(w.orgIds[0]).name} <Verified size={12} />
                   </p>
-                </div>
+                </Pressable>
               ))}
               {!projects.length && <EmptyState title="No projects found" />}
             </div>
@@ -204,6 +270,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
           {scope === 'posts' && (posts.length ? <div className="list">{posts.map((p) => <PostCard key={p.id} post={p} />)}</div> : <EmptyState title="No posts yet" />)}
         </motion.div>
       </AnimatePresence>
+      )}
 
       <Sheet open={filterOpen} onClose={() => setFilterOpen(false)} title="Filters">
         <div className="stack">

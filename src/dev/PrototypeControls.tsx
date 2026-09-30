@@ -3,7 +3,7 @@ import { Toggle } from '../ui/primitives';
 
 /** Evaluation panel outside the phone. Not part of the product. */
 export function PrototypeControls() {
-  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing } = useStore();
+  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile } = useStore();
   const rows: { key: keyof typeof scenario; label: string }[] = [
     { key: 'newUser', label: 'New user' },
     { key: 'loading', label: 'Slow network' },
@@ -23,9 +23,28 @@ export function PrototypeControls() {
         </button>
       </div>
       <div className="proto-seg">
-        <button className={acting === 'konark' ? 'is-on' : ''} onClick={() => setActing('konark')}>
-          Konark Pictures · acting for the house (exploration)
+        <button className={acting === 'konark' ? 'is-on' : ''} onClick={() => { switchViewer('kiran'); setActing('konark'); }}>
+          Kiran, acting for Konark
         </button>
+        <button className={acting === 'tidewater' ? 'is-on' : ''} onClick={() => { switchViewer('kiran'); setActing('tidewater'); }}>
+          Kiran, acting for Tidewater
+        </button>
+      </div>
+      <p className="proto-h">House Home (hypotheses)</p>
+      <div className="proto-seg">
+        {([['slate', 'A · Slate'], ['pulse', 'B · Pulse'], ['queue', 'C · Queue']] as const).map(([id, label]) => (
+          <button key={id} className={houseHome === id ? 'is-on' : ''} onClick={() => setHouseHome(id)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="proto-h">House profile order</p>
+      <div className="proto-seg">
+        {([['work', 'A · Work first'], ['hiring', 'B · Hiring first']] as const).map(([id, label]) => (
+          <button key={id} className={houseProfile === id ? 'is-on' : ''} onClick={() => setHouseProfile(id)}>
+            {label}
+          </button>
+        ))}
       </div>
       <p className="proto-h">Visual direction</p>
       <div className="proto-seg">

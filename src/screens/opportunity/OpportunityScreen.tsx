@@ -23,7 +23,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id }: { id: string }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, showToast, setHero } = useStore();
+  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting } = useStore();
   const o = findOpportunity(id, userCollabs);
   const [scrollY, setScrollY] = useState(0);
   const tint = useImageTint(o?.media);
@@ -48,7 +48,7 @@ export function OpportunityScreen({ id }: { id: string }) {
   }
 
   const author = o.authorId ? person(o.authorId) : null;
-  const mine = o.authorId === viewer.id;
+  const mine = o.authorId === viewer.id || (!!o.orgId && o.orgId === acting);
   const response = responses[o.id];
   const interested = interestsSent[o.id] !== undefined;
   const received = interestsReceived.filter((i) => i.opportunityId === o.id).length;
@@ -115,7 +115,7 @@ export function OpportunityScreen({ id }: { id: string }) {
             {kindLabel[o.kind]} · {o.projectType.split(' · ')[0]}
           </p>
           <h1 className="large-title">{o.role}</h1>
-          <Pressable className="detail-by" onClick={() => (author ? push({ name: 'profile', id: author.id }) : showToast({ text: 'Production page' }))} scale={0.98}>
+          <Pressable className="detail-by" onClick={() => (author ? push({ name: 'profile', id: author.id }) : push({ name: 'org', id: o.orgId! }))} scale={0.98}>
             <Byline o={o} />
             <span className="meta">· {o.project}</span>
           </Pressable>
@@ -162,7 +162,7 @@ export function OpportunityScreen({ id }: { id: string }) {
 
           <p className="meta detail-trust">
             Ana never charges to apply or audition.{' '}
-            <button className="link link--small" onClick={() => showToast({ text: 'Reported. Case A-20931' })}>
+            <button className="link link--small" onClick={() => openSheet({ name: 'report', subject: `${o.role} · ${o.project}` })}>
               Report
             </button>
           </p>
@@ -174,7 +174,7 @@ export function OpportunityScreen({ id }: { id: string }) {
           <ChevronLeft size={24} />
         </IconButton>
         <span className="flex" />
-        <IconButton label="Share" className="icon-btn--float" onClick={() => showToast({ text: 'Link copied' })}>
+        <IconButton label="Share" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: `${o.role} · ${o.project}` })}>
           <Share size={18} />
         </IconButton>
         <span className="save-float">

@@ -559,6 +559,14 @@ export const interests: Record<string, Interest[]> = {
     { id: 'i3', personId: 'omar', opportunityId: 'o-kiran-ac', time: '1d' },
   ],
   tara: [],
+  /* The house reviews people who responded to its roles with the same interest model as individuals. */
+  konark: [
+    { id: 'k1', personId: 'vikram', opportunityId: 'o-neela-dop', note: 'Shot Monsoon Letters with your team. Araku in the rain is exactly my kind of light.', time: '1h' },
+    { id: 'k2', personId: 'anvi', opportunityId: 'o-neela-dop', note: 'Two features on available light, reel attached to my profile.', time: '3h' },
+    { id: 'k3', personId: 'raghu', opportunityId: 'o-neela-dop', time: '6h' },
+    { id: 'k4', personId: 'dev', opportunityId: 'o-neela-journalist', note: 'Free for the full schedule.', time: '1d' },
+  ],
+  tidewater: [],
 };
 
 export const notifications: Record<string, Notification[]> = {
