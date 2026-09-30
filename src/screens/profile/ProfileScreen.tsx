@@ -1,5 +1,6 @@
 import { Ban, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
 import { workIdForTitle, works } from '../../data/works';
+import { world, project as wproject, publicName } from '../../state/world';
 import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
@@ -16,12 +17,20 @@ function derive(p: Person) {
   const fromWorks: Credit[] = works.flatMap((w) =>
     w.credits.filter((c) => c.personId === p.id).map((c) => ({ id: `${w.id}-${p.id}`, title: w.title, year: w.year, role: c.role, department: c.dept, orgId: w.orgIds[0], format: w.format.split(' · ')[0], status: 'Released' as const, media: w.media })),
   );
-  const credits: Credit[] =
+  // Accepted credits on projects the production has shared. Accepted but unshared stays private.
+  const fromWorld: Credit[] = world.credits
+    .filter((c) => c.personId === p.id && c.status === 'accepted' && wproject(c.projectId)?.shared)
+    .map((c) => {
+      const w = wproject(c.projectId)!;
+      return { id: c.id, title: publicName(w), year: '2026', role: c.line, department: c.dept, orgId: w.houseId!, format: w.format, status: 'Filming' as const, media: w.artwork ?? seed.cameraRoll[0] };
+    });
+  const base: Credit[] =
     seed.credits[p.id] ??
     (fromWorks.length ? fromWorks : null) ??
     events
       .filter((e) => e.kind === 'credit')
       .map((e) => ({ id: e.id, title: e.title!, year: '2025', role: e.detail!, department: '', orgId: e.orgId!, format: 'Feature film', status: 'Released' as const, media: e.media?.[0] ?? seed.portfolio.kiran[1] }));
+  const credits = [...fromWorld, ...base];
   const work: Media[] = seed.portfolio[p.id] ?? events.flatMap((e) => (e.kind !== 'credit' ? e.media ?? [] : []));
   return { credits, work, projects: seed.projects[p.id] ?? [], about: seed.about[p.id] };
 }
@@ -247,12 +256,46 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </section>
         )}
 
+        {own && (() => {
+          const mine = world.associations.filter((a) => a.personId === viewer.id && a.status !== 'removed');
+          if (!mine.length) return null;
+          return (
+            <section className="section section--flush">
+              <SectionHeader title="Projects you're on" />
+              <p className="meta ph-note">
+                <Lock size={11} /> Only you and each production see these. They aren't credits.
+              </p>
+              <div className="list list--flush">
+                {mine.map((a) => {
+                  const w = wproject(a.projectId)!;
+                  const c = [...world.credits].reverse().find((x) => x.associationId === a.id);
+                  return (
+                    <PressCard key={a.id} className="prow" onPress={() => push({ name: 'association', id: a.id })} scale={0.99}>
+                      <span className="ph-initial">
+                        <Lock size={14} />
+                      </span>
+                      <div className="prow-text">
+                        <p className="item-title">{w.workingTitle}</p>
+                        <p className="meta">
+                          {a.workingRole} · {w.houseId ? org(w.houseId).name : 'Independent'}
+                        </p>
+                        {c?.status === 'accepted' && !w.shared && <p className="meta">Credit accepted · public when the project is shared</p>}
+                        {a.status === 'flagged' && <p className="meta accent">You said this isn't right</p>}
+                      </div>
+                    </PressCard>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
+
         <section className="section section--flush">
           <SectionHeader title="Credits" />
           {credits.length ? (
             <div className="rail">
               {credits.map((c) => (
-                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = workIdForTitle(c.title); if (wid) push({ name: 'work', id: wid }); else if (own) openSheet({ name: 'reportCredit', title: c.title }); }} aria-label={c.title}>
+                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = workIdForTitle(c.title) ?? world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); else if (own) openSheet({ name: 'reportCredit', title: c.title }); }} aria-label={c.title}>
                   <Photo media={c.media} className="rail-poster" showPlay={false} />
                   <p className="item-title">{c.title}</p>
                   <p className="meta">{c.role}</p>

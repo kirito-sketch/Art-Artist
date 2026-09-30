@@ -2,6 +2,7 @@ import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
 import { isLive, worksForOrg, type Work } from '../../data/works';
+import { world, toPublicWork } from '../../state/world';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
@@ -20,7 +21,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  *   hiring  Open roles first. The page as a front door for hiring.
  */
 export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked } = useStore();
+  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked, roleStatus } = useStore();
   const o = org(id);
   const own = acting === id;
   const [scrollY, setScrollY] = useState(0);
@@ -34,10 +35,10 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   if (load.state === 'error' && !isTab) return <PageError what="page" retry={load.retry} />;
 
   if (!o) return <EmptyState title="Page unavailable" />;
-  const ws = worksForOrg(id);
+  const ws = [...world.projects.filter((p) => p.houseId === id).map(toPublicWork).filter((w): w is Work => !!w), ...worksForOrg(id)];
   const live = ws.filter(isLive);
   const made = ws.filter((w) => !isLive(w));
-  const roles = seed.opportunities.filter((x) => x.orgId === id);
+  const roles = [...world.roles.filter((r) => r.orgId === id && r.visibility === 'open' && !roleStatus[r.id]), ...seed.opportunities.filter((x) => x.orgId === id && !roleStatus[x.id])];
   // People who accepted a credit on this house's work. Earned, never curated by the house.
   const counts = new Map<string, number>();
   ws.forEach((w) => w.credits.forEach((c) => counts.set(c.personId, (counts.get(c.personId) ?? 0) + 1)));
@@ -165,7 +166,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                   <Button block variant="secondary" onClick={() => showToast({ text: 'House details are set up with Ana during onboarding' })}>
                     Edit page
                   </Button>
-                  <Button block variant="outline" onClick={() => push({ name: 'composeCollab', intent: 'looking' })}>
+                  <Button block variant="outline" onClick={() => openSheet({ name: 'pickProject' })}>
                     Open a role
                   </Button>
                 </>

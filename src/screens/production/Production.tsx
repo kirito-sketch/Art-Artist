@@ -6,6 +6,7 @@ import { isLive, work, worksForOrg, type Work } from '../../data/works';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { world, publicName } from '../../state/world';
 
 /*
  * EXPLORATION, not confirmed architecture. See docs/PRODUCTION_HOUSE_EXPLORATION.md.
@@ -61,7 +62,7 @@ function useSignals(house: string) {
 }
 
 function HouseTop() {
-  const { acting, openSheet, showToast, notifications } = useStore();
+  const { acting, openSheet, notifications } = useStore();
   const house = org(acting);
   const unread = notifications.some((n) => n.unread && n.forId === acting);
   return (
@@ -80,7 +81,7 @@ function HouseTop() {
         <Bell size={21} />
         {unread && <span className="tab-dot ph-bell-dot" />}
       </IconButton>
-      <IconButton label="New project" onClick={() => showToast({ text: 'Creating a project is not designed yet' })}>
+      <IconButton label="New project" onClick={() => openSheet({ name: 'newProject' })}>
         <Plus size={22} />
       </IconButton>
     </header>
@@ -113,7 +114,7 @@ function SlateHome() {
             <Signals w={lead} interested={interestFor(lead).length} />
           </div>
         </PressCard>
-      ) : (
+      ) : world.projects.some((p) => p.houseId === acting) ? null : (
         <EmptyHouse />
       )}
       <Around />
@@ -137,12 +138,12 @@ function Signals({ w, interested }: { w: Work; interested: number }) {
 }
 
 function EmptyHouse() {
-  const { acting, showToast } = useStore();
+  const { acting, openSheet } = useStore();
   return (
     <div className="house-empty">
       <p className="title-2">Nothing in production</p>
       <p className="meta">Start a project when you're ready. {org(acting).name}'s past work already shows on your page.</p>
-      <Button onClick={() => showToast({ text: 'New project: a title is enough to start' })}>Start a project</Button>
+      <Button onClick={() => openSheet({ name: 'newProject' })}>Start a project</Button>
     </div>
   );
 }
@@ -206,6 +207,19 @@ function Slate({ works, compact }: { works: Work[]; compact?: boolean }) {
     <section className="section">
       <SectionHeader title="Our slate" />
       <div className="rail">
+        {world.projects
+          .filter((p) => p.houseId === acting)
+          .map((p) => (
+            <Pressable key={p.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'hproject', id: p.id })}>
+              {p.artwork ? (
+                <Photo media={p.artwork} className={`rail-poster ${compact ? 'rail-poster--s' : ''}`} showPlay={false} />
+              ) : (
+                <span className={`rail-poster ph-noposter ${compact ? 'rail-poster--s' : ''}`}>{p.shared ? p.workingTitle[0] : <Lock size={20} />}</span>
+              )}
+              <p className="item-title">{p.workingTitle}</p>
+              <p className="meta">{p.shared ? `Shared as ${publicName(p)}` : 'Only your house sees this'}</p>
+            </Pressable>
+          ))}
         {works.map((w) => (
           <Pressable key={w.id} className="rail-item" scale={0.97} onClick={() => push({ name: isLive(w) || PRIVATE[w.id] ? 'project' : 'work', id: w.id })}>
             <Photo media={w.media} className={`rail-poster ${compact ? 'rail-poster--s' : ''}`} showPlay={false} />

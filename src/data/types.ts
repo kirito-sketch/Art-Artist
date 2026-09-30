@@ -183,7 +183,7 @@ export interface Notification {
   actorId: string;
   time: string;
   unread: boolean;
-  route?: { name: 'conversation' | 'profile' | 'opportunity' | 'project'; id: string };
+  route?: { name: 'conversation' | 'profile' | 'opportunity' | 'project' | 'hproject' | 'association'; id: string };
   /** The organisation this belongs to. Absent means it's for the person. */
   forId?: string;
 }

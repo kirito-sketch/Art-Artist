@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
+import { party, person } from './selectors';
+import { world, wid, publicName, project as wproject, type Association, type Format, type HouseProject } from './world';
 import type { Conversation, Credit, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
 
 /* ------------------------------------------------------------ navigation */
@@ -17,6 +19,8 @@ export type Route =
   | { name: 'project'; id: string }
   | { name: 'work'; id: string }
   | { name: 'settings' }
+  | { name: 'hproject'; id: string }
+  | { name: 'association'; id: string }
   | { name: 'org'; id: string }
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
@@ -37,7 +41,9 @@ export type Sheet =
   | { name: 'report'; subject: string; partyId?: string }
   | { name: 'block'; id: string }
   | { name: 'editRole'; id: string }
-  | { name: 'closeRole'; id: string };
+  | { name: 'closeRole'; id: string }
+  | { name: 'newProject' }
+  | { name: 'pickProject' };
 
 export interface Scenario {
   newUser: boolean;
@@ -117,6 +123,11 @@ function useStoreValue() {
   const [roleEdits, setRoleEdits] = useState<Record<string, Partial<Opportunity> & { changed?: string[] }>>({});
   const [roleStatus, setRoleStatus] = useState<Record<string, { state: 'filled' | 'closed'; reason: string }>>({});
   const failedOnce = useRef(new Set<string>());
+  /** Bumped whenever the shared world changes, so every screen re-reads it. */
+  const [worldVersion, setWorldVersion] = useState(0);
+  const bump = useCallback(() => setWorldVersion((v) => v + 1), []);
+  /** Test state: the signed-in member holds credit authority for the house. */
+  const [canIssue, setCanIssue] = useState(true);
   const [following, setFollowing] = useState<string[]>(DEFAULT_FOLLOWING);
   const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
@@ -436,10 +447,38 @@ function useStoreValue() {
     setHomeLayout,
     acting,
     memberships,
-    pendingCredits,
+    pendingCredits: [
+      ...world.credits
+        .filter((c) => c.personId === viewer.id && (c.status === 'proposed' || c.status === 'correction'))
+        .map((c) => {
+          const p = wproject(c.projectId)!;
+          return { id: c.id, title: p.workingTitle, year: '2026', role: c.line, department: c.dept, orgId: p.houseId ?? 'konark', format: p.format, status: 'Filming' as const, media: p.artwork ?? seed.cameraRoll[0], correction: c.status === 'correction' };
+        }),
+      ...pendingCredits,
+    ],
     acceptedCredits,
     creditBusy,
     acceptCredit: function accept(cid: string) {
+      const wc = world.credits.find((x) => x.id === cid);
+      if (wc) {
+        setCreditBusy(cid);
+        attempt(
+          `credit-${cid}`,
+          () => {
+            setCreditBusy(null);
+            wc.status = 'accepted';
+            const p = wproject(wc.projectId)!;
+            world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: viewer.id, text: `${person(viewer.id).name} accepted the credit on ${p.workingTitle}: ${wc.line}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+            bump();
+            showToast({ text: p.shared ? `Credit accepted. It now shows on your profile and on ${publicName(p)}.` : `Credit accepted. It becomes public when ${party(p.houseId!)!.name} shares the project.`, tone: 'success' });
+          },
+          () => {
+            setCreditBusy(null);
+            showToast({ text: "Couldn't accept the credit. Nothing changed.", tone: 'error', action: { label: 'Retry', run: () => accept(cid) } });
+          },
+        );
+        return;
+      }
       const c = pendingCredits.find((x) => x.id === cid);
       if (!c) return;
       setCreditBusy(cid);
@@ -464,7 +503,18 @@ function useStoreValue() {
     editRole: (id: string, patch: Partial<Opportunity>, changed: string[]) => setRoleEdits((r) => ({ ...r, [id]: { ...r[id], ...patch, changed: [...new Set([...(r[id]?.changed ?? []), ...changed])] } })),
     closeRole: (id: string, state: 'filled' | 'closed', reason: string) => setRoleStatus((r) => ({ ...r, [id]: { state, reason } })),
     reopenRole: (id: string) => setRoleStatus((r) => { const n = { ...r }; delete n[id]; return n; }),
-    requestCorrection: (cid: string) => setPendingCredits((xs) => xs.map((x) => (x.id === cid ? { ...x, correction: true } : x))),
+    requestCorrection: (cid: string, reason?: string) => {
+      const wc = world.credits.find((x) => x.id === cid);
+      if (wc) {
+        wc.status = 'correction';
+        wc.note = reason;
+        const p = wproject(wc.projectId)!;
+        world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: viewer.id, text: `${person(viewer.id).name} asked to correct a credit on ${p.workingTitle}: ${reason ?? ''}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+        bump();
+        return;
+      }
+      setPendingCredits((xs) => xs.map((x) => (x.id === cid ? { ...x, correction: true } : x)));
+    },
     /** Switching identity keeps you on the tab you were on, so the change is visible where you made it. */
     setActing: (a: string, keepTab = false, keepStack = false) => {
       setActing(a);
@@ -492,8 +542,16 @@ function useStoreValue() {
     },
     profileVersion,
     bumpProfile: () => setProfileVersion((v) => v + 1),
-    markNotificationsReadWhere: (ids: string[]) => setNotifications((ns) => ns.map((n) => (ids.includes(n.id) ? { ...n, unread: false } : n))),
-    markNotificationRead: (id: string) => setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, unread: false } : n))),
+    markNotificationsReadWhere: (ids: string[]) => {
+      world.notifications.forEach((n) => ids.includes(n.id) && (n.unread = false));
+      bump();
+      setNotifications((ns) => ns.map((n) => (ids.includes(n.id) ? { ...n, unread: false } : n)));
+    },
+    markNotificationRead: (id: string) => {
+      const w = world.notifications.find((n) => n.id === id);
+      if (w) (w.unread = false), bump();
+      setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+    },
     look,
     setLook,
     setHero,
@@ -523,17 +581,114 @@ function useStoreValue() {
       showToast({ text: 'Response withdrawn', action: { label: 'Undo', run: () => setResponses((r) => ({ ...r, [id]: prev })) } });
     },
     interestsSent,
-    sendInterest,
-    withdrawInterest,
+    sendInterest: (id: string, note: string, answers?: string[]) => {
+      // Roles created in the prototype reach their house through the shared world.
+      if (world.roles.some((r) => r.id === id)) {
+        world.interests = world.interests.filter((i) => !(i.opportunityId === id && i.personId === viewer.id));
+        world.interests.push({ id: wid('wi'), personId: viewer.id, opportunityId: id, note: note || undefined, answers: answers?.some(Boolean) ? answers : undefined, time: 'now' });
+        const r = world.roles.find((x) => x.id === id)!;
+        if (r.orgId) world.notifications.unshift({ id: wid('wn'), forId: r.orgId, kind: 'interest', actorId: viewer.id, text: `${person(viewer.id).name} is interested in ${r.role} on ${r.project}`, time: 'now', unread: true, route: { name: 'hproject', id: r.projectId } });
+        bump();
+      }
+      sendInterest(id, note);
+    },
+    withdrawInterest: (id: string) => {
+      world.interests.forEach((i) => i.opportunityId === id && i.personId === viewer.id && (i.withdrawn = true));
+      bump();
+      withdrawInterest(id);
+    },
     availability,
     setAvailability,
     conversations,
     startConversation,
     sendMessage,
     markConversationRead,
-    interestsReceived,
-    dismissInterest,
-    notifications,
+    interestsReceived: [
+      ...interestsReceived,
+      ...(acting !== 'self' ? world.interests.filter((i) => !i.dismissed && world.roles.find((r) => r.id === i.opportunityId)?.orgId === acting) : []),
+    ],
+    dismissInterest: (id: string) => {
+      const w = world.interests.find((i) => i.id === id);
+      if (w) (w.dismissed = true), bump();
+      else dismissInterest(id);
+    },
+    notifications: [...world.notifications.filter((n) => n.toPersonId === viewer.id || (!!n.forId && memberships.includes(n.forId))), ...notifications],
+    worldVersion,
+    canIssue,
+    setCanIssue,
+    createProject: (d: { workingTitle: string; format: Format; languages: string[] }) => {
+      const p: HouseProject = { id: wid('hp'), ...(acting !== 'self' ? { houseId: acting } : { ownerId: viewer.id }), workingTitle: d.workingTitle, format: d.format, languages: d.languages, stage: 'Development', shared: false };
+      world.projects.unshift(p);
+      bump();
+      return p.id;
+    },
+    updateProject: (id: string, patch: Partial<HouseProject>) => {
+      const p = wproject(id);
+      if (!p) return;
+      Object.assign(p, patch);
+      world.roles.forEach((r) => r.projectId === id && ((r.project = publicName(p)), (r.stage = p.stage), p.artwork && (r.media = p.artwork)));
+      bump();
+    },
+    addRole: (projectId: string, f: { role: string; about: string; dates: string; city: string; paid: boolean; compensation: string; questions: string[]; visibility: 'private' | 'open' }) => {
+      const p = wproject(projectId)!;
+      const r = {
+        id: wid('wr'), projectId, visibility: f.visibility, kind: 'crew' as const, role: f.role, project: publicName(p), projectType: `${p.format} · ${p.languages.join(', ')}`,
+        ...(p.houseId ? { orgId: p.houseId } : { authorId: p.ownerId }),
+        city: f.city || 'To be confirmed', dates: f.dates || 'Dates to be confirmed', compensation: f.paid ? f.compensation || 'Paid' : 'Unpaid', paid: f.paid, closesInDays: 14, stage: p.stage, language: p.languages.join(', '),
+        about: f.about, lookingFor: [], questions: f.questions.filter(Boolean).slice(0, 3), match: [], forCrafts: [], media: p.artwork ?? seed.cameraRoll[(world.roles.length + 3) % seed.cameraRoll.length], postedAgo: 'now',
+      };
+      world.roles.unshift(r);
+      bump();
+      return r.id;
+    },
+    setRoleVisibility: (id: string, v: 'private' | 'open') => {
+      const r = world.roles.find((x) => x.id === id);
+      if (r) (r.visibility = v), (r.postedAgo = 'now'), bump();
+    },
+    addToProject: (projectId: string, who: { personId?: string; pending?: { name: string; phone: string } }, workingRole: string, dept: string, fromRoleId?: string) => {
+      const p = wproject(projectId)!;
+      const a: Association = { id: wid('wa'), projectId, ...who, workingRole, dept, fromRoleId, status: 'added' };
+      world.associations.push(a);
+      const owner = p.houseId ? party(p.houseId)!.name : person(p.ownerId!).name;
+      // Transparency, not permission: the person is told privately. There is nothing to accept.
+      if (who.personId) world.notifications.unshift({ id: wid('wn'), toPersonId: who.personId, kind: 'credit', actorId: p.houseId ?? p.ownerId!, text: `${owner} added you to ${p.workingTitle} as ${workingRole}`, time: 'now', unread: true, route: { name: 'association', id: a.id } });
+      bump();
+      return a.id;
+    },
+    editAssociation: (id: string, patch: Partial<Association>) => {
+      const a = world.associations.find((x) => x.id === id);
+      if (!a) return;
+      Object.assign(a, patch);
+      if (a.status === 'flagged' && (patch.workingRole || patch.dept)) a.status = 'added';
+      bump();
+    },
+    flagAssociation: (id: string) => {
+      const a = world.associations.find((x) => x.id === id);
+      if (!a) return;
+      a.status = 'flagged';
+      const p = wproject(a.projectId)!;
+      if (p.houseId) world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: a.personId!, text: `${person(a.personId!).name} says being on ${p.workingTitle} as ${a.workingRole} isn't right`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+      bump();
+    },
+    issueCredit: (associationId: string, line: string, dept: string) => {
+      const a = world.associations.find((x) => x.id === associationId)!;
+      const p = wproject(a.projectId)!;
+      const status = canIssue ? 'proposed' : 'prepared';
+      world.credits = world.credits.filter((c) => c.associationId !== associationId || c.status === 'accepted');
+      const c = { id: wid('wc'), projectId: a.projectId, associationId, personId: a.personId!, line, dept, status } as const;
+      world.credits.push({ ...c });
+      if (status === 'proposed') world.notifications.unshift({ id: wid('wn'), toPersonId: a.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} issued you a credit on ${p.workingTitle}: ${line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'profile', id: a.personId! } });
+      bump();
+      return status;
+    },
+    proposePrepared: (creditId: string) => {
+      const c = world.credits.find((x) => x.id === creditId);
+      if (!c) return;
+      const p = wproject(c.projectId)!;
+      c.status = 'proposed';
+      world.notifications.unshift({ id: wid('wn'), toPersonId: c.personId, kind: 'credit', actorId: p.houseId!, text: `${party(p.houseId!)!.name} issued you a credit on ${p.workingTitle}: ${c.line}. Accept it to make it official.`, time: 'now', unread: true, route: { name: 'profile', id: c.personId } });
+      bump();
+    },
     markNotificationsRead,
     userPosts,
     userCollabs,

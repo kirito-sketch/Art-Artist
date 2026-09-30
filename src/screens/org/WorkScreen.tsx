@@ -1,7 +1,8 @@
 import { ChevronLeft, MoreHorizontal, Share } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
-import { work } from '../../data/works';
+import { work as staticWork } from '../../data/works';
+import { world, project as wproject, toPublicWork } from '../../state/world';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
@@ -14,8 +15,9 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  * is hiring. The house's private workspace is a different screen and a different context.
  */
 export function WorkScreen({ id }: { id: string }) {
-  const { pop, push, openSheet, viewer, acting, setHero } = useStore();
-  const w = work(id);
+  const { pop, push, openSheet, viewer, acting, setHero, roleStatus } = useStore();
+  const wp = wproject(id);
+  const w = staticWork(id) ?? (wp ? toPublicWork(wp) : undefined);
   const [scrollY, setScrollY] = useState(0);
   useEffect(() => {
     setHero('work', scrollY < 300);
@@ -38,7 +40,7 @@ export function WorkScreen({ id }: { id: string }) {
     );
   }
 
-  const roles = seed.opportunities.filter((o) => o.project === w.title);
+  const roles = [...seed.opportunities.filter((o) => o.project === w.title), ...world.roles.filter((r) => r.projectId === id && r.visibility === 'open')].filter((o) => !roleStatus[o.id]);
   const depts = [...new Set(w.credits.map((c) => c.dept))];
   const mine = acting === 'self' ? w.credits.find((c) => c.personId === viewer.id) : undefined;
   const isLead = acting !== 'self' && w.orgIds.includes(acting);
@@ -48,7 +50,7 @@ export function WorkScreen({ id }: { id: string }) {
     <div className="screen screen--hero" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="whero">
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
-          <Photo media={w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />
+          {w.media.id === 'ph' ? <div className="whero-photo whero-empty" /> : <Photo media={w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />}
         </div>
         <div className="whero-text">
           <p className="whero-kicker">
@@ -110,7 +112,7 @@ export function WorkScreen({ id }: { id: string }) {
           </div>
         )}
         {isLead && (
-          <Button block variant="secondary" onClick={() => push({ name: 'project', id: w.id })}>
+          <Button block variant="secondary" onClick={() => push({ name: wp ? 'hproject' : 'project', id: w.id })}>
             Open in your workspace
           </Button>
         )}

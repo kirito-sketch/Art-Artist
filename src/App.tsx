@@ -16,6 +16,7 @@ import { ProductionHome, ProjectScreen } from './screens/production/Production';
 import { WorkScreen } from './screens/org/WorkScreen';
 import { OrgScreen } from './screens/org/OrgScreen';
 import { SettingsScreen } from './screens/settings/Settings';
+import { AssociationScreen, HouseProjectScreen } from './screens/production/Create';
 import { SheetHost } from './screens/sheets/Sheets';
 import { networkFor } from './state/selectors';
 import { StoreProvider, useStore, type Route } from './state/store';
@@ -58,6 +59,10 @@ function RouteView({ r }: { r: Route }) {
       return <OrgScreen id={r.id} />;
     case 'settings':
       return <SettingsScreen />;
+    case 'hproject':
+      return <HouseProjectScreen id={r.id} />;
+    case 'association':
+      return <AssociationScreen id={r.id} />;
   }
 }
 

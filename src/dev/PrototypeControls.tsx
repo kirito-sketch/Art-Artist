@@ -34,7 +34,7 @@ function Choice<T extends string>({ title, note, value, onChange, options }: { t
  * the look. Test states are tucked away because they are for checking edge cases, not reviewing.
  */
 export function PrototypeControls() {
-  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel } = useStore();
+  const { viewer, switchViewer, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, acting, setActing, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel, canIssue, setCanIssue } = useStore();
   const persona: Persona = acting === 'konark' || acting === 'tidewater' ? acting : (viewer.id as Persona);
   const isHouse = persona === 'konark' || persona === 'tidewater';
   const pick = (p: Persona) => {
@@ -158,6 +158,12 @@ export function PrototypeControls() {
         </div>
       </details>
 
+      {isHouse && (
+        <div className="proto-row proto-row--solo">
+          <span>Kiran can issue credits</span>
+          <Toggle on={canIssue} onChange={setCanIssue} label="Kiran can issue credits" />
+        </div>
+      )}
       <details className="proto-more" open={activeStates > 0}>
         <summary>Test states{activeStates ? ` · ${activeStates} on` : ''}</summary>
         {rows.map((r) => (

@@ -1922,3 +1922,23 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 
 .toast-action { color: inherit; }
 .inline-error, .field-error { color: color-mix(in srgb, #d6453a 75%, var(--text)); }
+
+/* Creation flows */
+.field-hint { margin: 6px 2px 0; font-size: 12.5px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field--stack { margin-bottom: 8px; }
+.chips--tight { margin-top: 8px; }
+.ws-visibility { display: inline-flex; align-items: center; gap: 6px; }
+.ws-pad { margin-left: var(--gutter); margin-right: var(--gutter); }
+.ws-announce { margin: 4px var(--gutter) 8px; padding: 16px; border-radius: 16px; border: 1px dashed color-mix(in srgb, var(--text) 25%, transparent); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.ph-state--added { color: var(--text-2, #666); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.art-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.art-thumb { aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; border: 0; padding: 0; background: none; outline: 2px solid transparent; outline-offset: 2px; }
+.art-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.art-thumb.is-on { outline-color: var(--accent); }
+.share-lists { display: grid; gap: 14px; }
+.ap-who, .credit-preview, .assoc-card { display: flex; gap: 12px; align-items: center; }
+.ap-who > span:last-child, .credit-preview > span:last-child, .assoc-card > span:last-child { display: flex; flex-direction: column; }
+.credit-preview { padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--text) 5%, transparent); }
+.assoc-card { margin: 0 var(--gutter) 12px; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--text) 5%, transparent); }
+.proto-row--solo { margin-top: 10px; }

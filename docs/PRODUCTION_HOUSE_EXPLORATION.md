@@ -117,10 +117,10 @@ Each is a separate question. None is filled in silently.
 | Question | Current prototype | Status |
 |---|---|---|
 | Editing the house page | "Edit page" says it isn't designed yet | Open |
-| Creating a project (production side) | "+" says it isn't designed yet | Open |
-| Opening a role as a house | Uses the collaboration composer, posted as the house | Placeholder; needs its own look at what a house role must say |
-| Adding people to a project (engagement) | Not built | Open. Must stay credits-in-progress, never crew management |
-| Publishing credits at wrap | Not built | Open |
+| Creating a project (production side) | Built: 3 fields, private by default, workspace fills in over time | Built (see CREATION_FLOWS.md) |
+| Opening a role as a house | Built: role belongs to a project; private or open; one object through filled or closed | Built |
+| Adding people to a project | Built: private association, person told, "This isn't right" | Built |
+| Issuing credits | Built for one person (prepared / proposed / accepted / correction). Bulk wrap pass deliberately not built | Single built; bulk open |
 | Co-production credit authority | Not built | Validate |
 | Member permissions | Settings shows owner, members, and a separate "can issue credits" grant, read-only | Hypothesis. Validate with houses |
 | Inbox separated by identity | Conversations remember which identity started them and say "Replying as"; one Inbox | Validate |

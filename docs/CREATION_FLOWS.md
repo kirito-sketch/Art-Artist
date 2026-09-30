@@ -1,4 +1,6 @@
-# House creation flows: proposal (not built)
+# House creation flows
+
+**Status: built (Version 17).** Test in the prototype: pick Konark in the panel, then Tara, then Konark again; the shared records survive switching.
 
 For review before building. Order: **Create project → Open a role → Add a person to the project → Issue their credit later.**
 
@@ -104,3 +106,21 @@ The Add sheet offers two buttons: **Add to project** and **Add and issue credit*
 - Whether houses create projects before announcing them.
 - People not yet on Ana: how long a pending association or credit waits, and what they see when they join.
 - Should the person be told when they're added to a project, or only when a credit is proposed? (Current proposal: told, privately, so a wrong association can be removed early.)
+
+## Decisions from review (built)
+
+- **Notify for transparency, not permission.** When a production adds someone: "Konark Pictures added you to Project X as Colourist", with **View** and **This isn't right**. There is no Accept. "This isn't right" marks the association as needing review and tells the production, which can correct the working role (this clears the flag) or remove the person. Nothing about it becomes public.
+- **Added is never styled like a credit.** People see private associations in "Projects you're on" (lock icon, "They aren't credits"), separate from "Waiting for you" (credits to accept).
+- **Working role stays editable** while someone is only added. The credit line is written when the credit is issued.
+- **Multilingual:** projects hold a list of languages, and creation allows several.
+- **Share on Ana** lists exactly what becomes public (title or "Untitled Telugu feature", format, languages, stage, production, logline and artwork if added, open roles, accepted credits) and what stays private (working title, people added, private roles, credits not yet accepted). Roles opened before sharing show as part of "Untitled Telugu feature".
+- **Not on Ana:** a private placeholder (name and phone) inside the project only. Not a profile, not searchable, not on the public page, and it can't be credited until the person joins. Linking it to a real account later is not designed.
+- **Credit authority:** without it, a member can *prepare* a credit ("Credit prepared"), and someone authorised issues it. The panel toggle "Kiran can issue credits" shows both paths. Who holds authority remains open.
+- **Independent projects** can be created and can have private associations. "Issue credit" isn't available: "Credits for independent projects aren't available yet."
+- **No bulk "Issue credits" pass yet.** It stays documented as a possible wrap-time tool once single credits are proven.
+
+## End-to-end story (tested)
+
+Konark creates private "Project Monsoon" → adds the role "Supporting · Sister", open on Ana (appears as "Untitled Telugu feature") → Tara shows interest with an optional answer → Konark is notified, closes the role as Filled through Ana, picks Tara, and adds her to the project (role prefilled) → Tara is told privately, with View and This isn't right → Konark issues the credit "Anjali (Sister)", Cast, with a preview → Konark shares the project as "Varsham" after seeing what becomes public → Tara accepts under Waiting for you → the credit appears on Tara's profile and on Varsham's public page, and Konark is notified.
+
+Also tested: Add and issue credit (two records), a credit prepared without authority, a person not on Ana, and "This isn't right" reaching the house.

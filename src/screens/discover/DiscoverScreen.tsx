@@ -3,6 +3,7 @@ import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newsp
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { works } from '../../data/works';
+import { world, toPublicWork } from '../../state/world';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
@@ -70,7 +71,7 @@ interface Filters {
 }
 
 export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s: Scope) => void }) {
-  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt } = useStore();
+  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion } = useStore();
   const [searchState, setSearchState] = useState<'ready' | 'loading' | 'error'>('ready');
   const [query, setQuery] = useState('');
   /** Typing shows results across everything; "See all" narrows to one kind and brings the tabs back. */
@@ -82,7 +83,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const [filterOpen, setFilterOpen] = useState(false);
 
   const q = query.trim().toLowerCase();
-  const roles = useMemo(() => [...userCollabs, ...seed.opportunities.filter((o) => o.authorId !== viewer.id)], [userCollabs, viewer.id]);
+  const roles = useMemo(() => [...world.roles.filter((r) => r.visibility === 'open'), ...userCollabs, ...seed.opportunities.filter((o) => o.authorId !== viewer.id)], [userCollabs, viewer.id, worldVersion]);
 
   const applyRoleFilters = (list: Opportunity[], f: Filters, k: typeof kind) =>
     list
@@ -99,7 +100,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
     .filter((p) => !blocked.includes(p.id))
     .filter((p) => (craft ? p.craft === craft || (craft === 'cinematographer' && p.craft === 'camera') : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
-  const projects = works.filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
+  const projects = [...world.projects.map(toPublicWork).filter((w): w is NonNullable<typeof w> => !!w), ...works].filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const houses = q ? seed.orgs.filter((o) => !blocked.includes(o.id) && `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q)) : [];
   const grouped = !!q && !narrowed;
   const runSearch = () => {

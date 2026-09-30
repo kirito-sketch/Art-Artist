@@ -128,9 +128,9 @@ const MEMBERS: Record<string, { name: string; role: string; credits: boolean; yo
 };
 
 function House({ id }: { id: string }) {
-  const { showToast, push } = useStore();
+  const { showToast, push, canIssue } = useStore();
   const o = org(id);
-  const members = MEMBERS[id] ?? [];
+  const members = (MEMBERS[id] ?? []).map((m) => (m.you ? { ...m, credits: canIssue } : m));
   return (
     <div className="settings">
       <Group title="Page">

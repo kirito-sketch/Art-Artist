@@ -1,11 +1,13 @@
-import { Ban, Check, CircleCheck, Flag, Link2, PenLine, Send, UserSearch } from 'lucide-react';
+import { Ban, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
 import { findOpportunity, firstName, org, party, person } from '../../state/selectors';
-import { Avatar, Button, EmptyState, Pressable, Row, Toggle } from '../../ui/primitives';
+import { Avatar, Button, EmptyState, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
+import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
+import { world } from '../../state/world';
 
 export function SheetHost() {
   const { sheet, closeSheet } = useStore();
@@ -48,6 +50,12 @@ export function SheetHost() {
       <Sheet open={is('report')} onClose={closeSheet} title="Report">
         {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} />}
       </Sheet>
+      <Sheet open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
+        <NewProjectForm />
+      </Sheet>
+      <Sheet open={is('pickProject')} onClose={closeSheet} title="Open a role">
+        <PickProject />
+      </Sheet>
       <Sheet open={is('editRole')} onClose={closeSheet} title="Edit role" size="tall">
         {sheet?.name === 'editRole' && <EditRole id={sheet.id} />}
       </Sheet>
@@ -64,12 +72,13 @@ export function SheetHost() {
 /* ------------------------------------------------------------------ Create */
 
 function CreateMenu() {
-  const { push, acting } = useStore();
+  const { push, acting, openSheet } = useStore();
   // Acting for a house: it posts updates and opens roles. It is never "available for work".
   if (acting !== 'self')
     return (
       <div className="group">
-        <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
+        <Row icon={<Plus size={22} />} label="New project" onPress={() => openSheet({ name: 'newProject' })} />
+        <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => openSheet({ name: 'pickProject' })} />
         <Row icon={<PenLine size={22} />} label={`Post as ${org(acting).name}`} onPress={() => push({ name: 'composePost' })} />
       </div>
     );
@@ -78,6 +87,7 @@ function CreateMenu() {
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
       <Row icon={<CircleCheck size={22} />} label="Available for work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
+      <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
     </div>
   );
 }
@@ -386,7 +396,7 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
           attempt(
             `correct-${title}`,
             () => {
-              if (creditId) requestCorrection(creditId);
+              if (creditId) requestCorrection(creditId, reason);
               closeSheet();
               showToast({ text: 'Sent to the production. Nothing is public until you accept.' });
             },
@@ -696,7 +706,33 @@ const CLOSE_REASONS: { state: 'filled' | 'closed'; label: string; tells: string 
 function CloseRole({ id }: { id: string }) {
   const { closeRole, closeSheet, showToast, interestsReceived } = useStore();
   const [pick, setPick] = useState<number | null>(null);
-  const waiting = interestsReceived.filter((i) => i.opportunityId === id).length;
+  const [step, setStep] = useState<'reason' | 'who' | 'add'>('reason');
+  const [who, setWho] = useState<string | null>(null);
+  const waiting = interestsReceived.filter((i) => i.opportunityId === id && !i.withdrawn);
+  const wr = world.roles.find((r) => r.id === id);
+  if (step === 'who')
+    return (
+      <div className="stack">
+        <p className="meta">Who did you choose? Everyone else who showed interest is told the role is filled.</p>
+        <div className="list list--flush">
+          {waiting.map((i) => (
+            <PressCard key={i.id} className="prow" onPress={() => { closeRole(id, 'filled', 'Filled through Ana'); setWho(i.personId); setStep('add'); }} scale={0.985}>
+              <Avatar party={person(i.personId)} size={40} />
+              <div className="prow-text">
+                <p className="item-title">{person(i.personId).name}</p>
+                <p className="meta">{person(i.personId).role}</p>
+              </div>
+            </PressCard>
+          ))}
+        </div>
+        <button className="link" onClick={() => { closeRole(id, 'filled', 'Filled through Ana'); closeSheet(); showToast({ text: 'Role marked as filled' }); }}>
+          Skip
+        </button>
+      </div>
+    );
+  if (step === 'add' && who && wr) {
+    return <AddPerson projectId={wr.projectId} preset={{ personId: who, role: wr.role, fromRoleId: id }} done={closeSheet} />;
+  }
   return (
     <div className="stack">
       <div className="group">
@@ -704,19 +740,21 @@ function CloseRole({ id }: { id: string }) {
           <Row key={r.label} label={r.label} onPress={() => setPick(i)} chevron={false} value={pick === i ? <Check size={18} className="accent" /> : undefined} />
         ))}
       </div>
-      <p className="meta">{waiting ? `${waiting} ${waiting === 1 ? 'person' : 'people'} who showed interest will be told the role is ${pick !== null ? CLOSE_REASONS[pick].tells.toLowerCase() : 'closed'}. ` : ''}The role stops appearing on Ana. You can reopen it.</p>
+      <p className="meta">{waiting.length ? `${waiting.length} ${waiting.length === 1 ? 'person' : 'people'} who showed interest will be told the role is ${pick !== null ? CLOSE_REASONS[pick].tells.toLowerCase() : 'closed'}. ` : ''}The role stops appearing on Ana.</p>
       <Button
         block
         size="l"
         disabled={pick === null}
         onClick={() => {
           const r = CLOSE_REASONS[pick!];
+          // Filled through Ana on a project role: choose the person, then offer to add them to the project.
+          if (pick === 0 && wr && waiting.length) return setStep('who');
           closeRole(id, r.state, r.label);
           closeSheet();
           showToast({ text: r.state === 'filled' ? 'Role marked as filled' : 'Role closed' });
         }}
       >
-        Close role
+        {pick === 0 && wr && waiting.length ? 'Continue' : 'Close role'}
       </Button>
     </div>
   );

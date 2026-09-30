@@ -1,13 +1,14 @@
 import * as seed from '../data/seed';
 import type { NetworkEvent, Opportunity, Org, Party, Person, Post, Viewer } from '../data/types';
 import type { Scenario } from './store';
+import { world } from './world';
 
 export const party = (id: string): Party | undefined => seed.parties[id];
 export const person = (id: string) => seed.parties[id] as Person;
 export const org = (id: string) => seed.parties[id] as Org;
 
 export function findOpportunity(id: string, userCollabs: Opportunity[] = []) {
-  return userCollabs.find((o) => o.id === id) ?? seed.opportunities.find((o) => o.id === id);
+  return userCollabs.find((o) => o.id === id) ?? seed.opportunities.find((o) => o.id === id) ?? world.roles.find((o) => o.id === id);
 }
 
 /** Opportunities the recommendation layer would return for this viewer. */
