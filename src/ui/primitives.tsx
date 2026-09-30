@@ -1,6 +1,6 @@
 import { motion, type HTMLMotionProps } from 'framer-motion';
 import { forwardRef, useState, type ReactNode } from 'react';
-import { BadgeCheck, ChevronRight, ImageOff, Play } from 'lucide-react';
+import { BadgeCheck, Check, ChevronRight, ImageOff, Play } from 'lucide-react';
 import type { Media, Party } from '../data/types';
 import { spring } from './motion';
 
@@ -48,7 +48,8 @@ export function PressCard({ scale = 0.98, className = '', onPress, children, ...
 /* ---------------------------------------------------------------- Button */
 
 type ButtonProps = HTMLMotionProps<'button'> & {
-  variant?: 'primary' | 'secondary' | 'plain' | 'danger' | 'outline' | 'light';
+  /** See docs/CTA_SYSTEM.md. primary = graphite; secondary (outline is the same) = raised with an edge; selected = tonal state; plain = tertiary; danger = destructive confirmation only; light = on media. */
+  variant?: 'primary' | 'secondary' | 'selected' | 'plain' | 'danger' | 'outline' | 'light';
   size?: 'l' | 'm' | 's';
   icon?: ReactNode;
   block?: boolean;
@@ -57,10 +58,33 @@ type ButtonProps = HTMLMotionProps<'button'> & {
 
 export function Button({ variant = 'primary', size = 'm', icon, block, loading, className = '', children, disabled, ...rest }: ButtonProps) {
   return (
-    <Pressable scale={0.96} className={`btn btn--${variant} btn--${size} ${block ? 'btn--block' : ''} ${className}`} disabled={disabled || loading} {...rest}>
+    <Pressable scale={0.96} className={`btn btn--${variant} btn--${size} ${block ? 'btn--block' : ''} ${className}`} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
       {loading ? <span className="spinner" aria-label="Loading" /> : icon}
       {children as ReactNode}
     </Pressable>
+  );
+}
+
+/**
+ * Follow is always a secondary action, everywhere: Follow (secondary) → Following (selected, with a
+ * check). One component so it can never drift between screens again (docs/CTA_SYSTEM.md).
+ */
+export function FollowButton({ on, onToggle, size = 's', block, name }: { on: boolean; onToggle: () => void; size?: 'm' | 's'; block?: boolean; name?: string }) {
+  return (
+    <Button
+      size={size}
+      block={block}
+      variant={on ? 'selected' : 'secondary'}
+      icon={on ? <Check size={size === 's' ? 14 : 16} strokeWidth={2.6} /> : undefined}
+      aria-pressed={on}
+      aria-label={name ? `${on ? 'Following' : 'Follow'} ${name}` : undefined}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+    >
+      {on ? 'Following' : 'Follow'}
+    </Button>
   );
 }
 

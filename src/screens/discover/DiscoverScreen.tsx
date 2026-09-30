@@ -1,15 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { PostGrid } from './PostGrid';
 import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newspaper, Palette, Scissors, Search, Shirt, SlidersHorizontal, Sparkles, Theater, Users, Video, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { discoverableProjects, discoverableRoles, searchableHouses, searchablePeople } from '../../domain/discovery';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
-import { org, person } from '../../state/selectors';
+import { discoverPosts, org, person } from '../../state/selectors';
 import { OfflineBanner } from '../../ui/chrome';
-import { Avatar, Button, Chip, EmptyState, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
+import { Avatar, Button, Chip, FollowButton, EmptyState, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { PostCard } from '../home/PostCard';
 import { RoleRow } from './RoleRow';
 
 export type Scope = 'roles' | 'people' | 'projects' | 'posts';
@@ -47,16 +47,7 @@ function PersonRow({ p }: { p: Person }) {
           {p.role} · {p.city}
         </p>
       </div>
-      <Button
-        size="s"
-        variant={on ? 'secondary' : 'outline'}
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFollow(p.id);
-        }}
-      >
-        {on ? 'Following' : 'Follow'}
-      </Button>
+      <FollowButton on={on} onToggle={() => toggleFollow(p.id)} name={p.name} />
     </PressCard>
   );
 }
@@ -111,11 +102,11 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
     setScope(sc);
     setNarrowed(true);
   };
-  const posts = [...userPosts, ...seed.posts.filter((p) => following.includes(p.authorId))].filter((p) => (q ? p.text.toLowerCase().includes(q) : true));
+  const posts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : true));
   const activeFilters = Object.values(filters).filter(Boolean).length;
 
   return (
-    <div className="screen" data-scroll="discover">
+    <div className="screen canvas v-discover" data-scroll="discover">
       <div className="title-block title-block--top">
         <h1 className="large-title">Discover</h1>
       </div>
@@ -293,7 +284,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
             </div>
           )}
 
-          {scope === 'posts' && (posts.length ? <div className="list">{posts.map((p) => <PostCard key={p.id} post={p} />)}</div> : <EmptyState title="No posts yet" />)}
+          {scope === 'posts' && (posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title="No posts yet" />)}
         </motion.div>
       </AnimatePresence>
       )}

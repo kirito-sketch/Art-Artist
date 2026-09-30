@@ -454,6 +454,66 @@ export const posts: Post[] = [
     text: 'Cut this in one night for a friend. Forty seconds, zero sleep.',
     media: [m('zoya-v', { kind: 'video', duration: '0:40' })],
   },
+  {
+    id: 'p5', authorId: 'vikram', time: '6d', likes: 143, comments: 9, project: 'Monsoon Letters',
+    text: 'Second unit on the river. We waited three hours for this fog and it gave us eleven minutes.',
+    media: [m('pf-2'), m('backwaters'), m('paperboats')],
+  },
+  {
+    id: 'p6', authorId: 'rhea', time: '1w', likes: 96, comments: 14,
+    text: 'Grade pass on a night exterior. Keeping the sodium orange, pulling the cyan out of the shadows.',
+    media: [m('neonmonsoon')],
+  },
+  {
+    id: 'p7', authorId: 'nandini', time: '1w', likes: 77, comments: 5, project: 'Kaaval',
+    text: 'Fitting day. Every uniform aged by hand, two washes and a week in the sun.',
+    media: [m('kaaval-1'), m('journalist')],
+  },
+  {
+    id: 'p8', authorId: 'anvi', time: '1w', likes: 188, comments: 22,
+    text: 'Test roll on the new lenses. Chai, rain, a window. Nothing else needed.',
+    media: [m('chairain')],
+  },
+  {
+    id: 'p9', authorId: 'farhan', time: '2w', likes: 41, comments: 3,
+    text: 'Room tone at 5am before the market opens. Forty seconds of the city breathing.',
+    media: [m('salt2', { kind: 'video', duration: '0:40' })],
+  },
+  {
+    id: 'p10', authorId: 'arjun', time: '2w', likes: 256, comments: 31,
+    text: 'Recce in the hills. This valley is the whole first act.',
+    media: [m('neela'), m('quiet')],
+  },
+  {
+    id: 'p11', authorId: 'lakshmi', time: '2w', likes: 132, comments: 11,
+    text: 'Table read, day one. Nervous in the best way.',
+    media: [m('homeloan')],
+  },
+  {
+    id: 'p12', authorId: 'teja', time: '3w', likes: 64, comments: 4,
+    text: 'Steadicam through the whole corridor in one take. Four attempts, legs gone.',
+    media: [m('sameer-1', { kind: 'video', duration: '1:12' })],
+  },
+  {
+    id: 'p13', authorId: 'kabir', time: '3w', likes: 49, comments: 8,
+    text: 'Draft four is done. Cut the flashback, kept the ending.',
+    media: [],
+  },
+  {
+    id: 'p14', authorId: 'priya', time: '3w', likes: 58, comments: 2,
+    text: 'Pulling focus on a 135 at the beach, wind at 30. Marks on everything.',
+    media: [m('coastline')],
+  },
+  {
+    id: 'p15', authorId: 'ishaan', time: '4w', likes: 118, comments: 9, project: 'Fault Lines · Season 2',
+    text: 'Reference wall for the station interiors. Every photo is from a real district office.',
+    media: [m('faultlines'), m('set-2')],
+  },
+  {
+    id: 'p16', authorId: 'devika', time: '1mo', likes: 201, comments: 19, project: 'Salt Water',
+    text: 'The first frame we shot. Still my favourite.',
+    media: [m('saltwater')],
+  },
 ];
 
 /* ----------------------------------------------------------- credibility */

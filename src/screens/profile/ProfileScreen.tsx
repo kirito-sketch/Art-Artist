@@ -6,7 +6,7 @@ import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
-import { Button, Row, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Button, FollowButton, Row, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
@@ -183,7 +183,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               icon={<span className={`status-dot ${availability.open ? 'is-on' : ''}`} />}
               label={
                 scenario.newUser ? (
-                  <span className="accent">Add when you're available</span>
+                  <span className="link link--underline">Add when you're available</span>
                 ) : (
                   <span className="work-status-text">
                     <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
@@ -203,12 +203,9 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </Button>
           ) : (
             <>
-              <Button block variant={isFollowing ? 'secondary' : 'primary'} onClick={() => toggleFollow(id)}>
-                {isFollowing ? 'Following' : 'Follow'}
-              </Button>
+              <FollowButton block size="m" on={isFollowing} onToggle={() => toggleFollow(id)} />
               <Button
                 block
-                variant="outline"
                 onClick={() => {
                   const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                   cid && push({ name: 'conversation', id: cid });
@@ -245,7 +242,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                       <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)}>
                         Accept
                       </Button>
-                      <Button size="s" variant="plain" onClick={() => (c.revision ? push({ name: 'association', id: c.associationId }) : openSheet({ name: 'reportCredit', title: c.title, creditId: c.id }))}>
+                      <Button size="s" variant="secondary" onClick={() => (c.revision ? push({ name: 'association', id: c.associationId }) : openSheet({ name: 'reportCredit', title: c.title, creditId: c.id }))}>
                         {c.revision ? 'Compare' : 'Something wrong?'}
                       </Button>
                     </div>

@@ -2,7 +2,7 @@ import * as seed from '../data/seed';
 import type { NetworkEvent, Opportunity, Org, Party, Person, Post, Viewer } from '../data/types';
 import type { Scenario } from './store';
 import { world } from './world';
-import { blockedBy, recommendedRoles } from '../domain/discovery';
+import { blockedBy, publicProjects, recommendedRoles } from '../domain/discovery';
 
 export const party = (id: string): Party | undefined => seed.parties[id];
 export const person = (id: string) => seed.parties[id] as Person;
@@ -33,6 +33,24 @@ export function postsFor(viewer: Viewer, scenario: Scenario, following: string[]
   if (scenario.newUser || viewer.id === 'tara') return mine;
   const blocked = blockedBy(viewer.id);
   return [...mine, ...seed.posts.filter((p) => following.includes(p.authorId) && !blocked.includes(p.authorId))];
+}
+
+/**
+ * Discover → Posts: posts are public, so Discover shows everyone's (people you follow first), minus
+ * anyone blocked either way. Home's "Latest posts" stays limited to people you follow.
+ */
+export function discoverPosts(viewer: Viewer, following: string[], userPosts: Post[]): Post[] {
+  const blocked = blockedBy(viewer.id);
+  const others = seed.posts.filter((p) => p.authorId !== viewer.id && !blocked.includes(p.authorId));
+  const mine = userPosts.filter((p) => p.authorId === viewer.id && p.status !== 'failed');
+  return [...mine, ...others.filter((p) => following.includes(p.authorId)), ...others.filter((p) => !following.includes(p.authorId))];
+}
+
+/** The public project a post is about, when there is one. */
+export function postWork(post: Post) {
+  if (!post.project) return undefined;
+  const t = post.project.toLowerCase();
+  return publicProjects().find((w) => w.title.toLowerCase() === t);
 }
 
 export const firstName = (p: Party) => (p.kind === 'org' ? p.name : p.name.split(' ')[0]);

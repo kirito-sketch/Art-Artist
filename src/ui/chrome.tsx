@@ -4,7 +4,7 @@ import { useStore } from '../state/store';
 import { spring } from './motion';
 import { Photo } from './primitives';
 
-export function StatusBar({ tone = 'dark' }: { tone?: 'light' | 'dark' }) {
+export function StatusBar({ tone = 'dark' }: { tone?: 'light' | 'dark' | 'paper' }) {
   return (
     <div className={`status-bar status-bar--${tone}`} aria-hidden>
       <span className="status-time">9:41</span>

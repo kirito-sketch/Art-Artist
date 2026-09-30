@@ -292,3 +292,29 @@ The rules are in VISUAL_COMPOSITION_SYSTEM.md 3.2, 3.3, 3.8, 3.9 and 5.5. What c
 - **Colour:** Role sheet image tint removed; secondary text darkened on sand (3.8:1 to about 6:1); the Slate's pink "to review" text became white with a red dot; the correction line on Profile is no longer red.
 - **Consistency:** local shadows replaced with shadow-2 or removed; radii 6, 12 and 26 moved into the family (xs, s, xl); spacing 22, 26, 30, 34 and 46 moved onto the scale.
 - **Accessibility:** the plate label is darker (0.52 to 0.62, 4.3:1 to 5.9:1 on the brightest stills); the Role Detail's floating controls get a paper bar once the hero has scrolled away, so they never sit on text; portrait-card context wraps to two lines instead of cutting mid-word.
+
+---
+
+## 12. Stakeholder corrections (Phase 1)
+
+Editorial Workbench stays the single direction. These changes strengthen its Ana-specific layer.
+
+**Discover → Posts.** A tight three-column contact sheet of the work (4:5 tiles, 2 px gaps, no captions or counters). A set of frames and a clip carry a small mark; a text-only post is a note tile with the title-card rule. Tapping opens a vertical stream (`posts` route) at that post; the rest follow. Back returns to the same grid position and filter, because the Discover tab stays mounted underneath. Discover now sits on the paper canvas. Posts in Discover are everyone's public posts (followed people first, blocked excluded); Home's "Latest posts" stays limited to people you follow.
+
+**CTA system.** See docs/CTA_SYSTEM.md: graphite primary, one raised secondary family, a tonal selected state, text tertiary, red only for destructive confirmations and as a mark.
+
+**First-run Home.** A new person's Home opens on "Your world on Ana": their craft and city as a caps kicker, their craft object (or three real stills for crafts without one), one line built from onboarding (craft, city, languages, availability), and a call sheet of what Ana already has for them (roles, people, projects, houses). Then roles matched on craft (and city where true), people in their craft with the reason, one quiet next step, projects, and houses (their city first). No network, posts or activity appear until they exist. Sections carry `data-world` for the Phase 2 onboarding transition.
+
+### Airbnb-pattern audit
+
+| Pattern | Where | Decision | Ana interpretation |
+|---|---|---|---|
+| Large rounded image card with a white heart bubble | Home roles, posters | Adapt | Frame label for status; Save is a smoked slate plate, not a white bubble |
+| White circular floating controls over a hero | Role, Profile, Project, House | Adapt | Smoked slate plates squared to the radius family, same material as frame labels |
+| Category bar of pictogram tabs | Discover | Adapt | An editorial section index: words, left-aligned, ink rule under the active one |
+| Search pill with a drop shadow | Discover | Adapt | Raised white field with a hairline, no shadow |
+| White sheet overlapping the hero | Role, Profile | Keep (good platform UX) | Kicker set as a caps production line; facts as a call sheet |
+| Wide "experience" image cards | Home production houses | Adapt | The house's current stage as a frame label on its still; the house signs the card |
+| Horizontal card carousels | Home, Slate | Keep | Poster rail with a larger lead and title cards for unannounced work |
+| Floating bottom navigation | Everywhere | Keep | Ana red Create +, active mark as a dot |
+| Generic category tiles | Home | Already Ana | Object Tiles holding craft objects |

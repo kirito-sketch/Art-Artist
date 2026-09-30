@@ -75,7 +75,7 @@ export function YourData() {
               <Button block size="l" variant="secondary" onClick={() => showToast({ text: "We'll email you a copy within 48 hours" })}>
                 Download my data first
               </Button>
-              <Button block size="l" variant="danger" onClick={() => setStep('confirm')}>
+              <Button block size="l" onClick={() => setStep('confirm')}>
                 Continue
               </Button>
             </>

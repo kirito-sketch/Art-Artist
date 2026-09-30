@@ -5,7 +5,7 @@ import { isLive, type Work } from '../../data/works';
 import { world, worksForOrg } from '../../state/world';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
-import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
 import { useLoad } from '../../ui/useLoad';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
@@ -145,7 +145,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </h1>
           )}
           <p className="meta">Production house · {o.city}</p>
-          {!o.verified && <p className="meta accent">Verification pending · only people who act for {o.name} can see this page</p>}
+          {!o.verified && <p className="meta">Verification pending · only people who act for {o.name} can see this page</p>}
           <p className="body">{o.about}</p>
           <p className="pid-stats">
             <span>
@@ -178,12 +178,9 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </Button>
               ) : (
                 <>
-                  <Button block variant={isFollowing ? 'secondary' : 'primary'} onClick={() => toggleFollow(id)}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
+                  <FollowButton block size="m" on={isFollowing} onToggle={() => toggleFollow(id)} />
                   <Button
                     block
-                    variant="outline"
                     onClick={() => {
                       const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                       cid && push({ name: 'conversation', id: cid });

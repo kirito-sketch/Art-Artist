@@ -38,7 +38,8 @@ export type Route =
   | { name: 'org'; id: string }
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
-  | { name: 'media'; items: Media[]; index: number };
+  | { name: 'media'; items: Media[]; index: number }
+  | { name: 'posts'; ids: string[]; index: number };
 
 export type Sheet =
   | { name: 'create' }
@@ -140,7 +141,7 @@ function useStoreValue() {
   const bump = useCallback(() => setWorldVersion((v) => v + 1), []);
   /** Test state: the signed-in member holds credit authority for the house. */
   const [canIssue, setCanIssue] = useState(BOOT?.canIssue ?? true);
-  const [following, setFollowing] = useState<string[]>(DEFAULT_FOLLOWING);
+  const [following, setFollowing] = useState<string[]>(BOOT?.flags?.newUser ? [] : DEFAULT_FOLLOWING);
   const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
   const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY[START]);
@@ -198,6 +199,8 @@ function useStoreValue() {
   const switchViewer = useCallback((id: string) => {
     setViewerId(id);
     setToast(null);
+    // A person created in onboarding follows nobody yet; seeded personas keep their demo network.
+    setFollowing(id.startsWith('you-') ? [] : DEFAULT_FOLLOWING);
     setAvailabilityState(DEFAULT_AVAILABILITY[id]);
     setConversations(seed.conversations[id]);
     setInterestsReceived(seed.interests[id]);

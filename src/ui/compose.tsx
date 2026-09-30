@@ -147,10 +147,13 @@ export function ObjectTile({ kind, label, meta, asset, onPress }: { kind: CraftO
 }
 
 /** Wide editorial card for a production house: its current work leads, the house signs it. */
-export function HouseFeature({ house, still, line, onPress }: { house: Org; still?: Media; line: ReactNode; onPress: () => void }) {
+export function HouseFeature({ house, still, line, label, onPress }: { house: Org; still?: Media; line: ReactNode; label?: ReactNode; onPress: () => void }) {
   return (
     <PressCard className="house-feature" onPress={onPress} scale={0.985} aria-label={house.name}>
-      <div className="house-feature-still">{still ? <Photo media={still} showPlay={false} /> : <TitleCard title={house.name} />}</div>
+      <div className="house-feature-still">
+        {still ? <Photo media={still} showPlay={false} /> : <TitleCard title={house.name} />}
+        {label && <span className="house-feature-label">{label}</span>}
+      </div>
       <div className="house-feature-sign">
         <Avatar party={house} size={40} />
         <span className="house-feature-text">

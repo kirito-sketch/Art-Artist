@@ -1155,3 +1155,426 @@
   -webkit-box-orient: vertical;
   align-items: initial;
 }
+
+/* ================================================== Discover */
+
+.v-discover .search-wrap {
+  background: var(--base);
+}
+
+.v-discover .search {
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.v-discover .tabs {
+  border-color: var(--hairline);
+}
+
+/* Posts: a contact sheet of the work. Tight gaps, no captions, no counters, edge to edge. */
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: -14px;
+  padding-bottom: var(--tabbar-clearance);
+}
+
+.post-tile {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--dark);
+}
+
+.post-tile > .photo {
+  position: absolute !important;
+  inset: 0;
+}
+
+.post-tile-mark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  display: grid;
+}
+
+/* A text-only post is a note on paper with the title-card rule, not an empty tile. */
+.post-tile--note {
+  background: var(--tint);
+}
+
+.post-tile-note {
+  position: absolute;
+  inset: 0;
+  padding: 26px 10px 10px;
+  font-size: var(--t-5);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-tile-note::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 10px;
+  width: 18px;
+  height: 2px;
+  background: var(--accent);
+}
+
+/* The opened stream: one post after another, the work at full width. */
+.stream-bar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  padding-top: var(--status-bar);
+  height: calc(var(--status-bar) + 52px);
+  background: color-mix(in srgb, var(--base) 90%, transparent);
+  backdrop-filter: saturate(1.4) blur(18px);
+  -webkit-backdrop-filter: saturate(1.4) blur(18px);
+  box-shadow: 0 1px 0 var(--hairline);
+}
+
+.stream-bar-title {
+  font-size: var(--t-3);
+  font-weight: 700;
+}
+
+.stream-bar-spacer {
+  width: 44px;
+}
+
+.stream-post {
+  padding: 16px 0 20px;
+}
+
+.stream-post + .stream-post {
+  border-top: 1px solid var(--hairline);
+}
+
+.stream-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--gutter) 12px;
+}
+
+.stream-author-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stream-media {
+  position: relative;
+}
+
+.stream-media-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.stream-media-track::-webkit-scrollbar {
+  display: none;
+}
+
+.stream-media-item {
+  flex: none;
+  width: 100%;
+  scroll-snap-align: start;
+}
+
+.stream-media-item .photo {
+  aspect-ratio: 4 / 5;
+  background: var(--dark);
+}
+
+.stream-media-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.stream-note {
+  margin: 0 var(--gutter);
+  padding: 20px;
+  border-radius: var(--r-m);
+  background: var(--tint);
+}
+
+.stream-note .title-card-rule {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.stream-note p {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.stream-body {
+  padding: 12px var(--gutter) 0;
+}
+
+.stream-caption {
+  margin: 0 0 10px;
+  font-size: var(--t-4);
+  line-height: 1.45;
+}
+
+.stream-context {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: var(--t-4);
+  font-weight: 600;
+}
+
+.stream-context-label {
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.post-stream {
+  padding-top: 0;
+}
+
+.post-stream .end {
+  padding-bottom: 60px;
+}
+
+/* Routes that sit on the canvas ask for the paper status bar explicitly. */
+.status-bar--paper {
+  color: var(--text);
+  background: var(--base);
+}
+
+/* =========================================== First-run Home */
+/*
+ * The opening moment: the one sand field on this screen, the person's craft and city as a caps
+ * kicker, and a call sheet of what Ana already has for them. The craft object (or, for crafts
+ * without one, three real stills) is the anchor the Phase 2 transition resolves around.
+ */
+.world-intro {
+  position: relative;
+  margin: 4px 0 0;
+  padding: 24px 20px 0;
+  border-radius: var(--r-l);
+  background: var(--sand);
+  --text-2: color-mix(in srgb, var(--text) 70%, var(--sand));
+  overflow: hidden;
+}
+
+.world-visual {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+}
+
+.world-object {
+  --object-tilt: -6deg;
+  --object-lift: 0px;
+  --object-scale: 1;
+  --object-shadow: 1;
+  --object-duration: 0ms;
+  position: absolute;
+  inset: 0;
+}
+
+.world-object .craft-shadow {
+  display: none;
+}
+
+.world-stills {
+  position: absolute;
+  inset: 6px 0 0 12px;
+}
+
+.world-stills > .photo {
+  position: absolute !important;
+  width: 64px;
+  height: 80px;
+  border-radius: var(--r-s);
+  box-shadow: var(--shadow-2);
+}
+
+.world-stills > .photo:nth-child(1) { left: 0; top: 18px; transform: rotate(-6deg); }
+.world-stills > .photo:nth-child(2) { left: 26px; top: 0; z-index: 1; }
+.world-stills > .photo:nth-child(3) { left: 48px; top: 22px; transform: rotate(5deg); }
+
+.world-kicker {
+  margin: 0;
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.world-title {
+  margin: 8px 0 0;
+  max-width: 62%;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.world-line {
+  margin: 10px 0 0;
+  max-width: 34ch;
+  font-size: var(--t-4);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+.world-sheet {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 20px -20px 0;
+  border-top: 1px solid rgba(40, 30, 20, 0.14);
+}
+
+.world-sheet-cell {
+  padding: 12px 0 14px 20px;
+  text-align: left;
+  color: inherit;
+}
+
+.world-sheet-cell + .world-sheet-cell {
+  border-left: 1px solid rgba(40, 30, 20, 0.14);
+  padding-left: 12px;
+}
+
+.world-sheet dt {
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.world-sheet dd {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.world-why {
+  margin: -8px 0 14px;
+  font-size: var(--t-5);
+  color: var(--text-2);
+}
+
+/* One quiet next step: a record-style surface, a secondary action, and a way to put it off. */
+.first-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: var(--section);
+  padding: 16px;
+  border-radius: var(--r-m);
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.first-step-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+/* ======================================= Ana-specific controls on media */
+/*
+ * Controls over imagery are slate plates, not white bubbles: the same smoked plate as the frame
+ * label, squared to the radius family. They read as production kit on the image rather than
+ * marketplace chrome on top of it. The saved state keeps the filled bookmark (the mark).
+ */
+.icon-btn--float,
+.save--floating {
+  border-radius: var(--r-s);
+  background: rgba(18, 16, 14, 0.55);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+
+.save--floating.is-on {
+  color: #fff;
+}
+
+/* On paper (Home header), the same controls are plain ink icons. */
+.v-home .home-header--inline .icon-btn--float {
+  color: var(--text);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/*
+ * Discover modes read as an editorial section index, not a marketplace category bar: words, not
+ * pictograms, left-aligned, the active one in ink with the ink rule under it.
+ */
+.v-discover .tab > svg {
+  display: none;
+}
+
+.v-discover .tabs {
+  gap: 22px;
+}
+
+.v-discover .tab {
+  flex: none;
+  padding: 8px 0 12px;
+  font-size: var(--t-3);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.v-discover .tab-underline {
+  left: 0;
+  right: 0;
+}
+
+/* Role Detail kicker: the format as a production line, set in caps like the call sheet. */
+.v-role .kicker {
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* A house is shown by what it is making: the stage sits on the still as a frame label. */
+.house-feature-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}

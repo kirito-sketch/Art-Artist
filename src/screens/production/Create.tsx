@@ -236,9 +236,9 @@ export function HouseProjectScreen({ id }: { id: string }) {
                 <div className="prow-text">
                   <p className="item-title">{who?.name ?? a.pending!.name}</p>
                   <p className="meta">{c && c.status !== 'prepared' ? c.line : current ? current.line : a.workingRole}</p>
-                  {a.status === 'flagged' && <p className="meta accent">Says this isn't right</p>}
-                  {c?.status === 'correction' && c.note && <p className="meta accent">Asked: {c.note}</p>}
-                  {amending && <p className="meta accent">Asked to amend: {amendment!.reason}. The credit stays public until you decide.</p>}
+                  {a.status === 'flagged' && <p className="meta meta--attention">Says this isn't right</p>}
+                  {c?.status === 'correction' && c.note && <p className="meta meta--attention">Asked: {c.note}</p>}
+                  {amending && <p className="meta meta--attention">Asked to amend: {amendment!.reason}. The credit stays public until you decide.</p>}
                 </div>
                 <span className={`ph-state ${!pending && !amending && current ? 'ph-state--confirmed' : c ? 'ph-state--invited' : 'ph-state--added'}`}>{label}</span>
               </PressCard>
@@ -912,11 +912,11 @@ export function AssociationScreen({ id }: { id: string }) {
                   {revision ? 'Accept revision' : 'Accept'}
                 </Button>
                 {revision ? (
-                  <Button size="s" variant="plain" onClick={() => (declineRevision(pending.id), showToast({ text: `Kept "${current?.line}"` }))}>
+                  <Button size="s" variant="secondary" onClick={() => (declineRevision(pending.id), showToast({ text: `Kept "${current?.line}"` }))}>
                     Keep current
                   </Button>
                 ) : (
-                  <Button size="s" variant="plain" onClick={() => openSheet({ name: 'reportCredit', title: p.workingTitle, creditId: pending.id })}>
+                  <Button size="s" variant="secondary" onClick={() => openSheet({ name: 'reportCredit', title: p.workingTitle, creditId: pending.id })}>
                     Something wrong?
                   </Button>
                 )}

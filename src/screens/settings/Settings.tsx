@@ -125,12 +125,12 @@ function Personal() {
       <Group title="Security">
         <Row label="Two-step verification" value="On" chevron={false} />
         <Row label="Signed-in devices" value="2" chevron={false} />
-        <Row label={<span className="danger-text">Sign out</span>} chevron={false} onPress={() => setSignOut(true)} />
+        <Row label="Sign out" chevron={false} onPress={() => setSignOut(true)} />
       </Group>
       <Sheet open={signOut} onClose={() => setSignOut(false)} title="Sign out?">
         <div className="stack">
           <p className="meta">You'll need to sign in again on this phone.</p>
-          <Button block size="l" variant="danger" onClick={() => startEntry('signin', "You've signed out.")}>
+          <Button block size="l" onClick={() => startEntry('signin', "You've signed out.")}>
             Sign out
           </Button>
           <Button block size="l" variant="secondary" onClick={() => setSignOut(false)}>

@@ -34,6 +34,7 @@ import { ADMIN } from './admin/adminMode';
 import { AdminConsole } from './admin/Admin';
 import { LAB, SCENARIO, SPECIMEN } from './qa/boot';
 import { Specimen } from './qa/Specimen';
+import { PostStream } from './screens/discover/PostStream';
 import { EdgeCaseLab } from './qa/Lab';
 import { ScenarioBar } from './qa/ScenarioBar';
 
@@ -59,6 +60,8 @@ function RouteView({ r }: { r: Route }) {
       return <CollabComposer intent={r.intent} />;
     case 'media':
       return <MediaViewer items={r.items} index={r.index} />;
+    case 'posts':
+      return <PostStream ids={r.ids} index={r.index} />;
     case 'network':
       return <NetworkScreen />;
     case 'editProfile':
@@ -170,7 +173,7 @@ function Phone() {
   const top = stack[stack.length - 1];
   // The status bar turns light and transparent over full-bleed photos (media viewer, profile hero).
   const topKey = top ? (top.name === 'profile' ? `profile-${top.id}` : top.name) : tab === 'profile' ? `profile-${viewer.id}-tab` : tab;
-  const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : 'dark';
+  const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : top?.name === 'posts' || top?.name === 'opportunity' ? 'paper' : 'dark';
 
   return (
     <div className="phone" data-viewer={viewer.id} data-look={store.look}>
