@@ -1767,3 +1767,11 @@
   display: flex;
   flex-direction: column;
 }
+
+.proto-seg--archived button {
+  opacity: 0.6;
+}
+
+.proto-seg--archived button.is-on {
+  opacity: 1;
+}

@@ -28,6 +28,17 @@ export function PrototypeControls() {
           [
             ['minimal', 'Minimal'],
             ['glass', 'Glass'],
+          ] as const
+        ).map(([id, label]) => (
+          <button key={id} className={look === id ? 'is-on' : ''} onClick={() => setLook(id)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="proto-h">Archived, for comparison</p>
+      <div className="proto-seg proto-seg--archived">
+        {(
+          [
             ['bold', 'Bold'],
             ['doodle', 'Doodle'],
           ] as const
