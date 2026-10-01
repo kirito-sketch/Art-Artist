@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { PostGrid } from './PostGrid';
 import { BadgeCheck, Camera, Clapperboard, Film, IndianRupee, MapPin, Mic, Newspaper, Palette, Scissors, Search, Shirt, SlidersHorizontal, Sparkles, Theater, Users, Video, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { research } from '../../research-data/client';
 import * as seed from '../../data/seed';
 import { discoverableProjects, discoverableRoles, searchableHouses, searchablePeople } from '../../domain/discovery';
 import type { Opportunity, Person } from '../../data/types';
@@ -68,6 +69,13 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const [kind, setKind] = useState<'all' | Opportunity['kind']>('all');
   const [craft, setCraft] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({ paid: false, verified: false, travel: false, near: false });
+  // Research observation only (no-op outside a research session): which section and craft were chosen.
+  const seen = useRef({ scope, craft });
+  useEffect(() => {
+    if (seen.current.scope !== scope) research.track('discover_tab_selected', { metadata: { tab: scope } });
+    if (seen.current.craft !== craft && craft) research.track('discover_filter_selected', { metadata: { filter: craft } });
+    seen.current = { scope, craft };
+  }, [scope, craft]);
   const [draft, setDraft] = useState<Filters>(filters);
   const [filterOpen, setFilterOpen] = useState(false);
 

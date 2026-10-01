@@ -3,3 +3,10 @@ dist
 *.log
 .DS_Store
 screenshots/tmp
+# Environment files: never commit real keys (the example is committed on purpose)
+.env
+.env.*
+!.env.example
+# Supabase CLI local state
+supabase/.temp
+supabase/.branches

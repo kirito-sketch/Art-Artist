@@ -29,6 +29,8 @@ import { IdentityShift } from './ui/IdentityShift';
 import { IconButton, Photo } from './ui/primitives';
 import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
+import { ResearchObserver } from './research-data/ResearchObserver';
+import { research } from './research-data/client';
 import { EntryFlow } from './entry/Entry';
 import { PolicyUpdate } from './legal/PolicyUpdate';
 import { ADMIN } from './admin/adminMode';
@@ -277,6 +279,7 @@ export default function App() {
   if (ADMIN && !SCENARIO) return <AdminConsole />;
   return (
     <StoreProvider>
+      <ResearchObserver />
       <div className="stage">
         <div className="stage-phone">
           {!RESEARCH && !SCENARIO && <StageNotice />}
@@ -287,3 +290,6 @@ export default function App() {
     </StoreProvider>
   );
 }
+
+// Development only: drive the research client from the console or a test script (no UI in this phase).
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __anaResearch: typeof research }).__anaResearch = research;
