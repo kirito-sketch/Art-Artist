@@ -12,7 +12,7 @@
  * Everything is written through the research client, which never blocks Art and Artist.
  * See docs/RESEARCH_TEST_MODE.md.
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronUp, LifeBuoy, MessageSquareText } from 'lucide-react';
 import { useStore } from '../state/store';
 import { Button } from '../ui/primitives';
@@ -77,6 +77,38 @@ function useCompact() {
 
 type View = null | 'details' | 'feedback' | 'stuck' | 'skip' | 'end';
 
+/**
+ * Fit the whole test composition in the viewport without page scrolling. The simulated phone keeps its
+ * natural size and design; only its outer wrapper is scaled (preserving aspect ratio) so it never
+ * exceeds the available height, or the width left beside the research panel. Phone-width screens
+ * (<= 520 px) keep the full-screen device and are not scaled.
+ * Mirrors the CSS: breathing room 24 px top and bottom, panel clamp(260px, 22vw, 320px),
+ * gap clamp(20px, 3vw, 40px), compact bar 64 px.
+ */
+function useDeviceScale(device: React.RefObject<HTMLDivElement>, compact: boolean, active: boolean) {
+  const [fit, setFit] = useState<{ scale: number; w: number; h: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!active) return;
+    const measure = () => {
+      const phone = device.current?.querySelector<HTMLElement>('.phone');
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (!phone || vw <= 520) return setFit(null);
+      const w = phone.offsetWidth; // natural (unscaled) size: transforms don't change offset sizes
+      const h = phone.offsetHeight;
+      const clamp = (min: number, v: number, max: number) => Math.min(max, Math.max(min, v));
+      const pad = 48;
+      const availH = vh - pad - (compact ? 64 : 0);
+      const availW = compact ? vw - 32 : vw - pad - clamp(260, vw * 0.22, 320) - clamp(20, vw * 0.03, 40);
+      setFit({ scale: Math.min(1, availH / h, availW / w), w, h });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [compact, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  return fit;
+}
+
 export function TestMode({ phone }: { phone: ReactNode }) {
   const store = useStore();
   const restored = useRef(load());
@@ -90,6 +122,8 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   const [expanded, setExpanded] = useState(false); // compact layout: research sheet open
   const compact = useCompact();
   const device = useRef<HTMLDivElement>(null);
+  const showsDevice = stage === 'task-intro' || stage === 'task' || stage === 'task-done';
+  const fit = useDeviceScale(device, compact, showsDevice);
   const [succeeded, setSucceeded] = useState(false);
   const [startError, setStartError] = useState(false);
   const tasks: StudyTask[] = session?.tasks ?? [];
@@ -390,8 +424,10 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   const showBar = compact && stage === 'task' && !view && !expanded;
   return (
     <div className={`test-stage ${compact ? 'test-stage--compact' : ''} ${showBar ? 'has-bar' : ''}`}>
-      <div className="test-device" ref={device} aria-label="Art and Artist prototype">
-        {phone}
+      <div className="test-device" ref={device} aria-label="Art and Artist prototype" style={fit ? { width: fit.w * fit.scale, height: fit.h * fit.scale } : undefined}>
+        <div className="test-device-scale" style={fit ? { transform: `scale(${fit.scale})` } : undefined}>
+          {phone}
+        </div>
       </div>
       {!compact && (
         <aside className="rp rp--side" aria-label="Research test">

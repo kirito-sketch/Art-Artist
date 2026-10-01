@@ -9,12 +9,17 @@
 
 .test-stage {
   --rp-bar: 64px;
-  min-height: 100%;
+  /* The whole composition lives inside the viewport: no page scrolling. */
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 40px;
-  padding: 32px;
+  gap: clamp(20px, 3vw, 40px);
+  padding: 24px;
+  box-sizing: border-box;
   background: var(--base, #f6f4f0);
 }
 
@@ -22,6 +27,11 @@
   position: relative;
   flex: none;
   transition: opacity 0.2s ease;
+}
+
+/* The phone keeps its natural size and design; only this wrapper is scaled (see useDeviceScale). */
+.test-device-scale {
+  transform-origin: top left;
 }
 
 /* Between tasks and while answering, Art and Artist is visible but not operable. */
@@ -41,9 +51,12 @@
 
 .rp--side {
   flex: none;
-  width: 300px;
-  max-height: 852px;
+  width: clamp(260px, 22vw, 320px);
+  /* The shell never leaves the viewport; only its content scrolls if a step is long. */
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
   padding: 22px 20px;
   background: var(--base, #f6f4f0);
   border: 1px solid var(--hairline);
@@ -62,7 +75,12 @@
 }
 
 .test-stage--solo {
-  min-height: 100vh;
+  /* Research pages (intro, consent, survey...) may scroll inside the stage on very short screens. */
+  overflow-y: auto;
+}
+
+.test-stage--solo .rp--solo {
+  margin: auto;
 }
 
 .rp-brand {
@@ -290,8 +308,8 @@
   gap: 0;
 }
 
-.test-stage--compact.has-bar {
-  padding-bottom: calc(var(--rp-bar) + 32px);
+.test-stage--compact:not(.test-stage--solo) {
+  padding-bottom: calc(var(--rp-bar) + 24px);
 }
 
 /* The bar: attached to the browser viewport, below the device, never over Art and Artist. */
@@ -400,7 +418,7 @@
     display: block;
   }
   /* One constant height for the whole session (bar or sheet), so Art and Artist never shifts. */
-  .test-stage--compact {
+  .test-stage--compact:not(.test-stage--solo) {
     padding-bottom: var(--rp-bar);
   }
   .test-stage--compact .phone {
