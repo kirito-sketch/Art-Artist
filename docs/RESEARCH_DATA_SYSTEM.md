@@ -1,8 +1,8 @@
 # Research data system
 
-The data foundation for unmoderated usability testing of the Ana prototype. This phase covers storage,
-security and instrumentation only. The participant Test Mode (`/test`), task overlay, feedback button,
-survey and the researcher dashboard (`/research`) are the next phase and are **not built yet**.
+The data foundation for unmoderated usability testing of the Ana prototype: storage, security and
+instrumentation. The participant experience is documented in docs/RESEARCH_TEST_MODE.md (`/test`) and
+the researcher view in docs/RESEARCH_DASHBOARD.md (`/research`).
 
 ## 1. Architecture
 
@@ -61,8 +61,9 @@ still works exactly as before and records nothing unless a research session has 
 On Vercel, `vercel.json` rewrites `/api/research/<action>` (including two-segment actions such as
 `task/start`) to the single function `api/research.ts` as `?action=<action>`. Server imports use
 explicit `.js` extensions because Vercel runs each function file as Node ESM without bundling.
-`VITE_SUPABASE_ANON_KEY` may exist in the Vercel environment, but no code references it, so it is not
-included in the browser bundle.
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are read only by the Research Dashboard, which is a
+lazily loaded chunk; they never appear in the prototype bundle. The anon/publishable key is public by
+design, and RLS keeps research tables closed to it.
 
 Copy `.env.example` to `.env.local`. All `.env*` files except the example are git-ignored.
 
@@ -126,7 +127,7 @@ touched.
 
 | Group | Events |
 |---|---|
-| Research lifecycle | `session_started`, `session_completed`, `task_started`, `task_completed`, `task_skipped`, `feedback_opened`, `feedback_submitted` |
+| Research lifecycle | `session_started`, `session_completed`, `task_started`, `task_completed`, `task_skipped`, `feedback_opened`, `feedback_submitted`, `stuck_reported`, `task_instruction_opened`, `survey_submitted` |
 | Navigation | `home_viewed`, `discover_opened`, `inbox_opened`, `own_profile_viewed`, `screen_opened` {route}, `navigated_back` {from}, `sheet_opened` {sheet} |
 | Discovery | `discover_tab_selected` {tab}, `discover_filter_selected` {filter} |
 | Objects opened | `role_opened`, `project_opened`, `person_profile_opened`, `house_profile_opened`, `post_opened`, `conversation_opened`, `notifications_opened`, `saved_opened`, `settings_opened` |
@@ -162,12 +163,13 @@ data.
 
 | Endpoint | Body | Effect |
 |---|---|---|
-| `POST /api/research/session` | `studySlug`, `consent: true`, `prototypeVersion`, `clientStartId`, optional `persona`, `participantCode`, `participant{displayName, participantType, primaryCraft, experienceLevel}`, `client{deviceType, viewportWidth, viewportHeight, browser, os, touch}` | Creates (or reuses by code) the participant and creates the session. Returns `token`, `participantCode`, study title and task instructions. Study must be `active` |
+| `POST /api/research/session` | `studySlug`, `consent: true`, `prototypeVersion`, `clientStartId`, optional `persona`, `participantCode`, `participant{displayName, participantType, primaryCraft, experienceLevel}`, `client{deviceType, viewportWidth, viewportHeight, browser, os, touch}` | Creates (or reuses by code) the participant and creates the session. Returns `token`, `participantCode`, study title, and tasks (key, sequence, title, instruction, success events and object type, so Test Mode can notice success). Study must be `active` |
 | `POST /api/research/event` | `events[]` (≤ 50): `id`, `seq`, `name`, `screen`, `objectType`, `objectId`, `metadata`, `ts`, `attemptId` | Stores events once each, links them to the attempt and marks the attempt `success_detected` when a task's success event arrives |
 | `POST /api/research/task/start` | `taskKey`, `attemptId` | Opens an attempt. A repeat, or a second open attempt for the same task, returns the existing one |
 | `POST /api/research/task/complete` | `attemptId`, `outcome`, `difficulty`, `expectationMatch`, `feedbackText` | Closes the attempt and computes `duration_ms`. Repeats are ignored |
-| `POST /api/research/feedback` | `id`, `category`, `comment`, `screen`, `attemptId`, `eventId`, `context{persona, route, tab, sheet, acting, taskKey, lastSequence}` | Stores once. The server copies `prototype_version` from the session |
+| `POST /api/research/feedback` | `id`, `category`, `comment`, `screen`, `attemptId`, `eventId`, `context{persona, route, tab, sheet, acting, taskKey, lastSequence, source, question, rating}` | Stores once. The server copies `prototype_version` from the session. `source` is `button` (Feedback control), `stuck` (I'm stuck) or `survey` (final survey answer, with `question` and, for the 1–5 question, `rating`) |
 | `POST /api/research/session/complete` | `status` (completed / abandoned) | Closes the session and abandons any open attempts. Repeats are ignored |
+| `GET /api/research/study` | header `x-study-type` (individual_creative / production_house) | The newest active study of that type: slug, title, description, task count. Participant-facing only |
 | `GET /api/research/health` | | `{ ok, configured, database: reachable / unreachable / not_configured, latencyMs }`, from a head-only round trip to `research_studies`. 200 when reachable, 503 otherwise. Reveals no data or error detail |
 | `GET /api/research/debug/page`, `GET /api/research/debug` | header `x-research-debug-key` | Internal development view. Returns **404 unless `RESEARCH_DEBUG_KEY` is set**, and 401 without the right key |
 
@@ -186,8 +188,11 @@ research.submitFeedback({ category: 'confusing', comment: 'Optional words' });  
 research.completeSession();
 ```
 
-Every call is a no-op without an active session. In development, `window.__anaResearch` exposes the
-same object for the console and test scripts (Test Mode will call it in the next phase).
+Every call is a no-op without an active session. A session token held by a tab only counts on the
+surface that started it or called `research.resume()` (Test Mode) in that page load, so the normal
+prototype opened later in the same tab records nothing. Test Mode also uses `research.subscribe()`
+(to notice task success), `research.activeStudy()` and `research.session()`. In development,
+`window.__anaResearch` exposes the same object for the console and test scripts.
 
 ## 8. Session-token model
 

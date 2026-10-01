@@ -1,0 +1,741 @@
+/**
+ * Research Dashboard (/research). Researcher-only: Supabase Auth sign-in, and Row Level Security on
+ * every research table (research_researchers allowlist). Four sections: Overview, Sessions, Tasks,
+ * Feedback, plus session, task and feedback detail. Study and prototype version are global filters and
+ * the version breakdown is always visible. docs/RESEARCH_DASHBOARD.md.
+ */
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import './dashboard.css';
+import { configured, isResearcher, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, sb, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
+import { CATEGORY_LABEL, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
+
+type Route = { view: 'overview' | 'sessions' | 'tasks' | 'feedback'; id?: string };
+const parseHash = (): Route => {
+  const [, view, id] = (location.hash.replace(/^#\/?/, '/') || '/').split('/');
+  return { view: (['overview', 'sessions', 'tasks', 'feedback'].includes(view) ? view : 'overview') as Route['view'], id: id || undefined };
+};
+const go = (r: Route) => (location.hash = `/${r.view}${r.id ? `/${r.id}` : ''}`);
+const done = (a: Attempt) => a.outcome === 'completed' || a.outcome === 'completed_with_difficulty';
+const closed = (a: Attempt) => a.outcome !== 'in_progress';
+const fmt1 = (n: number | null) => (n == null ? '-' : n.toFixed(1));
+const who = (s: Session | undefined) => s?.research_participants?.participant_code ?? '?';
+
+export default function Dashboard() {
+  const [auth, setAuth] = useState<'loading' | 'signed-out' | 'denied' | 'ok'>('loading');
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = 'Ana research';
+    if (!sb) return setAuth('signed-out');
+    const check = async () => {
+      const { data } = await sb!.auth.getSession();
+      if (!data.session) return setAuth('signed-out');
+      setEmail(data.session.user.email ?? null);
+      setAuth((await isResearcher()) ? 'ok' : 'denied');
+    };
+    void check();
+    const { data } = sb.auth.onAuthStateChange(() => void check());
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  if (!configured) return <Gate title="Research dashboard not configured">Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for this deployment.</Gate>;
+  if (auth === 'loading') return <Gate title="Ana research">Loading…</Gate>;
+  if (auth === 'signed-out') return <SignIn />;
+  if (auth === 'denied')
+    return (
+      <Gate title="No access">
+        <p>{email} is signed in but is not on the researcher list, so no research data is available.</p>
+        <button className="dash-btn" onClick={() => sb!.auth.signOut()}>
+          Sign out
+        </button>
+      </Gate>
+    );
+  return <Workspace email={email} />;
+}
+
+function Gate({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <main className="dash dash-gate">
+      <div className="dash-gate-card">
+        <p className="dash-eyebrow">Ana research</p>
+        <h1>{title}</h1>
+        <div className="dash-gate-body">{children}</div>
+      </div>
+    </main>
+  );
+}
+
+function SignIn() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  return (
+    <Gate title="Researcher sign in">
+      <form
+        className="dash-form"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          setError('');
+          const { error: err } = await sb!.auth.signInWithPassword({ email: email.trim(), password });
+          setBusy(false);
+          if (err) setError('Those details did not work.');
+        }}
+      >
+        <label>
+          Email
+          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </label>
+        <label>
+          Password
+          <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </label>
+        {error && (
+          <p className="dash-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="dash-btn dash-btn--primary" disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+    </Gate>
+  );
+}
+
+function Workspace({ email }: { email: string | null }) {
+  const [route, setRoute] = useState<Route>(parseHash());
+  const [studies, setStudies] = useState<Study[]>([]);
+  const [studyId, setStudyId] = useState<string | null>(null);
+  const [data, setData] = useState<StudyData | null>(null);
+  const [version, setVersion] = useState('all');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const on = () => setRoute(parseHash());
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
+  useEffect(() => {
+    loadStudies()
+      .then((s) => {
+        setStudies(s);
+        setStudyId((cur) => cur ?? (s.find((x) => x.status === 'active') ?? s[0])?.id ?? null);
+      })
+      .catch(() => setError('Could not load studies.'));
+  }, []);
+  const reload = () => studyId && loadStudy(studyId).then(setData).catch(() => setError('Could not load this study.'));
+  useEffect(() => {
+    setData(null);
+    setVersion('all');
+    void reload();
+  }, [studyId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Version filter applies to everything below it.
+  const view = useMemo(() => {
+    if (!data) return null;
+    const sessions = version === 'all' ? data.sessions : data.sessions.filter((s) => s.prototype_version === version);
+    const ids = new Set(sessions.map((s) => s.id));
+    return { tasks: data.tasks, sessions, attempts: data.attempts.filter((a) => ids.has(a.session_id)), feedback: data.feedback.filter((f) => ids.has(f.session_id)), all: data };
+  }, [data, version]);
+  const versions = useMemo(() => [...new Set((data?.sessions ?? []).map((s) => s.prototype_version))].sort(), [data]);
+
+  return (
+    <main className="dash">
+      <header className="dash-top">
+        <div className="dash-brand">
+          <span className="dash-eyebrow">Ana research</span>
+          <select aria-label="Study" value={studyId ?? ''} onChange={(e) => setStudyId(e.target.value)}>
+            {studies.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title} ({s.status})
+              </option>
+            ))}
+          </select>
+        </div>
+        <nav className="dash-nav" aria-label="Sections">
+          {(['overview', 'sessions', 'tasks', 'feedback'] as const).map((v) => (
+            <a key={v} href={`#/${v}`} className={route.view === v ? 'is-on' : ''} aria-current={route.view === v ? 'page' : undefined}>
+              {v[0].toUpperCase() + v.slice(1)}
+            </a>
+          ))}
+        </nav>
+        <div className="dash-right">
+          <label className="dash-version">
+            Version
+            <select value={version} onChange={(e) => setVersion(e.target.value)}>
+              <option value="all">All versions ({versions.length})</option>
+              {versions.map((v) => (
+                <option key={v}>{v}</option>
+              ))}
+            </select>
+          </label>
+          <button className="dash-link" onClick={() => void reload()}>
+            Refresh
+          </button>
+          <button className="dash-link" onClick={() => sb!.auth.signOut()} title={email ?? ''}>
+            Sign out
+          </button>
+        </div>
+      </header>
+      {version === 'all' && versions.length > 1 && (
+        <p className="dash-banner" role="note">
+          Showing {versions.length} prototype versions combined ({versions.map((v) => `${v}: ${data!.sessions.filter((s) => s.prototype_version === v).length}`).join(' · ')}). Choose a version to compare like with like.
+        </p>
+      )}
+      {error && <p className="dash-error">{error}</p>}
+      {!view ? (
+        <p className="dash-loading">Loading…</p>
+      ) : route.view === 'overview' ? (
+        <Overview v={view} />
+      ) : route.view === 'sessions' ? (
+        route.id ? <SessionDetail v={view} id={route.id} /> : <Sessions v={view} />
+      ) : route.view === 'tasks' ? (
+        route.id ? <TaskDetail v={view} id={route.id} /> : <Tasks v={view} />
+      ) : (
+        <FeedbackInbox v={view} openId={route.id} onChanged={reload} versions={versions} />
+      )}
+    </main>
+  );
+}
+
+type View = { tasks: Task[]; sessions: Session[]; attempts: Attempt[]; feedback: Feedback[]; all: StudyData };
+
+function taskStats(t: Task, v: View) {
+  const as = v.attempts.filter((a) => a.task_id === t.id);
+  const cl = as.filter(closed);
+  const ok = as.filter(done);
+  const ratings = as.map((a) => a.difficulty_rating).filter((x): x is number => x != null);
+  const ids = new Set(as.map((a) => a.id));
+  return {
+    attempts: as.length,
+    closed: cl.length,
+    completed: ok.length,
+    withDifficulty: as.filter((a) => a.outcome === 'completed_with_difficulty').length,
+    abandoned: as.filter((a) => a.outcome === 'abandoned').length,
+    skipped: as.filter((a) => a.outcome === 'skipped').length,
+    medianMs: median(ok.map((a) => a.duration_ms).filter((x): x is number => x != null)),
+    difficulty: mean(ratings),
+    feedback: v.feedback.filter((f) => !isSurvey(f) && f.task_attempt_id && ids.has(f.task_attempt_id)).length,
+  };
+}
+
+// ------------------------------------------------------------------------------------------- overview
+function Overview({ v }: { v: View }) {
+  const total = v.sessions.length;
+  const completed = v.sessions.filter((s) => s.status === 'completed').length;
+  const abandoned = v.sessions.filter((s) => s.status === 'abandoned').length;
+  const ratings = v.attempts.map((a) => a.difficulty_rating).filter((x): x is number => x != null);
+  const fb = v.feedback.filter((f) => !isSurvey(f));
+  const byVersion = [...new Set(v.all.sessions.map((s) => s.prototype_version))].sort().map((ver) => {
+    const ss = v.all.sessions.filter((s) => s.prototype_version === ver);
+    const ids = new Set(ss.map((s) => s.id));
+    const rs = v.all.attempts.filter((a) => ids.has(a.session_id)).map((a) => a.difficulty_rating).filter((x): x is number => x != null);
+    return { ver, n: ss.length, completed: ss.filter((s) => s.status === 'completed').length, abandoned: ss.filter((s) => s.status === 'abandoned').length, difficulty: mean(rs) };
+  });
+  return (
+    <section className="dash-section" aria-label="Overview">
+      <div className="dash-stats">
+        <Stat label="Sessions" value={total} />
+        <Stat label="Completed" value={completed} />
+        <Stat label="Abandoned" value={abandoned} />
+        <Stat label="In progress" value={total - completed - abandoned} />
+        <Stat label="Completion rate" value={pct(completed, total)} />
+        <Stat label="Avg task difficulty" value={fmt1(mean(ratings))} hint="1 very easy, 5 very difficult" />
+        <Stat label="Feedback items" value={fb.length} />
+      </div>
+      <h2>Prototype versions</h2>
+      <table className="dash-table">
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Sessions</th>
+            <th>Completed</th>
+            <th>Abandoned</th>
+            <th>Avg difficulty</th>
+          </tr>
+        </thead>
+        <tbody>
+          {byVersion.map((r) => (
+            <tr key={r.ver}>
+              <td>
+                <span className="dash-ver">{r.ver}</span>
+              </td>
+              <td>{r.n}</td>
+              <td>{r.completed}</td>
+              <td>{r.abandoned}</td>
+              <td>{fmt1(r.difficulty)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h2>Tasks</h2>
+      <TaskTable v={v} />
+    </section>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
+  return (
+    <div className="dash-stat" title={hint}>
+      <span className="dash-stat-value">{value}</span>
+      <span className="dash-stat-label">{label}</span>
+    </div>
+  );
+}
+
+function TaskTable({ v }: { v: View }) {
+  return (
+    <table className="dash-table">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Attempts</th>
+          <th>Completion</th>
+          <th>With difficulty</th>
+          <th>Abandoned</th>
+          <th>Skipped</th>
+          <th>Median time</th>
+          <th>Avg difficulty</th>
+          <th>Feedback</th>
+        </tr>
+      </thead>
+      <tbody>
+        {v.tasks.map((t) => {
+          const s = taskStats(t, v);
+          return (
+            <tr key={t.id} className="dash-click" onClick={() => go({ view: 'tasks', id: t.id })}>
+              <td>
+                <a href={`#/tasks/${t.id}`} onClick={(e) => e.stopPropagation()}>
+                  {t.sequence}. {t.title}
+                </a>
+              </td>
+              <td>{s.attempts}</td>
+              <td>{pct(s.completed, s.closed)}</td>
+              <td>{pct(s.withDifficulty, s.closed)}</td>
+              <td>{pct(s.abandoned, s.closed)}</td>
+              <td>{pct(s.skipped, s.closed)}</td>
+              <td>{fmtDuration(s.medianMs)}</td>
+              <td>{fmt1(s.difficulty)}</td>
+              <td>{s.feedback}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// ------------------------------------------------------------------------------------------- sessions
+function Sessions({ v }: { v: View }) {
+  const [status, setStatus] = useState('all');
+  const [ptype, setPtype] = useState('all');
+  const rows = v.sessions.filter((s) => (status === 'all' || s.status === status) && (ptype === 'all' || (s.research_participants?.participant_type ?? 'unknown') === ptype));
+  return (
+    <section className="dash-section" aria-label="Sessions">
+      <div className="dash-filters">
+        <label>
+          Status
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="all">All</option>
+            <option value="completed">Completed</option>
+            <option value="abandoned">Abandoned</option>
+            <option value="active">In progress</option>
+          </select>
+        </label>
+        <label>
+          Participant type
+          <select value={ptype} onChange={(e) => setPtype(e.target.value)}>
+            <option value="all">All</option>
+            <option value="individual_creative">Individual creative</option>
+            <option value="production_house">Production house</option>
+          </select>
+        </label>
+        <span className="dash-count">{rows.length} sessions</span>
+      </div>
+      <table className="dash-table">
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th>Role / craft</th>
+            <th>Version</th>
+            <th>Started</th>
+            <th>Tasks completed</th>
+            <th>Status</th>
+            <th>Avg difficulty</th>
+            <th>Feedback</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((s) => {
+            const as = v.attempts.filter((a) => a.session_id === s.id);
+            const rs = as.map((a) => a.difficulty_rating).filter((x): x is number => x != null);
+            const p = s.research_participants;
+            return (
+              <tr key={s.id} className="dash-click" onClick={() => go({ view: 'sessions', id: s.id })}>
+                <td>
+                  <a href={`#/sessions/${s.id}`} onClick={(e) => e.stopPropagation()}>
+                    <b>{p?.participant_code}</b>
+                  </a>
+                  {p?.display_name && <span className="dash-sub"> {p.display_name}</span>}
+                </td>
+                <td>{p?.primary_craft ?? '-'}</td>
+                <td>
+                  <span className="dash-ver">{s.prototype_version}</span>
+                </td>
+                <td>{fmtDate(s.started_at)}</td>
+                <td>
+                  {as.filter(done).length} / {v.tasks.length}
+                </td>
+                <td>
+                  <Status s={s.status} />
+                </td>
+                <td>{fmt1(mean(rs))}</td>
+                <td>{v.feedback.filter((f) => f.session_id === s.id && !isSurvey(f)).length}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function Status({ s }: { s: string }) {
+  return <span className={`dash-status dash-status--${s}`}>{s === 'active' ? 'In progress' : s[0].toUpperCase() + s.slice(1)}</span>;
+}
+
+function SessionDetail({ v, id }: { v: View; id: string }) {
+  const s = v.all.sessions.find((x) => x.id === id);
+  const [events, setEvents] = useState<EventRow[] | null>(null);
+  useEffect(() => {
+    loadEvents(id).then(setEvents).catch(() => setEvents([]));
+  }, [id]);
+  if (!s) return <p className="dash-empty">Session not found in this study.</p>;
+  const p = s.research_participants;
+  const attempts = v.all.attempts.filter((a) => a.session_id === id);
+  const fb = v.all.feedback.filter((f) => f.session_id === id);
+  const survey = fb.filter(isSurvey);
+  const total = s.completed_at ? Date.parse(s.completed_at) - Date.parse(s.started_at) : null;
+  return (
+    <section className="dash-section" aria-label={`Session ${p?.participant_code}`}>
+      <a href="#/sessions" className="dash-back">
+        ← Sessions
+      </a>
+      <div className="dash-summary">
+        <h1>
+          {p?.participant_code} {p?.display_name && <span className="dash-sub">{p.display_name}</span>}
+        </h1>
+        <dl>
+          <dt>Status</dt>
+          <dd>
+            <Status s={s.status} />
+          </dd>
+          <dt>Version</dt>
+          <dd>
+            <span className="dash-ver">{s.prototype_version}</span>
+          </dd>
+          <dt>Craft</dt>
+          <dd>{p?.primary_craft ?? '-'}</dd>
+          <dt>Experience</dt>
+          <dd>{p?.experience_level ?? '-'}</dd>
+          <dt>Persona</dt>
+          <dd>{s.selected_persona ?? '-'}</dd>
+          <dt>Device</dt>
+          <dd>
+            {s.device_type} {s.viewport_width}×{s.viewport_height}
+          </dd>
+          <dt>Started</dt>
+          <dd>{fmtDate(s.started_at)}</dd>
+          <dt>Length</dt>
+          <dd>{fmtDuration(total)}</dd>
+        </dl>
+      </div>
+      <h2>Tasks</h2>
+      {v.all.tasks.map((t) => {
+        const a = attempts.find((x) => x.task_id === t.id);
+        if (!a)
+          return (
+            <article key={t.id} className="dash-attempt dash-attempt--none">
+              <h3>
+                Task {t.sequence}: {t.title}
+              </h3>
+              <p className="dash-sub">Not reached</p>
+            </article>
+          );
+        const evs = (events ?? []).filter((e) => e.task_attempt_id === a.id);
+        const stuck = evs.some((e) => e.event_name === 'stuck_reported');
+        const afb = fb.filter((f) => f.task_attempt_id === a.id && !isSurvey(f));
+        return (
+          <article key={t.id} className="dash-attempt">
+            <h3>
+              Task {t.sequence}: {t.title}
+            </h3>
+            <dl className="dash-attempt-facts">
+              <dt>Outcome</dt>
+              <dd>
+                <span className={`dash-outcome dash-outcome--${a.outcome}`}>{OUTCOME_LABEL[a.outcome]}</span>
+                {a.success_detected && <span className="dash-sub"> · success detected</span>}
+                {stuck && <span className="dash-sub"> · used I'm stuck</span>}
+              </dd>
+              <dt>Time</dt>
+              <dd>{fmtDuration(a.duration_ms)}</dd>
+              <dt>Difficulty</dt>
+              <dd>{a.difficulty_rating ? `${a.difficulty_rating}/5` : '-'}</dd>
+              <dt>Expected</dt>
+              <dd>{a.expectation_match == null ? '-' : a.expectation_match >= 3 ? 'Yes' : 'No'}</dd>
+            </dl>
+            <p className="dash-path">
+              <span className="dash-label">Path</span> {events === null ? 'Loading…' : pathOf(evs).join(' → ') || '-'}
+            </p>
+            {a.feedback_text && (
+              <blockquote className="dash-quote">
+                {a.feedback_text.split('\n').map((l, i) => (
+                  <span key={i}>{l}</span>
+                ))}
+              </blockquote>
+            )}
+            {afb.map((f) => (
+              <p key={f.id} className="dash-fb-inline">
+                <span className="dash-cat">{CATEGORY_LABEL[f.category]}</span>
+                {f.interaction_context?.source === 'stuck' && <span className="dash-sub"> (I'm stuck)</span>} on {screenLabel(f.screen)}: {f.participant_comment ?? <i>no comment</i>}
+              </p>
+            ))}
+          </article>
+        );
+      })}
+      {survey.length > 0 && (
+        <>
+          <h2>Final survey</h2>
+          <dl className="dash-survey">
+            {[...survey].sort((a, b) => SURVEY_ORDER.indexOf(a.interaction_context?.question as string) - SURVEY_ORDER.indexOf(b.interaction_context?.question as string)).map((f) => (
+              <div key={f.id}>
+                <dt>{SURVEY_LABEL[f.interaction_context?.question as string] ?? String(f.interaction_context?.question)}</dt>
+                <dd>{f.interaction_context?.rating != null ? `${f.interaction_context.rating}/5` : f.participant_comment}</dd>
+              </div>
+            ))}
+          </dl>
+        </>
+      )}
+      <h2>Event trail</h2>
+      <ol className="dash-trail">
+        {(events ?? []).map((e) => (
+          <li key={e.sequence}>
+            <span className="dash-seq">{e.sequence}</span>
+            <span>{eventLabel(e)}</span>
+            <span className="dash-sub">{screenLabel(e.screen)}</span>
+            <details>
+              <summary aria-label={`Raw data for event ${e.sequence}`}>raw</summary>
+              <pre>{JSON.stringify({ event: e.event_name, object_type: e.object_type, object_id: e.object_id, metadata: e.metadata, at: e.created_at }, null, 1)}</pre>
+            </details>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+// --------------------------------------------------------------------------------------------- tasks
+function Tasks({ v }: { v: View }) {
+  return (
+    <section className="dash-section" aria-label="Tasks">
+      <TaskTable v={v} />
+      <p className="dash-note">Completion counts completed and completed-with-difficulty out of finished attempts. Median time is for completed attempts.</p>
+    </section>
+  );
+}
+
+function TaskDetail({ v, id }: { v: View; id: string }) {
+  const t = v.tasks.find((x) => x.id === id);
+  const attempts = v.attempts.filter((a) => a.task_id === id).sort((a, b) => a.started_at.localeCompare(b.started_at));
+  const [events, setEvents] = useState<EventRow[] | null>(null);
+  useEffect(() => {
+    loadEventsForAttempts(attempts.map((a) => a.id)).then(setEvents).catch(() => setEvents([]));
+  }, [id, attempts.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!t) return <p className="dash-empty">Task not found.</p>;
+  const s = taskStats(t, v);
+  return (
+    <section className="dash-section" aria-label={`Task ${t.sequence}`}>
+      <a href="#/tasks" className="dash-back">
+        ← Tasks
+      </a>
+      <h1>
+        Task {t.sequence}: {t.title}
+      </h1>
+      <p className="dash-instruction">{t.instruction}</p>
+      <p className="dash-sub">Success events: {t.success_events.length ? t.success_events.join(', ') : 'none (participant says when done)'}</p>
+      <div className="dash-stats">
+        <Stat label="Attempts" value={s.attempts} />
+        <Stat label="Completion" value={pct(s.completed, s.closed)} />
+        <Stat label="Abandoned" value={pct(s.abandoned, s.closed)} />
+        <Stat label="Skipped" value={pct(s.skipped, s.closed)} />
+        <Stat label="Median time" value={fmtDuration(s.medianMs)} />
+        <Stat label="Avg difficulty" value={fmt1(s.difficulty)} />
+        <Stat label="Feedback" value={s.feedback} />
+      </div>
+      <h2>Attempts</h2>
+      <ul className="dash-attempts">
+        {attempts.map((a) => {
+          const sess = v.all.sessions.find((x) => x.id === a.session_id);
+          return (
+            <li key={a.id}>
+              <a href={`#/sessions/${a.session_id}`}>
+                <b>{who(sess)}</b>
+              </a>{' '}
+              · <span className={`dash-outcome dash-outcome--${a.outcome}`}>{OUTCOME_LABEL[a.outcome].toLowerCase()}</span> · {fmtDuration(a.duration_ms)} · difficulty {a.difficulty_rating ?? '-'} · <span className="dash-ver">{sess?.prototype_version}</span>
+              <div className="dash-path dash-sub">{events === null ? '' : pathOf(events.filter((e) => e.task_attempt_id === a.id)).join(' → ')}</div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+// ------------------------------------------------------------------------------------------ feedback
+function FeedbackInbox({ v, openId, onChanged, versions }: { v: View; openId?: string; onChanged: () => void; versions: string[] }) {
+  const [cat, setCat] = useState('all');
+  const [task, setTask] = useState('all');
+  const [screen, setScreen] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [ver, setVer] = useState('all');
+  const attemptTask = new Map(v.attempts.map((a) => [a.id, a.task_id]));
+  const items = v.feedback.filter((f) => !isSurvey(f));
+  const screens = [...new Set(items.map((f) => f.screen ?? '-'))];
+  const rows = items.filter(
+    (f) =>
+      (cat === 'all' || f.category === cat) &&
+      (task === 'all' || (f.task_attempt_id && attemptTask.get(f.task_attempt_id) === task)) &&
+      (screen === 'all' || (f.screen ?? '-') === screen) &&
+      (status === 'all' || f.status === status) &&
+      (ver === 'all' || f.prototype_version === ver),
+  );
+  return (
+    <section className="dash-section" aria-label="Feedback">
+      <div className="dash-chips" role="group" aria-label="Category">
+        {['all', ...Object.keys(CATEGORY_LABEL)].map((c) => (
+          <button key={c} className={`dash-chip ${cat === c ? 'is-on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>
+            {c === 'all' ? 'All' : CATEGORY_LABEL[c]} <span className="dash-sub">{c === 'all' ? items.length : items.filter((f) => f.category === c).length}</span>
+          </button>
+        ))}
+      </div>
+      <div className="dash-filters">
+        <label>
+          Task
+          <select value={task} onChange={(e) => setTask(e.target.value)}>
+            <option value="all">All</option>
+            {v.tasks.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.sequence}. {t.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Version
+          <select value={ver} onChange={(e) => setVer(e.target.value)}>
+            <option value="all">All</option>
+            {versions.map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Screen
+          <select value={screen} onChange={(e) => setScreen(e.target.value)}>
+            <option value="all">All</option>
+            {screens.map((x) => (
+              <option key={x} value={x}>
+                {screenLabel(x)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Status
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="all">All</option>
+            {Object.entries(STATUS_LABEL).map(([k, l]) => (
+              <option key={k} value={k}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="dash-count">{rows.length} items</span>
+      </div>
+      <div className="dash-cards">
+        {rows.map((f) => (
+          <FeedbackCard key={f.id} f={f} v={v} open={openId === f.id} onChanged={onChanged} />
+        ))}
+        {!rows.length && <p className="dash-empty">No feedback matches these filters.</p>}
+      </div>
+    </section>
+  );
+}
+
+function FeedbackCard({ f, v, open, onChanged }: { f: Feedback; v: View; open: boolean; onChanged: () => void }) {
+  const s = v.all.sessions.find((x) => x.id === f.session_id);
+  const a = v.all.attempts.find((x) => x.id === f.task_attempt_id);
+  const t = v.all.tasks.find((x) => x.id === a?.task_id);
+  const [trail, setTrail] = useState<string[] | null>(null);
+  const [status, setStatus] = useState(f.status);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    if (f.trail_until_sequence == null) return setTrail([]);
+    loadEvents(f.session_id, f.trail_until_sequence)
+      .then((evs) => setTrail(pathOf(evs).slice(-7)))
+      .catch(() => setTrail([]));
+  }, [f.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <article className={`dash-card ${open ? 'is-open' : ''}`} id={`fb-${f.id}`}>
+      <header>
+        <span className="dash-cat">{CATEGORY_LABEL[f.category]}</span>
+        {f.interaction_context?.source === 'stuck' && <span className="dash-sub">from I'm stuck</span>}
+        <span className="dash-ver">{f.prototype_version}</span>
+        <span className="dash-sub">{fmtDate(f.created_at)}</span>
+      </header>
+      <p className="dash-card-comment">{f.participant_comment ?? <i className="dash-sub">No comment</i>}</p>
+      <dl className="dash-card-facts">
+        <dt>Participant</dt>
+        <dd>
+          <a href={`#/sessions/${f.session_id}`}>{who(s)}</a>
+        </dd>
+        <dt>Task</dt>
+        <dd>{t ? `${t.sequence}. ${t.title}` : '-'}</dd>
+        <dt>Screen</dt>
+        <dd>{screenLabel(f.screen)}</dd>
+      </dl>
+      <p className="dash-path">
+        <span className="dash-label">Context</span> {trail === null ? 'Loading…' : (trail[trail.length - 1] === 'Feedback' ? trail : [...trail, 'Feedback']).join(' → ')}
+      </p>
+      <label className="dash-status-select">
+        Review status
+        <select
+          value={status}
+          disabled={saving}
+          onChange={async (e) => {
+            const next = e.target.value;
+            setSaving(true);
+            try {
+              await setFeedbackStatus(f.id, next);
+              setStatus(next);
+              onChanged();
+            } catch {
+              alert('Could not update the status.');
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {Object.entries(STATUS_LABEL).map(([k, l]) => (
+            <option key={k} value={k}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </label>
+    </article>
+  );
+}

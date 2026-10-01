@@ -30,7 +30,9 @@ const MAX_QUEUE = 300;
 type Op = { path: string; body: Record<string, unknown>; tries: number; auth: boolean };
 type EventPayload = { id: string; seq: number; name: ResearchEventName; screen: string | null; objectType?: ResearchObjectType; objectId?: string; metadata: Metadata; ts: string; attemptId?: string };
 export type ResearchContext = { screen?: string; persona?: string; acting?: string; tab?: string; sheet?: string };
-export type SessionInfo = { participantCode: string; study: { slug: string; title: string }; tasks: { key: string; sequence: number; title: string; instruction: string }[] };
+export type StudyTask = { key: string; sequence: number; title: string; instruction: string; successEvents: string[]; successObjectType: string | null };
+export type SessionInfo = { participantCode: string; study: { slug: string; title: string }; tasks: StudyTask[] };
+export type TrackedEvent = { name: ResearchEventName; objectType?: ResearchObjectType; objectId?: string; metadata: Metadata };
 
 const store = {
   get(k: string) {
@@ -84,6 +86,12 @@ let batchTimer: ReturnType<typeof setTimeout> | null = null;
 let flushing = false;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let starting: Promise<SessionInfo | null> | null = null;
+/**
+ * A token left in this tab only counts on the surface that owns it: startSession() or resume() in
+ * this page load. So opening the normal prototype in the same tab after a test records nothing.
+ */
+let attached = false;
+const listeners = new Set<(e: TrackedEvent) => void>();
 const recent = new Map<string, number>();
 
 const persist = () => {
@@ -168,7 +176,39 @@ function detectDevice(): { deviceType: string; viewportWidth: number; viewportHe
 
 export const research = {
   /** True while this browser tab holds a research session. */
-  isActive: () => ENABLED && !!token,
+  isActive: () => ENABLED && !!token && attached,
+
+  /** Re-attach to the session already held by this tab (a reload inside Test Mode). */
+  resume(): SessionInfo | null {
+    if (!ENABLED || !token) return null;
+    attached = true;
+    if (queue.length) setTimeout(() => void flush(), 500);
+    return store.json<SessionInfo | null>(K.info, null);
+  },
+
+  /** The session this tab holds, if any (without attaching to it). */
+  session: (): SessionInfo | null => (token ? store.json<SessionInfo | null>(K.info, null) : null),
+
+  /** Listen to tracked events (Test Mode uses this to notice task success). Returns an unsubscribe. */
+  subscribe(fn: (e: TrackedEvent) => void) {
+    listeners.add(fn);
+    return () => void listeners.delete(fn);
+  },
+
+  /** The active study for a participant type (title, description, task count). Null when unavailable. */
+  async activeStudy(type: 'individual_creative' | 'production_house' = 'individual_creative'): Promise<{ slug: string; title: string; description: string | null; taskCount: number } | null> {
+    if (!ENABLED) return null;
+    try {
+      const r = await fetch(API + '/study', { headers: { 'x-study-type': type } });
+      if (!r.ok) return null;
+      return ((await r.json()) as { study: { slug: string; title: string; description: string | null; taskCount: number } }).study;
+    } catch {
+      return null;
+    }
+  },
+
+  /** The current position in the event trail. */
+  sequence: () => seq,
 
   /** Keep screen and persona current so events and feedback carry them automatically. */
   setContext(c: ResearchContext) {
@@ -181,7 +221,7 @@ export const research = {
    */
   startSession(opts: { studySlug: string; persona?: string; participantCode?: string; participant?: { displayName?: string; participantType?: string; primaryCraft?: string; experienceLevel?: string }; consent: true }): Promise<SessionInfo | null> {
     if (!ENABLED) return Promise.resolve(null);
-    if (token) return Promise.resolve(store.json<SessionInfo | null>(K.info, null));
+    if (token) return (attached = true), Promise.resolve(store.json<SessionInfo | null>(K.info, null));
     if (starting) return starting;
     starting = (async () => {
       try {
@@ -193,6 +233,7 @@ export const research = {
         if (!r.ok) return warn('session start', r.status), null;
         const data = (await r.json()) as SessionInfo & { token: string };
         token = data.token;
+        attached = true;
         seq = 0;
         queue = [];
         attempts = {};
@@ -243,6 +284,13 @@ export const research = {
     seq += 1;
     store.set(K.seq, String(seq));
     pending.push({ id: uuid(), seq, name, screen: sanitizeToken(context.screen, 80), objectType: data.objectType, objectId, metadata, ts: new Date().toISOString(), attemptId: currentTask ? attempts[currentTask] : undefined });
+    for (const fn of listeners) {
+      try {
+        fn({ name, objectType: data.objectType, objectId, metadata });
+      } catch {
+        /* a listener must never break tracking */
+      }
+    }
     if (pending.length >= 20) flushEvents();
     else if (!batchTimer) batchTimer = setTimeout(flushEvents, 800);
   },
@@ -264,11 +312,11 @@ export const research = {
    * Submit feedback. Screen, task, persona, build and the point in the event trail are attached
    * automatically; the participant only chooses a category and may add a comment.
    */
-  submitFeedback(f: { category: FeedbackCategory; comment?: string; id?: string }): string | null {
+  submitFeedback(f: { category: FeedbackCategory; comment?: string; id?: string; source?: 'button' | 'stuck' | 'survey'; question?: string; rating?: number }): string | null {
     if (!research.isActive()) return null;
     const id = f.id ?? uuid();
     if (done.includes(id)) return id;
-    research.track('feedback_submitted', { metadata: { category: f.category } });
+    if (f.source !== 'survey') research.track('feedback_submitted', { metadata: { category: f.category, source: f.source ?? 'button' } });
     flushEvents();
     done.push(id);
     enqueue('feedback', {
@@ -277,7 +325,7 @@ export const research = {
       comment: f.comment,
       screen: context.screen,
       attemptId: currentTask ? attempts[currentTask] : undefined,
-      context: { persona: context.persona, acting: context.acting, tab: context.tab, sheet: context.sheet, route: context.screen, taskKey: currentTask, lastSequence: seq },
+      context: { persona: context.persona, acting: context.acting, tab: context.tab, sheet: context.sheet, route: context.screen, taskKey: currentTask, lastSequence: seq, source: f.source ?? 'button', question: f.question, rating: f.rating },
     });
     return id;
   },
@@ -296,12 +344,16 @@ export const research = {
     flushEvents();
     for (const k of Object.values(K)) store.del(k);
     token = null;
+    attached = false;
     seq = 0;
     queue = [];
     attempts = {};
     done = [];
     currentTask = null;
   },
+
+  /** The open task in this tab, if any. */
+  currentTask: () => currentTask,
 
   /** For development inspection: what is waiting to be sent. */
   debugState: () => ({ active: research.isActive(), seq, queued: queue.length, pendingEvents: pending.length, openTasks: Object.keys(attempts), currentTask }),

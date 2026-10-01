@@ -15,6 +15,9 @@ export const RESEARCH_EVENTS = {
   task_skipped: 'The participant skipped a task',
   feedback_opened: 'The participant opened the feedback form',
   feedback_submitted: 'A feedback item was submitted',
+  stuck_reported: "The participant tapped I'm stuck",
+  task_instruction_opened: 'The participant reopened the task instruction',
+  survey_submitted: 'The final survey was submitted',
 
   // Navigation
   home_viewed: 'Home tab shown',

@@ -1,0 +1,292 @@
+/* =============================================================== Participant Test Mode (/test)
+ * Quiet and separate from Ana's content, in Ana's own language: paper, Ana green for the one primary
+ * action per step, existing type. The strip lives in the status-bar area so it never covers navigation,
+ * Create, or any in-content action. docs/RESEARCH_TEST_MODE.md. */
+
+.stage--test {
+  gap: 0;
+}
+
+/* Full-screen steps (intro, consent, details, survey, thanks) */
+.test-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  background: var(--base, #f6f4f0);
+  color: var(--text);
+}
+
+.test-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: calc(var(--status-bar) + 28px) 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: var(--t-3);
+  line-height: 1.45;
+}
+
+.test-panel-footer {
+  padding: 14px 24px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--base, #f6f4f0);
+  border-top: 1px solid var(--hairline);
+}
+
+.test-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.test-title {
+  font-family: var(--display);
+  font-size: 30px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+  outline: none;
+}
+
+.test-quiet {
+  font-size: var(--t-4);
+  color: var(--text-2);
+}
+
+.test-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 18px;
+  font-size: var(--t-4);
+  list-style: disc;
+}
+
+.test-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  font-size: var(--t-4);
+  cursor: pointer;
+}
+
+.test-check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--action);
+  flex: none;
+}
+
+.test-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--t-4);
+}
+
+.test-field > span {
+  color: var(--text-2);
+}
+
+.test-field textarea.field {
+  padding: 12px 16px;
+  resize: none;
+  line-height: 1.4;
+}
+
+.test-field select.field {
+  appearance: auto;
+}
+
+/* The task strip: in the status-bar area, above Ana, below test sheets */
+.test-strip {
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--status-bar);
+  z-index: 81;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 0 12px 6px;
+  background: var(--base, #f6f4f0);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.test-strip-task {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+}
+
+.test-strip-task svg {
+  color: var(--action);
+  flex: none;
+}
+
+.test-strip-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.test-strip-text b {
+  font-weight: 650;
+}
+
+.test-strip-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  min-width: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text);
+}
+
+.test-strip-btn--done {
+  background: var(--action);
+  color: var(--on-action, #fff);
+  box-shadow: none;
+}
+
+.test-strip button:focus-visible,
+.test-panel button:focus-visible,
+.test-sheet button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Sheet content */
+.test-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 8px;
+  font-size: var(--t-4);
+}
+
+.test-task-title {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.test-task-instruction {
+  font-size: var(--t-3);
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.test-q {
+  font-size: var(--t-3);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.test-link {
+  align-self: center;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: var(--t-4);
+  font-weight: 550;
+  color: var(--text-2);
+}
+
+.test-row-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.test-scale-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.test-scale-btn {
+  height: 48px;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: var(--t-3);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.test-scale-btn.is-on {
+  background: var(--action);
+  color: var(--on-action, #fff);
+  box-shadow: none;
+}
+
+.test-scale-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.test-choice {
+  display: flex;
+  gap: 8px;
+}
+
+.test-choice .chip {
+  min-width: 72px;
+  min-height: 40px;
+  justify-content: center;
+}
+
+.test-cats {
+  gap: 8px;
+}
+
+.test-cat {
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  text-align: left;
+  font-size: var(--t-3);
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .test-panel,
+  .test-strip {
+    transition: none;
+  }
+}

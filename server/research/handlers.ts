@@ -61,6 +61,7 @@ function log(...args: unknown[]) {
 export async function handleResearch(req: ResearchRequest, env: ResearchEnv): Promise<ResearchResponse> {
   if (req.action === 'health') return health(env);
   if (req.action.startsWith('debug')) return debug(req, env);
+  if (req.action === 'study' && req.method === 'GET') return activeStudy(env, req.headers['x-study-type']);
   if (req.method !== 'POST') return fail(405, 'method_not_allowed');
   const sb = db(env);
   if (!sb) return fail(503, 'research_backend_not_configured');
@@ -102,6 +103,28 @@ async function health(env: ResearchEnv): Promise<ResearchResponse> {
     return { status: 503, body: { ok: false, configured: true, database: 'unreachable' } };
   }
   return ok({ ok: true, configured: true, database: 'reachable', latencyMs: Date.now() - started });
+}
+
+/**
+ * The active study a participant can join (participant-facing information only: title, description,
+ * task count). Newest active study of the requested participant type.
+ */
+async function activeStudy(env: ResearchEnv, type?: string): Promise<ResearchResponse> {
+  const sb = db(env);
+  if (!sb) return fail(503, 'research_backend_not_configured');
+  const participantType = ['individual_creative', 'production_house'].includes(type ?? '') ? type! : 'individual_creative';
+  const { data, error } = await sb
+    .from('research_studies')
+    .select('id, slug, title, description, participant_type, research_tasks(count)')
+    .eq('status', 'active')
+    .eq('participant_type', participantType)
+    .order('started_at', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`active study: ${error.message}`);
+  if (!data) return fail(404, 'no_active_study');
+  const count = (data.research_tasks as unknown as { count: number }[] | null)?.[0]?.count ?? 0;
+  return ok({ ok: true, study: { slug: data.slug, title: data.title, description: data.description, participantType: data.participant_type, taskCount: count } });
 }
 
 async function withSession(sb: SupabaseClient, req: ResearchRequest, fn: (s: SessionRow) => Promise<ResearchResponse>) {
@@ -167,9 +190,16 @@ async function startSession(sb: SupabaseClient, b: Record<string, unknown>): Pro
     if (error.code === '23505') return fail(409, 'session_already_started');
     return log('session', error.message), fail(500, 'server_error');
   }
-  const { data: tasks } = await sb.from('research_tasks').select('key, sequence, title, instruction').eq('study_id', study.id).eq('is_active', true).order('sequence');
-  // Participant-facing data only: the study title and its task instructions. Never ids or other sessions.
-  return ok({ ok: true, token, participantCode: participant.participant_code, study: { slug: study.slug, title: study.title }, tasks: tasks ?? [] });
+  const { data: tasks } = await sb.from('research_tasks').select('key, sequence, title, instruction, success_events, success_object_type').eq('study_id', study.id).eq('is_active', true).order('sequence');
+  // Participant-facing data only: the study title, its task instructions and the semantic events that
+  // count as success (so Test Mode can notice success). Never ids or other sessions.
+  return ok({
+    ok: true,
+    token,
+    participantCode: participant.participant_code,
+    study: { slug: study.slug, title: study.title },
+    tasks: (tasks ?? []).map((t) => ({ key: t.key, sequence: t.sequence, title: t.title, instruction: t.instruction, successEvents: t.success_events, successObjectType: t.success_object_type })),
+  });
 }
 
 async function completeSession(sb: SupabaseClient, s: SessionRow, b: Record<string, unknown>) {
@@ -305,7 +335,8 @@ async function submitFeedback(sb: SupabaseClient, s: SessionRow, b: Record<strin
       prototype_version: s.prototype_version, // from the session, never from the request
       persona: sanitizeToken(ctx.persona, 80) ?? s.selected_persona,
       trail_until_sequence: int(ctx.lastSequence, 0, 10_000_000),
-      interaction_context: sanitizeMetadata({ taskKey: ctx.taskKey, route: ctx.route, sheet: ctx.sheet, acting: ctx.acting, tab: ctx.tab }),
+      // source: 'button' (Feedback control), 'stuck' (I'm stuck), 'survey' (final survey, with question / rating).
+      interaction_context: sanitizeMetadata({ taskKey: ctx.taskKey, route: ctx.route, sheet: ctx.sheet, acting: ctx.acting, tab: ctx.tab, source: ctx.source, question: ctx.question, rating: typeof ctx.rating === 'number' ? ctx.rating : undefined }),
     },
     { onConflict: 'session_id,client_feedback_id', ignoreDuplicates: true },
   );

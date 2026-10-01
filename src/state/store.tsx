@@ -1,13 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
 import { RESEARCH } from '../research';
+import { TEST_MODE } from '../research-data/surface';
 import { BOOT } from '../qa/boot';
 import * as act from '../domain/actions';
 import { notificationsFor } from '../domain/discovery';
 
 /** Research sessions start as Aditi acting for Konark; an edge-case scenario starts where it says; everything else starts as Kiran. */
-const START = RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran';
-const START_ACTING = RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
+// Participant Test Mode (/test) is the Individual Creative study: always Kiran, always the seed state.
+const START = TEST_MODE ? 'kiran' : RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran';
+const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
 // A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { party } from './selectors';

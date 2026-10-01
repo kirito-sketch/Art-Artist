@@ -10,6 +10,7 @@ import './styles/components.css';
 import './styles/screens.css';
 import './styles/looks.css';
 import './styles/expression.css';
+import './styles/test-mode.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';

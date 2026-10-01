@@ -1,6 +1,7 @@
 // Capture the canonical records before any fixture touches them.
 import './snapshot';
-import { RESEARCH } from '../research';
+import { RESEARCH as RESEARCH_MODE } from '../research';
+import { RESEARCH_DASHBOARD, TEST_MODE } from '../research-data/surface';
 import { applyOps } from './fixtures';
 import { scenarioById } from './scenarios';
 import type { Fixture, Scenario } from './types';
@@ -11,7 +12,9 @@ import type { Fixture, Scenario } from './types';
  * fresh copy of the seed, before anything renders. Reloading repeats it exactly, which is the reset.
  *
  * Research Mode always wins: it strips scenario and Lab parameters and never sees any of this.
+ * So do Participant Test Mode (/test) and the Research Dashboard (/research): QA tools never open there.
  */
+const RESEARCH = RESEARCH_MODE || TEST_MODE || RESEARCH_DASHBOARD;
 
 const params = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 

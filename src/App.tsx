@@ -1,6 +1,6 @@
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
 import type { Media } from './data/types';
 import { TabBar } from './nav/TabBar';
 import { CollabComposer } from './screens/create/CollabComposer';
@@ -31,6 +31,12 @@ import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
 import { ResearchObserver } from './research-data/ResearchObserver';
 import { research } from './research-data/client';
+import { RESEARCH_DASHBOARD, TEST_MODE } from './research-data/surface';
+import { TestMode } from './research-data/TestMode';
+
+// The researcher dashboard loads only on /research, so its code (and the Supabase browser client)
+// never ship to the prototype or to participants.
+const ResearchDashboard = lazy(() => import('./research-dashboard/Dashboard'));
 import { EntryFlow } from './entry/Entry';
 import { PolicyUpdate } from './legal/PolicyUpdate';
 import { ADMIN } from './admin/adminMode';
@@ -161,7 +167,7 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
   );
 }
 
-function Phone() {
+function Phone({ overlay }: { overlay?: ReactNode }) {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
   const [discoverScope, setDiscoverScope] = useState<Scope>('roles');
@@ -243,6 +249,7 @@ function Phone() {
         {store.entry && <EntryFlow key={store.entry.mode + (store.entry.notice ?? '')} />}
         <ToastHost />
         <IdentityShift />
+        {overlay}
         <div className="home-indicator" />
       </div>
     </div>
@@ -259,6 +266,24 @@ export default function App() {
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, []);
+  // Participant Test Mode: the real prototype plus the test layer. No console, notices or QA tools.
+  if (TEST_MODE)
+    return (
+      <StoreProvider>
+        <ResearchObserver />
+        <div className="stage stage--test">
+          <div className="stage-phone">
+            <Phone overlay={<TestMode />} />
+          </div>
+        </div>
+      </StoreProvider>
+    );
+  if (RESEARCH_DASHBOARD)
+    return (
+      <Suspense fallback={<p className="dash-loading">Loading…</p>}>
+        <ResearchDashboard />
+      </Suspense>
+    );
   // The moderation console is a separate internal tool, never part of the app's identities.
   // The Edge Case Lab is an internal page; a scenario replaces the console with its own bar.
   if (LAB) return <EdgeCaseLab />;
