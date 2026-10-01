@@ -1,12 +1,13 @@
 /**
- * Research Dashboard (/research). Researcher-only: Supabase Auth sign-in, and Row Level Security on
- * every research table (research_researchers allowlist). Four sections: Overview, Sessions, Tasks,
- * Feedback, plus session, task and feedback detail. Study and prototype version are global filters and
- * the version breakdown is always visible. docs/RESEARCH_DASHBOARD.md.
+ * Research Dashboard (/research). Internal prototype dashboard: opens directly, no sign-in. All data
+ * comes from the server-side read API (/api/research/dashboard/*), which uses the server-only service
+ * role; the browser holds no Supabase key. Four sections: Overview, Sessions, Tasks, Feedback, plus
+ * session, task and feedback detail. Study and prototype version are global filters and the version
+ * breakdown is always visible. docs/RESEARCH_DASHBOARD.md.
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import './dashboard.css';
-import { configured, isSurvey, researcherAccess, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, sb, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
+import { DashboardError, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
 import { CATEGORY_LABEL, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
 
 type Route = { view: 'overview' | 'sessions' | 'tasks' | 'feedback'; id?: string };
@@ -21,103 +22,20 @@ const fmt1 = (n: number | null) => (n == null ? '-' : n.toFixed(1));
 const who = (s: Session | undefined) => s?.research_participants?.participant_code ?? '?';
 
 export default function Dashboard() {
-  const [auth, setAuth] = useState<'loading' | 'signed-out' | 'denied' | 'error' | 'ok'>('loading');
-  const [email, setEmail] = useState<string | null>(null);
-
   useEffect(() => {
     document.title = 'Art and Artist Research';
-    if (!sb) return setAuth('signed-out');
-    const check = async () => {
-      const { data } = await sb!.auth.getSession();
-      if (!data.session) return setAuth('signed-out');
-      setEmail(data.session.user.email ?? null);
-      const access = await researcherAccess();
-      setAuth(access === 'researcher' ? 'ok' : access);
-    };
-    void check();
-    const { data } = sb.auth.onAuthStateChange(() => void check());
-    return () => data.subscription.unsubscribe();
   }, []);
-
-  if (!configured) return <Gate title="Research dashboard not configured">Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for this deployment.</Gate>;
-  if (auth === 'loading') return <Gate title="Art and Artist Research">Loading…</Gate>;
-  if (auth === 'signed-out') return <SignIn />;
-  if (auth === 'error')
-    return (
-      <Gate title="Couldn't check access">
-        <p>The research database didn't answer. Check the connection and the deployment's Supabase settings, then try again.</p>
-        <button className="dash-btn" onClick={() => location.reload()}>
-          Try again
-        </button>
-        <button className="dash-btn" onClick={() => sb!.auth.signOut()}>
-          Sign out
-        </button>
-      </Gate>
-    );
-  if (auth === 'denied')
-    return (
-      <Gate title="No access">
-        <p>{email} is signed in but is not on the researcher list, so no research data is available.</p>
-        <button className="dash-btn" onClick={() => sb!.auth.signOut()}>
-          Sign out
-        </button>
-      </Gate>
-    );
-  return <Workspace email={email} />;
+  return <Workspace />;
 }
 
-function Gate({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <main className="dash dash-gate">
-      <div className="dash-gate-card">
-        <p className="dash-eyebrow">Art and Artist Research</p>
-        <h1>{title}</h1>
-        <div className="dash-gate-body">{children}</div>
-      </div>
-    </main>
-  );
-}
+const loadError = (e: unknown, what: string) =>
+  e instanceof DashboardError && e.status === 401
+    ? 'This dashboard needs its access key: open /research?key=… once in this browser.'
+    : e instanceof DashboardError && e.status === 503
+      ? 'The research backend is not configured on this deployment.'
+      : `Could not load ${what}. Check the connection and refresh.`;
 
-function SignIn() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  return (
-    <Gate title="Researcher sign in">
-      <form
-        className="dash-form"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          setError('');
-          const { error: err } = await sb!.auth.signInWithPassword({ email: email.trim(), password });
-          setBusy(false);
-          if (err) setError('Those details did not work.');
-        }}
-      >
-        <label>
-          Email
-          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          Password
-          <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        {error && (
-          <p className="dash-error" role="alert">
-            {error}
-          </p>
-        )}
-        <button className="dash-btn dash-btn--primary" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-    </Gate>
-  );
-}
-
-function Workspace({ email }: { email: string | null }) {
+function Workspace() {
   const [route, setRoute] = useState<Route>(parseHash());
   const [studies, setStudies] = useState<Study[]>([]);
   const [studyId, setStudyId] = useState<string | null>(null);
@@ -136,9 +54,9 @@ function Workspace({ email }: { email: string | null }) {
         setStudies(s);
         setStudyId((cur) => cur ?? (s.find((x) => x.status === 'active') ?? s[0])?.id ?? null);
       })
-      .catch(() => setError('Could not load studies.'));
+      .catch((e) => setError(loadError(e, 'studies')));
   }, []);
-  const reload = () => studyId && loadStudy(studyId).then(setData).catch(() => setError('Could not load this study.'));
+  const reload = () => studyId && loadStudy(studyId).then(setData).catch((e) => setError(loadError(e, 'this study')));
   useEffect(() => {
     setData(null);
     setVersion('all');
@@ -186,9 +104,6 @@ function Workspace({ email }: { email: string | null }) {
           </label>
           <button className="dash-link" onClick={() => void reload()}>
             Refresh
-          </button>
-          <button className="dash-link" onClick={() => sb!.auth.signOut()} title={email ?? ''}>
-            Sign out
           </button>
         </div>
       </header>

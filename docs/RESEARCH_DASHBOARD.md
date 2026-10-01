@@ -10,35 +10,47 @@ export.
 
 - **URL:** `https://<deployment>/research` (on a static preview, `?dashboard`). Separate from the
   existing `?research` Research Mode.
-- **Code:** `src/research-dashboard/` (`Dashboard.tsx`, `data.ts`, `labels.ts`, `dashboard.css`). It
-  is a lazily loaded chunk, so neither its code nor the Supabase browser client ship to the prototype
-  or to participants.
+- **Code:** `src/research-dashboard/` (`Dashboard.tsx`, `data.ts`, `labels.ts`, `dashboard.css`), a
+  lazily loaded chunk; `server/research/handlers.ts` (`dashboard()`) for the read API.
 
-## Researcher permissions
+## Access model
 
-- **Sign-in:** Supabase Auth, email and password.
-- **Reads:** the browser uses the public anon/publishable key plus the researcher's Supabase Auth
-  session. Row Level Security decides everything:
-  - users in `research_researchers` can read all research tables and update only `status` and
-    `researcher_note` on feedback;
-  - anyone else gets zero rows;
-  - the anon key alone gets "permission denied".
-- **Gate:** after sign-in the app calls `research_is_researcher()`. A signed-in non-researcher sees
-  "No access". That screen is a courtesy only; even a hand-made request with their token returns
-  nothing (verified: `200 []` for reads, and an update that changed no rows).
-- **No server key:** the dashboard never uses the service key. The hidden route is not the protection;
-  RLS is.
+`/research` is an internal prototype dashboard for one researcher. It **opens directly**: there is no
+sign-in, no email/password, no Supabase Auth and no "No access" screen.
 
-**Adding a researcher (once):**
-1. Supabase → Authentication → Users → Add user: email and password, with auto-confirm on.
-2. SQL Editor:
-   ```sql
-   insert into research_researchers (user_id, note)
-   select id, 'researcher' from auth.users where email = 'you@example.com';
-   ```
+```
+Browser /research
+  → GET/POST /api/research/dashboard/*      (server-side, same Vercel function as the research API)
+  → Supabase with SUPABASE_SERVICE_ROLE_KEY (server-only)
+```
 
-Needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the deployment (already set in Vercel). The
-anon/publishable key is public by design and appears in the dashboard chunk only.
+- The browser holds **no Supabase client and no Supabase key** (not even the anon key). The service-role
+  key stays in the server environment. Verified: a production build with placeholder keys contains
+  none of them, and the dashboard chunk has no Supabase code.
+- The API returns only the columns the dashboard shows: never token hashes, client idempotency ids
+  or other internals.
+- **Optional light protection:** set `RESEARCH_DASHBOARD_KEY` (server-only) in Vercel. Every dashboard
+  call then needs it; open `/research?key=<value>` once and the browser keeps it locally and sends it as
+  a header. Unset (the default) means open. Vercel Deployment Protection also covers the URL while it is
+  on.
+- Note: with no key set, anyone who can reach the deployment can read the research data through
+  `/api/research/dashboard/*`. That is acceptable for this internal prototype; set the key before
+  sharing the deployment more widely.
+- `research_researchers`, `research_is_researcher()` and the RLS read policies remain in the database,
+  unused by the dashboard. Nothing was dropped.
+
+### Dashboard API
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/research/dashboard/studies` | All studies: id, slug, title, status, participant type, planned version |
+| `GET /api/research/dashboard/study?id=<studyId>` | That study's tasks, sessions (with participant code, optional name, craft, experience, type), task attempts and feedback |
+| `GET /api/research/dashboard/events?session=<id>[&until=<sequence>]` | One session's events in order, optionally up to a feedback item's position |
+| `GET /api/research/dashboard/events?attempts=<id,id,…>` | Events for a set of task attempts (up to 200) |
+| `POST /api/research/dashboard/feedback-status` `{id, status}` | Sets a feedback item's review status (new, reviewed, actionable, fixed, wont_fix) |
+
+Invalid ids return 400, wrong methods 405, a missing key (when one is set) 401, an unconfigured
+backend 503.
 
 ## Information architecture
 

@@ -1,16 +1,12 @@
 /**
- * Dashboard data access. The browser uses the public anon/publishable key plus the researcher's own
- * Supabase Auth session. Row Level Security decides what comes back: only users listed in
- * research_researchers can read research tables (docs/RESEARCH_DASHBOARD.md). No service key here.
+ * Dashboard data access. Everything goes through the server-side read API (/api/research/dashboard/*),
+ * which queries Supabase with the server-only service role. The browser holds no Supabase client and
+ * no Supabase key. docs/RESEARCH_DASHBOARD.md.
  */
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { EventRow } from './labels';
 import { brand } from '../research-data/brand';
 
-const URL_ = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-export const configured = !!(URL_ && ANON);
-export const sb: SupabaseClient | null = configured ? createClient(URL_!, ANON!, { auth: { persistSession: true, storageKey: 'ana-research-dashboard', autoRefreshToken: true } }) : null;
+const API = ((import.meta.env.VITE_RESEARCH_API_BASE as string | undefined) || '/api/research').replace(/\/$/, '') + '/dashboard';
 
 export type Study = { id: string; slug: string; title: string; status: string; participant_type: string | null; prototype_version: string | null };
 export type Task = { id: string; key: string; sequence: number; title: string; instruction: string; success_events: string[] };
@@ -20,65 +16,68 @@ export type Attempt = { id: string; session_id: string; task_id: string; outcome
 export type Feedback = { id: string; session_id: string; task_attempt_id: string | null; category: string; screen: string | null; participant_comment: string | null; prototype_version: string; persona: string | null; trail_until_sequence: number | null; interaction_context: Record<string, unknown> | null; status: string; researcher_note: string | null; created_at: string };
 export type StudyData = { tasks: Task[]; sessions: Session[]; attempts: Attempt[]; feedback: Feedback[] };
 
-const need = () => {
-  if (!sb) throw new Error('not_configured');
-  return sb;
-};
-
 /**
- * Dashboard access, decided by RLS on an ordinary research table (no RPC: the allowlist helper lives in
- * a private schema and research_researchers is intentionally unreadable from the browser).
- * Researchers can read research_studies; anyone else gets zero rows. A query error is reported as such,
- * not as "no access".
+ * Optional light protection: if the server sets RESEARCH_DASHBOARD_KEY, open /research?key=<value>
+ * once; the key is kept in this browser's localStorage and sent as a header. Unset: no key needed.
  */
-export async function researcherAccess(): Promise<'researcher' | 'denied' | 'error'> {
-  const { data, error } = await need().from('research_studies').select('id').limit(1);
-  if (error) return 'error';
-  return data && data.length > 0 ? 'researcher' : 'denied';
+const KEY_STORE = 'aa-research-dashboard-key';
+function dashboardKey(): string | null {
+  try {
+    const fromUrl = new URLSearchParams(location.search).get('key');
+    if (fromUrl) {
+      localStorage.setItem(KEY_STORE, fromUrl);
+      const u = new URL(location.href);
+      u.searchParams.delete('key');
+      history.replaceState(null, '', u.toString());
+    }
+    return localStorage.getItem(KEY_STORE);
+  } catch {
+    return null;
+  }
+}
+const KEY = typeof window !== 'undefined' ? dashboardKey() : null;
+
+export class DashboardError extends Error {
+  constructor(public status: number) {
+    super(`dashboard_${status}`);
+  }
+}
+
+async function get<T>(path: string): Promise<T> {
+  const r = await fetch(`${API}/${path}`, { headers: KEY ? { 'x-research-dashboard-key': KEY } : {}, cache: 'no-store' });
+  if (!r.ok) throw new DashboardError(r.status);
+  return (await r.json()) as T;
 }
 
 export async function loadStudies(): Promise<Study[]> {
-  const { data, error } = await need().from('research_studies').select('id, slug, title, status, participant_type, prototype_version').order('created_at');
-  if (error) throw error;
-  return (data as Study[]).map((x) => ({ ...x, title: brand(x.title) }));
+  const { studies } = await get<{ studies: Study[] }>('studies');
+  return studies.map((x) => ({ ...x, title: brand(x.title) }));
 }
 
-/** Everything a study's views need, in four queries. Events load per session or feedback item. */
+/** Everything a study's views need, in one call. Events load per session or feedback item. */
 export async function loadStudy(studyId: string): Promise<StudyData> {
-  const c = need();
-  const [tasks, sessions, attempts, feedback] = await Promise.all([
-    c.from('research_tasks').select('id, key, sequence, title, instruction, success_events').eq('study_id', studyId).order('sequence'),
-    c
-      .from('research_sessions')
-      .select('id, status, prototype_version, selected_persona, device_type, viewport_width, viewport_height, started_at, completed_at, research_participants(participant_code, display_name, primary_craft, experience_level, participant_type)')
-      .eq('study_id', studyId)
-      .order('started_at', { ascending: false }),
-    c.from('research_task_attempts').select('id, session_id, task_id, outcome, success_detected, difficulty_rating, expectation_match, feedback_text, duration_ms, started_at, completed_at, research_sessions!inner(study_id)').eq('research_sessions.study_id', studyId),
-    c.from('research_feedback').select('id, session_id, task_attempt_id, category, screen, participant_comment, prototype_version, persona, trail_until_sequence, interaction_context, status, researcher_note, created_at, research_sessions!inner(study_id)').eq('research_sessions.study_id', studyId).order('created_at', { ascending: false }),
-  ]);
-  for (const r of [tasks, sessions, attempts, feedback]) if (r.error) throw r.error;
-  return { tasks: (tasks.data as Task[]).map((t) => ({ ...t, title: brand(t.title), instruction: brand(t.instruction) })), sessions: sessions.data as unknown as Session[], attempts: attempts.data as unknown as Attempt[], feedback: feedback.data as unknown as Feedback[] };
+  const d = await get<StudyData>(`study?id=${encodeURIComponent(studyId)}`);
+  return { ...d, tasks: d.tasks.map((t) => ({ ...t, title: brand(t.title), instruction: brand(t.instruction) })) };
 }
 
 export async function loadEvents(sessionId: string, untilSequence?: number): Promise<EventRow[]> {
-  let q = need().from('research_events').select('sequence, event_name, screen, object_type, object_id, metadata, task_attempt_id, created_at').eq('session_id', sessionId).order('sequence');
-  if (untilSequence != null) q = q.lte('sequence', untilSequence);
-  const { data, error } = await q;
-  if (error) throw error;
-  return data as EventRow[];
+  const q = `session=${encodeURIComponent(sessionId)}${untilSequence != null ? `&until=${untilSequence}` : ''}`;
+  return (await get<{ events: EventRow[] }>(`events?${q}`)).events;
 }
 
 export async function loadEventsForAttempts(attemptIds: string[]): Promise<EventRow[]> {
   if (!attemptIds.length) return [];
-  const { data, error } = await need().from('research_events').select('sequence, event_name, screen, object_type, object_id, metadata, task_attempt_id, created_at').in('task_attempt_id', attemptIds).order('sequence');
-  if (error) throw error;
-  return data as EventRow[];
+  return (await get<{ events: EventRow[] }>(`events?attempts=${attemptIds.map(encodeURIComponent).join(',')}`)).events;
 }
 
-/** Researcher review status (RLS allows researchers to update only status and researcher_note). */
+/** Researcher review status. */
 export async function setFeedbackStatus(id: string, status: string) {
-  const { error } = await need().from('research_feedback').update({ status }).eq('id', id);
-  if (error) throw error;
+  const r = await fetch(`${API}/feedback-status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(KEY ? { 'x-research-dashboard-key': KEY } : {}) },
+    body: JSON.stringify({ id, status }),
+  });
+  if (!r.ok) throw new DashboardError(r.status);
 }
 
 /** Survey answers are feedback rows tagged source = survey; everything else is participant feedback. */

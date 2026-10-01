@@ -37,7 +37,7 @@ function safeParse(s: string) {
 }
 
 export function envFrom(source: Record<string, string | undefined>): ResearchEnv {
-  return { SUPABASE_URL: source.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: source.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: source.RESEARCH_DEBUG_KEY };
+  return { SUPABASE_URL: source.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: source.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: source.RESEARCH_DEBUG_KEY, RESEARCH_DASHBOARD_KEY: source.RESEARCH_DASHBOARD_KEY };
 }
 
 export async function handleNodeRequest(req: IncomingMessage & { body?: unknown }, res: ServerResponse, env: ResearchEnv = envFrom(process.env)) {
@@ -55,6 +55,8 @@ export async function handleNodeRequest(req: IncomingMessage & { body?: unknown 
   if (req.method === 'POST' && body === undefined) return send(400, { ok: false, error: 'invalid_json' });
   const headers: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(req.headers)) headers[k.toLowerCase()] = Array.isArray(v) ? v[0] : v;
-  const out = await handleResearch({ method: req.method ?? 'GET', action, headers, body }, env);
+  const query: Record<string, string> = {};
+  for (const [k, v] of url.searchParams) if (k !== 'action') query[k] = v;
+  const out = await handleResearch({ method: req.method ?? 'GET', action, headers, body, query }, env);
   send(out.status, out.body, out.contentType);
 }

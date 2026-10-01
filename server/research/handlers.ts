@@ -20,8 +20,10 @@ export type ResearchEnv = {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   RESEARCH_DEBUG_KEY?: string;
+  /** Optional. When set, the dashboard read API requires it (x-research-dashboard-key). Unset: open. */
+  RESEARCH_DASHBOARD_KEY?: string;
 };
-export type ResearchRequest = { method: string; action: string; headers: Record<string, string | undefined>; body: unknown };
+export type ResearchRequest = { method: string; action: string; headers: Record<string, string | undefined>; body: unknown; query?: Record<string, string> };
 export type ResearchResponse = { status: number; body: unknown; contentType?: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -61,6 +63,14 @@ function log(...args: unknown[]) {
 export async function handleResearch(req: ResearchRequest, env: ResearchEnv): Promise<ResearchResponse> {
   if (req.action === 'health') return health(env);
   if (req.action.startsWith('debug')) return debug(req, env);
+  if (req.action.startsWith('dashboard/')) {
+    try {
+      return await dashboard(req, env);
+    } catch (e) {
+      log(req.action, (e as Error).message);
+      return fail(500, 'server_error');
+    }
+  }
   if (req.action === 'study' && req.method === 'GET') return activeStudy(env, req.headers['x-study-type']);
   if (req.method !== 'POST') return fail(405, 'method_not_allowed');
   const sb = db(env);
@@ -342,6 +352,89 @@ async function submitFeedback(sb: SupabaseClient, s: SessionRow, b: Record<strin
   );
   if (error) return log('feedback', error.message), fail(500, 'server_error');
   return ok();
+}
+
+// ------------------------------------------------------------------------------- research dashboard
+/**
+ * Read API for /research (internal prototype dashboard). Runs only here, on the server, with the
+ * service role; the browser never holds a Supabase key. Returns only the columns the dashboard shows:
+ * never token hashes, client idempotency ids or other internals.
+ *
+ *   GET  dashboard/studies                         all studies
+ *   GET  dashboard/study?id=<studyId>              tasks, sessions (+participant), attempts, feedback
+ *   GET  dashboard/events?session=<id>[&until=<n>] one session's events (optionally up to a sequence)
+ *   GET  dashboard/events?attempts=<id,id,...>     events for a set of task attempts
+ *   POST dashboard/feedback-status {id, status}    researcher review status
+ *
+ * Open by default (internal prototype; the deployment may add Vercel protection). If
+ * RESEARCH_DASHBOARD_KEY is set, every call must send it as x-research-dashboard-key.
+ */
+const SESSION_COLS = 'id, status, prototype_version, selected_persona, device_type, viewport_width, viewport_height, started_at, completed_at, research_participants(participant_code, display_name, primary_craft, experience_level, participant_type)';
+const ATTEMPT_COLS = 'id, session_id, task_id, outcome, success_detected, difficulty_rating, expectation_match, feedback_text, duration_ms, started_at, completed_at';
+const FEEDBACK_COLS = 'id, session_id, task_attempt_id, category, screen, participant_comment, prototype_version, persona, trail_until_sequence, interaction_context, status, researcher_note, created_at';
+const EVENT_COLS = 'sequence, event_name, screen, object_type, object_id, metadata, task_attempt_id, created_at';
+const FEEDBACK_STATUSES = ['new', 'reviewed', 'actionable', 'fixed', 'wont_fix'];
+
+async function dashboard(req: ResearchRequest, env: ResearchEnv): Promise<ResearchResponse> {
+  const key = env.RESEARCH_DASHBOARD_KEY;
+  if (key) {
+    const given = Buffer.from(req.headers['x-research-dashboard-key'] ?? '');
+    const want = Buffer.from(key);
+    if (given.length !== want.length || !timingSafeEqual(given, want)) return fail(401, 'dashboard_key_required');
+  }
+  const sb = db(env);
+  if (!sb) return fail(503, 'research_backend_not_configured');
+  const q = req.query ?? {};
+  const action = req.action.slice('dashboard/'.length);
+
+  if (action === 'feedback-status') {
+    if (req.method !== 'POST') return fail(405, 'method_not_allowed');
+    const b = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+    if (!isUuid(b.id) || !FEEDBACK_STATUSES.includes(b.status as string)) return fail(400, 'invalid_request');
+    const { error } = await sb.from('research_feedback').update({ status: b.status }).eq('id', b.id);
+    if (error) throw new Error(error.message);
+    return ok();
+  }
+  if (req.method !== 'GET') return fail(405, 'method_not_allowed');
+
+  if (action === 'studies') {
+    const { data, error } = await sb.from('research_studies').select('id, slug, title, status, participant_type, prototype_version').order('created_at');
+    if (error) throw new Error(error.message);
+    return ok({ studies: data });
+  }
+  if (action === 'study') {
+    if (!isUuid(q.id)) return fail(400, 'invalid_request');
+    const [tasks, sessions] = await Promise.all([
+      sb.from('research_tasks').select('id, key, sequence, title, instruction, success_events').eq('study_id', q.id).order('sequence'),
+      sb.from('research_sessions').select(SESSION_COLS).eq('study_id', q.id).order('started_at', { ascending: false }),
+    ]);
+    if (tasks.error || sessions.error) throw new Error((tasks.error ?? sessions.error)!.message);
+    const ids = (sessions.data ?? []).map((x) => x.id as string);
+    const [attempts, feedback] = ids.length
+      ? await Promise.all([
+          sb.from('research_task_attempts').select(ATTEMPT_COLS).in('session_id', ids),
+          sb.from('research_feedback').select(FEEDBACK_COLS).in('session_id', ids).order('created_at', { ascending: false }),
+        ])
+      : [{ data: [], error: null }, { data: [], error: null }];
+    if (attempts.error || feedback.error) throw new Error((attempts.error ?? feedback.error)!.message);
+    return ok({ tasks: tasks.data, sessions: sessions.data, attempts: attempts.data, feedback: feedback.data });
+  }
+  if (action === 'events') {
+    let query = sb.from('research_events').select(EVENT_COLS).order('sequence');
+    if (isUuid(q.session)) {
+      query = query.eq('session_id', q.session);
+      const until = Number(q.until);
+      if (q.until !== undefined && Number.isInteger(until)) query = query.lte('sequence', until);
+    } else if (q.attempts) {
+      const list = q.attempts.split(',').filter(isUuid).slice(0, 200);
+      if (!list.length) return ok({ events: [] });
+      query = query.in('task_attempt_id', list);
+    } else return fail(400, 'invalid_request');
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return ok({ events: data });
+  }
+  return fail(404, 'unknown_action');
 }
 
 // ------------------------------------------------------------------------------- development inspection
