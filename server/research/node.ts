@@ -3,13 +3,17 @@
  * Node function. Reads at most 32 KB of JSON and maps /api/research/<action> to handleResearch.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { handleResearch, type ResearchEnv } from './handlers';
+import { handleResearch, type ResearchEnv } from './handlers.js';
 
 const MAX_BODY = 32 * 1024;
 
 function readJson(req: IncomingMessage & { body?: unknown }): Promise<unknown> {
-  // Vercel (and some frameworks) have already parsed the body.
-  if (req.body !== undefined) return Promise.resolve(typeof req.body === 'string' ? safeParse(req.body) : req.body);
+  // Vercel (and some frameworks) have already parsed the body. Vercel's getter throws on malformed JSON.
+  try {
+    if (req.body !== undefined) return Promise.resolve(typeof req.body === 'string' ? safeParse(req.body) : req.body);
+  } catch {
+    return Promise.resolve(undefined);
+  }
   return new Promise((resolve) => {
     let size = 0;
     const chunks: Buffer[] = [];
@@ -38,7 +42,8 @@ export function envFrom(source: Record<string, string | undefined>): ResearchEnv
 
 export async function handleNodeRequest(req: IncomingMessage & { body?: unknown }, res: ServerResponse, env: ResearchEnv = envFrom(process.env)) {
   const url = new URL(req.url ?? '/', 'http://local');
-  const action = url.pathname.replace(/^.*\/api\/research\/?/, '').replace(/\/+$/, '');
+  // On Vercel the rewrite passes the action as ?action=; under Vite it is the path after /api/research/.
+  const action = (url.searchParams.get('action') ?? url.pathname.replace(/^.*\/api\/research\/?/, '')).replace(/^\/+|\/+$/g, '');
   const body = req.method === 'POST' ? await readJson(req) : undefined;
   const send = (status: number, payload: unknown, type = 'application/json') => {
     res.statusCode = status;

@@ -14,7 +14,7 @@
  */
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { ATTEMPT_OUTCOMES, FEEDBACK_CATEGORIES, isResearchEventName, sanitizeMetadata, sanitizeToken, RESEARCH_OBJECT_TYPES } from '../../src/research-data/taxonomy';
+import { ATTEMPT_OUTCOMES, FEEDBACK_CATEGORIES, isResearchEventName, sanitizeMetadata, sanitizeToken, RESEARCH_OBJECT_TYPES } from '../../src/research-data/taxonomy.js';
 
 export type ResearchEnv = {
   SUPABASE_URL?: string;
@@ -59,7 +59,7 @@ function log(...args: unknown[]) {
 }
 
 export async function handleResearch(req: ResearchRequest, env: ResearchEnv): Promise<ResearchResponse> {
-  if (req.action === 'health') return ok({ ok: true, configured: !!(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) });
+  if (req.action === 'health') return health(env);
   if (req.action.startsWith('debug')) return debug(req, env);
   if (req.method !== 'POST') return fail(405, 'method_not_allowed');
   const sb = db(env);
@@ -86,6 +86,22 @@ export async function handleResearch(req: ResearchRequest, env: ResearchEnv): Pr
     log(req.action, (e as Error).message);
     return fail(500, 'server_error');
   }
+}
+
+/**
+ * Health: configuration plus a real round trip to the research tables (a head-only count, so nothing
+ * is returned). Says only whether the database is reachable, never any data or error detail.
+ */
+async function health(env: ResearchEnv): Promise<ResearchResponse> {
+  const sb = db(env);
+  if (!sb) return { status: 503, body: { ok: false, configured: false, database: 'not_configured' } };
+  const started = Date.now();
+  const { error } = await sb.from('research_studies').select('id', { count: 'exact', head: true });
+  if (error) {
+    log('health', error.code ?? error.message);
+    return { status: 503, body: { ok: false, configured: true, database: 'unreachable' } };
+  }
+  return ok({ ok: true, configured: true, database: 'reachable', latencyMs: Date.now() - started });
 }
 
 async function withSession(sb: SupabaseClient, req: ResearchRequest, fn: (s: SessionRow) => Promise<ResearchResponse>) {
