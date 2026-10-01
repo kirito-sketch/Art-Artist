@@ -214,6 +214,10 @@ export function PrototypeControls() {
           <Row label="Policy update" hint="Agreeing to changed terms" onClick={() => flow('policy')} />
           <Row label="Moderation console" hint="Internal tool for Art and Artist staff" onClick={openAdmin} external />
         </div>
+        {/* Internal status, never shown inside the product (src/legal/docs.tsx, DraftTag). */}
+        <p className="pc-note" role="note">
+          Legal and policy copy (Before you join, Terms, Privacy, guidelines, house authority, policy update, Your data) is placeholder: draft for legal review.
+        </p>
       </section>
 
       <section className="pc-sec">

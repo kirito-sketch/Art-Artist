@@ -3,7 +3,10 @@ import * as seed from '../../data/seed';
 import { useStore } from '../../state/store';
 import { org, party } from '../../state/selectors';
 import { publicName, world, type HouseProject } from '../../state/world';
-import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
+import { industryActivity, peopleFor } from '../../domain/relevance';
+import type { Person } from '../../data/types';
+import { NetworkRow } from '../home/NetworkActivity';
 import { displayTitle, keepSeparators, Faces, FrameLabel, PortraitCard, PosterTile, TitleCard } from '../../ui/compose';
 import { person } from '../../state/selectors';
 
@@ -74,13 +77,26 @@ function SlateHome() {
     <div className="screen canvas v-slate" data-scroll="home">
       <HouseTop />
       <Pending />
-      {lead ? <LeadProject p={lead} onOpen={() => push({ name: 'hproject', id: lead.id })} /> : <EmptyHouse />}
-      <div className="ws-pad">
-        <AroundWork />
-        <OpenRoles />
-        <SlateRail />
-        <PeopleToConsider />
-      </div>
+      {lead ? (
+        <>
+          <LeadProject p={lead} onOpen={() => push({ name: 'hproject', id: lead.id })} />
+          <div className="ws-pad">
+            <AroundWork />
+            <OpenRoles />
+            <SlateRail />
+            <PeopleToConsider />
+            <HappeningForHouse />
+          </div>
+        </>
+      ) : (
+        // Cold start (V30): content first. Real people lead; starting a project is the next step, not a wall.
+        <div className="ws-pad">
+          <PeopleToConsider />
+          <EmptyHouse />
+          <AroundWork />
+          <HappeningForHouse />
+        </div>
+      )}
     </div>
   );
 }
@@ -222,23 +238,69 @@ function SlateRail() {
   );
 }
 
-/** Portrait Cards, the same family as the Individual Home: people who fit roles you haven't opened. */
+/** The house as the "me" the shared relevance model ranks for: a team builder in its own city. */
+function houseAsPerson(id: string): Person {
+  const o = org(id);
+  return { id, kind: 'person', name: o.name, role: 'Production house', craft: 'production', city: o.city, tone: o.tone, visibility: 'public' };
+}
+
+/**
+ * People, as Portrait Cards with Follow as the card action (V30, same as the Individual Home). With
+ * private roles: people who fit them. A new house with no roles yet gets the cold-start tray instead:
+ * credible professionals in other crafts, available and nearby first, so its first Home is never empty.
+ */
 function PeopleToConsider() {
-  const { push } = useStore();
+  const { push, acting, following, toggleFollow, viewer } = useStore();
   const h = useHouse();
   const picks = h.mine
     .flatMap((p) => h.rolesOf(p).filter((r) => r.visibility === 'private').map((r) => ({ r, p })))
     .map(({ r, p }) => ({ r, p, who: seed.people.find((x) => x.visibility === 'public' && x.role.toLowerCase().includes(r.role.toLowerCase().split(' ')[0])) }))
     .filter((x) => x.who)
     .slice(0, 3);
-  if (!picks.length) return null;
+  const follow = (who: Person) => <FollowButton primary block on={following.includes(who.id)} onToggle={() => toggleFollow(who.id)} name={who.name} />;
+  if (!picks.length) {
+    // Never the people who act for this house (you included).
+    const people = peopleFor(houseAsPerson(acting), 'hire', following).filter(({ item }) => item.id !== viewer.id).slice(0, 8);
+    if (!people.length) return null;
+    return (
+      <section className="v-section">
+        <SectionHeader title="People you could work with" />
+        <p className="world-why">Credible professionals across crafts, available and nearby first.</p>
+        <div className="portrait-rail">
+          {people.map(({ item: who, why }) => (
+            <PortraitCard key={who.id} person={who} context={why} onPress={() => push({ name: 'profile', id: who.id })} action={follow(who)} />
+          ))}
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="v-section">
       <SectionHeader title="For roles you haven't opened" />
       <div className="portrait-rail">
-        {picks.map(({ r, p, who }) => {
-          return <PortraitCard key={r.id} person={who!} context={`${r.role} · private on ${p.workingTitle}`} onPress={() => push({ name: 'profile', id: who!.id })} />;
-        })}
+        {picks.map(({ r, p, who }) => (
+          <PortraitCard key={r.id} person={who!} context={`${r.role} · private on ${p.workingTitle}`} onPress={() => push({ name: 'profile', id: who!.id })} action={follow(who!)} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Cold start: a house with nothing happening around its own work yet sees the industry's activity instead. */
+function HappeningForHouse() {
+  const { acting } = useStore();
+  const h = useHouse();
+  if (h.houseNotes.length) return null;
+  const events = industryActivity(houseAsPerson(acting)).slice(0, 4);
+  if (!events.length) return null;
+  return (
+    <section className="v-section">
+      <SectionHeader title="Happening on Art and Artist" />
+      <p className="world-why">Credits issued, projects starting, people becoming available.</p>
+      <div className="list list--flush">
+        {events.map((e, i) => (
+          <NetworkRow key={e.id} e={e} index={i} />
+        ))}
       </div>
     </section>
   );

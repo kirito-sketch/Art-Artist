@@ -481,14 +481,14 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
       <div>
         <span className="field-label">Questions (optional, up to 3)</span>
         {qs.map((q, i) => (
-          <input key={i} className="field field--stack" value={q} onChange={(e) => setQs((x) => x.map((y, j) => (j === i ? e.target.value : y)))} placeholder={`Question ${i + 1}`} />
+          <input key={i} className="field field--stack" value={q} onChange={(e) => setQs((x) => x.map((y, j) => (j === i ? e.target.value : y)))} placeholder={i === 0 ? 'e.g. Which features have you worked on?' : `Question ${i + 1}`} />
         ))}
         {qs.length < 3 && (
           <button className="link" onClick={() => setQs((x) => [...x, ''])}>
             Add a question
           </button>
         )}
-        <p className="meta field-hint">Answers are optional for people showing interest.</p>
+        <p className="meta field-hint">Answers are optional for people showing interest. To see work, ask for a link (for example "A link to a scene you lit"): nothing can be uploaded when showing interest.</p>
       </div>
       <div>
         <span className="field-label">Who can see it</span>

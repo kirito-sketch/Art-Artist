@@ -178,9 +178,11 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </Button>
               ) : (
                 <>
-                  <FollowButton block size="m" on={isFollowing} onToggle={() => toggleFollow(id)} />
+                  {/* V30: Follow primary, Message secondary, same as a person's profile. */}
+                  <FollowButton block size="m" primary on={isFollowing} onToggle={() => toggleFollow(id)} name={o.name} />
                   <Button
                     block
+                    variant="secondary"
                     onClick={() => {
                       const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                       cid && push({ name: 'conversation', id: cid });

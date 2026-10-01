@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Camera, Check, ChevronLeft, Eye, EyeOff, Mail } from 'lucide-react';
+import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Lock, Mail, Users } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { CRAFTS, headline } from '../data/crafts';
 import * as seed from '../data/seed';
@@ -573,41 +573,118 @@ function Forgot({ onBack, onDone }: { onBack: () => void; onDone: (id: string) =
 }
 
 /** Explicit, readable consent. Recorded with document, version and date. */
+/*
+ * Before you join (V30). Same consent, lighter presentation: one reassuring line, three short "what to
+ * know" rows that open the full explanation and documents, then the required consent, then a clearly
+ * optional email preference. Required boxes are never pre-ticked; the documents are always one tap away.
+ * Shared by every path into Art and Artist (individuals, invited house members, sign-up for a house):
+ * organisation-specific agreements are asked where they apply (accepting an invite, setting up a house).
+ * The legal substance is unchanged and still placeholder pending legal review (src/legal/docs.tsx).
+ */
+const KNOW: { d: DocId; icon: ReactNode; h: string; line: string; full: string }[] = [
+  {
+    d: 'terms',
+    icon: <BadgeCheck size={20} />,
+    h: 'Your work and credits',
+    line: 'Credits come from productions. You accept or correct them.',
+    // The original card copy, kept word for word in the detail view.
+    full: 'Finding each other, working together, and a true record of work. Credits come from productions; you accept or correct them.',
+  },
+  {
+    d: 'privacy',
+    icon: <Lock size={20} />,
+    h: 'Your privacy',
+    line: 'Your phone number is never public. We never sell personal data.',
+    full: 'Your profile, work and messages, to run Art and Artist. Your phone number is never public. We never sell personal data.',
+  },
+  {
+    d: 'conduct',
+    icon: <Users size={20} />,
+    h: 'How people treat each other',
+    line: 'Real identities, honest roles, no fees to apply or audition.',
+    full: 'Real identities, no fees to apply or audition, no harassment, honest roles.',
+  },
+];
+
 function Consent({ onBack, openDoc, onAgree }: { onBack: () => void; openDoc: (d: DocId) => void; onAgree: (marketing: boolean) => void }) {
   const [terms, setTerms] = useState(false);
   const [age, setAge] = useState(false);
   const [marketing, setMarketing] = useState(false);
-  const cards: { d: DocId; h: string; p: string }[] = [
-    { d: 'terms', h: 'What Art and Artist is for', p: 'Finding each other, working together, and a true record of work. Credits come from productions; you accept or correct them.' },
-    { d: 'privacy', h: 'What we collect and why', p: 'Your profile, work and messages, to run Art and Artist. Your phone number is never public. We never sell personal data.' },
-    { d: 'conduct', h: 'How people treat each other', p: 'Real identities, no fees to apply or audition, no harassment, honest roles.' },
-  ];
+  const [topic, setTopic] = useState<(typeof KNOW)[number] | null>(null);
+  const link = (d: DocId, label: string) => (
+    <button
+      type="button"
+      className="consent-link"
+      onClick={(e) => {
+        e.stopPropagation();
+        openDoc(d);
+      }}
+    >
+      {label}
+    </button>
+  );
   return (
     <Form title="Before you join" onBack={onBack}>
-      <DraftTag />
-      {cards.map((c) => (
-        <div key={c.d} className="consent-card">
-          <p className="item-title">{c.h}</p>
-          <p className="meta">{c.p}</p>
-          <button className="link link--small" onClick={() => openDoc(c.d)}>
-            Read in full
+      <p className="meta consent-lede">A few things to know about how Art and Artist works.</p>
+
+      <div className="know-list" aria-label="What to know">
+        {KNOW.map((k) => (
+          <button key={k.d} type="button" className="know-row" onClick={() => setTopic(k)} aria-haspopup="dialog">
+            <span className="know-icon" aria-hidden>
+              {k.icon}
+            </span>
+            <span className="know-text">
+              <span className="item-title">{k.h}</span>
+              <span className="meta">{k.line}</span>
+            </span>
+            <ChevronRight size={18} className="know-chevron" aria-hidden />
           </button>
-        </div>
-      ))}
-      <Check2 on={terms} set={setTerms}>
-        I agree to the <b>Terms of Service</b> and have read the <b>Privacy Policy</b>
-      </Check2>
-      <Check2 on={age} set={setAge}>
-        I'm 18 or older
-      </Check2>
-      <div className="ob-row">
-        <span className="meta">Occasional emails about new features (optional)</span>
-        <Toggle on={marketing} onChange={setMarketing} label="Product emails" />
+        ))}
       </div>
+
+      <div className="consent-required" role="group" aria-label="Required to join">
+        <CheckRow on={terms} set={setTerms} id="consent-terms">
+          I agree to the {link('terms', 'Terms of Service')} and have read the {link('privacy', 'Privacy Policy')}
+        </CheckRow>
+        <CheckRow on={age} set={setAge} id="consent-age">
+          I'm 18 or older
+        </CheckRow>
+      </div>
+
+      <div className="consent-optional">
+        <span className="consent-optional-text">
+          <span className="consent-optional-label">Optional</span>
+          <span className="meta">Occasional emails about new features</span>
+        </span>
+        <Toggle on={marketing} onChange={setMarketing} label="Product emails (optional)" />
+      </div>
+
       <Button block size="l" disabled={!terms || !age} onClick={() => onAgree(marketing)}>
         Agree and continue
       </Button>
+
+      <Sheet open={!!topic} onClose={() => setTopic(null)} title="" size="tall">
+        {topic && (
+          <div className="stack">
+            <h2 className="ob-title know-sheet-title">{topic.h}</h2>
+            <p className="body">{topic.full}</p>
+            <LegalDocView id={topic.d} />
+          </div>
+        )}
+      </Sheet>
     </Form>
+  );
+}
+
+/** A required checkbox whose label can contain links: the box and the text toggle; links open documents. */
+function CheckRow({ on, set, id, children }: { on: boolean; set: (v: boolean) => void; id: string; children: ReactNode }) {
+  return (
+    <div className={`check-row ${on ? 'is-on' : ''}`} onClick={() => set(!on)}>
+      <button type="button" className="check-box" role="checkbox" aria-checked={on} aria-labelledby={id} onClick={(e) => (e.stopPropagation(), set(!on))}>
+        {on && <Check size={14} strokeWidth={3} />}
+      </button>
+      <span id={id}>{children}</span>
+    </div>
   );
 }
 

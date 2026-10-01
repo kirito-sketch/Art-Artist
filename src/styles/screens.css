@@ -2196,3 +2196,24 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .convo-closed { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px var(--gutter) 34px; text-align: center; border-top: 1px solid var(--line); }
 .assoc-section { padding-top: 8px; }
 .assoc-actions { margin-top: 20px; }
+
+/* Before you join (V30): calm, light, progressive. */
+.consent-lede { margin: -6px 0 2px; font-size: 15px; }
+.know-list { display: flex; flex-direction: column; border-radius: 14px; background: color-mix(in srgb, var(--text) 4%, transparent); overflow: hidden; }
+.know-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; background: none; border: 0; text-align: left; font: inherit; color: var(--text); cursor: pointer; }
+.know-row + .know-row { border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+.know-icon { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--action-tint, rgba(39, 92, 80, 0.1)); color: var(--action, #275c50); }
+.know-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.know-text .item-title { font-size: 15px; }
+.know-text .meta { font-size: 13.5px; line-height: 1.35; }
+.know-chevron { flex: none; color: var(--text-3); }
+.know-sheet-title { margin: 0; }
+.consent-required { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.consent-required .check-row { cursor: pointer; padding: 8px 0; align-items: flex-start; font-size: 15px; line-height: 1.4; }
+.consent-required .check-box { padding: 0; background: none; cursor: pointer; color: inherit; }
+.consent-required .check-row.is-on .check-box { background: var(--text); border-color: var(--text); color: var(--surface); }
+.consent-link { display: inline; padding: 0; border: 0; background: none; font: inherit; font-weight: 650; color: var(--action, #275c50); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.consent-optional { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0 2px; border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+.consent-optional-text { display: flex; flex-direction: column; gap: 1px; }
+.consent-optional-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.pc-note { margin: 10px 2px 0; font-size: 12px; line-height: 1.4; color: #8a5a00; background: #fff3d6; border-radius: 8px; padding: 8px 10px; }

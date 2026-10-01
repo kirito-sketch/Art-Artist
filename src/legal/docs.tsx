@@ -2,7 +2,8 @@ import { useStore } from '../state/store';
 
 /**
  * Legal and policy surfaces. PLACEHOLDER CONTENT: the structure and plain-language summaries are
- * product design; none of this is legal text. Every surface shows "Draft for legal review".
+ * product design; none of this is legal text. Every surface is marked with <DraftTag /> in code
+ * (internal; listed in the prototype console), pending legal review.
  */
 export type DocId = 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority';
 
@@ -103,8 +104,13 @@ export const DOCS: Record<DocId, Doc> = {
   },
 };
 
+/**
+ * Marks copy that is placeholder pending legal review. The status is internal: it is listed in the
+ * prototype console (Legal and policy) and in docs, and is NOT shown to people using the product,
+ * where it made the legal content feel alarming and unfinished. Kept as a marker in the code.
+ */
 export function DraftTag() {
-  return <span className="draft-tag">Draft for legal review</span>;
+  return null;
 }
 
 export function LegalDocView({ id }: { id: DocId }) {
