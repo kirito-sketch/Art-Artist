@@ -4,7 +4,7 @@ import { PressCard, Photo } from '../../ui/primitives';
 import { Byline, useSentLabel } from '../home/OpportunityCard';
 
 /** Compact opportunity row for lists. Three lines; state replaces the last line once the user has acted. */
-export function RoleRow({ o }: { o: Opportunity }) {
+export function RoleRow({ o, note }: { o: Opportunity; note?: string }) {
   const { push } = useStore();
   const sent = useSentLabel(o);
   return (
@@ -15,7 +15,7 @@ export function RoleRow({ o }: { o: Opportunity }) {
         <p className="meta meta--dark">
           <Byline o={o} />
         </p>
-        <p className={`meta ${sent ? 'meta--done' : ''}`}>{sent ?? `${o.kind === 'collab' ? 'Collaboration · ' : ''}${o.city.split(' ')[0]} · ${o.paid ? o.compensation : 'Unpaid'}`}</p>
+        <p className={`meta ${sent || note ? 'meta--done' : ''}`}>{note ?? sent ?? `${o.kind === 'collab' ? 'Collaboration · ' : ''}${o.city.split(' ')[0]} · ${o.paid ? o.compensation : 'Unpaid'}`}</p>
       </div>
     </PressCard>
   );

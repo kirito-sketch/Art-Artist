@@ -177,7 +177,7 @@ export function Specimen() {
         </div>
       </Block>
 
-      <Block id="red" title="Red is a mark, never a field" note="Five states told apart by structure and language first; red appears only as a dot, a rule or a word">
+      <Block id="red" title="Ana green marks; red means danger" note="Five states told apart by structure and language first. Attention uses the Ana green dot; red appears only for errors and destructive confirmations">
         <div className="spec-states">
           <div className="spec-state">
             <Clock3 size={16} />

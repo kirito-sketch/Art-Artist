@@ -1,25 +1,30 @@
 import { motion } from 'framer-motion';
 import { Bookmark } from 'lucide-react';
 import type { Opportunity } from '../../data/types';
-import { useStore } from '../../state/store';
+import { useStore, type SavedKind } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { shared, spring } from '../../ui/motion';
 import { Avatar, PressCard, Photo, Verified } from '../../ui/primitives';
 import { displayTitle, keepSeparators, FrameLabel } from '../../ui/compose';
 
-export function SaveButton({ id, floating }: { id: string; floating?: boolean }) {
-  const { saved, toggleSave } = useStore();
-  const on = saved.includes(id);
+/**
+ * The one Save control (docs/SAVE_MODEL.md). Posts, Roles and Projects only; the state lives in the
+ * store, so the same item reads as saved everywhere. `floating` is the light utility circle over
+ * media; without it, a plain icon for action rows on paper.
+ */
+export function SaveButton({ id, kind = 'role', floating }: { id: string; kind?: SavedKind; floating?: boolean }) {
+  const { isSaved, toggleSave } = useStore();
+  const on = isSaved(kind, id);
   return (
     <motion.button
       className={`save ${floating ? 'save--floating' : ''} ${on ? 'is-on' : ''}`}
-      aria-label={on ? 'Remove from saved' : 'Save'}
+      aria-label={on ? 'Remove from Saved' : 'Save'}
       aria-pressed={on}
       whileTap={{ scale: 0.8 }}
       transition={spring.press}
       onClick={(e) => {
         e.stopPropagation();
-        toggleSave(id);
+        toggleSave(id, kind);
       }}
     >
       <motion.span key={String(on)} initial={{ scale: on ? 0.5 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 700, damping: 14 }} style={{ display: 'inline-flex' }}>

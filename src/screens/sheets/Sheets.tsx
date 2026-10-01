@@ -1,4 +1,4 @@
-import { Ban, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
+import { Ban, Bookmark, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { dur, shared, spring } from '../../ui/motion';
@@ -10,6 +10,7 @@ import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
 import { world, project as wproject } from '../../state/world';
+import { sentReports } from '../../state/reports';
 
 export function SheetHost() {
   const { sheet, closeSheet } = useStore();
@@ -48,7 +49,10 @@ export function SheetHost() {
         {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
       </Sheet>
       <Sheet open={is('report')} onClose={closeSheet} title="Report">
-        {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} />}
+        {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} target={sheet.target} />}
+      </Sheet>
+      <Sheet open={is('postMore')} onClose={closeSheet} title="">
+        {sheet?.name === 'postMore' && <PostMenu id={sheet.id} />}
       </Sheet>
       <Sheet open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
         <NewProjectForm />
@@ -86,9 +90,9 @@ function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }
             layoutId={shared.create}
             className="create-surface"
             style={{ borderRadius: 26 }}
-            initial={{ backgroundColor: '#c4412e' }}
+            initial={{ backgroundColor: '#275c50' }}
             animate={{ backgroundColor: '#ffffff' }}
-            exit={{ backgroundColor: '#c4412e' }}
+            exit={{ backgroundColor: '#275c50' }}
             transition={spring.sheet}
           >
             <motion.div className="create-content" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1, duration: dur.micro } }} exit={{ opacity: 0, transition: { duration: 0.08 } }}>
@@ -511,15 +515,18 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
 
 /** Private to the account owner: what they saved, what they sent, what they posted. */
 function Activity() {
-  const { saved, responses, interestsSent, userCollabs, viewer } = useStore();
+  const { saved, responses, interestsSent, userCollabs, viewer, push } = useStore();
   const pick = (ids: string[]) => ids.map((id) => findOpportunity(id, userCollabs)).filter(Boolean) as NonNullable<ReturnType<typeof findOpportunity>>[];
   const sections = [
     { title: 'Sent', items: pick([...Object.keys(responses), ...Object.keys(interestsSent)]), empty: 'Roles you respond to appear here.' },
-    { title: 'Saved', items: pick(saved), empty: 'Saved roles appear here.' },
     { title: 'Your collaborations', items: [...userCollabs, ...seed.opportunities.filter((o) => o.authorId === viewer.id)], empty: 'Nothing posted yet.' },
   ];
   return (
     <div className="stack stack--loose">
+      {/* Saved has one home, the private Saved screen; activity only points to it. */}
+      <div className="group">
+        <Row icon={<Bookmark size={20} />} label="Saved" value={saved.length ? String(saved.length) : undefined} onPress={() => push({ name: 'saved' })} />
+      </div>
       {sections.map((s) => (
         <section key={s.title}>
           <h3 className="section-title section-title--sheet">{s.title}</h3>
@@ -648,7 +655,25 @@ function MoreSheet({ id }: { id: string }) {
 const REPORT_REASONS = ['Fake profile or impersonation', 'Asking for money to apply or audition', 'Harassment or unsafe behaviour', 'Misleading role or project', 'Stolen or misused work', 'Something else'];
 
 /** Report: reason, optional detail, a clear promise, and the offer to block. */
-function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }) {
+/**
+ * A post's More menu. Someone else's post: Report post, through the same trust flow as everything
+ * else. Your own post: Share only for now (editing and deleting posts don't exist yet; documented).
+ */
+function PostMenu({ id }: { id: string }) {
+  const { openSheet, viewer, userPosts } = useStore();
+  const post = userPosts.find((p) => p.id === id) ?? seed.posts.find((p) => p.id === id);
+  if (!post) return <EmptyState title="This post is no longer available" />;
+  const author = party(post.authorId);
+  const mine = post.authorId === viewer.id;
+  return (
+    <div className="group">
+      <Row icon={<Link2 size={20} />} label="Share post" onPress={() => openSheet({ name: 'share', label: `Post by ${author?.name ?? 'someone'}` })} />
+      {!mine && <Row icon={<Flag size={20} />} label="Report post" onPress={() => openSheet({ name: 'report', subject: `this post by ${author?.name ?? 'this person'}`, partyId: post.authorId, target: { kind: 'Post', id: post.id } })} />}
+    </div>
+  );
+}
+
+function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: string; target?: { kind: 'Post'; id: string } }) {
   const { openSheet, closeSheet, acting, viewer } = useStore();
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
@@ -657,7 +682,7 @@ function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }
     return (
       <div className="stack">
         <p className="title-2">Thanks. We'll look at it.</p>
-        <p className="body">Ana reviews reports within 24 hours. {subject} won't be told who reported. If we act, you'll get a notification.</p>
+        <p className="body">Ana reviews reports within 24 hours. {target ? 'The author' : subject} won't be told who reported. If we act, you'll get a notification.</p>
         {partyId && (
           <Button block size="l" variant="danger" onClick={() => openSheet({ name: 'block', id: partyId })}>
             Also block
@@ -685,6 +710,9 @@ function ReportSheet({ subject, partyId }: { subject: string; partyId?: string }
         loading={step === 'sending'}
         onClick={() => {
           setStep('sending');
+          // The payload the trust queue receives: what was reported (type, id, author) and why. The
+          // reporter travels with it for Ana staff only; the author is never told who reported.
+          sentReports.push({ kind: target?.kind ?? 'Other', objectId: target?.id, authorId: partyId, subject, reason, note: detail || undefined, reporterId: viewer.id });
           window.setTimeout(() => setStep('done'), 700);
         }}
       >

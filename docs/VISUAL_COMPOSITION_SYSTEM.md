@@ -95,7 +95,7 @@ These four elements are shared by every composition family. They are what makes 
 | Signature | What it is | Rule |
 |---|---|---|
 | **Frame label** | Small-caps label (11.5 px, 700, +0.09em) on a smoked plate, used for status on media: stage, kind, closing, privacy | Every status written on an image is a Frame Label. There are no pills on media. Tones: Plate (default), Paper, Urgent (red text only). |
-| **Title card** | A project without public artwork, shown as its title on the dark surface with a thin red rule | Never show an empty grey box or a lock-only placeholder for work. |
+| **Title card** | A project without public artwork, shown as its title on the dark surface with a thin Ana-green rule | Never show an empty grey box or a lock-only placeholder for work. |
 | **Call sheet** | A two-column grid of small-caps field names and values with hairlines | Used for the facts of a role or project. Never an icon list, which reads as a settings screen. |
 | **Record** | A white surface with a hairline border and no shadow, holding credits, associations and amendments | Trust objects never get decorative depth, tint or objects. |
 
@@ -216,7 +216,7 @@ Composition may vary. Meaning must not.
 
 - **One display title per screen.** Display names the one piece of work or person the screen is about: the lead project (Slate), the role (Role Detail), the person (Profile), the featured role (Home, capped at 36 inside its card; a carousel repeats one slot, it does not add titles). Section titles stay at 22 px. Tested on the four screens: each has exactly one.
 - **At most one expressive field per screen, and none is required.** Sand appears once at most: the craft band on Home, the relationship highlight on Role Detail. Slate and Profile have none, and are better for it. Everything else sits on the base.
-- **Red is a mark, never a field or a sentence.** See 3.9 for the five states it has to tell apart.
+- **Ana green (`--action`, #275C50) is the one action and accent colour; red is danger only.** See 3.9 for the five states and docs/CTA_SYSTEM.md for the hierarchy.
 - **Faces sit on the work.** People connected to a project (interested, on the project) appear as overlapping faces on or beside its image, not as a separate list, wherever space allows.
 
 ## 3.9 Hardening rules (locked with the system)
@@ -229,21 +229,27 @@ Composition may vary. Meaning must not.
 
 **Colour balance.** Paper is the ground; raised white is visibly whiter than paper and always carries shadow-2, so the two never merge into "beige". Graphite (title cards, lead media, the dark strip) anchors each screen. Sand appears once at most. Media is never tinted onto the page (the Role sheet's image tint was removed). No new colours: secondary text on sand is a mix of ink and sand, not a new grey.
 
-**Red.** Five states, told apart by structure and language first:
+**Colour and states.** Warm paper and neutrals are the environment; graphite is type and structure; Ana green (`--action`, #275C50) is action and the brand interaction accent; real work supplies the colour; red (`--danger`) is reserved for destructive confirmations and genuine errors. Five states, told apart by structure and language first:
 
-| State | Structure | Language | Red |
+| State | Structure | Language | Colour |
 |---|---|---|---|
 | Waiting (on someone else) | quiet meta line, clock | "Waiting for Kiran" | none |
-| Attention (your decision) | row with a dot; a count on the lead strip | "2 to review" | a dot |
+| Attention (your decision) | row with a dot; a count on the lead strip | "2 to review" | a green dot |
 | Correction (you asked for one) | record row, record mark | "You said this isn't right. Waiting on the house." | none |
-| Error (it failed) | inline, beside the thing that failed, with an icon | "Couldn't send. Try again." | icon and text |
+| Error (it failed) | inline, beside the thing that failed, with an icon | "Couldn't send. Try again." | red icon and text |
 | Destructive | only inside a confirmation | "Delete project" | the one red button |
 
-Urgent time ("Closes in 4 days") is red text on a white Frame Label: a mark. Red never fills a band, a card or a background.
+Urgent time ("Closes in 4 days") is green text on a white Frame Label: a mark, not an alarm. No colour fills a band, a card or a background for a state.
 
 **Surfaces and shadows.** Two shadow levels only: shadow-2 for raised content (cards, tiles, posters, stills rails, the reel) and shadow-3 for floating chrome (tab bar, action bar). Object shadows are separate: a contact shadow belonging to the Object Tile's asset slot, never a box-shadow. Records carry a hairline and no shadow. Sheets over media carry no shadow; their radius and the paper do the work.
 
 **Portraits.** Faces are cropped square and circular, face centre at about 36 % height (`object-position: 50% 30%`), shown at 26, 40, 64 and 96. A portrait never carries text over it. Over a still, the face sits on a white ring so it separates from any background. No photo is a normal state: initials in ink on the quiet tint with a hairline, never a grey silhouette. Below 24 px (face stacks) the fallback is a plain tint disc.
+
+**Top header and status bar.** On primary scrolling screens (Home, Production House Home) the status-bar area, the Ana header and the page are one paper surface (`--base`; no other near-white). The header is part of the page and scrolls away; nothing sticky replaces it; the floating bottom navigation stays. Media-led detail screens (Role, Project, Profile) keep their hero-to-the-top pattern with floating utility controls, and their status bar turns paper once the hero has scrolled away.
+
+**Utility controls.** Back, Share, Save and More over media are one control: a light near-white circle, ink icon, soft float shadow and a faint warm edge, the same on every hero. Only Save has a selected state (green filled glyph). They are never filled with the action colour.
+
+**Filters.** Filters are their own component, not buttons: a warm surface by default (on paper, `--tint` tiles and raised chips), a solid green fill with white text when selected, faded when disabled. Discover → People craft tiles keep their earlier logic (a tile that reads against the page, solid when selected) in warm tones.
 
 **Full-scroll cohesion.** Every section of the four screens, down to the last, uses the families in section 5. Old pills, grey grouped boxes and settings-style icon lists do not reappear below the fold.
 
@@ -549,7 +555,7 @@ The objects in the prototype are **placeholders**: their concept and placement a
 - **Key light:** top-left.
 - **Shadow:** none in the file; the tile draws one soft contact shadow.
 - **Materials:** graphite, aluminium, glass, amber `#c99a4e`, clay `#b8735a`, sage `#6f8b83`.
-- **Red:** Ana red appears only as one small indicator.
+- **Accent:** at most one tiny indicator in the family's accent. (The placeholder drawings still carry a red dot; the supplied family follows this rule.)
 - **Detail:** readable at 64 px, with no outlines.
 
 The first four objects are lens, timeline, microphone and material swatches.

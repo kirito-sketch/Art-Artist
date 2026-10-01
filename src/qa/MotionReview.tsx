@@ -106,7 +106,7 @@ function CreateDemo() {
       <div className="mr-create">
         <AnimatePresence>
           {open && (
-            <motion.div layoutId="demo-create" className="mr-create-surface" style={{ borderRadius: 26 }} initial={{ backgroundColor: '#c4412e' }} animate={{ backgroundColor: '#ffffff' }} exit={{ backgroundColor: '#c4412e' }} transition={spring.sheet}>
+            <motion.div layoutId="demo-create" className="mr-create-surface" style={{ borderRadius: 26 }} initial={{ backgroundColor: '#275c50' }} animate={{ backgroundColor: '#ffffff' }} exit={{ backgroundColor: '#275c50' }} transition={spring.sheet}>
               <div className="group create-rows">
                 <div className="row"><PenLine size={20} /> Post</div>
                 <div className="row"><UserSearch size={20} /> Looking for someone</div>

@@ -8,6 +8,7 @@ import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
+import { SaveButton } from '../home/OpportunityCard';
 import { useLoad } from '../../ui/useLoad';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
 
@@ -78,6 +79,9 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
           <IconButton label="Share project" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: w.title })}>
             <Share size={18} />
           </IconButton>
+          <span className="save-float">
+            <SaveButton id={w.id} kind="project" floating />
+          </span>
           <IconButton label="More" className="icon-btn--float" onClick={() => openSheet({ name: 'report', subject: w.title })}>
             <MoreHorizontal size={20} />
           </IconButton>

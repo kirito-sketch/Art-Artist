@@ -39,7 +39,15 @@ export type Route =
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
   | { name: 'media'; items: Media[]; index: number }
-  | { name: 'posts'; ids: string[]; index: number };
+  | { name: 'posts'; ids: string[]; index: number }
+  | { name: 'saved' };
+
+export type SavedKind = 'post' | 'role' | 'project';
+export interface SavedItem {
+  kind: SavedKind;
+  id: string;
+  at: number;
+}
 
 export type Sheet =
   | { name: 'create' }
@@ -53,7 +61,8 @@ export type Sheet =
   | { name: 'identity' }
   | { name: 'share'; label: string }
   | { name: 'more'; id: string }
-  | { name: 'report'; subject: string; partyId?: string }
+  | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post'; id: string } }
+  | { name: 'postMore'; id: string }
   | { name: 'block'; id: string }
   | { name: 'editRole'; id: string }
   | { name: 'closeRole'; id: string }
@@ -132,7 +141,12 @@ function useStoreValue() {
   const [sheet, setSheet] = useState<Sheet | null>(BOOT?.sheet ?? null);
   const [toast, setToast] = useState<Toast | null>(null);
 
-  const [saved, setSaved] = useState<string[]>([]);
+  /**
+   * Saved (docs/SAVE_MODEL.md): one private list per person, for Posts, Roles and Projects only.
+   * The single source of truth for every bookmark in the app. Acting as a house never changes whose
+   * list it is.
+   */
+  const [saved, setSaved] = useState<SavedItem[]>([]);
   const [creditBusy, setCreditBusy] = useState<string | null>(null);
   /** UI only: the credit that was just accepted, so its record can be stamped once (motion). */
   const [justAccepted, setJustAccepted] = useState<string | null>(null);
@@ -245,15 +259,13 @@ function useStoreValue() {
   const openSheet = useCallback((s: Sheet) => setSheet(s), []);
   const closeSheet = useCallback(() => setSheet(null), []);
 
+  const isSaved = useCallback((kind: SavedKind, id: string) => saved.some((x) => x.kind === kind && x.id === id), [saved]);
   const toggleSave = useCallback(
-    (id: string) => {
-      const on = !saved.includes(id);
-      setSaved((s) => (on ? [id, ...s.filter((i) => i !== id)] : s.filter((i) => i !== id)));
-      showToast(
-        on
-          ? { text: acting !== 'self' ? 'Saved to your account' : 'Saved to your list', action: { label: 'Undo', run: () => setSaved((x) => x.filter((i) => i !== id)) } }
-          : { text: 'Removed from saved' },
-      );
+    (id: string, kind: SavedKind = 'role') => {
+      const on = !saved.some((x) => x.kind === kind && x.id === id);
+      setSaved((s) => (on ? [{ kind, id, at: Date.now() }, ...s] : s.filter((x) => !(x.kind === kind && x.id === id))));
+      // The bookmark confirms itself. Only while acting for a house do we say whose list it went to.
+      if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'Undo', run: () => setSaved((x) => x.filter((i) => !(i.kind === kind && i.id === id))) } });
     },
     [saved, showToast, acting],
   );
@@ -638,6 +650,7 @@ function useStoreValue() {
     showToast,
     dismissToast,
     saved,
+    isSaved,
     toggleSave,
     following,
     toggleFollow,

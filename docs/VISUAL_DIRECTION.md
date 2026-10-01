@@ -309,12 +309,22 @@ Editorial Workbench stays the single direction. These changes strengthen its Ana
 
 | Pattern | Where | Decision | Ana interpretation |
 |---|---|---|---|
-| Large rounded image card with a white heart bubble | Home roles, posters | Adapt | Frame label for status; Save is a smoked slate plate, not a white bubble |
-| White circular floating controls over a hero | Role, Profile, Project, House | Adapt | Smoked slate plates squared to the radius family, same material as frame labels |
+| Large rounded image card with a white heart bubble | Home roles, posters | Adapt | Frame label for status; Save is a light utility circle whose glyph turns green when saved (cleanup pass) |
+| White circular floating controls over a hero | Role, Profile, Project, House | Keep (restored in the cleanup pass) | One light utility circle on every hero; the Phase 1 slate plates were not approved |
 | Category bar of pictogram tabs | Discover | Adapt | An editorial section index: words, left-aligned, ink rule under the active one |
 | Search pill with a drop shadow | Discover | Adapt | Raised white field with a hairline, no shadow |
 | White sheet overlapping the hero | Role, Profile | Keep (good platform UX) | Kicker set as a caps production line; facts as a call sheet |
 | Wide "experience" image cards | Home production houses | Adapt | The house's current stage as a frame label on its still; the house signs the card |
 | Horizontal card carousels | Home, Slate | Keep | Poster rail with a larger lead and title cards for unannounced work |
-| Floating bottom navigation | Everywhere | Keep | Ana red Create +, active mark as a dot |
+| Floating bottom navigation | Everywhere | Keep | Ana green Create +, active mark as a green dot |
 | Generic category tiles | Home | Already Ana | Object Tiles holding craft objects |
+
+---
+
+## 13. Final cleanup pass (before lock)
+
+- **Colour hierarchy:** warm paper and neutrals (environment), graphite (type, structure), **Ana green `#275C50`** as the single action and brand-interaction colour (`--action` and its states), real work as the colour of the screen, and red only for destructive confirmations and genuine errors. Black primary buttons and the red Create are gone. Details in docs/CTA_SYSTEM.md.
+- **Utility controls:** the light floating circles are restored on every media hero (Profile, Role, Project, House); Save shows its state in a green filled glyph.
+- **Filters:** a separate component. Discover → People craft tiles regain the earlier "tile that reads against the page, solid when selected" logic, in warm tones with a green selected fill.
+- **Save, Follow and posts:** Save is for Posts, Roles and Projects; Follow for People and Production Houses; one private Saved screen one tap from your own Profile; every post has Like, Share, Save and More, no comments, and Report post in More. See docs/SAVE_MODEL.md.
+- **Header:** status bar, Ana header and page are one paper surface on primary screens; the header scrolls away.

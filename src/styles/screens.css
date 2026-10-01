@@ -250,7 +250,7 @@
 }
 
 .post-action.is-on {
-  color: var(--danger);
+  color: var(--action);
 }
 
 /* featured match */
@@ -545,8 +545,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--action);
+  color: var(--on-action);
   transition: opacity 0.2s;
 }
 
@@ -895,15 +895,21 @@
   gap: 6px;
   padding: 14px 0 12px;
   border-radius: var(--r-m);
-  background: var(--grouped);
+  background: var(--filter-bg, var(--grouped));
   font-size: var(--t-5);
   font-weight: 500;
   color: var(--text);
 }
 
+/* Filter selected: a solid fill with light text, as before; the fill is now Ana action green. */
 .craft.is-on {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.craft:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .posters {
@@ -1156,8 +1162,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--action);
+  color: var(--on-action);
   flex: none;
 }
 
@@ -1860,7 +1866,7 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 /* Identity, share, trust */
 .tab-avatar--org, .tab-avatar--org.is-on { border-radius: 26%; }
 .identity-row { width: 100%; background: none; border: 0; color: inherit; text-align: left; }
-.danger-text { color: #c0392b; }
+.danger-text { color: var(--danger); }
 .block-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--text-2, #555); font-size: 15px; }
 .center-btn { display: block; margin: 0 auto; }
 .search-results { padding-bottom: 120px; }
@@ -1921,7 +1927,7 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .proto-list { margin: 0 0 10px; padding-left: 16px; font-size: 12px; color: var(--text-2, #666); display: flex; flex-direction: column; gap: 3px; }
 
 .toast-action { color: inherit; }
-.inline-error, .field-error { color: color-mix(in srgb, #d6453a 75%, var(--text)); }
+.inline-error, .field-error { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
 
 /* Creation flows */
 .field-hint { margin: 6px 2px 0; font-size: 12.5px; }

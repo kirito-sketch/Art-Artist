@@ -37,6 +37,7 @@ import { LAB, MOTION_REVIEW, SCENARIO, SPECIMEN } from './qa/boot';
 import { MotionReview } from './qa/MotionReview';
 import { Specimen } from './qa/Specimen';
 import { PostStream } from './screens/discover/PostStream';
+import { SavedScreen } from './screens/profile/SavedScreen';
 import { EdgeCaseLab } from './qa/Lab';
 import { ScenarioBar } from './qa/ScenarioBar';
 
@@ -69,6 +70,8 @@ function RouteView({ r }: { r: Route }) {
       return <MediaViewer items={r.items} index={r.index} />;
     case 'posts':
       return <PostStream ids={r.ids} index={r.index} />;
+    case 'saved':
+      return <SavedScreen />;
     case 'network':
       return <NetworkScreen />;
     case 'editProfile':
@@ -180,7 +183,7 @@ function Phone() {
   const top = stack[stack.length - 1];
   // The status bar turns light and transparent over full-bleed photos (media viewer, profile hero).
   const topKey = top ? (top.name === 'profile' ? `profile-${top.id}` : top.name) : tab === 'profile' ? `profile-${viewer.id}-tab` : tab;
-  const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : top?.name === 'posts' || top?.name === 'opportunity' ? 'paper' : 'dark';
+  const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : top?.name === 'posts' || top?.name === 'saved' || top?.name === 'opportunity' ? 'paper' : 'dark';
 
   return (
     <MotionConfig reducedMotion="user">

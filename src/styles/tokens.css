@@ -20,9 +20,20 @@
   --text-3: #aeaeb2;
   --on-dark: #ffffff;
 
-  /* State */
-  --accent: #c4412e; /* brand red, from the logo */
-  --accent-soft: rgba(196, 65, 46, 0.1);
+  /* Ana action: the one interaction colour (docs/CTA_SYSTEM.md). Never hard-code the hex. */
+  --action: #275c50;
+  --action-pressed: #1e4a40;
+  --action-hover: #22534a;
+  --action-tint: rgba(39, 92, 80, 0.1); /* selected surfaces: Following, filters, saved */
+  --action-tint-strong: rgba(39, 92, 80, 0.18);
+  --action-disabled: rgba(39, 92, 80, 0.35);
+  --on-action: #ffffff;
+  --focus-ring: rgba(39, 92, 80, 0.55);
+
+  /* State. Accent is the Ana action colour used as a mark (dots, rules, active tab). Red is not a
+     brand colour: it is --danger, for destructive actions and genuine errors only. */
+  --accent: var(--action);
+  --accent-soft: var(--action-tint);
   --verified: #1f5af6;
   --available: #1e9e5a;
   --danger: #d83a2e;

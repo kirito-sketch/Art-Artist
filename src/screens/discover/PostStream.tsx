@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { ChevronLeft, Heart } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
 import { party, postWork } from '../../state/selectors';
 import { FrameLabel } from '../../ui/compose';
+import { PostActions, PostMore } from '../home/PostActions';
 import { shared, spring } from '../../ui/motion';
 import { Avatar, IconButton, Photo, Pressable } from '../../ui/primitives';
 
@@ -48,22 +49,24 @@ function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
   const { push } = useStore();
   const author = party(post.authorId)!;
   const work = postWork(post);
-  const [liked, setLiked] = useState(false);
   const [page, setPage] = useState(0);
   const many = post.media.length > 1;
   const open = () => push(author.kind === 'org' ? { name: 'org', id: author.id } : { name: 'profile', id: author.id });
 
   return (
     <article className="stream-post" data-post={post.id}>
-      <Pressable className="stream-author" onClick={open} scale={0.98}>
-        <Avatar party={author} size={36} />
-        <span className="stream-author-text">
-          <span className="item-title">{author.name}</span>
-          <span className="meta">
-            {author.kind === 'person' ? author.role : 'Production house'} · {post.time === 'now' ? 'Just now' : post.time}
+      <div className="stream-head">
+        <Pressable className="stream-author" onClick={open} scale={0.98}>
+          <Avatar party={author} size={36} />
+          <span className="stream-author-text">
+            <span className="item-title">{author.name}</span>
+            <span className="meta">
+              {author.kind === 'person' ? author.role : 'Production house'} · {post.time === 'now' ? 'Just now' : post.time}
+            </span>
           </span>
-        </span>
-      </Pressable>
+        </Pressable>
+        <PostMore post={post} />
+      </div>
 
       {post.media.length > 0 ? (
         <motion.div className="stream-media" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
@@ -100,12 +103,7 @@ function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
             <span className="stream-context-label">Project</span> {post.project}
           </p>
         ) : null}
-        <div className="post-actions">
-          <motion.button className={`post-action ${liked ? 'is-on' : ''}`} whileTap={{ scale: 0.8 }} transition={spring.press} onClick={() => setLiked((l) => !l)} aria-pressed={liked} aria-label="Like">
-            <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
-            {post.likes + (liked ? 1 : 0) || null}
-          </motion.button>
-        </div>
+        <PostActions post={post} />
       </div>
     </article>
   );

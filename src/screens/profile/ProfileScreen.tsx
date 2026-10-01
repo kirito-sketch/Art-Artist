@@ -1,4 +1,4 @@
-import { Ban, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
@@ -136,6 +136,12 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </IconButton>
           )}
           <span className="flex" />
+          {own && (
+            // Private, one tap: the person's Saved list. Only on their own profile, never shown to visitors.
+            <IconButton label="Saved" className="icon-btn--float" onClick={() => push({ name: 'saved' })}>
+              <Bookmark size={18} />
+            </IconButton>
+          )}
           <IconButton label="Share profile" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
             <Share size={18} />
           </IconButton>

@@ -154,7 +154,7 @@
   color: var(--text-2);
 }
 .spec-state--error > svg {
-  color: var(--accent);
+  color: var(--danger);
 }
 
 /* Motion review */
