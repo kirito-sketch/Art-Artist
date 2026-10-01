@@ -1,12 +1,12 @@
-import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
-import { Button, FollowButton, Row, EmptyState, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
@@ -50,6 +50,26 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   );
 }
 
+/**
+ * The profile name stays the strongest type and takes at most two lines: after displayTitle's step,
+ * it shrinks in 2 px steps down to 24 px until it fits, rather than being cut.
+ */
+function useNameFit(name: string) {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.removeProperty('font-size');
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    const lines = () => el.getBoundingClientRect().height / (parseFloat(getComputedStyle(el).lineHeight) || size * 1.02);
+    while (lines() > 2.2 && size > 24) {
+      size -= 2;
+      el.style.setProperty('font-size', `${size}px`, 'important');
+    }
+  }, [name]);
+  return ref;
+}
+
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach } = useStore();
   const p = person(id);
@@ -57,6 +77,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
   const [scrollY, setScrollY] = useState(0);
   const overHero = scrollY < 360;
+  const nameRef = useNameFit(p?.name ?? '');
 
   // While the photo sits under the status bar, the bar turns light.
   useEffect(() => {
@@ -145,19 +166,22 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       </div>
 
       <div className="psheet">
+        {/* Identity first: Person, Craft, Location, Credibility, then Availability, then Actions, then Work. */}
         <header className="pid">
-          <PersonPhoto party={p} className="pid-portrait" />
+          <span className="pid-avatar">
+            <Avatar party={p} size={80} />
+          </span>
           <p className="pid-craft" lang={scriptLang(CRAFT_LABEL[p.craft] ?? p.role)}>
             {CRAFT_LABEL[p.craft] ?? p.role}
           </p>
           {own && isTab && memberships.length > 0 ? (
-            <button className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
+            <button ref={nameRef as RefObject<HTMLButtonElement>} className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
               {p.name}
               {p.identityVerified && <Verified size={22} label="Identity verified" />}
               <ChevronDown size={20} />
             </button>
           ) : (
-            <h1 className="large-title display-title display-title--name" {...displayTitle(p.name)}>
+            <h1 ref={nameRef as RefObject<HTMLHeadingElement>} className="large-title display-title display-title--name" {...displayTitle(p.name)}>
               {p.name}
               {p.identityVerified && <Verified size={22} label="Identity verified" />}
             </h1>
@@ -165,49 +189,46 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <p className="pid-role" lang={scriptLang(p.role)}>
             {p.role}
           </p>
-          <p className="meta">
+          <p className="pid-place">
             {p.city}
-            {p.languages ? ` · ${p.languages.join(', ')}` : ''}
+            {p.languages?.length ? ` · ${p.languages.join(', ')}` : ''}
           </p>
           <p className="pid-stats">
+            <Verified size={13} label="Verified credits" />
             <span>
-              <Verified size={13} label="Verified credits" />
-              <b>{credits.length}</b> verified {credits.length === 1 ? 'credit' : 'credits'}
+              {credits.length} verified {credits.length === 1 ? 'credit' : 'credits'}
+              {p.years ? ` · ${p.years} years active` : ''}
             </span>
-            {p.years && (
-              <span>
-                <b>{p.years}</b> years active
-              </span>
-            )}
           </p>
-          {from && !own && (
-            <button className="pid-available" disabled>
-              <span className="status-dot is-on" />
-              {availableLabel(from)}
-            </button>
-          )}
         </header>
 
-        {own && (
-          <div className="group work-status">
-            <Row
-              icon={<span className={`status-dot ${availability.open ? 'is-on' : ''}`} />}
-              label={
-                scenario.newUser ? (
-                  <span className="link link--underline">Add when you're available</span>
-                ) : (
-                  <span className="work-status-text">
-                    <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
-                    {availability.open && <span className="meta">{availability.scope}</span>}
-                  </span>
-                )
-              }
-              onPress={() => openSheet({ name: 'availability' })}
-            />
-            {/* Private to you, one tap each: what you saved and what you sent. Profiles themselves are never saved. */}
-            <Row icon={<Bookmark size={18} />} label="Saved" value={saved.length ? String(saved.length) : undefined} onPress={() => push({ name: 'saved' })} />
-            <Row icon={<List size={18} />} label="Your activity" onPress={() => openSheet({ name: 'activity' })} />
-          </div>
+        {/* Availability: one quiet row under credibility. Your own is editable; someone else's shows only when open. */}
+        {own ? (
+          <Pressable className="pid-availability" onClick={() => openSheet({ name: 'availability' })} aria-label="Availability">
+            <span className={`status-dot ${availability.open && !scenario.newUser ? 'is-on' : ''}`} />
+            {scenario.newUser ? (
+              <span className="link link--underline">Add when you're available</span>
+            ) : (
+              <span className="pid-availability-text">
+                <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
+                {availability.open && availability.scope && <span className="meta">{availability.scope}</span>}
+              </span>
+            )}
+            <ChevronRight size={18} className="pid-availability-chevron" />
+          </Pressable>
+        ) : (
+          from && (
+            <div className="pid-availability">
+              <span className="status-dot is-on" />
+              <span className="pid-availability-text">
+                <span>{availableLabel(from)}</span>
+                <span className="meta">
+                  {p.city}
+                  {p.openToTravel ? ' · will travel' : ''}
+                </span>
+              </span>
+            </div>
+          )
         )}
 
         <div className="profile-actions">
@@ -230,6 +251,20 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </>
           )}
         </div>
+
+        {/* Private to you, one quiet line: what you saved and what you sent. Profiles themselves are never saved. */}
+        {own && (
+          <div className="pid-private">
+            <button className="pid-private-link" onClick={() => push({ name: 'saved' })}>
+              <Bookmark size={16} />
+              Saved{saved.length ? <span className="meta"> {saved.length}</span> : null}
+            </button>
+            <button className="pid-private-link" onClick={() => openSheet({ name: 'activity' })}>
+              <List size={16} />
+              Your activity
+            </button>
+          </div>
+        )}
 
         {own && pendingCredits.length > 0 && (
           <section className="section section--flush">

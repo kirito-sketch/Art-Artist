@@ -19,7 +19,7 @@ Words: "Save" in text, the bookmark as the icon, **Saved** as the one screen tit
 - Filters: **All · Posts · Roles · Projects** (filter chips, with counts). All shows each kind in its own family, the most recently saved kind first, with "See all" switching the filter.
 - Each kind keeps its composition family: Posts in the media grid (opening the post stream), Roles as role rows, Projects as poster tiles.
 - **Entry points** (all private to you, all open the same screen):
-  - your own Profile: the "Saved" row (with its count) under your availability, beside "Your activity";
+  - your own Profile: the quiet "Saved" link (with its count) beside "Your activity", under Edit profile;
   - Settings, "Your content": Saved and Your activity;
   - the Your activity sheet, at the top;
   - your first save: a toast "Saved. Find it on your profile." with **View** (once; later saves confirm silently). While acting for a house, every save says "Saved to your account" with View.

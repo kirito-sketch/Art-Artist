@@ -333,5 +333,14 @@ Editorial Workbench stays the single direction. These changes strengthen its Ana
 
 - **One canonical person image:** the profile photo picked in onboarding or Edit Profile (`person.photo`). Every surface reads it through `usePartyImage` (`src/ui/primitives.tsx`) and renders `Avatar` or `PersonPhoto`: nav, Home, profiles, posts, messages, activity, interested rows, identity switcher, notifications, credits and house rows. Fallback is initials, never a broken image or a placeholder portrait for a real user.
 - **Portrait Card:** photo primary (4:5), then name, craft, one reason line from real data, then a quiet Follow. No banner, no cover variant, no floating avatar.
-- **Profile:** the hero stays the person's work; the person's portrait (photo or initials) leads the identity block, above craft and name. Hierarchy: Person, Craft, Work, Credibility.
+- **Profile identity:** the hero stays the person's work (no banner). The identity block reads Person, Craft, Location, Credibility, Availability, Actions, then Work:
+  1. a round 80 px profile photo (initials fallback), ringed in the paper colour;
+  2. the craft label, small and subordinate;
+  3. the name, the strongest type, at most two lines (it steps down to 24 px before it would wrap a third time);
+  4. the primary role at 17 px semibold;
+  5. city and languages at 15 px secondary;
+  6. one compact credibility line at 13 px ("4 verified credits · 11 years active");
+  7. one availability row between hairlines (green dot, date, "city · will travel"; your own opens the availability sheet, someone else's shows only when open);
+  8. Edit profile (own) or Follow + Message (others);
+  9. on your own profile, one quiet line with Saved and Your activity. Work sections follow straight after.
 - **No banner field:** onboarding and Edit Profile ask only for a profile photo, never a cover or background image.

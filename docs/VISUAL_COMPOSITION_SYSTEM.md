@@ -445,17 +445,19 @@ One canonical card for people (`PortraitCard` in `src/ui/compose.tsx`). There is
 
 ### Structure
 
-1. The profile photo, 4:5, rounded upper corners, filling the card width. The card is compact (124 px wide, about 2.8 cards visible on a phone) so a rail reads as a set of people, not a gallery of posters.
+1. The profile photo, a compact portrait crop 112 px tall across the full card width (about the upper half), rounded upper corners. The card is 164 px wide and about 240 px tall: two cards and a glimpse of the next on a 390 px phone, 12 px apart. Reduce height, never width.
 2. Name.
 3. Craft or role.
 4. One short reason line from real data: "Your craft · Kolkata", "Credited on Monsoon Letters", "Available from 15 Nov", "4 verified credits".
-5. Optional compact action (Follow / Following, never dominant).
+5. Optional compact action (Follow / Following, 36 px, never dominant).
+
+Name, craft and reason are one line each and truncate with an ellipsis, so every card in a rail has the same height whatever the content.
 
 No separate avatar on top of the photo, and no banner behind it.
 
 ### Photo treatment
 
-- `object-fit: cover`, face-safe crop (`object-position: 50% 30%`), never stretched, stable 4:5 ratio.
+- `object-fit: cover`, face-safe crop (`object-position: 50% 28%`), never stretched, fixed 112 px height.
 - No photo: the person's initials, large, in ink on the quiet tint. Never a broken image, a grey silhouette or a random stock portrait.
 - Availability is a small green dot with a white ring in the photo's lower corner; the reason line says the date.
 
