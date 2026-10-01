@@ -12,6 +12,7 @@ import { Logo } from '../ui/Logo';
 import { StatusBar } from '../ui/chrome';
 import { Sheet } from '../ui/Sheet';
 import { MediaPicker } from '../screens/create/PostComposer';
+import { research } from '../research-data/client';
 
 /*
  * How someone enters Art and Artist. One splash (only as long as loading), one entry screen, then account,
@@ -63,6 +64,11 @@ export function EntryFlow() {
     return () => window.clearTimeout(t);
   }, [step]);
 
+  // Research observation only (a no-op outside a test session): which first-run screen is showing.
+  useEffect(() => {
+    if (step !== 'intro') research.track('onboarding_step_viewed', { metadata: { step } });
+  }, [step]);
+
   const go = (s: Step) => {
     setHistory((h) => [...h, step]);
     setStep(s);
@@ -70,6 +76,7 @@ export function EntryFlow() {
   const back = () => {
     const h = [...history];
     const prev = h.pop();
+    if (prev) research.track('onboarding_step_back', { metadata: { from: step } });
     setHistory(h);
     if (prev) setStep(prev);
   };
@@ -281,7 +288,7 @@ export function EntryFlow() {
           )}
 
           {step === 'looking' && (
-            <Onboard step={stepIndex} total={steps.length} image="search" title="What are you looking for?" onBack={back} onSkip={() => go('work')}>
+            <Onboard step={stepIndex} total={steps.length} image="search" title="What are you looking for?" onBack={back} onSkip={() => (research.track('onboarding_step_skipped', { metadata: { step: 'looking' } }), go('work'))}>
               <p className="field-label">Availability</p>
               <div className="seg">
                 {(
@@ -313,7 +320,7 @@ export function EntryFlow() {
           )}
 
           {step === 'work' && (
-            <Onboard step={stepIndex} total={steps.length} image="moodboard" title="Show your work" onBack={back} onSkip={finishProfile} skipLabel="Skip for now">
+            <Onboard step={stepIndex} total={steps.length} image="moodboard" title="Show your work" onBack={back} onSkip={() => (research.track('onboarding_step_skipped', { metadata: { step: 'work' } }), finishProfile())} skipLabel="Skip for now">
               <p className="meta">Stills, frames or a reel help people understand what you do. Add them now or later from your profile.</p>
               <WorkPicker work={work} setWork={setWork} />
               <p className="inline-note">Credits come from productions. When a production credits you on Art and Artist, you'll be asked to accept it.</p>
@@ -809,6 +816,9 @@ function Intro({ onDone }: { onDone: () => void }) {
   const [i, setI] = useState(0);
   const last = i === INTRO.length - 1;
   const s = INTRO[i];
+  useEffect(() => {
+    research.track('onboarding_step_viewed', { metadata: { step: `intro_${i + 1}` } });
+  }, [i]);
   return (
     <div className="intro">
       <AnimatePresence initial={false}>
@@ -831,7 +841,7 @@ function Intro({ onDone }: { onDone: () => void }) {
         </motion.div>
       </AnimatePresence>
       <div className="intro-shade" />
-      <button className="intro-skip" onClick={onDone}>
+      <button className="intro-skip" onClick={() => (research.track('onboarding_step_skipped', { metadata: { step: `intro_${i + 1}` } }), onDone())}>
         Skip
       </button>
       <div className="intro-body">

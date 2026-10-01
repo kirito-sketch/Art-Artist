@@ -24,26 +24,36 @@ on conflict (slug) do update set
   prototype_version = excluded.prototype_version, notes = excluded.notes;
 
 -- Individual Creative tasks ------------------------------------------------------------------------------
+-- Task 1 is the first-run experience (splash, introduction, account entry, onboarding) and succeeds when
+-- the main product shows. The six product tasks follow as 2 to 7. (study_id, sequence) is unique, so
+-- existing rows are moved out of the way first; the upsert below then sets every final number.
+-- The API keeps the same definition in sync on its own: server/research/studies.ts.
+update public.research_tasks set sequence = sequence + 100
+where study_id = (select id from public.research_studies where slug = 'ana-individual-creative-v29') and sequence < 100;
+
 with s as (select id from public.research_studies where slug = 'ana-individual-creative-v29')
 insert into public.research_tasks (study_id, key, sequence, title, instruction, participant_type, success_events, success_object_type)
 select s.id, t.key, t.seq, t.title, t.instruction, 'individual_creative', t.success_events, t.object_type
 from s, (values
-  ('understand-home', 1, 'Understand Home',
+  ('getting-started', 1, 'Getting started',
+   'Go through the experience as you naturally would until you feel you''ve reached the main product.',
+   '{first_home_reached}'::text[], null),
+  ('understand-home', 2, 'Understand Home',
    'Take a minute on the Home screen. In your own words, what does Art and Artist offer someone in your craft?',
    '{}'::text[], null),
-  ('find-craft-person', 2, 'Find someone in your craft',
+  ('find-craft-person', 3, 'Find someone in your craft',
    'Find another cinematographer you might want to work with and open their profile.',
    '{person_profile_opened}'::text[], 'person'),
-  ('find-posts', 3, 'Find posts in Discover',
+  ('find-posts', 4, 'Find posts in Discover',
    'Find recent work that people have posted.',
    '{post_opened}'::text[], 'post'),
-  ('save-project-or-role', 4, 'Save a project or role',
+  ('save-project-or-role', 5, 'Save a project or role',
    'Find a project or a role you would like to come back to later, and keep it.',
    '{project_saved,role_saved}'::text[], null),
-  ('show-interest-role', 5, 'Find a role and show interest',
+  ('show-interest-role', 6, 'Find a role and show interest',
    'Find a Director of Photography opportunity that interests you and show interest.',
    '{interest_sent}'::text[], 'role'),
-  ('profile-credits', 6, 'Understand your profile',
+  ('profile-credits', 7, 'Understand your profile',
    'Open your profile. Which projects are you credited on, and is anything waiting for you?',
    '{own_profile_viewed}'::text[], null)
 ) as t(key, seq, title, instruction, success_events, object_type)

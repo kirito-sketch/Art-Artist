@@ -19,6 +19,12 @@ export const RESEARCH_EVENTS = {
   task_instruction_opened: 'The participant reopened the task instruction',
   survey_submitted: 'The final survey was submitted',
 
+  // First run (splash, introduction, account entry and onboarding: the real product flow)
+  onboarding_step_viewed: 'A first-run screen shown (metadata.step: splash, intro_1..3, entry, email, consent, you, craft ...)',
+  onboarding_step_back: 'Went back a step during first run (metadata.from)',
+  onboarding_step_skipped: 'Skipped a first-run step (metadata.step)',
+  first_home_reached: 'First run finished and the main product is showing (metadata.via: created, signin)',
+
   // Navigation
   home_viewed: 'Home tab shown',
   discover_opened: 'Discover tab shown',

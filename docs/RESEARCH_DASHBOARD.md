@@ -78,7 +78,20 @@ Versions are never combined without that being visible.
 | Completed / Abandoned / In progress | By session status |
 | Completion rate | Completed sessions ÷ all sessions |
 | Avg task difficulty | Mean of all difficulty ratings (1 very easy, 5 very difficult) |
-| Feedback items | Participant feedback, excluding survey answers |
+| Feedback items | Participant feedback, excluding survey and first-run answers |
+
+**Task 1, Getting started (first run, splash to the main product)**, for studies that have it:
+attempts, completion rate, abandoned (count and rate), skipped, median time to first Home (completed
+attempts), average "understand what it is for" and "getting started" ratings (1 very difficult, 5 very
+easy), then every participant's answer to "what do you think Art and Artist helps you do?", what was
+unclear during the introduction or setup, and the feedback sent during the first run, each linked to
+its session. Built from the existing attempts and feedback rows (`source = first_run`), no new
+analytics tables.
+
+Session detail shows the first-run answers under Task 1 and the onboarding steps in the path and
+trail ("First run: Splash", "First run: Profile: craft", "Reached the main product (new account)").
+Sessions that started before Task 1 existed show it as "Not part of this session (task added later)";
+their task numbers follow the current list (their old Task 1 now reads Task 2).
 
 Then two tables:
 - **Prototype versions:** sessions, completed, abandoned and average difficulty per version.

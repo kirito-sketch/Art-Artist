@@ -8,6 +8,7 @@ body:has(.dash) { background: var(--base, #f6f4f0); overflow: auto; }
 .dash h1 { font-size: 26px; letter-spacing: -0.02em; font-weight: 700; margin: 8px 0 6px; }
 .dash h2 { font-size: 17px; font-weight: 650; margin: 28px 0 10px; }
 .dash h3 { font-size: 15px; font-weight: 650; }
+.dash-section > h3 { margin: 22px 0 8px; }
 .dash select, .dash input { font: inherit; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--surface); color: var(--text); }
 .dash :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .dash-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }

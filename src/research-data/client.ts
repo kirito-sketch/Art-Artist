@@ -315,11 +315,11 @@ export const research = {
    * Submit feedback. Screen, task, persona, build and the point in the event trail are attached
    * automatically; the participant only chooses a category and may add a comment.
    */
-  submitFeedback(f: { category: FeedbackCategory; comment?: string; id?: string; source?: 'button' | 'stuck' | 'survey'; question?: string; rating?: number }): string | null {
+  submitFeedback(f: { category: FeedbackCategory; comment?: string; id?: string; source?: 'button' | 'stuck' | 'survey' | 'first_run'; question?: string; rating?: number }): string | null {
     if (!research.isActive()) return null;
     const id = f.id ?? uuid();
     if (done.includes(id)) return id;
-    if (f.source !== 'survey') research.track('feedback_submitted', { metadata: { category: f.category, source: f.source ?? 'button' } });
+    if (f.source !== 'survey' && f.source !== 'first_run') research.track('feedback_submitted', { metadata: { category: f.category, source: f.source ?? 'button' } });
     flushEvents();
     done.push(id);
     enqueue('feedback', {

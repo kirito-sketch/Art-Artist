@@ -14,6 +14,7 @@
  */
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { syncStudyTasks } from './studies.js';
 import { ATTEMPT_OUTCOMES, FEEDBACK_CATEGORIES, isResearchEventName, sanitizeMetadata, sanitizeToken, RESEARCH_OBJECT_TYPES } from '../../src/research-data/taxonomy.js';
 
 export type ResearchEnv = {
@@ -125,7 +126,7 @@ async function activeStudy(env: ResearchEnv, type?: string): Promise<ResearchRes
   const participantType = ['individual_creative', 'production_house'].includes(type ?? '') ? type! : 'individual_creative';
   const { data, error } = await sb
     .from('research_studies')
-    .select('id, slug, title, description, participant_type, research_tasks(count)')
+    .select('id, slug, title, description, participant_type')
     .eq('status', 'active')
     .eq('participant_type', participantType)
     .order('started_at', { ascending: false, nullsFirst: false })
@@ -133,8 +134,18 @@ async function activeStudy(env: ResearchEnv, type?: string): Promise<ResearchRes
     .maybeSingle();
   if (error) throw new Error(`active study: ${error.message}`);
   if (!data) return fail(404, 'no_active_study');
-  const count = (data.research_tasks as unknown as { count: number }[] | null)?.[0]?.count ?? 0;
-  return ok({ ok: true, study: { slug: data.slug, title: data.title, description: data.description, participantType: data.participant_type, taskCount: count } });
+  await syncTasks(sb, data);
+  const { count } = await sb.from('research_tasks').select('id', { count: 'exact', head: true }).eq('study_id', data.id).eq('is_active', true);
+  return ok({ ok: true, study: { slug: data.slug, title: data.title, description: data.description, participantType: data.participant_type, taskCount: count ?? 0 } });
+}
+
+/** Keep the study's task list in sync with server/research/studies.ts. Never blocks a participant. */
+async function syncTasks(sb: SupabaseClient, study: { id: string; slug: string }) {
+  try {
+    await syncStudyTasks(sb, study);
+  } catch (e) {
+    log('task sync', (e as Error).message);
+  }
 }
 
 async function withSession(sb: SupabaseClient, req: ResearchRequest, fn: (s: SessionRow) => Promise<ResearchResponse>) {
@@ -156,6 +167,8 @@ async function startSession(sb: SupabaseClient, b: Record<string, unknown>): Pro
   const { data: study, error: studyError } = await sb.from('research_studies').select('id, slug, title, status').eq('slug', slug).maybeSingle();
   if (studyError) throw new Error(`study lookup: ${studyError.message}`);
   if (!study || study.status !== 'active') return fail(404, 'study_not_available');
+
+  await syncTasks(sb, study);
 
   // Repeated start (retry after a lost response): the token cannot be re-issued, so say so.
   const { data: existing } = await sb.from('research_sessions').select('id').eq('client_start_id', clientStartId).maybeSingle();
@@ -345,7 +358,8 @@ async function submitFeedback(sb: SupabaseClient, s: SessionRow, b: Record<strin
       prototype_version: s.prototype_version, // from the session, never from the request
       persona: sanitizeToken(ctx.persona, 80) ?? s.selected_persona,
       trail_until_sequence: int(ctx.lastSequence, 0, 10_000_000),
-      // source: 'button' (Feedback control), 'stuck' (I'm stuck), 'survey' (final survey, with question / rating).
+      // source: 'button' (Feedback control), 'stuck' (I'm stuck), 'survey' (final survey, with question / rating),
+      // 'first_run' (the questions after Task 1, Getting started, with question / rating).
       interaction_context: sanitizeMetadata({ taskKey: ctx.taskKey, route: ctx.route, sheet: ctx.sheet, acting: ctx.acting, tab: ctx.tab, source: ctx.source, question: ctx.question, rating: typeof ctx.rating === 'number' ? ctx.rating : undefined }),
     },
     { onConflict: 'session_id,client_feedback_id', ignoreDuplicates: true },
@@ -405,7 +419,7 @@ async function dashboard(req: ResearchRequest, env: ResearchEnv): Promise<Resear
   if (action === 'study') {
     if (!isUuid(q.id)) return fail(400, 'invalid_request');
     const [tasks, sessions] = await Promise.all([
-      sb.from('research_tasks').select('id, key, sequence, title, instruction, success_events').eq('study_id', q.id).order('sequence'),
+      sb.from('research_tasks').select('id, key, sequence, title, instruction, success_events, created_at').eq('study_id', q.id).order('sequence'),
       sb.from('research_sessions').select(SESSION_COLS).eq('study_id', q.id).order('started_at', { ascending: false }),
     ]);
     if (tasks.error || sessions.error) throw new Error((tasks.error ?? sessions.error)!.message);

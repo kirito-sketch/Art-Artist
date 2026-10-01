@@ -132,6 +132,7 @@ touched.
 | Group | Events |
 |---|---|
 | Research lifecycle | `session_started`, `session_completed`, `task_started`, `task_completed`, `task_skipped`, `feedback_opened`, `feedback_submitted`, `stuck_reported`, `task_instruction_opened`, `survey_submitted` |
+| First run | `onboarding_step_viewed` {step}, `onboarding_step_back` {from}, `onboarding_step_skipped` {step}, `first_home_reached` {via: created, signin} |
 | Navigation | `home_viewed`, `discover_opened`, `inbox_opened`, `own_profile_viewed`, `screen_opened` {route}, `navigated_back` {from}, `sheet_opened` {sheet} |
 | Discovery | `discover_tab_selected` {tab}, `discover_filter_selected` {filter} |
 | Objects opened | `role_opened`, `project_opened`, `person_profile_opened`, `house_profile_opened`, `post_opened`, `conversation_opened`, `notifications_opened`, `saved_opened`, `settings_opened` |
@@ -171,9 +172,9 @@ data.
 | `POST /api/research/event` | `events[]` (≤ 50): `id`, `seq`, `name`, `screen`, `objectType`, `objectId`, `metadata`, `ts`, `attemptId` | Stores events once each, links them to the attempt and marks the attempt `success_detected` when a task's success event arrives |
 | `POST /api/research/task/start` | `taskKey`, `attemptId` | Opens an attempt. A repeat, or a second open attempt for the same task, returns the existing one |
 | `POST /api/research/task/complete` | `attemptId`, `outcome`, `difficulty`, `expectationMatch`, `feedbackText` | Closes the attempt and computes `duration_ms`. Repeats are ignored |
-| `POST /api/research/feedback` | `id`, `category`, `comment`, `screen`, `attemptId`, `eventId`, `context{persona, route, tab, sheet, acting, taskKey, lastSequence, source, question, rating}` | Stores once. The server copies `prototype_version` from the session. `source` is `button` (Feedback control), `stuck` (I'm stuck) or `survey` (final survey answer, with `question` and, for the 1–5 question, `rating`) |
+| `POST /api/research/feedback` | `id`, `category`, `comment`, `screen`, `attemptId`, `eventId`, `context{persona, route, tab, sheet, acting, taskKey, lastSequence, source, question, rating}` | Stores once. The server copies `prototype_version` from the session. `source` is `button` (Feedback control), `stuck` (I'm stuck), `survey` (final survey answer, with `question` and, for the 1–5 question, `rating`) or `first_run` (the questions after Task 1, Getting started, same shape) |
 | `POST /api/research/session/complete` | `status` (completed / abandoned) | Closes the session and abandons any open attempts. Repeats are ignored |
-| `GET /api/research/study` | header `x-study-type` (individual_creative / production_house) | The newest active study of that type: slug, title, description, task count. Participant-facing only |
+| `GET /api/research/study` | header `x-study-type` (individual_creative / production_house) | The newest active study of that type: slug, title, description, task count. Participant-facing only. It also keeps the Individual Creative task list in sync with server/research/studies.ts (adds Task 1, Getting started; moves the product tasks to 2 to 7): idempotent, by key, never deletes; a failure is logged and never blocks the participant |
 | `GET /api/research/dashboard/*`, `POST /api/research/dashboard/feedback-status` | | Research Dashboard read API (docs/RESEARCH_DASHBOARD.md). Server-side, service role; optional `RESEARCH_DASHBOARD_KEY` |
 | `GET /api/research/health` | | `{ ok, configured, database: reachable / unreachable / not_configured, latencyMs }`, from a head-only round trip to `research_studies`. 200 when reachable, 503 otherwise. Reveals no data or error detail |
 | `GET /api/research/debug/page`, `GET /api/research/debug` | header `x-research-debug-key` | Internal development view. Returns **404 unless `RESEARCH_DEBUG_KEY` is set**, and 401 without the right key |

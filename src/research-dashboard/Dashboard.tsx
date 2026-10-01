@@ -7,8 +7,8 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import './dashboard.css';
-import { DashboardError, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
-import { CATEGORY_LABEL, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
+import { DashboardError, FIRST_RUN_TASK, isFirstRunAnswer, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
+import { CATEGORY_LABEL, FIRST_RUN_LABEL, FIRST_RUN_ORDER, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
 
 type Route = { view: 'overview' | 'sessions' | 'tasks' | 'feedback'; id?: string };
 const parseHash = (): Route => {
@@ -173,6 +173,7 @@ function Overview({ v }: { v: View }) {
         <Stat label="Avg task difficulty" value={fmt1(mean(ratings))} hint="1 very easy, 5 very difficult" />
         <Stat label="Feedback items" value={fb.length} />
       </div>
+      <FirstRun v={v} />
       <h2>Prototype versions</h2>
       <table className="dash-table">
         <thead>
@@ -201,6 +202,73 @@ function Overview({ v }: { v: View }) {
       <h2>Tasks</h2>
       <TaskTable v={v} />
     </section>
+  );
+}
+
+/**
+ * Task 1 (Getting started): the first-run experience, from splash to the main product. Built from the
+ * task's attempts, the questions asked after it (feedback rows, source first_run) and feedback sent
+ * during it. Absent for studies without this task.
+ */
+function FirstRun({ v }: { v: View }) {
+  const t = v.tasks.find((x) => x.key === FIRST_RUN_TASK);
+  if (!t) return null;
+  const st = taskStats(t, v);
+  const ids = new Set(v.attempts.filter((a) => a.task_id === t.id).map((a) => a.id));
+  const inTask = (f: Feedback) => !!f.task_attempt_id && ids.has(f.task_attempt_id);
+  const answers = v.feedback.filter((f) => isFirstRunAnswer(f) && inTask(f));
+  const q = (k: string) => answers.filter((f) => f.interaction_context?.question === k);
+  const avg = (k: string) => mean(q(k).map((f) => f.interaction_context?.rating).filter((x): x is number => typeof x === 'number'));
+  const during = v.feedback.filter((f) => !isSurvey(f) && inTask(f));
+  const who = (f: Feedback) => {
+    const p = v.sessions.find((x) => x.id === f.session_id)?.research_participants;
+    return (
+      <a href={`#/sessions/${f.session_id}`} className="dash-sub">
+        {p?.participant_code ?? 'session'}
+      </a>
+    );
+  };
+  const quotes = (list: Feedback[], empty: string) =>
+    list.length ? (
+      list.map((f) => (
+        <blockquote key={f.id} className="dash-quote">
+          <span>{f.participant_comment}</span>
+          <span>{who(f)}</span>
+        </blockquote>
+      ))
+    ) : (
+      <p className="dash-empty">{empty}</p>
+    );
+  return (
+    <>
+      <h2>
+        Task {t.sequence}: {t.title} (first run, splash to the main product)
+      </h2>
+      <div className="dash-stats">
+        <Stat label="Attempts" value={st.attempts} />
+        <Stat label="Completion rate" value={pct(st.completed, st.closed)} hint="Completed (including with difficulty) out of finished attempts" />
+        <Stat label="Abandoned" value={`${st.abandoned} (${pct(st.abandoned, st.closed)})`} hint="Ended the test during the first run" />
+        <Stat label="Skipped" value={st.skipped} />
+        <Stat label="Median time to first Home" value={fmtDuration(st.medianMs)} hint="From Open Art and Artist (splash) to the main product, completed attempts" />
+        <Stat label="Understand what it is for" value={fmt1(avg('understand_product'))} hint="1 very difficult, 5 very easy" />
+        <Stat label="Getting started" value={fmt1(avg('get_started'))} hint="1 very difficult, 5 very easy" />
+      </div>
+      <h3>What participants think Art and Artist helps them do</h3>
+      {quotes(q('what_it_helps_you_do').filter((f) => f.participant_comment), 'No answers yet.')}
+      <h3>Unclear during the introduction or setup</h3>
+      {quotes(q('setup_unclear').filter((f) => f.participant_comment), 'Nothing reported yet.')}
+      <h3>Feedback sent during the first run</h3>
+      {during.length ? (
+        during.map((f) => (
+          <p key={f.id} className="dash-fb-inline">
+            <span className="dash-cat">{CATEGORY_LABEL[f.category]}</span>
+            {f.interaction_context?.source === 'stuck' && <span className="dash-sub"> (I'm stuck)</span>}: {f.participant_comment ?? <i>no comment</i>} {who(f)}
+          </p>
+        ))
+      ) : (
+        <p className="dash-empty">None yet.</p>
+      )}
+    </>
   );
 }
 
@@ -344,7 +412,7 @@ function SessionDetail({ v, id }: { v: View; id: string }) {
   const p = s.research_participants;
   const attempts = v.all.attempts.filter((a) => a.session_id === id);
   const fb = v.all.feedback.filter((f) => f.session_id === id);
-  const survey = fb.filter(isSurvey);
+  const survey = fb.filter((f) => f.interaction_context?.source === 'survey');
   const total = s.completed_at ? Date.parse(s.completed_at) - Date.parse(s.started_at) : null;
   return (
     <section className="dash-section" aria-label={`Session ${p?.participant_code}`}>
@@ -389,7 +457,7 @@ function SessionDetail({ v, id }: { v: View; id: string }) {
               <h3>
                 Task {t.sequence}: {t.title}
               </h3>
-              <p className="dash-sub">Not reached</p>
+              <p className="dash-sub">{t.created_at && Date.parse(t.created_at) > Date.parse(s.started_at) ? 'Not part of this session (task added later)' : 'Not reached'}</p>
             </article>
           );
         const evs = (events ?? []).filter((e) => e.task_attempt_id === a.id);
@@ -423,6 +491,19 @@ function SessionDetail({ v, id }: { v: View; id: string }) {
                   <span key={i}>{l}</span>
                 ))}
               </blockquote>
+            )}
+            {fb.some((f) => f.task_attempt_id === a.id && isFirstRunAnswer(f)) && (
+              <dl className="dash-survey">
+                {fb
+                  .filter((f) => f.task_attempt_id === a.id && isFirstRunAnswer(f))
+                  .sort((x, y) => FIRST_RUN_ORDER.indexOf(x.interaction_context?.question as string) - FIRST_RUN_ORDER.indexOf(y.interaction_context?.question as string))
+                  .map((f) => (
+                    <div key={f.id}>
+                      <dt>{FIRST_RUN_LABEL[f.interaction_context?.question as string] ?? String(f.interaction_context?.question)}</dt>
+                      <dd>{f.interaction_context?.rating != null ? `${f.interaction_context.rating}/5` : f.participant_comment}</dd>
+                    </div>
+                  ))}
+              </dl>
             )}
             {afb.map((f) => (
               <p key={f.id} className="dash-fb-inline">

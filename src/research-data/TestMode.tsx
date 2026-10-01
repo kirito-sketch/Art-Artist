@@ -6,7 +6,9 @@
  * lives OUTSIDE the device: a side panel beside the phone on wide screens, or a bar and sheet attached
  * to the browser viewport below the phone on small screens.
  *
- * Flow: intro, consent, a few optional details, then one task at a time. While a task is active Art and Artist is
+ * Flow: intro, consent, a few optional details, then one task at a time. Task 1 (Getting started) is the
+ * first-run experience itself: "Open Art and Artist" starts the real splash, introduction, account entry
+ * and onboarding from a fresh first-time state, and the task succeeds when the main product shows. While a task is active Art and Artist is
  * fully usable. Success is noticed from the task's semantic success events, after the product action has
  * settled, and the panel then turns into the task questions. A short survey closes the session.
  * Everything is written through the research client, which never blocks Art and Artist.
@@ -50,6 +52,9 @@ const save = (p: Persisted) => {
 export function outcomeFor(difficulty: number | null, usedStuck: boolean): AttemptOutcome {
   return (difficulty !== null && difficulty >= 4) || usedStuck ? 'completed_with_difficulty' : 'completed';
 }
+
+/** Task 1 of the Individual Creative study: the real first-run flow (server/research/studies.ts). */
+const FIRST_RUN = 'getting-started';
 
 const CRAFTS = ['Cinematography', 'Camera crew', 'Direction', 'Acting', 'Editing', 'Sound', 'Production', 'Writing', 'Art / production design', 'Costume', 'Music', 'Other'];
 const EXPERIENCE = ['Student or just starting', 'Less than 3 years', '3 to 10 years', 'More than 10 years'];
@@ -158,6 +163,13 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     if (stage === 'task' && task) research.startTask(task.key);
   }, [stage, task?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Task 1: open Art and Artist the way a new person would, at the splash, with nothing carried over
+  // (no signed-in session, no completed onboarding, no navigation). The store is created fresh for
+  // each page load; this only starts the product's own first-run flow. Layout effect: no flash of Home.
+  useLayoutEffect(() => {
+    if (stage === 'task' && task?.key === FIRST_RUN && !store.entry) store.startEntry('new');
+  }, [stage, task?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Success detection: listen for the task's success events while it is active.
   useEffect(() => {
     if (stage !== 'task' || !task?.successEvents.length) return;
@@ -198,6 +210,8 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     setSucceeded(false);
     setView(null);
     setExpanded(false);
+    // Leaving Task 1 without finishing the first run (skip): close it so later tasks start in the product.
+    if (task?.key === FIRST_RUN && store.entry) store.endEntry();
     if (index + 1 < tasks.length) {
       setIndex(index + 1);
       setStage('task-intro');
@@ -207,6 +221,17 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   const finishTask = (r: { difficulty: number | null; expected: boolean | null; expecting: string; confusing: string }) => {
     const feedbackText = [r.expected === false && r.expecting.trim() ? `Expected: ${r.expecting.trim()}` : '', r.confusing.trim() ? `Confusing: ${r.confusing.trim()}` : ''].filter(Boolean).join('\n') || undefined;
     research.completeTask(task.key, { outcome: outcomeFor(r.difficulty, stuck.includes(task.key)), difficulty: r.difficulty ?? undefined, expectationMatch: r.expected === null ? undefined : r.expected ? 5 : 1, feedbackText });
+    nextTask();
+  };
+
+  /** After Task 1. "Get started" ease is also stored as the attempt's difficulty (inverted: 5 easy -> 1). */
+  const finishFirstRun = (r: { understand: number | null; start: number | null; unclear: string; helps: string }) => {
+    if (r.understand !== null) research.submitFeedback({ category: 'other', source: 'first_run', question: 'understand_product', rating: r.understand });
+    if (r.start !== null) research.submitFeedback({ category: 'other', source: 'first_run', question: 'get_started', rating: r.start });
+    if (r.unclear.trim()) research.submitFeedback({ category: 'other', source: 'first_run', question: 'setup_unclear', comment: r.unclear });
+    if (r.helps.trim()) research.submitFeedback({ category: 'other', source: 'first_run', question: 'what_it_helps_you_do', comment: r.helps });
+    const difficulty = r.start === null ? null : 6 - r.start;
+    research.completeTask(task.key, { outcome: outcomeFor(difficulty, stuck.includes(task.key)), difficulty: difficulty ?? undefined, feedbackText: r.unclear.trim() ? `Unclear: ${r.unclear.trim()}` : undefined });
     nextTask();
   };
 
@@ -280,6 +305,35 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     </header>
   );
 
+  // Task 1 is framed before the app opens: no phone yet, so the participant meets the real splash first.
+  if (stage === 'task-intro' && task.key === FIRST_RUN)
+    return solo(
+      view === 'end' ? (
+        <Panel label="End the test" title="End the test?" footer={<><Button block onClick={endEarly}>End test</Button><button className="rp-link" onClick={() => setView(null)}>Keep going</button></>}>
+          <p>Your answers so far will be kept. You can't come back to this test afterwards.</p>
+        </Panel>
+      ) : (
+        <Panel
+          label={`Task 1 of ${total}`}
+          eyebrow={`Task 1 of ${total}`}
+          title={task.title}
+          footer={
+            <>
+              <Button block onClick={() => setStage('task')}>
+                Open Art and Artist
+              </Button>
+              <button className="rp-link" onClick={() => setView('end')}>
+                End test
+              </button>
+            </>
+          }
+        >
+          <p>Imagine you've just discovered Art and Artist and are opening it for the first time.</p>
+          <p>Use the app as you normally would. {task.instruction}</p>
+        </Panel>
+      ),
+    );
+
   let body: ReactNode;
   if (stage === 'task-intro')
     body = (
@@ -305,7 +359,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
           </p>
           <h2 className="rp-title">{succeeded ? 'Task completed' : 'Task finished'}</h2>
         </header>
-        <TaskDone key={task.key} onSubmit={finishTask} />
+        {task.key === FIRST_RUN ? <FirstRunDone onSubmit={finishFirstRun} /> : <TaskDone key={task.key} onSubmit={finishTask} />}
       </>
     );
   else if (view === 'details')
@@ -499,10 +553,10 @@ function Panel({ label, title, children, footer, eyebrow = 'Art and Artist User 
  */
 function Intro({ onNext }: { onNext: () => void }) {
   return (
-    <Panel label="About Art and Artist" eyebrow="Art and Artist" title="A professional network for the creative industry" footer={<Button block onClick={onNext}>Continue</Button>}>
-      <p>Art and Artist helps people in film and creative work build a credible professional profile, discover people and projects, find opportunities, and connect with others they may want to work with.</p>
-      <p>Projects and credits are designed to reflect real work people have been part of, while production houses can share projects, find collaborators and credit their teams.</p>
-      <p className="rp-intro-note">During this test, use the prototype as if it were a real app. There are no wrong taps, and some parts of the prototype may still be incomplete. We're testing Art and Artist, not you.</p>
+    <Panel label="About Art and Artist" eyebrow="Art and Artist" title="Art and Artist" footer={<Button block onClick={onNext}>Continue</Button>}>
+      <p>Art and Artist is a professional network for people working in film and the creative industries.</p>
+      <p>It helps creatives build a credible body of work, discover people and projects, find professional opportunities, and connect with people they may want to work with.</p>
+      <p className="rp-intro-note">During this test, use the prototype as if you were discovering the product for the first time. There are no wrong taps. Some parts of the prototype may still be incomplete.</p>
     </Panel>
   );
 }
@@ -633,6 +687,33 @@ function TaskDone({ onSubmit }: { onSubmit: (r: { difficulty: number | null; exp
         <textarea className="field" rows={2} value={confusing} onChange={(e) => setConfusing(e.target.value)} maxLength={1000} />
       </label>
       <Button block onClick={() => onSubmit({ difficulty, expected, expecting, confusing })}>
+        Continue
+      </Button>
+    </div>
+  );
+}
+
+/** The questions after Task 1 (Getting started). Never hints at the "right" answer. */
+function FirstRunDone({ onSubmit }: { onSubmit: (r: { understand: number | null; start: number | null; unclear: string; helps: string }) => void }) {
+  const [understand, setUnderstand] = useState<number | null>(null);
+  const [start, setStart] = useState<number | null>(null);
+  const [unclear, setUnclear] = useState('');
+  const [helps, setHelps] = useState('');
+  return (
+    <div className="rp-form">
+      <p className="rp-q">How easy was it to understand what Art and Artist is for?</p>
+      <Scale value={understand} onChange={setUnderstand} low="Very difficult" high="Very easy" label="Understanding what it is for, 1 very difficult to 5 very easy" />
+      <p className="rp-q">How easy was it to get started?</p>
+      <Scale value={start} onChange={setStart} low="Very difficult" high="Very easy" label="Getting started, 1 very difficult to 5 very easy" />
+      <label className="rp-field">
+        <span>Was anything unclear during the introduction or setup? (optional)</span>
+        <textarea className="field" rows={2} value={unclear} onChange={(e) => setUnclear(e.target.value)} maxLength={1000} />
+      </label>
+      <label className="rp-field">
+        <span>Before continuing, what do you think Art and Artist helps you do?</span>
+        <textarea className="field" rows={3} value={helps} onChange={(e) => setHelps(e.target.value)} maxLength={1000} />
+      </label>
+      <Button block disabled={!helps.trim()} onClick={() => onSubmit({ understand, start, unclear, helps })}>
         Continue
       </Button>
     </div>

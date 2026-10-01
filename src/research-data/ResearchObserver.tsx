@@ -139,6 +139,15 @@ export function ResearchObserver() {
     else research.track('sheet_opened', { metadata: { sheet: s.sheet.name } });
   }, [s.sheet?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // First run: the entry flow (splash, introduction, account, onboarding) has closed and the main
+  // product is showing. "created" means a new account came out of onboarding; "signin" an existing one.
+  const inEntry = useRef(!!s.entry);
+  useEffect(() => {
+    const was = inEntry.current;
+    inEntry.current = !!s.entry;
+    if (was && !s.entry && research.isActive()) research.track('first_home_reached', { metadata: { via: s.isNewPerson ? 'created' : 'signin' } });
+  }, [s.entry]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // A credit stamped as accepted.
   useEffect(() => {
     if (research.isActive() && s.justAccepted) research.track('credit_accepted', { objectType: 'credit', objectId: s.justAccepted });

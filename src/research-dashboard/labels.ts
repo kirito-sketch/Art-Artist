@@ -12,6 +12,9 @@ export type EventRow = { sequence: number; event_name: string; screen: string | 
 const SHEET: Record<string, string> = { showInterest: 'Show interest', respond: 'Respond', share: 'Share', more: 'More', report: 'Report', availability: 'Availability', activity: 'Your activity', identity: 'Switch identity', create: 'Create', reviewInterest: 'Interested people', postMore: 'Post options', block: 'Block' };
 const TAB: Record<string, string> = { roles: 'Roles', people: 'People', projects: 'Projects', posts: 'Posts' };
 const SCREEN: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Messages', own_profile: 'Your profile', person_profile: 'Profile', role: 'Role', project: 'Project', house: 'House', post: 'Post', saved: 'Saved', settings: 'Settings', conversation: 'Conversation', notifications: 'Notifications' };
+/** First-run steps (the product's own entry flow, src/entry/Entry.tsx). */
+const STEP: Record<string, string> = { splash: 'Splash', intro_1: 'Intro 1', intro_2: 'Intro 2', intro_3: 'Intro 3', entry: 'Welcome', email: 'Email sign-up', signin: 'Sign in', forgot: 'Forgot password', consent: 'Terms', verify: 'Verify', you: 'Profile: you', craft: 'Profile: craft', where: 'Profile: where', looking: 'Profile: looking for', work: 'Profile: work', invite: 'Invitation', inviteTip: 'Invitation tip' };
+export const stepLabel = (s: unknown) => STEP[s as string] ?? String(s ?? '');
 export const screenLabel = (s: string | null | undefined) => (s ? SCREEN[s] ?? s.replace(/_/g, ' ') : '-');
 
 function objectName(type: string | null, id: string | null): string | null {
@@ -47,6 +50,10 @@ export function eventLabel(e: EventRow): string {
     case 'feedback_opened': return 'Opened feedback';
     case 'feedback_submitted': return `Sent feedback (${String(m.category ?? '').replace(/_/g, ' ')})`;
     case 'survey_submitted': return 'Submitted the final survey';
+    case 'onboarding_step_viewed': return `First run: ${stepLabel(m.step)}`;
+    case 'onboarding_step_back': return `First run: back from ${stepLabel(m.from)}`;
+    case 'onboarding_step_skipped': return `First run: skipped ${stepLabel(m.step)}`;
+    case 'first_home_reached': return m.via === 'signin' ? 'Reached the main product (signed in)' : 'Reached the main product (new account)';
     case 'home_viewed': return 'Opened Home';
     case 'discover_opened': return 'Opened Discover';
     case 'inbox_opened': return 'Opened Messages';
@@ -100,7 +107,10 @@ export function pathOf(events: EventRow[]): string[] {
     else if (e.event_name === 'inbox_opened') step = 'Messages';
     else if (e.event_name === 'own_profile_viewed') step = 'Your profile';
     else if (e.event_name === 'discover_tab_selected') step = TAB[m.tab as string] ?? String(m.tab);
-    else if (e.event_name === 'navigated_back') step = 'Back';
+    else if (e.event_name === 'navigated_back' || e.event_name === 'onboarding_step_back') step = 'Back';
+    else if (e.event_name === 'onboarding_step_viewed') step = stepLabel(m.step);
+    else if (e.event_name === 'onboarding_step_skipped') step = `Skip ${stepLabel(m.step)}`;
+    else if (e.event_name === 'first_home_reached') step = 'Main product';
     else if (e.event_name === 'stuck_reported') step = "I'm stuck";
     else if (e.event_name === 'feedback_submitted') step = 'Feedback';
     else {
@@ -117,6 +127,9 @@ export const CATEGORY_LABEL: Record<string, string> = { confusing: 'Confusing', 
 export const STATUS_LABEL: Record<string, string> = { new: 'New', reviewed: 'Reviewed', actionable: 'Actionable', fixed: 'Fixed', wont_fix: "Won't fix" };
 export const SURVEY_ORDER = ['overall_ease', 'what_is_ana_for', 'most_confusing', 'would_make_you_use'];
 export const SURVEY_LABEL: Record<string, string> = { overall_ease: 'Overall, how easy was Art and Artist to understand? (1 very difficult, 5 very easy)', what_is_ana_for: 'What do you think Art and Artist is for?', most_confusing: 'What was the most confusing part?', would_make_you_use: 'What, if anything, would make you want to use Art and Artist?' };
+
+export const FIRST_RUN_LABEL: Record<string, string> = { understand_product: 'How easy was it to understand what Art and Artist is for? (1 very difficult, 5 very easy)', get_started: 'How easy was it to get started? (1 very difficult, 5 very easy)', setup_unclear: 'Was anything unclear during the introduction or setup?', what_it_helps_you_do: 'Before continuing, what do you think Art and Artist helps you do?' };
+export const FIRST_RUN_ORDER = Object.keys(FIRST_RUN_LABEL);
 
 export const fmtDuration = (ms: number | null | undefined) => {
   if (ms == null) return '-';

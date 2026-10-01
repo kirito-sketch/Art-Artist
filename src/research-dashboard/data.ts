@@ -9,7 +9,7 @@ import { brand } from '../research-data/brand';
 const API = ((import.meta.env.VITE_RESEARCH_API_BASE as string | undefined) || '/api/research').replace(/\/$/, '') + '/dashboard';
 
 export type Study = { id: string; slug: string; title: string; status: string; participant_type: string | null; prototype_version: string | null };
-export type Task = { id: string; key: string; sequence: number; title: string; instruction: string; success_events: string[] };
+export type Task = { id: string; key: string; sequence: number; title: string; instruction: string; success_events: string[]; created_at?: string };
 export type Participant = { participant_code: string; display_name: string | null; primary_craft: string | null; experience_level: string | null; participant_type: string | null };
 export type Session = { id: string; status: string; prototype_version: string; selected_persona: string | null; device_type: string | null; viewport_width: number | null; viewport_height: number | null; started_at: string; completed_at: string | null; research_participants: Participant };
 export type Attempt = { id: string; session_id: string; task_id: string; outcome: string; success_detected: boolean; difficulty_rating: number | null; expectation_match: number | null; feedback_text: string | null; duration_ms: number | null; started_at: string; completed_at: string | null };
@@ -80,5 +80,11 @@ export async function setFeedbackStatus(id: string, status: string) {
   if (!r.ok) throw new DashboardError(r.status);
 }
 
-/** Survey answers are feedback rows tagged source = survey; everything else is participant feedback. */
-export const isSurvey = (f: Feedback) => f.interaction_context?.source === 'survey';
+/**
+ * Study answers are feedback rows tagged source = survey (final survey) or first_run (the questions after
+ * Task 1); everything else is participant feedback.
+ */
+export const isSurvey = (f: Feedback) => f.interaction_context?.source === 'survey' || f.interaction_context?.source === 'first_run';
+export const isFirstRunAnswer = (f: Feedback) => f.interaction_context?.source === 'first_run';
+/** Task 1 of the Individual Creative study: the first-run experience. */
+export const FIRST_RUN_TASK = 'getting-started';
