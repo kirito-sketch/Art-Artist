@@ -11,6 +11,9 @@
  * Reads SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and (optional) VITE_SUPABASE_ANON_KEY from the
  * environment or .env.local / .env. Never prints key values.
  * Options: RESEARCH_API=http://localhost:5173/api/research  RESEARCH_STUDY=ana-individual-creative-v29
+ * Hosted: RESEARCH_API=https://<deployment>/api/research, plus VERCEL_AUTOMATION_BYPASS_SECRET when the
+ * deployment has Vercel Authentication on (Project Settings > Deployment Protection > Protection Bypass
+ * for Automation). It is sent as the x-vercel-protection-bypass header and never printed.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -28,6 +31,7 @@ const STUDY = process.env.RESEARCH_STUDY || 'ana-individual-creative-v29';
 const VERSION = 'V29 (2026-10-01)';
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 const ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET ? { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET } : {};
 
 const results = [];
 const check = (name, pass, detail = '') => {
@@ -35,7 +39,7 @@ const check = (name, pass, detail = '') => {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`);
 };
 const post = async (path, body, token) => {
-  const r = await fetch(`${API}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
+  const r = await fetch(`${API}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...BYPASS, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
   let json = null;
   try {
     json = await r.json();
@@ -45,7 +49,7 @@ const post = async (path, body, token) => {
   return { status: r.status, json };
 };
 
-const health = await fetch(`${API}/health`).then((r) => r.json()).catch(() => null);
+const health = await fetch(`${API}/health`, { headers: BYPASS }).then((r) => r.json()).catch(() => null);
 check('Research API reachable and configured', health?.configured, health ? '' : `no response from ${API}`);
 if (!health?.configured) process.exit(1);
 
@@ -109,9 +113,9 @@ check('9. Feedback submitted', f1.status === 200 && f2.status === 200);
 // Security: a bad token cannot write; there is no read endpoint.
 const bad = await post('event', { events: [ev('home_viewed')] }, 'x'.repeat(43));
 check('   Invalid token rejected', bad.status === 401);
-const read = await fetch(`${API}/session`).then((r) => r.status);
+const read = await fetch(`${API}/session`, { headers: BYPASS }).then((r) => r.status);
 check('   No read access through the API (GET)', read === 405);
-const dbg = await fetch(`${API}/debug`).then((r) => r.status);
+const dbg = await fetch(`${API}/debug`, { headers: BYPASS }).then((r) => r.status);
 check('   Debug data needs the debug key', dbg === 401 || dbg === 404, `HTTP ${dbg}`);
 
 // 10. Session completes (twice: idempotent), then refuses new events.

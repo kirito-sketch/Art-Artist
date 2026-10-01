@@ -23,7 +23,7 @@ Participant
 | Research client | `src/research-data/client.ts` | Holds only the participant's opaque session token |
 | Taxonomy + sanitiser | `src/research-data/taxonomy.ts` | No. Shared by client and server |
 | Research API | `server/research/handlers.ts`, mounted by `server/research/node.ts` | **Yes**: `SUPABASE_SERVICE_ROLE_KEY` |
-| Hosting adapters | `vite.config.ts` (dev and preview), `api/research/[...action].ts` (Vercel) | Read the env, pass it to the API |
+| Hosting adapters | `vite.config.ts` (dev and preview), `api/research.ts` + `vercel.json` rewrite (Vercel) | Read the env, pass it to the API |
 | Database | `supabase/migrations/*.sql`, `supabase/seed.sql` | n/a |
 
 Research data never mixes with Ana's demo data. The demo data (people, houses, projects, roles,
@@ -42,7 +42,7 @@ still works exactly as before and records nothing unless a research session has 
 - Server variables have no `VITE_` prefix, so Vite never ships them to the browser. This was
   verified by building with canary values and scanning `dist/`: no matches.
 - During `npm run dev` and `npm run preview` the Vite plugin in `vite.config.ts` serves
-  `/api/research/*` from `server/research/node.ts`. In production, deploy `api/research/[...action].ts`
+  `/api/research/*` from `server/research/node.ts`. In production, deploy `api/research.ts` (with the `vercel.json` rewrite)
   as a Vercel function, or mount `handleNodeRequest` on any Node server. **A static host (including
   the claude.ai artifact) has no API, so research logging is simply off there.** The client stays
   inactive and the prototype works normally.
@@ -57,6 +57,12 @@ still works exactly as before and records nothing unless a research session has 
 | `VITE_RESEARCH_API_BASE` | browser | API base, default `/api/research` |
 | `VITE_RESEARCH_ENABLED` | browser | `false` switches research logging off in a build |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | browser | Future dashboard only. The anon key is public by design and RLS locks it out of research tables |
+
+On Vercel, `vercel.json` rewrites `/api/research/<action>` (including two-segment actions such as
+`task/start`) to the single function `api/research.ts` as `?action=<action>`. Server imports use
+explicit `.js` extensions because Vercel runs each function file as Node ESM without bundling.
+`VITE_SUPABASE_ANON_KEY` may exist in the Vercel environment, but no code references it, so it is not
+included in the browser bundle.
 
 Copy `.env.example` to `.env.local`. All `.env*` files except the example are git-ignored.
 
@@ -162,7 +168,7 @@ data.
 | `POST /api/research/task/complete` | `attemptId`, `outcome`, `difficulty`, `expectationMatch`, `feedbackText` | Closes the attempt and computes `duration_ms`. Repeats are ignored |
 | `POST /api/research/feedback` | `id`, `category`, `comment`, `screen`, `attemptId`, `eventId`, `context{persona, route, tab, sheet, acting, taskKey, lastSequence}` | Stores once. The server copies `prototype_version` from the session |
 | `POST /api/research/session/complete` | `status` (completed / abandoned) | Closes the session and abandons any open attempts. Repeats are ignored |
-| `GET /api/research/health` | | `{ configured }` only. Reveals nothing |
+| `GET /api/research/health` | | `{ ok, configured, database: reachable / unreachable / not_configured, latencyMs }`, from a head-only round trip to `research_studies`. 200 when reachable, 503 otherwise. Reveals no data or error detail |
 | `GET /api/research/debug/page`, `GET /api/research/debug` | header `x-research-debug-key` | Internal development view. Returns **404 unless `RESEARCH_DEBUG_KEY` is set**, and 401 without the right key |
 
 Limits: body ≤ 32 KB, 50 events per call, text lengths and JSON sizes are bounded by the API and the
