@@ -82,8 +82,8 @@ export function Specimen() {
           </div>
         ))}
         <div className="portrait-rail">
-          {PEOPLE.map((p, i) => (
-            <PortraitCard key={p.id} person={p} still={i % 2 ? still('covers/quiet-hours') : undefined} context="Credited on Kaavu" onPress={noop} />
+          {PEOPLE.map((p) => (
+            <PortraitCard key={p.id} person={p} context="Credited on Kaavu" onPress={noop} />
           ))}
         </div>
       </Block>
@@ -98,7 +98,7 @@ export function Specimen() {
 
       <Block id="houses" title="House names">
         {HOUSES.map((h) => (
-          <HouseFeature key={h} house={house(h, h)} still={still('covers/neela')} line="Now making Neela Akasham · Hiring 2" onPress={noop} />
+          <HouseFeature key={h} house={house(h, h)} line="Now making Neela Akasham · Hiring 2" onPress={noop} />
         ))}
       </Block>
 
@@ -153,9 +153,9 @@ export function Specimen() {
           ))}
         </div>
         <div className="portrait-rail">
-          <PortraitCard person={person('c1', 'Kiran Varma', 'Cinematographer', 'images/qa/crop-square.jpg')} still={still('covers/backwaters')} context="Credited on Monsoon Letters" onPress={noop} />
-          <PortraitCard person={person('c2', 'Tara Menon', 'Actor', 'images/qa/crop-landscape.jpg')} still={still('covers/salt-water')} context="Worked with Konark" onPress={noop} />
-          <PortraitCard person={PEOPLE[2]} still={still('covers/neela')} context="No photo: initials" onPress={noop} />
+          <PortraitCard person={person('c1', 'Kiran Varma', 'Cinematographer', 'images/qa/crop-square.jpg')} context="Credited on Monsoon Letters" onPress={noop} />
+          <PortraitCard person={person('c2', 'Tara Menon', 'Actor', 'images/qa/crop-landscape.jpg')} context="Worked with Konark" onPress={noop} />
+          <PortraitCard person={PEOPLE[2]} context="No photo: initials" onPress={noop} />
         </div>
       </Block>
 

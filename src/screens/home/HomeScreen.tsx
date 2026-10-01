@@ -341,7 +341,7 @@ function FirstRun() {
 
 /* ---------------------------------------------------------- Large Cards composition */
 
-/** Portrait Cards: people worth knowing, each set against their own credited work. */
+/** Portrait Cards: people worth knowing, each led by their own photo, with one line of real context. */
 function PeopleWorthKnowing() {
   const { viewer, following, toggleFollow, push } = useStore();
   const blocked = blockedBy(viewer.id);
@@ -360,7 +360,6 @@ function PeopleWorthKnowing() {
             <PortraitCard
               key={id}
               person={p}
-              still={w?.artwork ?? seed.portfolio[id]?.[0]}
               context={
                 p.availableFrom ? (
                   <>
@@ -455,7 +454,7 @@ function HousesOnAna({ world }: { world?: string }) {
           <HouseFeature
             key={o.id}
             house={o}
-            still={lead.media.id === 'ph' ? undefined : lead.stills[0] ?? lead.media}
+           
             line={live ? `Now making ${live.title}${hiring ? ` · Hiring ${hiring}` : ''}` : `${lead.title}, ${lead.year}`}
             label={<FrameLabel>{live ? live.stage : lead.year}</FrameLabel>}
             onPress={() => push({ name: 'org', id: o.id })}

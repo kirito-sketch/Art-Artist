@@ -144,14 +144,38 @@ export function initials(name: string) {
   return Array.from(first)[0] ?? '';
 }
 
+/**
+ * The one source of a person's (or house's) image across Ana: the profile photo they chose (logo for
+ * a house). A failed load is remembered per source, so a component that later shows someone else,
+ * or the same person with a new photo, tries again instead of staying on initials.
+ */
+export function usePartyImage(party: Party) {
+  const src = party.kind === 'person' ? party.photo : party.logo;
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  return { src, show: !!src && failedSrc !== src, onError: () => setFailedSrc(src ?? null) };
+}
+
+/**
+ * A person's photo at any size (portrait cards, the profile identity): cover-cropped with a
+ * face-safe focal point, never stretched. Without a photo: their initials, as an intentional
+ * monogram on the quiet tint. Never a broken image, never a stock face.
+ */
+export function PersonPhoto({ party, className = '' }: { party: Party; className?: string }) {
+  const img = usePartyImage(party);
+  return (
+    <span className={`person-photo ${img.show ? '' : 'person-photo--initials'} ${className}`} aria-hidden>
+      {img.show ? <img src={img.src} alt="" onError={img.onError} draggable={false} /> : <span className="person-photo-initials">{initials(party.name)}</span>}
+    </span>
+  );
+}
+
 /** Headshot when delivered, otherwise a neutral monogram. Organisations are rounded squares. */
 export function Avatar({ party, size = 40, available }: { party: Party; size?: number; available?: boolean }) {
-  const [failed, setFailed] = useState(false);
+  const img = usePartyImage(party);
   const isOrg = party.kind === 'org';
-  const src = party.kind === 'person' ? party.photo : party.logo;
   return (
     <span className={`avatar ${isOrg ? 'avatar--org' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden>
-      {src && !failed ? <img src={src} alt="" onError={() => setFailed(true)} /> : size >= 24 ? initials(party.name) : null}
+      {img.show ? <img src={img.src} alt="" onError={img.onError} /> : size >= 24 ? initials(party.name) : null}
       {available && <span className="avatar-dot" style={{ width: Math.max(10, size * 0.24), height: Math.max(10, size * 0.24) }} />}
     </span>
   );

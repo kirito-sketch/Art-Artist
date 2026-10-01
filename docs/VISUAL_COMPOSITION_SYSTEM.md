@@ -243,7 +243,7 @@ Urgent time ("Closes in 4 days") is green text on a white Frame Label: a mark, n
 
 **Surfaces and shadows.** Two shadow levels only: shadow-2 for raised content (cards, tiles, posters, stills rails, the reel) and shadow-3 for floating chrome (tab bar, action bar). Object shadows are separate: a contact shadow belonging to the Object Tile's asset slot, never a box-shadow. Records carry a hairline and no shadow. Sheets over media carry no shadow; their radius and the paper do the work.
 
-**Portraits.** Faces are cropped square and circular, face centre at about 36 % height (`object-position: 50% 30%`), shown at 26, 40, 64 and 96. A portrait never carries text over it. Over a still, the face sits on a white ring so it separates from any background. No photo is a normal state: initials in ink on the quiet tint with a hairline, never a grey silhouette. Below 24 px (face stacks) the fallback is a plain tint disc.
+**Portraits.** Every person image comes from one source, the person's profile photo, read through `usePartyImage` and rendered by `Avatar` (circular) or `PersonPhoto` (rectangular blocks: the Portrait Card and the profile identity portrait). There are no local image implementations. Avatars are cropped square and circular, face centre at about 36 % height (`object-position: 50% 30%`), shown at 26, 40, 64 and 96. A portrait never carries text over it. Over a still, the face sits on a white ring so it separates from any background. No photo is a normal state: initials in ink on the quiet tint with a hairline, never a grey silhouette. Below 24 px (face stacks) the fallback is a plain tint disc.
 
 **Top header and status bar.** On primary scrolling screens (Home, Production House Home) the status-bar area, the Ana header and the page are one paper surface (`--base`; no other near-white). The header is part of the page and scrolls away; nothing sticky replaces it; the floating bottom navigation stays. Media-led detail screens (Role, Project, Profile) keep their hero-to-the-top pattern with floating utility controls, and their status bar turns paper once the hero has scrolled away.
 
@@ -429,45 +429,44 @@ These are not isolated component styles. They are layout/content patterns.
 
 ## 5.3 Portrait Card
 
+One canonical card for people (`PortraitCard` in `src/ui/compose.tsx`). There is no cover, banner or work-still variant.
+
 ### Best for
 
-- people discovery
-- suggested creatives
-- collaborator recommendations
-- “Worked with”
+- people discovery ("People worth knowing", "People in your craft")
+- people to consider for a role
+- "Worked with"
 
 ### Character
 
-- face-led
-- human
-- lighter than project cards
-- medium expression
+- portrait-led: the person's own photo is the card's image
+- human, editorial, lighter than project cards
+- not Instagram, LinkedIn, a dating app or a directory
 
 ### Structure
 
-- portrait may overlap or break card boundary
-- name
-- craft
-- one useful context line
-- optional compact action
+1. The profile photo, roughly 4:5, rounded upper corners, filling the card width.
+2. Name.
+3. Craft or role.
+4. One short reason line from real data: "Your craft · Kolkata", "Credited on Monsoon Letters", "Available from 15 Nov", "4 verified credits".
+5. Optional compact action (Follow / Following, never dominant).
 
-### Can use
+No separate avatar on top of the photo, and no banner behind it.
 
-- circular or offset portrait
-- subtle background tint
-- controlled overlap
-- gentle depth
+### Photo treatment
 
-### Proven structure
+- `object-fit: cover`, face-safe crop (`object-position: 50% 30%`), never stretched, stable 4:5 ratio.
+- No photo: the person's initials, large, in ink on the quiet tint. Never a broken image, a grey silhouette or a random stock portrait.
+- Availability is a small green dot with a white ring in the photo's lower corner; the reason line says the date.
 
-The person's own credited work sits as a still across the top. Their portrait (64 px) breaks the still's lower edge. Below it: name, craft, one context line (availability with the green dot, or a credit), and one compact action.
+### Work context
 
-The work still carries the image while portrait photography is missing. It must be real work connected to the person, never generic imagery.
+Work comes from the person's records (credits, projects, city, craft), written in the reason line. Never ask anyone for a banner or cover image to fill a card.
 
 ### Avoid
 
-- LinkedIn-style résumé density
-- excessive stats
+- banner or cover strip with a floating circular avatar (reads as a LinkedIn cover)
+- résumé density, stats rows
 - multiple CTAs
 
 ---
@@ -810,7 +809,6 @@ Some expressive content may break strict card boundaries.
 
 Approved examples:
 
-- portrait overlapping card edge
 - 3D craft object extending outside tile
 - floating status chip over image
 - stacked card preview

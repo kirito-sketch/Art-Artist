@@ -6,7 +6,7 @@ import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
-import { Button, FollowButton, Row, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Button, FollowButton, Row, EmptyState, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
@@ -115,9 +115,11 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const from = own ? (availability.open ? availability.from : null) : p.availableFrom ?? null;
   const isFollowing = following.includes(id);
   const backdrop = reel ?? work[0] ?? d.credits[0]?.media;
-  // Portrait first; until a headshot exists, the person's own work stands in.
-  // A new person may have no photo or work yet: fall back to a neutral Ana illustration, never a broken image.
-  const hero: Media = { id: `hero-${id}`, kind: 'image', src: p.photo ?? backdrop?.src ?? 'images/brand/entry/camera.jpg', fallback: backdrop?.fallback ?? backdrop?.src ?? 'images/brand/entry/camera.jpg' };
+  // The hero is the person's work; the person themself is the portrait in the identity block below
+  // (Person, Craft, Work, Credibility). With no work yet a neutral Ana illustration stands in (the
+  // photo would only repeat the portrait), never a broken image.
+  const heroSrc = backdrop?.src ?? 'images/brand/entry/camera.jpg';
+  const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };
 
   return (
     <div className="screen screen--hero canvas v-profile" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
@@ -144,6 +146,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
       <div className="psheet">
         <header className="pid">
+          <PersonPhoto party={p} className="pid-portrait" />
           <p className="pid-craft" lang={scriptLang(CRAFT_LABEL[p.craft] ?? p.role)}>
             {CRAFT_LABEL[p.craft] ?? p.role}
           </p>

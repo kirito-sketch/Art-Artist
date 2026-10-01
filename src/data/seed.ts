@@ -62,7 +62,12 @@ const m = (id: string, extra: Partial<Media> = {}): Media => {
   return { id, kind: 'image', src: `images/${src}.jpg`, fallback: fallback ? `images/${fallback}.jpg` : undefined, ...extra };
 };
 
-const photo = (id: string) => `images/people/${id}.jpg`;
+/**
+ * Profile photos delivered for seeded people (prototype fixtures, see public/images/people). Everyone
+ * else has no photo and shows initials, exactly as a real person who skipped the photo would.
+ */
+const PHOTO_FIXTURES = ['kiran', 'tara', 'meera', 'vikram'];
+const photo = (id: string) => (PHOTO_FIXTURES.includes(id) ? `images/people/${id}.jpg` : undefined);
 
 /* ------------------------------------------------------------------ people */
 

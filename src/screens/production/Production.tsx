@@ -5,7 +5,6 @@ import { org, party } from '../../state/selectors';
 import { publicName, world, type HouseProject } from '../../state/world';
 import { Avatar, Button, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
 import { displayTitle, keepSeparators, Faces, FrameLabel, PortraitCard, PosterTile, TitleCard } from '../../ui/compose';
-import { publicCreditsFor } from '../../domain/discovery';
 import { person } from '../../state/selectors';
 
 /*
@@ -238,9 +237,7 @@ function PeopleToConsider() {
       <SectionHeader title="For roles you haven't opened" />
       <div className="portrait-rail">
         {picks.map(({ r, p, who }) => {
-          const c = publicCreditsFor(who!.id)[0];
-          const w = c ? world.projects.find((x) => x.id === c.projectId) : undefined;
-          return <PortraitCard key={r.id} person={who!} still={w?.artwork ?? seed.portfolio[who!.id]?.[0]} context={`${r.role} · private on ${p.workingTitle}`} onPress={() => push({ name: 'profile', id: who!.id })} />;
+          return <PortraitCard key={r.id} person={who!} context={`${r.role} · private on ${p.workingTitle}`} onPress={() => push({ name: 'profile', id: who!.id })} />;
         })}
       </div>
     </section>

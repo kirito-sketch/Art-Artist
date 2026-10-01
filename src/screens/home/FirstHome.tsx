@@ -3,10 +3,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { craftDef } from '../../data/crafts';
 import type { Craft } from '../../data/types';
-import { blockedBy, discoverableProjects, publicCreditsFor, recommendedRoles, searchableHouses } from '../../domain/discovery';
+import { blockedBy, discoverableProjects, recommendedRoles, searchableHouses } from '../../domain/discovery';
 import { useStore } from '../../state/store';
 import { forYou, person } from '../../state/selectors';
-import { project as wproject } from '../../state/world';
 import { CraftObject, type CraftObjectKind } from '../../ui/craft';
 import { PortraitCard } from '../../ui/compose';
 import { spring, stagger } from '../../ui/motion';
@@ -158,15 +157,12 @@ export function FirstPeople() {
       <div className="portrait-rail">
         {ids.map((id) => {
           const p = person(id);
-          const credit = publicCreditsFor(id)[0];
-          const w = credit ? wproject(credit.projectId) : undefined;
           const sameCraft = p.craft === me.craft || (me.crafts ?? []).includes(p.craft);
           const reason = sameCraft && p.city === me.city ? `Your craft, in ${me.city}` : sameCraft ? `Your craft · ${p.city}` : `In ${p.city}`;
           return (
             <PortraitCard
               key={id}
               person={p}
-              still={w?.artwork ?? seed.portfolio[id]?.[0]}
               context={reason}
               onPress={() => push({ name: 'profile', id })}
               action={<FollowButton on={following.includes(id)} onToggle={() => toggleFollow(id)} name={p.name} block />}

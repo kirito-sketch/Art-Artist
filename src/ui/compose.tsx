@@ -4,7 +4,7 @@ import { spring } from './motion';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Media, Org, Person } from '../data/types';
 import { CraftObject, type CraftObjectKind } from './craft';
-import { Avatar, Photo, PressCard, Verified } from './primitives';
+import { Avatar, PersonPhoto, Photo, PressCard, Verified } from './primitives';
 
 /*
  * Ana composition families (docs/VISUAL_COMPOSITION_SYSTEM.md, section 5). Each family is one
@@ -62,13 +62,18 @@ export function FrameLabel({ children, tone = 'plate', icon }: { children: React
   );
 }
 
-/** Portrait Card: person-led. Their work sits behind; the portrait breaks the edge. */
-export function PortraitCard({ person, still, context, action, onPress }: { person: Person; still?: Media; context?: ReactNode; action?: ReactNode; onPress: () => void }) {
+/**
+ * Portrait Card: person-led. One image, the person's own profile photo, as a 4:5 portrait; then
+ * name, craft, one line of real context (why they are here, or credited work) and Follow. No cover
+ * or banner image, no avatar on top of another picture: Ana never asks for a banner. Without a
+ * photo the portrait area carries their initials as a quiet monogram.
+ */
+export function PortraitCard({ person, context, action, onPress }: { person: Person; context?: ReactNode; action?: ReactNode; onPress: () => void }) {
   return (
     <PressCard className="portrait-card" onPress={onPress} scale={0.98} aria-label={person.availableFrom ? `${person.name}, available` : person.name}>
-      <div className="portrait-card-still">{still ? <Photo media={still} showPlay={false} /> : <span className="portrait-card-blank" />}</div>
-      <span className="portrait-card-face">
-        <Avatar party={person} size={64} available={!!person.availableFrom} />
+      <span className="portrait-card-photo">
+        <PersonPhoto party={person} />
+        {person.availableFrom && <span className="portrait-card-available" aria-hidden />}
       </span>
       <div className="portrait-card-text">
         <p className="item-title" lang={scriptLang(person.name)} title={person.name}>

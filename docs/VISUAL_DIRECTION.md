@@ -89,7 +89,7 @@ The before and after sequences are in the review page and in the scratch capture
 | Section | Family | Surface |
 |---|---|---|
 | Roles for you | Cinematic Card (frame label replaces pill) | Level 2 |
-| People worth knowing (new placement of existing suggestions) | Portrait Card: work still behind, face breaking the edge | Level 2 |
+| People worth knowing (new placement of existing suggestions) | Portrait Card: the person's own photo at 4:5, reason line from real data (see the composition system 5.3) | Level 2 |
 | From your network | Editorial Row, unboxed, hairlines | Level 1 |
 | Explore your craft | Object Tile on the sand band; objects break the tile top | Expressive band |
 | Projects to watch | Poster / Stills rail; lead poster larger (4:5 vs 2:3) | Level 1 with image shadow |
@@ -236,7 +236,7 @@ A combination, not a mascot:
 4. **Tactile craft objects** in one consistent light, used sparingly.
 5. **Dark title cards** for unannounced work, with a thin red rule.
 6. **The call sheet and the record**: hairline grids and quiet records where trust matters.
-7. **Faces sitting on the work**: portraits breaking card edges and interest stacked on the slate.
+7. **Faces with the work**: portrait-led people cards (photo first, no banner) and interest stacked on the slate.
 
 ---
 
@@ -248,7 +248,7 @@ A combination, not a mascot:
   - `src/ui/craft.tsx` holds the placeholder drawings and the `CRAFT_OBJECTS` list, where supplied assets are registered.
   - `?specimen` is the design-system test page: typography stress test, Telugu fixture, the Object Tile slot, surfaces and the red states.
 - **One direction only:** no console switch was added. Archived Home and Slate variants are unchanged references.
-- **Content gap:** person portrait photography still does not exist in the prototype (every person falls back to initials). The hardening pass could not generate fixtures (no image-generation credit was available), so crop and scale were proven with neutral crop targets on the specimen page. Supplying `public/images/people/{id}.jpg` per docs/IMAGE_PROMPTS.md makes portraits appear with no code change.
+- **Content gap:** person portrait photography still does not exist in the prototype (every person falls back to initials). The hardening pass could not generate fixtures (no image-generation credit was available), so crop and scale were proven with neutral crop targets on the specimen page. Since then four core personas (Kiran, Tara, Meera, Vikram) have prototype fixtures in `public/images/people/`, cropped from the project's own fictional stills; everyone else uses initials. To add one, place `public/images/people/{id}.jpg` per docs/IMAGE_PROMPTS.md and add the id to `PHOTO_FIXTURES` in `src/data/seed.ts`.
 
 ### Components and tokens to update when Figma resumes
 
@@ -328,3 +328,10 @@ Editorial Workbench stays the single direction. These changes strengthen its Ana
 - **Filters:** a separate component. Discover → People craft tiles regain the earlier "tile that reads against the page, solid when selected" logic, in warm tones with a green selected fill.
 - **Save, Follow and posts:** Save is for Posts, Roles and Projects; Follow for People and Production Houses; one private Saved screen one tap from your own Profile; every post has Like, Share, Save and More, no comments, and Report post in More. See docs/SAVE_MODEL.md.
 - **Header:** status bar, Ana header and page are one paper surface on primary screens; the header scrolls away.
+
+## 14. Person image and Portrait Card (profile-photo pass)
+
+- **One canonical person image:** the profile photo picked in onboarding or Edit Profile (`person.photo`). Every surface reads it through `usePartyImage` (`src/ui/primitives.tsx`) and renders `Avatar` or `PersonPhoto`: nav, Home, profiles, posts, messages, activity, interested rows, identity switcher, notifications, credits and house rows. Fallback is initials, never a broken image or a placeholder portrait for a real user.
+- **Portrait Card:** photo primary (4:5), then name, craft, one reason line from real data, then a quiet Follow. No banner, no cover variant, no floating avatar.
+- **Profile:** the hero stays the person's work; the person's portrait (photo or initials) leads the identity block, above craft and name. Hierarchy: Person, Craft, Work, Credibility.
+- **No banner field:** onboarding and Edit Profile ask only for a profile photo, never a cover or background image.

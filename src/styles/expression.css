@@ -163,40 +163,60 @@
   flex-direction: column;
 }
 
-.portrait-card-still {
-  height: 104px;
+/* Portrait-led: the person's own photo is the card's image (4:5, face-safe crop). No banner, no
+ * floating avatar; work context comes from data in the text below. */
+.portrait-card-photo {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
   border-radius: var(--r-l) var(--r-l) 0 0;
   overflow: hidden;
   background: var(--tint);
 }
 
-.portrait-card-still .photo {
-  width: 100%;
-  height: 100%;
-  filter: saturate(0.85);
+.portrait-card-available {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--available);
+  box-shadow: 0 0 0 2px var(--raised);
 }
 
-.portrait-card-blank {
+/* The canonical person image block (fills its box): photo, else initials. */
+.person-photo {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
   background: var(--tint);
 }
 
-.portrait-card-face {
-  margin: -34px 0 0 14px;
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: var(--raised);
+.person-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
+.person-photo--initials {
   display: grid;
   place-items: center;
-  position: relative;
-  z-index: 1;
+}
+
+.person-photo-initials {
+  font-family: var(--display);
+  font-size: 40px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
 }
 
 .portrait-card-text {
-  padding: 8px 14px 0;
+  padding: 12px 14px 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1936,4 +1956,19 @@
 /* Inactive tab icons stay neutral but legible (5:1, was 2.2:1). Active is ink with the green mark. */
 .tab-item {
   color: var(--text-2);
+}
+
+/* The person's portrait in the profile identity block: their own photo (or initials), never a
+ * banner and never a circle floating over the hero. */
+.v-profile .pid-portrait {
+  width: 76px;
+  height: 95px;
+  border-radius: var(--r-m);
+  overflow: hidden;
+  margin-bottom: 14px;
+  outline: 1px solid var(--hairline);
+}
+
+.v-profile .pid-portrait .person-photo-initials {
+  font-size: 26px;
 }
