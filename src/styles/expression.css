@@ -152,13 +152,13 @@
 .portrait-card {
   position: relative;
   flex: none;
-  width: 168px;
+  width: 124px;
   scroll-snap-align: start;
   border-radius: var(--r-l);
   background: var(--raised);
   box-shadow: var(--shadow-2);
   overflow: visible;
-  padding-bottom: 14px;
+  padding-bottom: 10px;
   display: flex;
   flex-direction: column;
 }
@@ -176,10 +176,10 @@
 
 .portrait-card-available {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 12px;
-  height: 12px;
+  right: 8px;
+  bottom: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--available);
   box-shadow: 0 0 0 2px var(--raised);
@@ -210,13 +210,13 @@
 
 .person-photo-initials {
   font-family: var(--display);
-  font-size: 40px;
+  font-size: 32px;
   letter-spacing: 0.02em;
   color: var(--text-2);
 }
 
 .portrait-card-text {
-  padding: 12px 14px 0;
+  padding: 9px 10px 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -232,7 +232,7 @@
 .portrait-card-context {
   font-size: var(--t-5);
   color: var(--text-2);
-  margin-top: 6px;
+  margin-top: 3px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -246,7 +246,21 @@
 }
 
 .portrait-card-action {
-  padding: 12px 14px 0;
+  padding: 9px 10px 0;
+}
+
+.portrait-card-action .btn {
+  min-height: 32px;
+  height: 32px;
+  font-size: var(--t-5);
+}
+
+.portrait-card .item-title {
+  font-size: var(--t-4, 15px);
+}
+
+.portrait-card .meta {
+  font-size: var(--t-5);
 }
 
 .portrait-card-action .btn {

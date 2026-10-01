@@ -248,7 +248,7 @@ A combination, not a mascot:
   - `src/ui/craft.tsx` holds the placeholder drawings and the `CRAFT_OBJECTS` list, where supplied assets are registered.
   - `?specimen` is the design-system test page: typography stress test, Telugu fixture, the Object Tile slot, surfaces and the red states.
 - **One direction only:** no console switch was added. Archived Home and Slate variants are unchanged references.
-- **Content gap:** person portrait photography still does not exist in the prototype (every person falls back to initials). The hardening pass could not generate fixtures (no image-generation credit was available), so crop and scale were proven with neutral crop targets on the specimen page. Since then four core personas (Kiran, Tara, Meera, Vikram) have prototype fixtures in `public/images/people/`, cropped from the project's own fictional stills; everyone else uses initials. To add one, place `public/images/people/{id}.jpg` per docs/IMAGE_PROMPTS.md and add the id to `PHOTO_FIXTURES` in `src/data/seed.ts`.
+- **Content gap:** person portrait photography still does not exist in the prototype (every person falls back to initials). The hardening pass could not generate fixtures (no image-generation credit was available), so crop and scale were proven with neutral crop targets on the specimen page. Since then every seeded person except Omar Sheikh has a prototype fixture in `public/images/people/` (three cropped from the project's own stills, the rest Unsplash stock, listed in that folder's README); Omar keeps initials on purpose so the fallback stays visible. To add one, place `public/images/people/{id}.jpg` per docs/IMAGE_PROMPTS.md and add the id to `PHOTO_FIXTURES` in `src/data/seed.ts`.
 
 ### Components and tokens to update when Figma resumes
 

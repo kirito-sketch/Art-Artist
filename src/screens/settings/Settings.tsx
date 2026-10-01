@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react';
+import { Bookmark, ChevronLeft, List } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
@@ -57,7 +57,7 @@ export function SettingsScreen() {
 }
 
 function Personal() {
-  const { viewer, blocked, unblock, memberships, setActing, push, startEntry } = useStore();
+  const { viewer, blocked, unblock, memberships, setActing, push, startEntry, saved, openSheet } = useStore();
   const [signOut, setSignOut] = useState(false);
   const me = person(viewer.id);
   const [who, setWho] = useState<'everyone' | 'known'>('everyone');
@@ -67,6 +67,11 @@ function Personal() {
         <Row label="Name" value={me.name} chevron={false} />
         <Row label="Phone" value="+91 98••• ••210" chevron={false} />
         <Row label="Email" value={`${me.name.split(" ")[0].toLowerCase()}@••••.in`} chevron={false} />
+      </Group>
+
+      <Group title="Your content" note="Private to you. Also on your profile.">
+        <Row icon={<Bookmark size={18} />} label="Saved" value={saved.length ? String(saved.length) : undefined} onPress={() => push({ name: 'saved' })} />
+        <Row icon={<List size={18} />} label="Your activity" onPress={() => openSheet({ name: 'activity' })} />
       </Group>
 
       <Group title="Privacy and discoverability" note="Credits you've accepted are always public on the project. That's what makes them credible.">

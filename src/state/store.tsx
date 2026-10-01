@@ -264,10 +264,12 @@ function useStoreValue() {
     (id: string, kind: SavedKind = 'role') => {
       const on = !saved.some((x) => x.kind === kind && x.id === id);
       setSaved((s) => (on ? [{ kind, id, at: Date.now() }, ...s] : s.filter((x) => !(x.kind === kind && x.id === id))));
-      // The bookmark confirms itself. Only while acting for a house do we say whose list it went to.
-      if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'Undo', run: () => setSaved((x) => x.filter((i) => !(i.kind === kind && i.id === id))) } });
+      // The bookmark confirms itself. While acting for a house we say whose list it went to; the very
+      // first save says once where Saved lives, with a way straight there.
+      if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'View', run: () => push({ name: 'saved' }) } });
+      else if (on && saved.length === 0) showToast({ text: 'Saved. Find it on your profile.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
     },
-    [saved, showToast, acting],
+    [saved, showToast, acting, push],
   );
 
   const toggleFollow = useCallback(

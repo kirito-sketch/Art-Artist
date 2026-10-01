@@ -18,14 +18,19 @@ Words: "Save" in text, the bookmark as the icon, **Saved** as the one screen tit
 - One private **Saved** screen (`saved` route, `src/screens/profile/SavedScreen.tsx`).
 - Filters: **All · Posts · Roles · Projects** (filter chips, with counts). All shows each kind in its own family, the most recently saved kind first, with "See all" switching the filter.
 - Each kind keeps its composition family: Posts in the media grid (opening the post stream), Roles as role rows, Projects as poster tiles.
-- **Entry:** one tap from your own Profile: the private "Saved" row (with its count) under your availability, beside "Your activity". It appears only on your own profile, never to visitors, and is not in the profile hero (a bookmark there would read as saving the profile), not in Settings and not in the bottom navigation.
+- **Entry points** (all private to you, all open the same screen):
+  - your own Profile: the "Saved" row (with its count) under your availability, beside "Your activity";
+  - Settings, "Your content": Saved and Your activity;
+  - the Your activity sheet, at the top;
+  - your first save: a toast "Saved. Find it on your profile." with **View** (once; later saves confirm silently). While acting for a house, every save says "Saved to your account" with View.
+- Never in a profile hero (a bookmark there would read as saving the profile), never visible to visitors, not in the bottom navigation.
 - Saved is never a public profile section.
 
 ## State
 
 - One source of truth in the store: `saved: { kind, id, at }[]`, read through `isSaved(kind, id)` and changed by `toggleSave(id, kind)`. Every bookmark (Home card, Role Detail, Project Detail, post stream, Home and Profile posts) reads it, so an item shows saved everywhere at once.
 - Tapping a saved bookmark unsaves it, everywhere, with no confirmation.
-- The control confirms itself (press, fill, settle; see the motion system). No toast, except while acting for a house, where a short toast says it went to your personal account.
+- The control confirms itself (press, fill, settle; see the motion system). A toast appears only on your first save (to say where Saved lives) and while acting for a house (to say it went to your personal account).
 - **Identity:** Save belongs to the person. Acting as a Production House never creates a house collection.
 - The list is per person and resets when the prototype switches persona.
 
@@ -66,7 +71,7 @@ More holds secondary, trust and ownership actions only. **Share and Save are nev
 
 | Profile | Hero (light utility controls) | Action area |
 |---|---|---|
-| Your own | Share profile, Settings (Back only when opened as a page) | Edit profile; private rows for availability, Saved and Your activity |
+| Your own | Share profile, Settings (Back only when opened as a page) | Edit profile; private rows for availability, Saved and Your activity (also in Settings) |
 | Another person | Back, Share, More (Report, Block) | Follow, Message |
 | A production house, as a visitor | Back, Share, More (Report, Block) | Follow, Message |
 | Your house, acting for it | Back, Share, House settings | Edit page, Open a role |

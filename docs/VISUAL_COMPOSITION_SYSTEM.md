@@ -445,7 +445,7 @@ One canonical card for people (`PortraitCard` in `src/ui/compose.tsx`). There is
 
 ### Structure
 
-1. The profile photo, roughly 4:5, rounded upper corners, filling the card width.
+1. The profile photo, 4:5, rounded upper corners, filling the card width. The card is compact (124 px wide, about 2.8 cards visible on a phone) so a rail reads as a set of people, not a gallery of posters.
 2. Name.
 3. Craft or role.
 4. One short reason line from real data: "Your craft · Kolkata", "Credited on Monsoon Letters", "Available from 15 Nov", "4 verified credits".

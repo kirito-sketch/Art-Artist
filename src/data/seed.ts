@@ -63,10 +63,11 @@ const m = (id: string, extra: Partial<Media> = {}): Media => {
 };
 
 /**
- * Profile photos delivered for seeded people (prototype fixtures, see public/images/people). Everyone
- * else has no photo and shows initials, exactly as a real person who skipped the photo would.
+ * Profile photos for seeded people (prototype fixtures, see public/images/people). Omar Sheikh is left
+ * without one on purpose, so the initials fallback stays visible, exactly as for a real person who
+ * skipped the photo.
  */
-const PHOTO_FIXTURES = ['kiran', 'tara', 'meera', 'vikram'];
+const PHOTO_FIXTURES = ['aditi', 'anvi', 'arjun', 'dev', 'devika', 'farhan', 'ishaan', 'kabir', 'kiran', 'lakshmi', 'meera', 'nandini', 'nikhil', 'priya', 'raghu', 'rhea', 'sameer', 'sana', 'tara', 'teja', 'vikram', 'zoya'];
 const photo = (id: string) => (PHOTO_FIXTURES.includes(id) ? `images/people/${id}.jpg` : undefined);
 
 /* ------------------------------------------------------------------ people */
