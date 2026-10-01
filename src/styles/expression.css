@@ -2039,25 +2039,19 @@
 
 /* ------------------------------------------------------------------ V30 (docs/V30.md) */
 
-/* Home: why you see what you see, and the one control that changes it. */
-.intent-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 4px 0 6px;
-  padding: 12px 14px;
-  border-radius: var(--r-m);
-  background: var(--raised);
-  border: 1px solid var(--line);
-  text-align: left;
-  width: 100%;
+/* Home: content first, control second. Under a section title, one compact row: the intent filter
+   (first section only), any section filter, and a quiet line on why. Never a settings card. */
+.home-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: -8px 0 14px; }
+.home-context .world-why { margin: 0; flex: 1 1 160px; }
+.intent-chip, .filter-pill {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  height: 30px; padding: 0 10px 0 12px; border-radius: 999px;
+  font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer;
 }
-.intent-bar-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.intent-bar-kicker { font-size: 12px; font-weight: 600; color: var(--text-2); letter-spacing: 0.01em; }
-.intent-bar-value { font-size: var(--t-4); font-weight: 650; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.intent-bar-value .meta { font-weight: 400; }
-.intent-bar-change { display: inline-flex; align-items: center; gap: 2px; flex: none; font-size: 14px; font-weight: 600; color: var(--action); }
+.intent-chip { background: var(--action-tint); color: var(--action); border: 0; }
+.filter-pill { background: transparent; color: var(--text); border: 1px solid var(--line); padding: 0 12px; }
+.filter-pill.is-on { background: var(--text); color: var(--surface); border-color: var(--text); }
+.filter-pill .status-dot { width: 7px; height: 7px; }
 
 /* Intent choices (onboarding and the Home sheet): one tappable row each, the selected one marked. */
 .intent-list { display: flex; flex-direction: column; gap: 8px; }
@@ -2144,8 +2138,6 @@
    While one is open the bar steps away, so the sheet's actions are never covered. */
 .tabbar { transition: opacity 0.18s, transform 0.18s; }
 .phone-screen:has(.tab-layer .sheet-layer) .tabbar { opacity: 0; transform: translateY(16px); pointer-events: none; }
-.intent-bar-prefix { font-weight: 500; color: var(--text-2); }
-.intent-bar-kicker { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* V30 cold start: widened recommendations say so, quietly, under the card. */
 .carousel-item { position: relative; }
@@ -2163,3 +2155,7 @@
 .project-rail .poster-tile-media { aspect-ratio: 4 / 5; border-radius: var(--r-m); }
 .project-rail .poster-tile-title { font-size: 15px; font-weight: 650; }
 .project-rail .poster-tile-sub { color: var(--text-2); }
+/* Home: the first section starts right under the header, so its cards are the first thing seen. */
+.v-home .home-sheet { padding-top: 0; }
+.v-home .home-sheet > .v-section:first-of-type,
+.v-home .home-sheet > div:first-of-type > .v-section { padding-top: 6px; }

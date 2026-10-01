@@ -278,7 +278,7 @@ function useStoreValue() {
       // The bookmark confirms itself. While acting for a house we say whose list it went to; the very
       // first save says once where Saved lives, with a way straight there.
       if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'View', run: () => push({ name: 'saved' }) } });
-      else if (on && saved.length === 0) showToast({ text: 'Saved. Find everything you save in Saved.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
+      else if (on && saved.length === 0) showToast({ text: 'Saved. Find it in Saved, on your profile.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
     },
     [saved, showToast, acting, push],
   );

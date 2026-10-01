@@ -24,12 +24,12 @@ import { blockedBy, discoverableProjects, discoverableRoles, publicCreditsFor, s
 export type Intent = 'work' | 'hire' | 'collaborate' | 'network' | 'explore';
 
 /** How intent is offered to people: plain actions, never persona labels. */
-export const INTENTS: { id: Intent; label: string; hint: string; status: string }[] = [
-  { id: 'work', label: 'Find work', hint: 'Roles, casting and paid work in your craft', status: 'Looking for work' },
-  { id: 'hire', label: 'Find people for a project', hint: 'Crew, cast and collaborators for something you are making', status: 'Building a team' },
-  { id: 'collaborate', label: 'Collaborate', hint: 'Short films, music videos and passion projects', status: 'Open to collaborations' },
-  { id: 'network', label: 'Grow my network', hint: 'People in your craft and the work they do', status: 'Growing my network' },
-  { id: 'explore', label: 'Just exploring', hint: 'Not looking right now', status: 'Not looking right now' },
+export const INTENTS: { id: Intent; label: string; short: string; hint: string; status: string }[] = [
+  { id: 'work', label: 'Find work', short: 'Find work', hint: 'Roles, casting and paid work in your craft', status: 'Looking for work' },
+  { id: 'hire', label: 'Find people for a project', short: 'Find people', hint: 'Crew, cast and collaborators for something you are making', status: 'Building a team' },
+  { id: 'collaborate', label: 'Collaborate', short: 'Collaborate', hint: 'Short films, music videos and passion projects', status: 'Open to collaborations' },
+  { id: 'network', label: 'Grow my network', short: 'Grow network', hint: 'People in your craft and the work they do', status: 'Growing my network' },
+  { id: 'explore', label: 'Just exploring', short: 'Exploring', hint: 'Not looking right now', status: 'Not looking right now' },
 ];
 export const intentDef = (i: Intent) => INTENTS.find((x) => x.id === i)!;
 
@@ -74,7 +74,7 @@ export interface Signals {
   interested: number;
 }
 
-export type HomeSection = 'forYou' | 'people' | 'available' | 'projects' | 'activity' | 'work';
+export type HomeSection = 'forYou' | 'people' | 'projects' | 'activity' | 'work';
 
 /**
  * Module order. The person's intent decides priority, but every Home shows people, opportunities,
@@ -86,14 +86,14 @@ export function homeOrder(intent: Intent, stage: Stage): HomeSection[] {
     return {
       work: ['forYou', 'projects', 'people', 'activity', 'work'],
       collaborate: ['forYou', 'people', 'projects', 'activity', 'work'],
-      hire: ['people', 'activity', 'available', 'projects', 'forYou', 'work'],
+      hire: ['people', 'activity', 'projects', 'forYou', 'work'],
       network: ['people', 'activity', 'work', 'projects', 'forYou'],
       explore: ['activity', 'projects', 'work', 'people', 'forYou'],
     }[intent] as HomeSection[];
   return {
     work: ['forYou', 'people', 'projects', 'activity', 'work'],
     collaborate: ['forYou', 'people', 'projects', 'work', 'activity'],
-    hire: ['people', 'available', 'projects', 'activity', 'forYou', 'work'],
+    hire: ['people', 'projects', 'activity', 'forYou', 'work'],
     network: ['people', 'work', 'activity', 'projects', 'forYou'],
     explore: ['projects', 'work', 'people', 'activity', 'forYou'],
   }[intent] as HomeSection[];
@@ -185,7 +185,7 @@ export function peopleFor(me: Person, intent: Intent, following: string[], signa
   return scored.sort((a, b) => b.score - a.score).map(({ item, why, tier }) => ({ item, why, tier }));
 }
 
-/** Professionals available now, other crafts first: the second tray for someone assembling a team. */
+/** Professionals available now, other crafts first (the people tray's "Available now" filter). */
 export function availableFor(me: Person, following: string[]): Ranked<Person>[] {
   return peopleFor(me, 'hire', following).filter((r) => !!r.item.availableFrom);
 }
