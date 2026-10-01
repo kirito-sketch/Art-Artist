@@ -1,44 +1,71 @@
 /* =============================================================== Participant Test Mode (/test)
- * Quiet and separate from Ana's content, in Ana's own language: paper, Ana green for the one primary
- * action per step, existing type. The strip lives in the status-bar area so it never covers navigation,
- * Create, or any in-content action. docs/RESEARCH_TEST_MODE.md. */
+ * Rule: nothing belonging to the study is drawn inside the simulated phone. The phone keeps its normal
+ * size and its normal status bar. Research UI sits outside the device:
+ *   - wide screens: a compact floating panel beside the phone (rp--side);
+ *   - small screens: a bar attached to the browser viewport below the device (rp-bar), opening into a
+ *     viewport sheet (rp--sheet). Never a modal inside Ana.
+ * Ana's visual language: warm paper, hairline, soft shadow, restrained radius, Ana green for the one
+ * primary research action. docs/RESEARCH_TEST_MODE.md. */
 
-.stage--test {
-  gap: 0;
-}
-
-/* Full-screen steps (intro, consent, details, survey, thanks) */
-.test-panel {
-  position: absolute;
-  inset: 0;
-  z-index: 90;
+.test-stage {
+  --rp-bar: 64px;
+  min-height: 100%;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 32px;
   background: var(--base, #f6f4f0);
-  color: var(--text);
 }
 
-.test-panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: calc(var(--status-bar) + 28px) 24px 24px;
+.test-device {
+  position: relative;
+  flex: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Between tasks and while answering, Ana is visible but not operable. */
+.test-device[inert] {
+  opacity: 0.55;
+}
+
+/* ------------------------------------------------------------------------------------ the panel */
+.rp {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  font-size: var(--t-3);
+  color: var(--text);
+  font-size: var(--t-4);
   line-height: 1.45;
 }
 
-.test-panel-footer {
-  padding: 14px 24px 34px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.rp--side {
+  flex: none;
+  width: 300px;
+  max-height: 852px;
+  overflow-y: auto;
+  padding: 22px 20px;
   background: var(--base, #f6f4f0);
-  border-top: 1px solid var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(40, 30, 20, 0.04), 0 12px 32px -18px rgba(40, 30, 20, 0.22);
 }
 
-.test-eyebrow {
+.rp--solo {
+  width: 100%;
+  max-width: 440px;
+  padding: 28px 26px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 22px;
+  box-shadow: 0 12px 40px -24px rgba(40, 30, 20, 0.3);
+}
+
+.test-stage--solo {
+  min-height: 100vh;
+}
+
+.rp-brand {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -46,173 +73,47 @@
   color: var(--text-2);
 }
 
-.test-title {
-  font-family: var(--display);
-  font-size: 30px;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
-  margin-bottom: 4px;
-  outline: none;
-}
-
-.test-quiet {
-  font-size: var(--t-4);
-  color: var(--text-2);
-}
-
-.test-list {
+.rp-head {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-left: 18px;
-  font-size: var(--t-4);
-  list-style: disc;
+  gap: 4px;
 }
 
-.test-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-height: 44px;
-  padding: 12px 14px;
-  border-radius: var(--r-m);
-  background: var(--surface);
-  font-size: var(--t-4);
-  cursor: pointer;
-}
-
-.test-check input {
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  accent-color: var(--action);
-  flex: none;
-}
-
-.test-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: var(--t-4);
-}
-
-.test-field > span {
-  color: var(--text-2);
-}
-
-.test-field textarea.field {
-  padding: 12px 16px;
-  resize: none;
-  line-height: 1.4;
-}
-
-.test-field select.field {
-  appearance: auto;
-}
-
-/* The task strip: in the status-bar area, above Ana, below test sheets */
-.test-strip {
-  position: absolute;
-  inset: 0 0 auto;
-  height: var(--status-bar);
-  z-index: 81;
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  padding: 0 12px 6px;
-  background: var(--base, #f6f4f0);
-  border-bottom: 1px solid var(--hairline);
-}
-
-.test-strip-task {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+.rp-eyebrow {
   font-size: 13px;
-  color: var(--text);
-  text-align: left;
-}
-
-.test-strip-task svg {
+  font-weight: 600;
   color: var(--action);
-  flex: none;
 }
 
-.test-strip-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.rp-status {
+  color: var(--text-2);
+  font-weight: 500;
 }
 
-.test-strip-text b {
-  font-weight: 650;
-}
-
-.test-strip-btn {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 34px;
-  min-width: 44px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--text);
-}
-
-.test-strip-btn--done {
-  background: var(--action);
-  color: var(--on-action, #fff);
-  box-shadow: none;
-}
-
-.test-strip button:focus-visible,
-.test-panel button:focus-visible,
-.test-sheet button:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-/* Sheet content */
-.test-sheet {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-bottom: 8px;
-  font-size: var(--t-4);
-}
-
-.test-task-title {
-  font-size: 22px;
-  font-weight: 650;
+.rp-title {
+  font-size: 21px;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-.test-task-instruction {
+.rp-instruction {
   font-size: var(--t-3);
   line-height: 1.45;
-  margin-bottom: 6px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
-.test-q {
-  font-size: var(--t-3);
-  font-weight: 600;
+.rp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 4px;
 }
 
-.test-link {
+.rp-link {
   align-self: center;
   min-height: 44px;
   padding: 0 12px;
@@ -221,22 +122,115 @@
   color: var(--text-2);
 }
 
-.test-row-actions {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 4px;
+.rp-noted {
+  font-size: 13px;
+  color: var(--action);
 }
 
-.test-scale-row {
+.rp-quiet {
+  font-size: var(--t-4);
+  color: var(--text-2);
+}
+
+.rp-q {
+  font-size: var(--t-3);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Research pages (intro, consent, details, survey, thanks) */
+.rp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rp-page-title {
+  font-family: var(--display);
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  outline: none;
+}
+
+.rp-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: var(--t-3);
+}
+
+.rp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 18px;
+  font-size: var(--t-4);
+  list-style: disc;
+}
+
+.rp-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--base, #f6f4f0);
+  font-size: var(--t-4);
+  cursor: pointer;
+}
+
+.rp-check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--action);
+  flex: none;
+}
+
+/* Forms */
+.rp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--t-4);
+}
+
+.rp-field > span {
+  color: var(--text-2);
+}
+
+.rp-field .field {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.rp-field textarea.field {
+  padding: 12px 14px;
+  resize: none;
+  line-height: 1.4;
+}
+
+.rp-field select.field {
+  appearance: auto;
+}
+
+.rp-scale-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
-.test-scale-btn {
-  height: 48px;
-  border-radius: var(--r-m);
+.rp-scale-btn {
+  height: 44px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--hairline);
   font-size: var(--t-3);
@@ -244,13 +238,13 @@
   color: var(--text);
 }
 
-.test-scale-btn.is-on {
+.rp-scale-btn.is-on {
   background: var(--action);
   color: var(--on-action, #fff);
   box-shadow: none;
 }
 
-.test-scale-ends {
+.rp-scale-ends {
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
@@ -258,35 +252,175 @@
   color: var(--text-2);
 }
 
-.test-choice {
+.rp-choice {
   display: flex;
   gap: 8px;
 }
 
-.test-choice .chip {
+.rp-choice .chip {
   min-width: 72px;
   min-height: 40px;
   justify-content: center;
 }
 
-.test-cats {
+.rp-cats {
   gap: 8px;
 }
 
-.test-cat {
-  min-height: 50px;
-  padding: 0 16px;
-  border-radius: var(--r-m);
+.rp-cat {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--hairline);
   text-align: left;
-  font-size: var(--t-3);
+  font-size: var(--t-4);
   color: var(--text);
 }
 
+.rp button:focus-visible,
+.rp-bar button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- small screens (no room) */
+.test-stage--compact {
+  flex-direction: column;
+  gap: 0;
+}
+
+.test-stage--compact.has-bar {
+  padding-bottom: calc(var(--rp-bar) + 32px);
+}
+
+/* The bar: attached to the browser viewport, below the device, never over Ana. */
+.rp-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  height: var(--rp-bar);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--base, #f6f4f0);
+  border-top: 1px solid var(--hairline);
+  box-shadow: 0 -8px 24px -18px rgba(40, 30, 20, 0.35);
+}
+
+.rp-bar-task {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+}
+
+.rp-bar-task svg {
+  flex: none;
+  color: var(--text-2);
+}
+
+.rp-bar-text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rp-bar-text b {
+  color: var(--action);
+  font-weight: 650;
+}
+
+.rp-bar-done {
+  flex: none;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--on-action, #fff);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rp-bar-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--text);
+}
+
+/* The sheet: attached to the browser viewport (not the simulated phone). */
+.rp-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.rp-sheet-scrim {
+  flex: 1;
+  background: rgba(20, 18, 14, 0.28);
+}
+
+.rp--sheet {
+  max-height: 78vh;
+  overflow-y: auto;
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
+  background: var(--base, #f6f4f0);
+  border-top: 1px solid var(--hairline);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 32px -16px rgba(40, 30, 20, 0.35);
+}
+
+/* Phone-width screens: the device is full screen, so the bar takes its own strip of the viewport. */
+@media (max-width: 520px) {
+  .test-stage {
+    padding: 0;
+    display: block;
+  }
+  /* One constant height for the whole session (bar or sheet), so Ana never shifts. */
+  .test-stage--compact {
+    padding-bottom: var(--rp-bar);
+  }
+  .test-stage--compact .phone {
+    height: calc(100dvh - var(--rp-bar));
+  }
+  .test-stage--solo {
+    padding: 0;
+  }
+  .rp--solo {
+    max-width: none;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 32px 22px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .test-panel,
-  .test-strip {
+  .test-device {
     transition: none;
   }
 }

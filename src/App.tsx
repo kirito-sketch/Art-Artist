@@ -1,6 +1,6 @@
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
-import { Suspense, lazy, useEffect, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import type { Media } from './data/types';
 import { TabBar } from './nav/TabBar';
 import { CollabComposer } from './screens/create/CollabComposer';
@@ -167,7 +167,7 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
   );
 }
 
-function Phone({ overlay }: { overlay?: ReactNode }) {
+function Phone() {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
   const [discoverScope, setDiscoverScope] = useState<Scope>('roles');
@@ -249,7 +249,6 @@ function Phone({ overlay }: { overlay?: ReactNode }) {
         {store.entry && <EntryFlow key={store.entry.mode + (store.entry.notice ?? '')} />}
         <ToastHost />
         <IdentityShift />
-        {overlay}
         <div className="home-indicator" />
       </div>
     </div>
@@ -266,16 +265,13 @@ export default function App() {
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, []);
-  // Participant Test Mode: the real prototype plus the test layer. No console, notices or QA tools.
+  // Participant Test Mode: the unchanged prototype phone, with all research UI outside the device.
+  // No console, notices or QA tools.
   if (TEST_MODE)
     return (
       <StoreProvider>
         <ResearchObserver />
-        <div className="stage stage--test">
-          <div className="stage-phone">
-            <Phone overlay={<TestMode />} />
-          </div>
-        </div>
+        <TestMode phone={<Phone />} />
       </StoreProvider>
     );
   if (RESEARCH_DASHBOARD)
