@@ -10,6 +10,7 @@ import { Button, FollowButton, Row, EmptyState, IconButton, Photo, PressCard, Pr
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
+import { CreditSeal } from '../../ui/CreditSeal';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -50,7 +51,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, acting, setActing, cannotReach } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, acting, setActing, cannotReach } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -62,6 +63,16 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
     setHero(heroKey, overHero && p?.visibility !== 'private');
     return () => setHero(heroKey, false);
   }, [heroKey, overHero, setHero, p?.visibility]);
+  // Credit accepted: bring the newly stamped credit into view in its rail (horizontal only).
+  useEffect(() => {
+    if (!justAccepted) return;
+    const t = window.setTimeout(() => {
+      const item = document.querySelector<HTMLElement>('.rail-item--sealing');
+      const rail = item?.parentElement;
+      if (item && rail) rail.scrollTo({ left: item.offsetLeft - (rail.clientWidth - item.clientWidth) / 2, behavior: 'smooth' });
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [justAccepted]);
 
   if (!p) return <EmptyState title="Profile unavailable" />;
   // Someone who blocked the identity in use sees exactly what a private profile looks like. They are never told.
@@ -293,8 +304,11 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           {credits.length ? (
             <div className="rail">
               {credits.map((c) => (
-                <Pressable key={c.id} className="rail-item" scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={c.title}>
-                  <Photo media={c.media} className="rail-poster" showPlay={false} />
+                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={c.title}>
+                  <span className="rail-poster-wrap">
+                    <Photo media={c.media} className="rail-poster" showPlay={false} />
+                    {justAccepted === c.id && <CreditSeal />}
+                  </span>
                   <p className="item-title">{c.title}</p>
                   <p className="meta">{c.role}</p>
                   <p className="meta rail-issuer">

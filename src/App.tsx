@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Media } from './data/types';
@@ -24,7 +24,8 @@ import { SheetHost } from './screens/sheets/Sheets';
 import { networkFor } from './state/selectors';
 import { StoreProvider, useStore, type Route } from './state/store';
 import { StatusBar, ToastHost } from './ui/chrome';
-import { spring } from './ui/motion';
+import { dur, ease, spring } from './ui/motion';
+import { IdentityShift } from './ui/IdentityShift';
 import { IconButton, Photo } from './ui/primitives';
 import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
@@ -32,14 +33,20 @@ import { EntryFlow } from './entry/Entry';
 import { PolicyUpdate } from './legal/PolicyUpdate';
 import { ADMIN } from './admin/adminMode';
 import { AdminConsole } from './admin/Admin';
-import { LAB, SCENARIO, SPECIMEN } from './qa/boot';
+import { LAB, MOTION_REVIEW, SCENARIO, SPECIMEN } from './qa/boot';
+import { MotionReview } from './qa/MotionReview';
 import { Specimen } from './qa/Specimen';
 import { PostStream } from './screens/discover/PostStream';
 import { EdgeCaseLab } from './qa/Lab';
 import { ScenarioBar } from './qa/ScenarioBar';
 
-/* Transition per route type: composers rise like sheets, media zooms, detail pushes from the right. */
+/*
+ * Transition per route type: composers rise like sheets, media zooms, detail pushes from the right.
+ * When a card's artwork carries into the detail (shared element), the layer only fades so the
+ * artwork is the thing that moves (docs/MOTION_MICROINTERACTION_SYSTEM.md).
+ */
 function transitionFor(r: Route) {
+  if (r.name === 'posts' || ((r.name === 'opportunity' || r.name === 'work') && r.from === 'card')) return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
   if (r.name === 'composePost' || r.name === 'composeCollab') return { initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%' } };
   if (r.name === 'media') return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 } };
   if (r.name === 'opportunity') return { initial: { opacity: 0, scale: 0.94, y: 24 }, animate: { opacity: 1, scale: 1, y: 0 }, exit: { opacity: 0, x: 60 } };
@@ -49,7 +56,7 @@ function transitionFor(r: Route) {
 function RouteView({ r }: { r: Route }) {
   switch (r.name) {
     case 'opportunity':
-      return <OpportunityScreen id={r.id} />;
+      return <OpportunityScreen id={r.id} fromCard={r.from === 'card'} />;
     case 'profile':
       return <ProfileScreen id={r.id} />;
     case 'conversation':
@@ -69,7 +76,7 @@ function RouteView({ r }: { r: Route }) {
     case 'project':
       return <HouseProjectScreen id={r.id} />;
     case 'work':
-      return <WorkScreen id={r.id} />;
+      return <WorkScreen id={r.id} fromCard={r.from === 'card'} />;
     case 'org':
       return <OrgScreen id={r.id} />;
     case 'settings':
@@ -176,6 +183,8 @@ function Phone() {
   const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : top?.name === 'posts' || top?.name === 'opportunity' ? 'paper' : 'dark';
 
   return (
+    <MotionConfig reducedMotion="user">
+    <LayoutGroup>
     <div className="phone" data-viewer={viewer.id} data-look={store.look}>
       <div className="phone-screen">
         <StatusBar tone={statusTone} />
@@ -190,7 +199,13 @@ function Phone() {
             style={{ pointerEvents: tab === t ? 'auto' : 'none', zIndex: tab === t ? 1 : 0 }}
             aria-hidden={tab !== t}
           >
-            {t === 'home' && (store.acting !== 'self' ? <ProductionHome /> : <HomeScreen goDiscover={goDiscover} />)}
+            {t === 'home' && (
+              // Identity switch: the home world fades up anew so the change of context is felt, not just read.
+              // (Keyed remount, no exit layer: an exiting copy of the old home must never linger under the new one.)
+              <motion.div key={store.acting} className="identity-layer" initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: dur.ui, ease: ease.out }}>
+                {store.acting !== 'self' ? <ProductionHome /> : <HomeScreen goDiscover={goDiscover} />}
+              </motion.div>
+            )}
             {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} />}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab />)}
@@ -222,9 +237,12 @@ function Phone() {
         {store.policyUpdate && !store.entry && <PolicyUpdate />}
         {store.entry && <EntryFlow key={store.entry.mode + (store.entry.notice ?? '')} />}
         <ToastHost />
+        <IdentityShift />
         <div className="home-indicator" />
       </div>
     </div>
+    </LayoutGroup>
+    </MotionConfig>
   );
 }
 
@@ -240,6 +258,12 @@ export default function App() {
   // The Edge Case Lab is an internal page; a scenario replaces the console with its own bar.
   if (LAB) return <EdgeCaseLab />;
   if (SPECIMEN) return <Specimen />;
+  if (MOTION_REVIEW)
+    return (
+      <MotionConfig reducedMotion="user">
+        <MotionReview />
+      </MotionConfig>
+    );
   if (SCENARIO?.fixture?.surface === 'admin')
     return (
       <>

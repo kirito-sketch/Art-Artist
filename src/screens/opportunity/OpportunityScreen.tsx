@@ -1,4 +1,6 @@
-import { ChevronLeft, Clock, MapPin, Share, Sparkles, Users } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { dur, shared, spring } from '../../ui/motion';
+import { Check, ChevronLeft, Clock, MapPin, Share, Sparkles, Users } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { world } from '../../state/world';
@@ -23,13 +25,15 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   );
 }
 
-export function OpportunityScreen({ id }: { id: string }) {
+export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
   const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse, roleModel, openAgain, showToast, blocked } = useStore();
   const base = findOpportunity(id, userCollabs);
   const o = base && { ...base, ...roleEdits[id] };
   const status = roleStatus[id];
   const changed = roleEdits[id]?.changed ?? [];
   const [scrollY, setScrollY] = useState(0);
+  /** View state only: after withdrawing, the bar says so instead of silently resetting. */
+  const [withdrew, setWithdrew] = useState(false);
 
   // Light status bar while the photo is under it.
   useEffect(() => {
@@ -142,12 +146,23 @@ export function OpportunityScreen({ id }: { id: string }) {
   } else if (interested) {
     left = (
       <>
-        <p className="item-title">Interest sent</p>
+        <p className="item-title booking-done">
+          Interest sent
+          <motion.span className="booking-check" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...spring.settle, delay: 0.12 }}>
+            <Check size={14} strokeWidth={3} />
+          </motion.span>
+        </p>
         <p className="meta">{poster} will message you if it's a fit</p>
       </>
     );
     action = (
-      <Button variant="secondary" onClick={() => withdrawInterest(o.id)}>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          withdrawInterest(o.id);
+          setWithdrew(true);
+        }}
+      >
         Withdraw
       </Button>
     );
@@ -167,15 +182,35 @@ export function OpportunityScreen({ id }: { id: string }) {
       </Button>
     );
   } else {
-    action = <Button onClick={() => openSheet({ name: 'showInterest', id: o.id })}>Show interest</Button>;
+    if (withdrew)
+      left = (
+        <>
+          <p className="item-title">No longer interested</p>
+          <p className="meta">Withdrawn. You can show interest again.</p>
+        </>
+      );
+    action = (
+      <Button
+        onClick={() => {
+          setWithdrew(false);
+          openSheet({ name: 'showInterest', id: o.id });
+        }}
+      >
+        Show interest
+      </Button>
+    );
   }
+  const barKey = status ? 'status' : interested ? 'sent' : response ? 'response' : withdrew ? 'withdrawn' : 'open';
 
   return (
     <div className="detail v-role">
       <div className="screen screen--hero canvas" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         <div className="ohero">
           <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
-            <Photo media={o.media} className="ohero-photo" />
+            {/* Opened from a card: the card's artwork becomes this hero. Otherwise it simply appears. */}
+            <motion.div layoutId={fromCard ? shared.role(o.id) : undefined} className="ohero-photo" transition={spring.push}>
+              <Photo media={o.media} className="ohero-photo" />
+            </motion.div>
           </div>
           <span className="ohero-labels">
             <FrameLabel>{kindLabel[o.kind]}</FrameLabel>
@@ -183,7 +218,7 @@ export function OpportunityScreen({ id }: { id: string }) {
           </span>
         </div>
 
-        <div className="detail-body osheet">
+        <motion.div className="detail-body osheet" initial={fromCard ? { y: 48, opacity: 0 } : false} animate={{ y: 0, opacity: 1 }} transition={{ ...spring.push, delay: 0.06 }}>
           <p className="kicker">{o.projectType}</p>
           <h1 className="large-title display-title" {...displayTitle(o.role)}>
             {keepSeparators(o.role)}
@@ -277,7 +312,7 @@ export function OpportunityScreen({ id }: { id: string }) {
               Report
             </button>
           </p>
-        </div>
+        </motion.div>
       </div>
 
       <div className={`float-bar ${scrollY > 400 ? 'is-solid' : ''}`}>
@@ -294,7 +329,12 @@ export function OpportunityScreen({ id }: { id: string }) {
       </div>
 
       <footer className="booking">
-        <div className="booking-left">{left}</div>
+        {/* The bar is the control: its state changes in place (open → sent → withdrawn), no toast needed. */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={barKey} className="booking-left" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: dur.micro }}>
+            {left}
+          </motion.div>
+        </AnimatePresence>
         {action}
       </footer>
     </div>

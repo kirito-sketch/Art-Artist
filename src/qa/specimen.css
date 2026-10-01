@@ -156,3 +156,48 @@
 .spec-state--error > svg {
   color: var(--accent);
 }
+
+/* Motion review */
+.mr-level,
+.mr-status {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+  background: #dcd7cf;
+  color: #3a352f;
+}
+.mr-status--implemented { background: #151413; color: #f4efe6; }
+.mr-status--rule-applied { background: #e8dfcf; }
+.mr-facts {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 6px 12px;
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.mr-facts dt { color: #6b6760; font-weight: 600; }
+.mr-facts dd { margin: 0; }
+.mr-demo { display: flex; justify-content: center; align-items: center; min-height: 120px; position: relative; }
+.mr-pill { background: #fff; }
+.mr-card { width: 180px; aspect-ratio: 4 / 5; border-radius: var(--r-l); overflow: hidden; box-shadow: var(--shadow-2); }
+.mr-card .photo { width: 100%; height: 100%; }
+.mr-band { margin: -20px calc(-1 * var(--gutter)) -24px; width: calc(100% + 2 * var(--gutter)); }
+.mr-create { position: relative; height: 300px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.mr-create .tab-create { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; }
+.mr-create-surface { position: absolute; left: 0; right: 0; bottom: 70px; overflow: hidden; box-shadow: var(--shadow-3); padding: 8px; }
+.mr-create-surface .row { display: flex; gap: 12px; align-items: center; padding: 14px 12px; font-weight: 600; }
+.mr-grid { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; margin: -20px calc(-1 * var(--gutter)) -24px; }
+.mr-post { position: absolute; inset: 0; background: var(--base); display: flex; flex-direction: column; gap: 8px; padding: 12px; cursor: pointer; }
+.mr-post-media { position: relative; flex: 1; }
+.mr-post-media .photo { position: absolute !important; inset: 0; }
+.mr-save { position: relative; top: auto; right: auto; }
+.mr-booking { position: relative; left: auto; right: auto; bottom: auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 12px 12px 20px; border-radius: var(--r-xl); background: #fff; box-shadow: var(--shadow-3); }
+.mr-identity { width: 100%; min-height: 150px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.mr-shift { position: static; translate: none; }

@@ -3,7 +3,7 @@ import { Bookmark } from 'lucide-react';
 import type { Opportunity } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
-import { spring } from '../../ui/motion';
+import { shared, spring } from '../../ui/motion';
 import { Avatar, PressCard, Photo, Verified } from '../../ui/primitives';
 import { displayTitle, keepSeparators, FrameLabel } from '../../ui/compose';
 
@@ -86,7 +86,10 @@ export function FeaturedCard({ o, onOpen }: { o: Opportunity; onOpen: () => void
   const pill = sent ?? (o.closesInDays !== undefined && o.closesInDays <= 5 ? `Closes in ${o.closesInDays} days` : o.kind === 'collab' ? 'Collaboration' : null);
   return (
     <PressCard className="feature" onPress={onOpen} scale={0.985} aria-label={`${o.role}, ${o.project}`}>
-      <Photo media={o.media} className="feature-photo" />
+      {/* The artwork carries into Role Detail as its hero (shared element). */}
+      <motion.div layoutId={shared.role(o.id)} className="feature-photo" transition={spring.push}>
+        <Photo media={o.media} className="feature-photo" />
+      </motion.div>
       <div className="feature-scrim" />
       {pill && <FrameLabel tone={sent ? 'paper' : (o.closesInDays ?? 9) <= 5 ? 'urgent' : 'plate'}>{pill}</FrameLabel>}
       <SaveButton id={o.id} floating />

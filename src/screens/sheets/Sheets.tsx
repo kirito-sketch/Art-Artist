@@ -1,5 +1,7 @@
 import { Ban, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
+import { dur, shared, spring } from '../../ui/motion';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
 import { findOpportunity, firstName, org, party, person } from '../../state/selectors';
@@ -14,9 +16,7 @@ export function SheetHost() {
   const is = (n: SheetRoute['name']) => sheet?.name === n;
   return (
     <>
-      <Sheet open={is('create')} onClose={closeSheet} title="Create">
-        <CreateMenu />
-      </Sheet>
+      <CreateSurface open={is('create')} onClose={closeSheet} />
       <Sheet open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
         <Notifications />
       </Sheet>
@@ -71,19 +71,50 @@ export function SheetHost() {
 
 /* ------------------------------------------------------------------ Create */
 
+/*
+ * Create (signature functional interaction). The red + disc grows into this surface (shared
+ * layout), the actions arrive with a slight stagger, and closing returns the surface into the +.
+ * It sits under the tab bar so the same control that opened it closes it.
+ */
+function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <div className="create-layer" role="dialog" aria-modal="true" aria-label="Create">
+          <motion.div className="create-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: dur.ui }} onClick={onClose} />
+          <motion.div
+            layoutId={shared.create}
+            className="create-surface"
+            style={{ borderRadius: 26 }}
+            initial={{ backgroundColor: '#c4412e' }}
+            animate={{ backgroundColor: '#ffffff' }}
+            exit={{ backgroundColor: '#c4412e' }}
+            transition={spring.sheet}
+          >
+            <motion.div className="create-content" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1, duration: dur.micro } }} exit={{ opacity: 0, transition: { duration: 0.08 } }}>
+              <p className="create-title">Create</p>
+              <CreateMenu />
+            </motion.div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function CreateMenu() {
   const { push, acting, openSheet } = useStore();
   // Acting for a house: it posts updates and opens roles. It is never "available for work".
   if (acting !== 'self')
     return (
-      <div className="group">
+      <div className="group create-rows">
         <Row icon={<Plus size={22} />} label="New project" onPress={() => openSheet({ name: 'newProject' })} />
         <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => openSheet({ name: 'pickProject' })} />
         <Row icon={<PenLine size={22} />} label={`Post as ${org(acting).name}`} onPress={() => push({ name: 'composePost' })} />
       </div>
     );
   return (
-    <div className="group">
+    <div className="group create-rows">
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
       <Row icon={<CircleCheck size={22} />} label="Available for work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
@@ -309,7 +340,7 @@ function InterestForm({ id }: { id: string }) {
           attempt(`interest-${id}`, () => sendInterest(id, note), () => setState('failed'));
         }}
       >
-        {state === 'failed' ? 'Try again' : 'Send interest'}
+        {state === 'sending' ? 'Sending…' : state === 'failed' ? 'Try again' : 'Send interest'}
       </Button>
     </div>
   );

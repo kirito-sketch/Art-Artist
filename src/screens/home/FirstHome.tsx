@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { craftDef } from '../../data/crafts';
 import type { Craft } from '../../data/types';
@@ -9,7 +9,7 @@ import { forYou, person } from '../../state/selectors';
 import { project as wproject } from '../../state/world';
 import { CraftObject, type CraftObjectKind } from '../../ui/craft';
 import { PortraitCard } from '../../ui/compose';
-import { stagger } from '../../ui/motion';
+import { spring, stagger } from '../../ui/motion';
 import { Button, FollowButton, Photo, SectionHeader } from '../../ui/primitives';
 import { FeaturedCard } from './OpportunityCard';
 
@@ -37,9 +37,36 @@ const OBJECT_FOR: Partial<Record<Craft, CraftObjectKind>> = {
   makeup: 'swatches',
 };
 
+/*
+ * Onboarding → first Home (signature, Level 3). The first time a person's world is shown, the craft
+ * object arrives large from the centre and settles into the intro; the intro's words, then its
+ * call sheet, then the sections resolve around it. About 0.8 s in all, input is never blocked,
+ * and it happens once per person per session. Reduced motion: a plain fade (MotionConfig).
+ */
+const formed = new Set<string>();
+
+export function useWorldForming(active: boolean) {
+  const { viewer } = useStore();
+  const forming = active && !formed.has(viewer.id);
+  // Marked after the first paint: the motion values above are read only when each element mounts.
+  useEffect(() => {
+    if (active) formed.add(viewer.id);
+  }, [active, viewer.id]);
+  return forming;
+}
+
+/** A first-run section resolving into place after the intro. */
+export function Resolve({ forming, i, children }: { forming: boolean; i: number; children: ReactNode }) {
+  return (
+    <motion.div initial={forming ? { opacity: 0, y: 28 } : false} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.settle, delay: 0.42 + i * 0.08 }}>
+      {children}
+    </motion.div>
+  );
+}
+
 const jump = (id: string) => document.querySelector(`[data-world="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-export function WorldIntro({ goDiscover }: { goDiscover: (scope?: string) => void }) {
+export function WorldIntro({ goDiscover, forming = false }: { goDiscover: (scope?: string) => void; forming?: boolean }) {
   const { viewer, availability } = useStore();
   const me = person(viewer.id);
   const craft = craftDef(me.craft);
@@ -55,8 +82,8 @@ export function WorldIntro({ goDiscover }: { goDiscover: (scope?: string) => voi
     .slice(0, 3);
 
   return (
-    <section className="world-intro" data-world="intro" aria-labelledby="world-title">
-      <div className="world-visual" data-world-anchor aria-hidden>
+    <motion.section className="world-intro" data-world="intro" aria-labelledby="world-title" initial={forming ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }}>
+      <motion.div className="world-visual" data-world-anchor aria-hidden initial={forming ? { x: -110, y: 160, scale: 1.7 } : false} animate={{ x: 0, y: 0, scale: 1 }} transition={{ ...spring.settle, delay: 0.05 }}>
         {kind ? (
           <span className="world-object">
             <span className="object-tile-shadow" />
@@ -71,17 +98,17 @@ export function WorldIntro({ goDiscover }: { goDiscover: (scope?: string) => voi
             ))}
           </span>
         )}
-      </div>
-      <p className="world-kicker">
+      </motion.div>
+      <motion.p className="world-kicker" {...rise(forming, 0)}>
         {craft?.label ?? me.role} · {me.city}
-      </p>
-      <h1 className="world-title" id="world-title">
+      </motion.p>
+      <motion.h1 className="world-title" id="world-title" {...rise(forming, 1)}>
         Your world on Ana
-      </h1>
-      <p className="world-line">
+      </motion.h1>
+      <motion.p className="world-line" {...rise(forming, 2)}>
         Picked for {article(craft?.person ?? me.role)} {(craft?.person ?? me.role).toLowerCase()} in {me.city}
         {langs}.{availability.open ? ` You're shown as available ${availability.from === 'Now' ? 'now' : `from ${availability.from}`}.` : ''}
-      </p>
+      </motion.p>
       <dl className="world-sheet">
         {(
           [
@@ -90,14 +117,14 @@ export function WorldIntro({ goDiscover }: { goDiscover: (scope?: string) => voi
             ['projects', 'Projects', projects],
             ['houses', 'Houses', houses],
           ] as const
-        ).map(([id, label, n]) => (
-          <button key={id} className="world-sheet-cell" onClick={() => (id === 'roles' ? goDiscover('roles') : jump(id))} aria-label={id === 'roles' ? `${n} open roles in your craft, open in Discover` : `${n} ${label.toLowerCase()}, jump to section`}>
+        ).map(([id, label, n], i) => (
+          <motion.button {...rise(forming, 3 + i)} key={id} className="world-sheet-cell" onClick={() => (id === 'roles' ? goDiscover('roles') : jump(id))} aria-label={id === 'roles' ? `${n} open roles in your craft, open in Discover` : `${n} ${label.toLowerCase()}, jump to section`}>
             <dt>{label}</dt>
             <dd>{n}</dd>
-          </button>
+          </motion.button>
         ))}
       </dl>
-    </section>
+    </motion.section>
   );
 }
 
@@ -115,7 +142,7 @@ export function FirstRoles({ goDiscover }: { goDiscover: (scope?: string) => voi
         <div className="carousel carousel--roles">
           {opps.map((o, i) => (
             <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
-              <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
+              <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id, from: 'card' })} />
             </motion.div>
           ))}
         </div>
@@ -188,6 +215,10 @@ export function FirstStep() {
       </div>
     </aside>
   );
+}
+
+function rise(forming: boolean, i: number) {
+  return forming ? { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, transition: { ...spring.settle, delay: 0.18 + i * 0.05 } } : {};
 }
 
 function listOf(xs: string[]) {

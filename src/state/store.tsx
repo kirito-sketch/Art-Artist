@@ -22,13 +22,13 @@ export type Look = 'minimal' | 'glass' | 'bold' | 'doodle';
 export type Tab = 'home' | 'discover' | 'inbox' | 'profile';
 
 export type Route =
-  | { name: 'opportunity'; id: string }
+  | { name: 'opportunity'; id: string; from?: 'card' }
   | { name: 'profile'; id: string }
   | { name: 'conversation'; id: string }
   | { name: 'network' }
   | { name: 'editProfile' }
   | { name: 'project'; id: string }
-  | { name: 'work'; id: string }
+  | { name: 'work'; id: string; from?: 'card' }
   | { name: 'settings' }
   | { name: 'houseSetup' }
   | { name: 'legal'; doc: 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority' }
@@ -134,6 +134,8 @@ function useStoreValue() {
 
   const [saved, setSaved] = useState<string[]>([]);
   const [creditBusy, setCreditBusy] = useState<string | null>(null);
+  /** UI only: the credit that was just accepted, so its record can be stamped once (motion). */
+  const [justAccepted, setJustAccepted] = useState<string | null>(null);
   /** Poster-side changes to published roles. Title and project stay fixed once published. */
   const failedOnce = useRef(new Set<string>());
   /** Bumped whenever the shared world changes, so every screen re-reads it. */
@@ -279,7 +281,7 @@ function useStoreValue() {
     (id: string, note: string) => {
       setInterestsSent((s) => ({ ...s, [id]: note }));
       setSheet(null);
-      showToast({ text: 'Interest sent', tone: 'success' });
+      // No toast: the role's action bar itself turns into "Interest sent" (see the motion system).
     },
     [showToast],
   );
@@ -548,6 +550,7 @@ function useStoreValue() {
         return { id: c.id, associationId: c.associationId, title: p.workingTitle, year: '2026', role: c.line, department: c.dept, orgId: p.houseId ?? 'konark', format: p.format, status: 'Filming' as const, media: p.artwork ?? seed.cameraRoll[0], correction: c.status === 'correction', note: c.note, revision: !!c.supersedes };
       }),
     creditBusy,
+    justAccepted,
     acceptCredit: function accept(cid: string) {
       if (!world.credits.some((x) => x.id === cid)) return;
       setCreditBusy(cid);
@@ -557,6 +560,8 @@ function useStoreValue() {
           setCreditBusy(null);
           const p = act.acceptCredit(actor, cid)!;
           bump();
+          setJustAccepted(cid);
+          window.setTimeout(() => setJustAccepted((j) => (j === cid ? null : j)), 2400);
           showToast({ text: p.shared ? `Credit accepted. It now shows on your profile and on ${publicName(p)}.` : `Credit accepted. It becomes public when ${party(p.houseId!)!.name} shares the project.`, tone: 'success' });
         },
         () => {

@@ -6,7 +6,7 @@ import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
 import { party, postWork } from '../../state/selectors';
 import { FrameLabel } from '../../ui/compose';
-import { spring } from '../../ui/motion';
+import { shared, spring } from '../../ui/motion';
 import { Avatar, IconButton, Photo, Pressable } from '../../ui/primitives';
 
 /*
@@ -28,7 +28,7 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
   }, [ids, index]);
 
   return (
-    <div className="screen canvas post-stream" ref={ref}>
+    <motion.div className="screen canvas post-stream" ref={ref} layoutScroll>
       <header className="topbar topbar--nav stream-bar">
         <IconButton label="Back to posts" onClick={pop}>
           <ChevronLeft size={26} />
@@ -36,15 +36,15 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
         <span className="stream-bar-title">Posts</span>
         <span className="stream-bar-spacer" />
       </header>
-      {posts.map((p) => (
-        <StreamPost key={p.id} post={p} />
+      {posts.map((p, i) => (
+        <StreamPost key={p.id} post={p} anchor={i === index} />
       ))}
       <p className="end">You've seen the latest posts</p>
-    </div>
+    </motion.div>
   );
 }
 
-function StreamPost({ post }: { post: Post }) {
+function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
   const { push } = useStore();
   const author = party(post.authorId)!;
   const work = postWork(post);
@@ -66,7 +66,7 @@ function StreamPost({ post }: { post: Post }) {
       </Pressable>
 
       {post.media.length > 0 ? (
-        <div className="stream-media">
+        <motion.div className="stream-media" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
           <div className="stream-media-track" onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
             {post.media.map((m, i) => (
               <Pressable key={m.id + i} className="stream-media-item" onClick={() => push({ name: 'media', items: post.media, index: i })} scale={0.99}>
@@ -81,12 +81,12 @@ function StreamPost({ post }: { post: Post }) {
               </FrameLabel>
             </span>
           )}
-        </div>
+        </motion.div>
       ) : (
-        <div className="stream-note">
+        <motion.div className="stream-note" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
           <span className="title-card-rule" />
           <p>{post.text}</p>
-        </div>
+        </motion.div>
       )}
 
       <div className="stream-body">

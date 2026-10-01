@@ -106,7 +106,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const activeFilters = Object.values(filters).filter(Boolean).length;
 
   return (
-    <div className="screen canvas v-discover" data-scroll="discover">
+    <motion.div className="screen canvas v-discover" data-scroll="discover" layoutScroll>
       <div className="title-block title-block--top">
         <h1 className="large-title">Discover</h1>
       </div>
@@ -322,6 +322,6 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
           </div>
         </div>
       </Sheet>
-    </div>
+    </motion.div>
   );
 }

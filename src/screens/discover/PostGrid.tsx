@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { Layers, Play } from 'lucide-react';
+import { shared, spring } from '../../ui/motion';
 import type { Post } from '../../data/types';
 import { party } from '../../state/selectors';
 import { Photo, PressCard } from '../../ui/primitives';
@@ -18,7 +20,10 @@ export function PostGrid({ posts, onOpen }: { posts: Post[]; onOpen: (index: num
         const label = `${author?.name ?? 'Post'}${kind === 'video' ? ', video' : kind === 'set' ? `, ${p.media.length} images` : ''}: ${p.text.slice(0, 80)}`;
         return (
           <PressCard key={p.id} className={`post-tile post-tile--${kind}`} onPress={() => onOpen(i)} scale={0.97} aria-label={label} role="listitem">
-            {first ? <Photo media={first} showPlay={false} /> : <span className="post-tile-note">{p.text}</span>}
+            {/* The tile's image is the shared element that grows into the opened post. */}
+            <motion.div className="post-tile-media" layoutId={shared.post(p.id)} transition={spring.push}>
+              {first ? <Photo media={first} showPlay={false} /> : <span className="post-tile-note">{p.text}</span>}
+            </motion.div>
             {kind === 'set' && (
               <span className="post-tile-mark" aria-hidden>
                 <Layers size={14} strokeWidth={2.4} />

@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
+import { spring } from './motion';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Media, Org, Person } from '../data/types';
 import { CraftObject, type CraftObjectKind } from './craft';
@@ -83,11 +85,17 @@ export function PortraitCard({ person, still, context, action, onPress }: { pers
 }
 
 /** Poster / Stills: the work carries the tile. Lead items are larger; the rail varies its rhythm. */
-export function PosterTile({ media, title, meta, label, lead, locked, onPress, children }: { media?: Media; title: string; meta?: ReactNode; label?: ReactNode; lead?: boolean; locked?: boolean; onPress: () => void; children?: ReactNode }) {
+export function PosterTile({ media, title, meta, label, lead, locked, sharedId, onPress, children }: { media?: Media; title: string; meta?: ReactNode; label?: ReactNode; lead?: boolean; locked?: boolean; sharedId?: string; onPress: () => void; children?: ReactNode }) {
   return (
     <PressCard className={`poster-tile ${lead ? 'poster-tile--lead' : ''}`} onPress={onPress} scale={0.97} aria-label={title}>
       <div className="poster-tile-media">
-        {media ? <Photo media={media} showPlay={false} /> : <TitleCard title={title} locked={locked} />}
+        {media ? (
+          <motion.div layoutId={sharedId} className="poster-tile-shared" transition={spring.push}>
+            <Photo media={media} showPlay={false} />
+          </motion.div>
+        ) : (
+          <TitleCard title={title} locked={locked} />
+        )}
         {label && <span className="poster-tile-label">{label}</span>}
         {children}
       </div>

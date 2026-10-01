@@ -11,13 +11,13 @@ import { CRAFT_OBJECTS } from '../../ui/craft';
 import { FrameLabel, HouseFeature, ObjectTile, PortraitCard, PosterTile } from '../../ui/compose';
 import { forYou, kindLabel, networkFor, org, person, postsFor } from '../../state/selectors';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
-import { spring, stagger } from '../../ui/motion';
+import { shared, spring, stagger } from '../../ui/motion';
 import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Row, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { NetworkRow } from './NetworkActivity';
 import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
 import { PostCard } from './PostCard';
-import { FirstPeople, FirstRoles, FirstStep, WorldIntro } from './FirstHome';
+import { FirstPeople, FirstRoles, FirstStep, Resolve, useWorldForming, WorldIntro } from './FirstHome';
 
 const NETWORK_LIMIT = 4;
 const POSTS_LIMIT = 2;
@@ -40,6 +40,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
   const cards = homeLayout === 'cards';
   // First session: a person just out of onboarding (or the "New user" test state). No network yet.
   const first = cards && !loading && (store.isNewPerson || scenario.newUser);
+  const forming = useWorldForming(first);
   const hasHero = !cards && !loading && !scenario.forYouError && opps.length > 0;
   const solid = !hasHero || scrollY > 40;
 
@@ -100,12 +101,18 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
 
           {first ? (
             <>
-              <WorldIntro goDiscover={goDiscover} />
-              <FirstRoles goDiscover={goDiscover} />
-              <FirstPeople />
-              <FirstStep />
-              <ProjectsToWatch title="Projects worth exploring" world="projects" />
-              <HousesOnAna world="houses" />
+              <WorldIntro goDiscover={goDiscover} forming={forming} />
+              <Resolve forming={forming} i={0}>
+                <FirstRoles goDiscover={goDiscover} />
+              </Resolve>
+              <Resolve forming={forming} i={1}>
+                <FirstPeople />
+              </Resolve>
+              <Resolve forming={forming} i={2}>
+                <FirstStep />
+                <ProjectsToWatch title="Projects worth exploring" world="projects" />
+                <HousesOnAna world="houses" />
+              </Resolve>
             </>
           ) : (
             <>
@@ -131,7 +138,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
                 <div className="carousel carousel--roles">
                   {opps.map((o, i) => (
                     <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
-                      <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id })} />
+                      <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id, from: 'card' })} />
                     </motion.div>
                   ))}
                 </div>
@@ -417,7 +424,8 @@ function ProjectsToWatch({ title = 'Projects to watch', world }: { title?: strin
               </>
             }
             label={<FrameLabel>{isLive(w) ? w.stage : w.year}</FrameLabel>}
-            onPress={() => push({ name: 'work', id: w.id })}
+            sharedId={w.media.id === 'ph' ? undefined : shared.work(w.id)}
+            onPress={() => push({ name: 'work', id: w.id, from: 'card' })}
           />
         ))}
       </div>

@@ -3,7 +3,7 @@ import { Compass, House, MessageCircle, Plus } from 'lucide-react';
 import { useStore, type Tab } from '../state/store';
 import { org, person } from '../state/selectors';
 import { Avatar } from '../ui/primitives';
-import { spring } from '../ui/motion';
+import { shared, spring } from '../ui/motion';
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -33,14 +33,19 @@ export function TabBar() {
         aria-label={it.id === 'profile' && acting !== 'self' ? `Profile, acting as ${org(acting).name}` : it.label}
         aria-current={active ? 'page' : undefined}
       >
-        {it.id === 'home' && <House size={24} strokeWidth={active ? 2.4 : 1.9} />}
-        {it.id === 'discover' && <Compass size={24} strokeWidth={active ? 2.4 : 1.9} />}
-        {it.id === 'inbox' && <MessageCircle size={24} strokeWidth={active ? 2.4 : 1.9} />}
-        {it.id === 'profile' && (
-          <span className={`tab-avatar ${active ? 'is-on' : ''} ${acting !== 'self' ? 'tab-avatar--org' : ''}`}>
-            <Avatar party={acting !== 'self' ? org(acting) : person(viewer.id)} size={26} />
-          </span>
-        )}
+        {/* The well slides to the active tab; the icon lifts 2px into it. Spatial, not decorative. */}
+        {active && <motion.span layoutId="tab-well" className="tab-well" transition={spring.snappy} />}
+        <motion.span className="tab-icon" animate={{ y: active ? -2 : 0 }} transition={spring.snappy}>
+          {it.id === 'home' && <House size={24} strokeWidth={active ? 2.4 : 1.9} />}
+          {it.id === 'discover' && <Compass size={24} strokeWidth={active ? 2.4 : 1.9} />}
+          {it.id === 'inbox' && <MessageCircle size={24} strokeWidth={active ? 2.4 : 1.9} />}
+          {it.id === 'profile' && (
+            // The avatar is the identity: it morphs when you switch who you act as.
+            <motion.span layout key={acting} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring.settle} className={`tab-avatar ${active ? 'is-on' : ''} ${acting !== 'self' ? 'tab-avatar--org' : ''}`}>
+              <Avatar party={acting !== 'self' ? org(acting) : person(viewer.id)} size={26} />
+            </motion.span>
+          )}
+        </motion.span>
         {it.id === 'inbox' && unread && <span className="tab-dot" />}
         {active && <motion.span layoutId="tab-mark" className="tab-mark" transition={spring.snappy} />}
       </motion.button>
@@ -55,11 +60,14 @@ export function TabBar() {
           className="tab-create"
           aria-label={createOpen ? 'Close' : 'Create'}
           aria-expanded={createOpen}
-          whileTap={{ scale: 0.88 }}
+          aria-haspopup="dialog"
+          whileTap={{ scale: 0.86 }}
           transition={spring.press}
           onClick={() => (createOpen ? closeSheet() : openSheet({ name: 'create' }))}
         >
-          <motion.span animate={{ rotate: createOpen ? 45 : 0 }} transition={spring.snappy} style={{ display: 'inline-flex' }}>
+          {/* The red disc is the origin of the Create surface: it grows into it and returns to it. */}
+          {!createOpen && <motion.span layoutId={shared.create} className="tab-create-disc" style={{ borderRadius: 26 }} transition={spring.sheet} />}
+          <motion.span className="tab-create-icon" animate={{ rotate: createOpen ? 45 : 0 }} transition={spring.snappy}>
             <Plus size={24} strokeWidth={2.4} />
           </motion.span>
         </motion.button>

@@ -1,4 +1,4 @@
-import { motion, type HTMLMotionProps } from 'framer-motion';
+import { AnimatePresence, motion, type HTMLMotionProps } from 'framer-motion';
 import { forwardRef, useState, type ReactNode } from 'react';
 import { BadgeCheck, Check, ChevronRight, ImageOff, Play } from 'lucide-react';
 import type { Media, Party } from '../data/types';
@@ -74,8 +74,9 @@ export function FollowButton({ on, onToggle, size = 's', block, name }: { on: bo
     <Button
       size={size}
       block={block}
+      layout={!block}
+      transition={spring.snappy}
       variant={on ? 'selected' : 'secondary'}
-      icon={on ? <Check size={size === 's' ? 14 : 16} strokeWidth={2.6} /> : undefined}
       aria-pressed={on}
       aria-label={name ? `${on ? 'Following' : 'Follow'} ${name}` : undefined}
       onClick={(e) => {
@@ -83,7 +84,13 @@ export function FollowButton({ on, onToggle, size = 's', block, name }: { on: bo
         onToggle();
       }}
     >
-      {on ? 'Following' : 'Follow'}
+      {/* State morph: the label and check swap in place while the fill changes; the width follows. */}
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span key={on ? 'on' : 'off'} className="follow-label" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}>
+          {on && <Check size={size === 's' ? 14 : 16} strokeWidth={2.6} />}
+          {on ? 'Following' : 'Follow'}
+        </motion.span>
+      </AnimatePresence>
     </Button>
   );
 }

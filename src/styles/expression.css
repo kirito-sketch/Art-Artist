@@ -357,7 +357,7 @@
   --object-lift: 0px;
   --object-scale: 1;
   --object-shadow: 1;
-  --object-duration: 0ms;
+  --object-duration: 260ms;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1187,7 +1187,7 @@
   background: var(--dark);
 }
 
-.post-tile > .photo {
+.post-tile > .photo-unused {
   position: absolute !important;
   inset: 0;
 }
@@ -1577,4 +1577,264 @@
   top: 12px;
   left: 12px;
   z-index: 2;
+}
+
+/* ===================================================== Motion system */
+
+:root {
+  --dur-micro: 150ms;
+  --dur-ui: 260ms;
+  --dur-editorial: 420ms;
+  --dur-signature: 650ms;
+}
+
+.identity-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.identity-shift {
+  position: absolute;
+  bottom: 112px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 8px;
+  border-radius: var(--r-pill);
+  background: var(--dark);
+  color: #f4efe6;
+  box-shadow: var(--shadow-3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.identity-shift > span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.identity-shift-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: rgba(244, 239, 230, 0.66);
+}
+
+.identity-shift-name {
+  font-size: var(--t-4);
+  font-weight: 700;
+}
+
+/* Bottom navigation: a tonal well slides to the active tab; the icon lifts into it. */
+.tab-well {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--tint);
+}
+
+.tab-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* Create: the red disc is a separate layer so it can become the Create surface. */
+.tab-create {
+  position: relative;
+  background: var(--dark);
+  box-shadow: none;
+}
+
+.tab-create-disc {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  box-shadow: 0 6px 16px rgba(196, 65, 46, 0.35);
+}
+
+.tab-create-icon {
+  position: relative;
+  display: inline-flex;
+}
+
+.create-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+}
+
+.create-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(21, 20, 19, 0.28);
+}
+
+.create-surface {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 110px;
+  overflow: hidden;
+  box-shadow: var(--shadow-3);
+}
+
+.create-content {
+  padding: 18px 8px 8px;
+}
+
+.create-title {
+  margin: 0 12px 8px;
+  font-size: var(--label);
+  font-weight: 700;
+  letter-spacing: var(--label-track);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.create-rows {
+  background: transparent;
+  box-shadow: none;
+}
+
+.create-rows > * {
+  animation: create-row-in var(--dur-ui) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.create-rows > *:nth-child(2) { animation-delay: 150ms; }
+.create-rows > *:nth-child(3) { animation-delay: 180ms; }
+.create-rows > *:nth-child(4) { animation-delay: 210ms; }
+.create-rows > *:nth-child(5) { animation-delay: 240ms; }
+.create-rows > *:nth-child(1) { animation-delay: 120ms; }
+
+@keyframes create-row-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-rows > * { animation: none; }
+}
+
+.post-tile-media {
+  position: absolute;
+  inset: 0;
+}
+
+.post-tile-media > .photo {
+  position: absolute !important;
+  inset: 0;
+}
+
+.poster-tile-shared {
+  position: absolute;
+  inset: 0;
+}
+
+.poster-tile-shared > .photo {
+  position: absolute !important;
+  inset: 0;
+}
+
+.follow-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.booking-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.booking-check {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text);
+  color: #fff;
+}
+
+/*
+ * Craft object response (Level 2). The whole transparent asset moves as one unit: a small lift and
+ * tilt with a slightly larger scale while pressed or focused, and the contact shadow thins as it
+ * rises. No idle loop, no spin. Reduced motion pins the asset at rest (see the object tile rules).
+ */
+.object-tile:active,
+.object-tile:focus-visible {
+  --object-lift: 8px;
+  --object-tilt: -5deg;
+  --object-scale: 1.04;
+  --object-shadow: 0.5;
+}
+
+@media (hover: hover) {
+  .object-tile:hover {
+    --object-lift: 5px;
+    --object-tilt: -3deg;
+    --object-scale: 1.02;
+    --object-shadow: 0.7;
+  }
+}
+
+/* Credit accepted: the record stamps once. The poster steadies from a provisional edge to solid. */
+.rail-poster-wrap {
+  position: relative;
+  display: block;
+}
+
+.credit-seal {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  color: var(--verified);
+  vertical-align: middle;
+}
+
+.credit-seal > svg {
+  position: absolute;
+  inset: 0;
+  color: var(--text);
+}
+
+.credit-seal-mark {
+  display: inline-grid;
+  place-items: center;
+}
+
+.rail-poster-wrap > .credit-seal {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-2);
+}
+
+.rail-item--sealing .rail-poster {
+  animation: record-steady var(--dur-editorial) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes record-steady {
+  from { opacity: 0.55; outline: 1.5px dashed rgba(40, 30, 20, 0.35); outline-offset: -1.5px; }
+  to { opacity: 1; outline: 1.5px dashed rgba(40, 30, 20, 0); outline-offset: -1.5px; }
+}
+
+.credit-sealed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-item--sealing .rail-poster { animation: none; }
 }

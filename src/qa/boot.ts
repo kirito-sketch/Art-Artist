@@ -30,6 +30,9 @@ export const LAB = !RESEARCH && (params.has('lab') || (params.has('scenario') &&
 /** The Visual Composition System specimen (?specimen): a design-system test page, never a product surface. */
 export const SPECIMEN = !RESEARCH && params.has('specimen');
 
+/** The motion review (?motion): internal, never linked from the stakeholder console. */
+export const MOTION_REVIEW = !RESEARCH && params.has('motion');
+
 export const SCENARIO: Scenario | undefined = !RESEARCH && !LAB ? requested : undefined;
 
 /** A scenario's starting state, or null for the normal prototype. */

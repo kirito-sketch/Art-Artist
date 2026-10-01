@@ -1,4 +1,6 @@
+import { motion } from 'framer-motion';
 import { ChevronLeft, MoreHorizontal, Share } from 'lucide-react';
+import { shared, spring } from '../../ui/motion';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
 import { world, project as wproject, work } from '../../state/world';
@@ -13,7 +15,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  * Public project page. What anyone on Ana sees: what it is, who made it, who is credited, whether it
  * is hiring. The house's private workspace is a different screen and a different context.
  */
-export function WorkScreen({ id }: { id: string }) {
+export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
   const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked } = useStore();
   const wp = wproject(id);
   const w = work(id);
@@ -53,7 +55,14 @@ export function WorkScreen({ id }: { id: string }) {
     <div className="screen screen--hero" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="whero">
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
-          {w.media.id === 'ph' ? <div className="whero-photo whero-empty" /> : <Photo media={w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />}
+          {w.media.id === 'ph' ? (
+            <div className="whero-photo whero-empty" />
+          ) : (
+            // Opened from a poster: the poster's still becomes this hero, so the project stays one object.
+            <motion.div layoutId={fromCard ? shared.work(w.id) : undefined} className="whero-photo" transition={spring.push}>
+              <Photo media={w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />
+            </motion.div>
+          )}
         </div>
         <div className="whero-text">
           <p className="whero-kicker">

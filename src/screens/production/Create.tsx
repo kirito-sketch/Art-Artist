@@ -1,3 +1,4 @@
+import { CreditSeal } from '../../ui/CreditSeal';
 import { ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
@@ -833,7 +834,7 @@ function PersonActions({ id, issue, revise, done }: { id: string; issue: () => v
  * project, other roles, anyone else's credits or the house's notes.
  */
 export function AssociationScreen({ id }: { id: string }) {
-  const { pop, flagAssociation, showToast, push, viewer, acting, setActing, acceptCredit, creditBusy, openSheet, declineRevision } = useStore();
+  const { pop, flagAssociation, showToast, push, viewer, acting, setActing, acceptCredit, creditBusy, justAccepted, openSheet, declineRevision } = useStore();
   const a = world.associations.find((x) => x.id === id);
   const [confirm, setConfirm] = useState(false);
   const back = (
@@ -887,7 +888,7 @@ export function AssociationScreen({ id }: { id: string }) {
         <SectionHeader title="Where this stands" />
         <div className="group">
           <Row label="On the project" value={a.status === 'removed' ? 'Removed' : a.status === 'flagged' ? "You said it isn't right" : 'Added'} chevron={false} />
-          <Row label="Credit" value={creditValue} chevron={false} />
+          <Row label="Credit" value={current && justAccepted === current.id ? <span className="credit-sealed">{creditValue} <CreditSeal size={22} /></span> : creditValue} chevron={false} />
           <Row label="Public" value={isPublic ? publicName(p) : 'No'} onPress={isPublic ? () => push({ name: 'work', id: p.id }) : undefined} />
         </div>
         <p className="meta settings-note">Being added isn't a credit. A credit is issued by {owner.name}, and shows publicly only once you accept it and the project is shared.</p>
