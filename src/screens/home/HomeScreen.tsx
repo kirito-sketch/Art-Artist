@@ -1,19 +1,19 @@
 import { motion } from 'framer-motion';
 import { BadgeCheck, Bell, Bookmark, CheckCircle2, ChevronDown, ChevronRight, RotateCcw, Users } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { craftDef } from '../../data/crafts';
 import type { Opportunity, Person } from '../../data/types';
 import { useStore } from '../../state/store';
-import { HOME_ORDER, intentDef, opportunitiesFor, peopleFor, projectsFor, type HomeSection } from '../../domain/relevance';
+import { availableFor, homeOrder, housesFor, industryActivity, intentDef, opportunitiesFor, peopleFor, projectsFor, stageOf, workFor, type HomeSection, type Signals, type Stage } from '../../domain/relevance';
 import { FrameLabel, PortraitCard, PosterTile } from '../../ui/compose';
-import { forYou, kindLabel, networkFor, org, person } from '../../state/selectors';
+import { findOpportunity, forYou, kindLabel, networkFor, org, person } from '../../state/selectors';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { shared, spring, stagger } from '../../ui/motion';
-import { Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { NetworkRow } from './NetworkActivity';
 import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
-import { FirstStep, Resolve, useWorldForming, WorldIntro } from './FirstHome';
+import { FirstStep, Resolve, useWorldForming } from './FirstHome';
 
 const HERO_HEIGHT = 600;
 
@@ -61,17 +61,29 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
   );
 
   /*
-   * V30 (docs/V30.md): Home answers "what matters to me right now?", not "what is inside Art and
-   * Artist?". Four sections, the same for everyone; the person's intent decides their order and the
-   * ranking inside them, and every block says why it is there. Posts, craft tiles and houses moved to
-   * Discover, where browsing is deliberate.
+   * V30 (docs/V30.md). One Home system, composed by intent and by how much we know yet (stage):
+   *  - first session: prove the network is worth using. Real people, opportunities, projects and
+   *    creative work above the fold, widened step by step so nothing reads as empty;
+   *  - early usage: follows, saves and interest start to sharpen the ranking;
+   *  - established: "what matters to me right now?" leads, with personal activity higher.
+   * Same modules at every stage; order, titles and ranking change. Every block says why it is there.
    */
-  const sections: Record<HomeSection, ReactNode> = {
-    forYou: <ForYou key="forYou" goDiscover={goDiscover} />,
-    people: <PeopleFor key="people" goDiscover={goDiscover} />,
-    activity: <Activity key="activity" />,
-    projects: <ActiveProjects key="projects" goDiscover={goDiscover} />,
+  const signals: Signals = {
+    following: store.following,
+    savedRoleCrafts: store.saved.filter((x) => x.kind === 'role').flatMap((x) => findOpportunity(x.id, store.userCollabs)?.forCrafts ?? []),
+    interested: Object.keys(store.interestsSent).length,
   };
+  const stage = stageOf(store.isNewPerson || scenario.newUser, signals);
+  const ctx: HomeCtx = { me, stage, signals, goDiscover };
+  const sections: Record<HomeSection, ReactNode> = {
+    forYou: <ForYou key="forYou" {...ctx} />,
+    people: <PeopleFor key="people" {...ctx} />,
+    available: <AvailableNow key="available" {...ctx} />,
+    activity: <Activity key="activity" {...ctx} />,
+    projects: <ActiveProjects key="projects" {...ctx} />,
+    work: <CommunityWork key="work" {...ctx} />,
+  };
+  const order = homeOrder(intent, stage);
 
   return (
     <>
@@ -104,9 +116,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
           <OfflineBanner />
           <PublishBar />
 
-          {first && cards && <WorldIntro forming={forming} />}
           <IntentBar me={me} />
-          {first && <FirstStep />}
 
           {loading ? (
             <section className="v-section" aria-busy="true">
@@ -119,15 +129,19 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
               </div>
             </section>
           ) : (
-            HOME_ORDER[intent].map((id, i) =>
-              first ? (
-                <Resolve key={id} forming={forming} i={i}>
-                  {sections[id]}
-                </Resolve>
-              ) : (
-                sections[id]
-              ),
-            )
+            order.map((id, i) => (
+              <Fragment key={id}>
+                {first ? (
+                  <Resolve forming={forming} i={i}>
+                    {sections[id]}
+                  </Resolve>
+                ) : (
+                  sections[id]
+                )}
+                {/* One reason to come back, after real content, never above it. */}
+                {stage !== 'established' && i === 2 && <FirstStep />}
+              </Fragment>
+            ))
           )}
 
           {!loading && (
@@ -149,12 +163,14 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
  * state, not an identity: the same person moves between finding work, hiring and not looking.
  */
 function IntentBar({ me }: { me: Person }) {
-  const { intent, openSheet } = useStore();
+  const { intent, openSheet, isNewPerson } = useStore();
   const craft = craftDef(me.craft)?.person ?? me.role;
+  const hello = isNewPerson ? `Welcome, ${me.name.split(' ')[0]} · ` : '';
   return (
     <Pressable className="intent-bar" onClick={() => openSheet({ name: 'intent' })} scale={0.99} aria-label={`Showing what matters for: ${intentDef(intent).label}. Change`}>
       <span className="intent-bar-text">
         <span className="intent-bar-kicker">
+          {hello}
           {craft}
           {me.city ? ` in ${me.city}` : ''}
         </span>
@@ -170,10 +186,18 @@ function IntentBar({ me }: { me: Person }) {
   );
 }
 
-/** For you: roles, casting and collaboration requests that fit this person. Not every craft "applies for roles", so the title stays general. */
-function ForYou({ goDiscover }: { goDiscover: (scope?: string) => void }) {
-  const { viewer, scenario, push, userCollabs, roleStatus, intent, setScenario } = useStore();
-  const me = person(viewer.id);
+/** Below this, a separate "Available now" tray would look thin; those people stay in the main people tray. */
+const AVAILABLE_MIN = 3;
+
+type HomeCtx = { me: Person; stage: Stage; signals: Signals; goDiscover: (scope?: string) => void };
+
+/**
+ * For you: roles, casting and collaboration requests. Not every craft "applies for roles", so the
+ * title stays general (actors see casting named). Exact matches first, then close crafts, then work
+ * open nearby, so a thin craft still sees real opportunity. When hiring, only close matches show.
+ */
+function ForYou({ me, stage, signals, goDiscover }: HomeCtx) {
+  const { scenario, push, userCollabs, roleStatus, intent, setScenario } = useStore();
   if (scenario.forYouError)
     return (
       <section className="v-section cards-roles" data-world="roles">
@@ -186,43 +210,48 @@ function ForYou({ goDiscover }: { goDiscover: (scope?: string) => void }) {
         </div>
       </section>
     );
-  const ranked = scenario.newUser ? forYou(viewer, scenario).map((o) => ({ item: o, why: 'Your craft' })) : opportunitiesFor(me, intent, userCollabs, roleStatus as Record<string, unknown>).slice(0, 6);
-  const near = ranked.some((r) => r.why.includes(me.city));
+  const all = opportunitiesFor(me, intent, userCollabs, roleStatus as Record<string, unknown>, signals, stage === 'established' ? 4 : 6);
+  // Someone assembling a team sees opportunities only where they are meaningful.
+  const ranked = (intent === 'hire' ? all.filter((r) => r.tier <= 2) : all).slice(0, 8);
+  if (!ranked.length) return null;
+  const exact = ranked.filter((r) => r.tier === 1).length;
+  const title = intent === 'collaborate' ? 'Collaborations and roles for you' : me.craft === 'actor' ? 'Casting and roles for you' : intent === 'hire' ? 'Opportunities in your craft' : 'Opportunities for you';
+  const why = exact === ranked.length ? `Matched on your craft${ranked.some((r) => r.why.includes(me.city)) ? ' and city' : ''}.` : exact ? 'Your craft first, then work close to it and open near you.' : 'Nothing in your exact craft yet: work close to it, and open near you.';
   return (
     <section className="v-section cards-roles" data-world="roles">
-      <SectionHeader title={intent === 'collaborate' ? 'Collaborations and roles for you' : 'Opportunities for you'} action="See all" onAction={() => goDiscover('roles')} />
-      <p className="world-why">{ranked.length ? `Matched on your craft${near ? ' and city' : ''}. Roles, casting and collaborations; everything else is in Discover.` : 'Nothing matches your craft right now. New roles and collaborations appear as people post them.'}</p>
-      {ranked.length > 0 && (
-        <div className="carousel carousel--roles">
-          {ranked.map(({ item: o }, i) => (
-            <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
-              <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id, from: 'card' })} />
-            </motion.div>
-          ))}
-        </div>
-      )}
-      {!ranked.length && (
-        <Button variant="secondary" size="s" onClick={() => goDiscover('roles')}>
-          Browse all opportunities
-        </Button>
-      )}
+      <SectionHeader title={title} action="See all" onAction={() => goDiscover('roles')} />
+      <p className="world-why">{why}</p>
+      <div className={`carousel carousel--roles ${stage !== 'established' ? 'carousel--first' : ''}`}>
+        {ranked.map(({ item: o, tier }, i) => (
+          <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
+            <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id, from: 'card' })} />
+            {tier > 1 && <span className="tier-note">{tier === 2 ? 'Close to your craft' : 'Open near you'}</span>}
+          </motion.div>
+        ))}
+      </div>
     </section>
   );
 }
 
-/** People you may want to work with, ranked for what you are doing now, each with the reason they are here. */
-function PeopleFor({ goDiscover }: { goDiscover: (scope?: string) => void }) {
-  const { viewer, following, toggleFollow, push, intent } = useStore();
-  const me = person(viewer.id);
-  const list = peopleFor(me, intent, following).slice(0, 8);
-  if (!list.length) return null;
+/** People, ranked for what you are doing now, each with the reason they are here. */
+function PeopleFor({ me, signals, goDiscover }: HomeCtx) {
+  const { following, toggleFollow, push, intent } = useStore();
   const team = intent === 'hire' || intent === 'collaborate';
+  // When hiring and there are enough available people, "Available now" is its own tray, so this one
+  // shows the strongest people otherwise. With fewer than three, they stay here (no thin tray).
+  const splitAvailable = intent === 'hire' && availableFor(me, following).length >= AVAILABLE_MIN;
+  const list = peopleFor(me, intent, following, signals)
+    .filter((r) => (splitAvailable ? !r.item.availableFrom : true))
+    .slice(0, 10);
+  if (!list.length) return null;
+  const title = intent === 'hire' ? 'People for your next project' : intent === 'collaborate' ? 'People to collaborate with' : intent === 'work' ? (me.craft === 'actor' ? 'Directors and producers' : 'People in your world') : 'People worth knowing';
+  const why = team ? 'Other crafts, credible and nearby first. Save people to keep a shortlist.' : intent === 'work' ? 'Your craft, and the directors and producers who hire.' : 'People in your craft and city, and credible professionals beyond it.';
   return (
     <section className="v-section" data-world="people">
-      <SectionHeader title={team ? 'People you could work with' : 'People worth knowing'} action="See all" onAction={() => goDiscover('people')} />
-      <p className="world-why">{team ? 'Other crafts, available and nearby first. Save people to keep a shortlist.' : intent === 'work' ? 'People in your craft, and the directors and producers who hire.' : 'People in your craft and city.'}</p>
+      <SectionHeader title={title} action="See all" onAction={() => goDiscover('people')} />
+      <p className="world-why">{why}</p>
       <div className="portrait-rail">
-        {list.map(({ item: p, why }) => (
+        {list.map(({ item: p, why: reason }) => (
           <PortraitCard
             key={p.id}
             person={p}
@@ -232,12 +261,30 @@ function PeopleFor({ goDiscover }: { goDiscover: (scope?: string) => void }) {
                   <span className="status-dot is-on" /> Available from {p.availableFrom}
                 </>
               ) : (
-                why
+                reason
               )
             }
             onPress={() => push({ name: 'profile', id: p.id })}
             action={team ? <PersonSave id={p.id} name={p.name} /> : <FollowButton on={following.includes(p.id)} onToggle={() => toggleFollow(p.id)} name={p.name} block />}
           />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Professionals available now: the second tray for someone assembling a team. */
+function AvailableNow({ me, goDiscover }: HomeCtx) {
+  const { following, push } = useStore();
+  const list = availableFor(me, following).slice(0, 10);
+  if (list.length < AVAILABLE_MIN) return null;
+  return (
+    <section className="v-section" data-world="available">
+      <SectionHeader title="Available now" action="See all" onAction={() => goDiscover('people')} />
+      <p className="world-why">Professionals in other crafts who can start soon.</p>
+      <div className="portrait-rail">
+        {list.map(({ item: p, why }) => (
+          <PortraitCard key={p.id} person={p} context={why} onPress={() => push({ name: 'profile', id: p.id })} action={<PersonSave id={p.id} name={p.name} />} />
         ))}
       </div>
     </section>
@@ -267,29 +314,30 @@ export function PersonSave({ id, name, block = true }: { id: string; name: strin
 }
 
 /**
- * Activity that matters: things that need your attention or change what you might do. Credits to
- * confirm and interest in your posts come first; then professional updates from your network
- * (credits, projects, availability, collaboration requests). Portfolio and reel uploads are not here:
- * this is not a feed.
+ * Activity. Things you owe come first (credits to confirm, interest in what you posted), then
+ * professional updates from your network. When there is little or no network yet (a first-time
+ * person), public industry activity fills the module so it shows a living community. Never a feed:
+ * no portfolio or reel uploads, at most five rows.
  */
-function Activity() {
-  const { viewer, scenario, pendingCredits, interestsReceived, openSheet, push, intent } = useStore();
-  const events = networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel');
+function Activity({ me, stage }: HomeCtx) {
+  const { viewer, scenario, pendingCredits, interestsReceived, openSheet, push } = useStore();
+  const mine = networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel');
   const toConfirm = pendingCredits.filter((c) => !c.correction);
   const waiting = interestsReceived.filter((i) => !i.withdrawn && !i.review);
   const actions: { id: string; text: ReactNode; meta: string; go: () => void }[] = [];
   if (toConfirm.length)
     actions.push({
       id: 'credits',
-      text: toConfirm.length === 1 ? (
-        <>
-          <b>{org(toConfirm[0].orgId).name}</b> credited you on <b>{toConfirm[0].title}</b>
-        </>
-      ) : (
-        <>
-          <b>{toConfirm.length} credits</b> are waiting for you to confirm
-        </>
-      ),
+      text:
+        toConfirm.length === 1 ? (
+          <>
+            <b>{org(toConfirm[0].orgId).name}</b> credited you on <b>{toConfirm[0].title}</b>
+          </>
+        ) : (
+          <>
+            <b>{toConfirm.length} credits</b> are waiting for you to confirm
+          </>
+        ),
       meta: 'Confirm or flag it on your profile',
       go: () => push({ name: 'profile', id: viewer.id }),
     });
@@ -307,11 +355,16 @@ function Activity() {
       meta: 'Review them and choose who to message',
       go: () => openSheet({ name: 'reviewInterest' }),
     });
-  const limit = intent === 'hire' || intent === 'explore' ? 4 : 3;
+  const limit = 5;
+  const personal = [...mine];
+  const fill = stage !== 'established' || actions.length + personal.length < 3 ? industryActivity(me, personal.map((e) => e.id)) : [];
+  const events = [...personal, ...fill].slice(0, Math.max(0, limit - actions.length));
   if (!actions.length && !events.length) return null;
+  const industry = !actions.length && !personal.length;
   return (
     <section className="v-section" data-world="activity">
-      <SectionHeader title="Activity that matters" action={events.length > limit ? 'See all' : undefined} onAction={() => push({ name: 'network' })} />
+      <SectionHeader title={industry ? 'Happening on Art and Artist' : 'Activity that matters'} action={personal.length > limit ? 'See all' : undefined} onAction={() => push({ name: 'network' })} />
+      {industry && <p className="world-why">Credits issued, projects starting and people becoming available, across the community.</p>}
       <div className="list list--flush">
         {actions.map((a) => (
           <PressCard key={a.id} className="nrow nrow--action" onPress={a.go} scale={0.985}>
@@ -325,7 +378,7 @@ function Activity() {
             <ChevronRight size={18} className="row-chevron" />
           </PressCard>
         ))}
-        {events.slice(0, Math.max(0, limit - actions.length)).map((e, i) => (
+        {events.map((e, i) => (
           <NetworkRow key={e.id} e={e} index={i} />
         ))}
       </div>
@@ -334,20 +387,23 @@ function Activity() {
 }
 
 /**
- * Active projects: films and series being made now, by verified productions. Projects you can still
- * be part of, hiring first and nearby next. (V29's "Projects to watch" read as something to stream.)
+ * Projects: films and series being made now by verified productions, hiring first, widened to recent
+ * releases so the tray always shows real work happening. (V29's "Projects to watch" read as something
+ * to stream.) Production houses ride along for people assembling a team and for first sessions.
  */
-function ActiveProjects({ goDiscover }: { goDiscover: (scope?: string) => void }) {
-  const { viewer, push, roleStatus } = useStore();
-  const me = person(viewer.id);
-  const list = projectsFor(me, roleStatus as Record<string, unknown>).slice(0, 6);
+function ActiveProjects({ me, stage, goDiscover }: HomeCtx) {
+  const { push, roleStatus, intent } = useStore();
+  const list = projectsFor(me, roleStatus as Record<string, unknown>, stage === 'established' ? 3 : 5).slice(0, 8);
+  const houses = intent === 'hire' || stage !== 'established' ? housesFor(me).slice(0, 6) : [];
   if (!list.length) return null;
+  const title = intent === 'work' || intent === 'collaborate' ? 'Projects you could join' : intent === 'hire' ? 'Projects and production houses' : 'Active projects';
+  const released = list.some((x) => !x.live);
   return (
     <section className="v-section" data-world="projects">
-      <SectionHeader title="Active projects" action="See all" onAction={() => goDiscover('projects')} />
-      <p className="world-why">Being made now by verified productions. Hiring first.</p>
+      <SectionHeader title={title} action="See all" onAction={() => goDiscover('projects')} />
+      <p className="world-why">Being made now by verified productions, hiring first{released ? ', then recent releases' : ''}.</p>
       <div className="poster-rail">
-        {list.map(({ w, hiring }, i) => (
+        {list.map(({ w, hiring, live }, i) => (
           <PosterTile
             key={w.id}
             lead={i === 0}
@@ -359,11 +415,58 @@ function ActiveProjects({ goDiscover }: { goDiscover: (scope?: string) => void }
                 {hiring ? ` · Hiring ${hiring}` : ''}
               </>
             }
-            label={<FrameLabel>{w.stage}</FrameLabel>}
+            label={<FrameLabel>{live ? w.stage : `Released ${w.year}`}</FrameLabel>}
             sharedId={w.media.id === 'ph' ? undefined : shared.work(w.id)}
             onPress={() => push({ name: 'work', id: w.id, from: 'card' })}
           />
         ))}
+      </div>
+      {houses.length > 0 && (
+        <div className="house-tray" role="list" aria-label="Production houses">
+          {houses.map(({ o, hiring, live }) => (
+            <PressCard key={o.id} className="house-chip" onPress={() => push({ name: 'org', id: o.id })} scale={0.97} role="listitem">
+              <Avatar party={o} size={36} />
+              <span className="house-chip-text">
+                <span className="item-title">
+                  {o.name} <Verified size={11} />
+                </span>
+                <span className="meta">{hiring ? `Hiring ${hiring}` : live ? 'Making something now' : o.city}</span>
+              </span>
+            </PressCard>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Creative work, contained: recent work from people in your craft, then the wider community. It shows
+ * the network is alive and creatively interesting without becoming the Home feed: one tray, last or
+ * near last, at most eight pieces, opening into the post viewer.
+ */
+function CommunityWork({ me }: HomeCtx) {
+  const { following, userPosts, push } = useStore();
+  const list = workFor(me, following, userPosts);
+  if (!list.length) return null;
+  const craft = list.some((x) => x.tier === 1);
+  return (
+    <section className="v-section" data-world="work">
+      <SectionHeader title={craft ? `Recent work in ${(craftDef(me.craft)?.label ?? 'your craft').toLowerCase()}` : 'Work from the community'} />
+      <p className="world-why">{craft ? 'From people in your craft, then the wider community.' : 'Recent work shared by people on Art and Artist.'}</p>
+      <div className="poster-rail work-rail">
+        {list.map(({ item: post }, i) => {
+          const a = person(post.authorId);
+          return (
+            <PosterTile
+              key={post.id}
+              media={post.media[0]}
+              title={a.name}
+              meta={a.role}
+              onPress={() => push({ name: 'posts', ids: list.map((x) => x.item.id), index: i })}
+            />
+          );
+        })}
       </div>
     </section>
   );

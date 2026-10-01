@@ -245,9 +245,11 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </Button>
           ) : (
             <>
-              <FollowButton block size="m" on={isFollowing} onToggle={() => toggleFollow(id)} />
+              {/* V30: Follow is the primary action (build a network gradually); Message is secondary. Whether someone can be messaged is a separate rule. */}
+              <FollowButton block size="m" primary on={isFollowing} onToggle={() => toggleFollow(id)} name={p.name} />
               <Button
                 block
+                variant="secondary"
                 onClick={() => {
                   const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                   cid && push({ name: 'conversation', id: cid });

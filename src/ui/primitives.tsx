@@ -69,14 +69,15 @@ export function Button({ variant = 'primary', size = 'm', icon, block, loading, 
  * Follow is always a secondary action, everywhere: Follow (secondary) → Following (selected, with a
  * check). One component so it can never drift between screens again (docs/CTA_SYSTEM.md).
  */
-export function FollowButton({ on, onToggle, size = 's', block, name }: { on: boolean; onToggle: () => void; size?: 'm' | 's'; block?: boolean; name?: string }) {
+/** Follow ↔ Following. `primary` makes Follow the dominant green action (another person's profile, V30); Following keeps a clear, quieter state. */
+export function FollowButton({ on, onToggle, size = 's', block, name, primary }: { on: boolean; onToggle: () => void; size?: 'm' | 's'; block?: boolean; name?: string; primary?: boolean }) {
   return (
     <Button
       size={size}
       block={block}
       layout={!block}
       transition={spring.snappy}
-      variant={on ? 'selected' : 'secondary'}
+      variant={on ? 'selected' : primary ? 'primary' : 'secondary'}
       aria-pressed={on}
       aria-label={name ? `${on ? 'Following' : 'Follow'} ${name}` : undefined}
       onClick={(e) => {

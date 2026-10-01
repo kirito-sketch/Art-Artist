@@ -1,12 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
-import { craftDef } from '../../data/crafts';
-import type { Craft } from '../../data/types';
-import { opportunitiesFor, peopleFor, projectsFor } from '../../domain/relevance';
 import { useStore } from '../../state/store';
-import { person } from '../../state/selectors';
-import { CraftObject, type CraftObjectKind } from '../../ui/craft';
 import { spring } from '../../ui/motion';
 import { Button } from '../../ui/primitives';
 
@@ -19,20 +14,6 @@ import { Button } from '../../ui/primitives';
  * Every block carries data-world so the Phase 2 onboarding → Home transition can resolve the
  * sections around the craft object without another layout.
  */
-
-const OBJECT_FOR: Partial<Record<Craft, CraftObjectKind>> = {
-  cinematographer: 'lens',
-  camera: 'lens',
-  lighting: 'lens',
-  editor: 'timeline',
-  colourist: 'timeline',
-  vfx: 'timeline',
-  sound: 'microphone',
-  music: 'microphone',
-  'production-design': 'swatches',
-  costume: 'swatches',
-  makeup: 'swatches',
-};
 
 /*
  * Onboarding → first Home (signature, Level 3). The first time a person's world is shown, the craft
@@ -58,61 +39,6 @@ export function Resolve({ forming, i, children }: { forming: boolean; i: number;
     <motion.div initial={forming ? { y: 18 } : false} animate={{ y: 0 }} transition={{ ...spring.settle, delay: 0.3 + i * 0.07 }}>
       {children}
     </motion.div>
-  );
-}
-
-const jump = (id: string) => document.querySelector(`[data-world="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-/*
- * The intro is static-first and compact: context, title, one line, then the real counts. The craft
- * object is a small supporting mark at the upper right; it never reserves space of its own. Counts
- * that are zero are left out, and the module shrinks with them. Motion (forming) only nudges
- * things into place; nothing is ever hidden waiting for an animation.
- */
-export function WorldIntro({ forming = false }: { forming?: boolean }) {
-  const { viewer, intent, following } = useStore();
-  const me = person(viewer.id);
-  const craft = craftDef(me.craft);
-  const kind = OBJECT_FOR[me.craft];
-  // Real counts from the same relevance model Home ranks with. Zero counts are left out.
-  const counts = (
-    [
-      ['roles', opportunitiesFor(me, intent).length, 'opportunity', 'opportunities'],
-      ['people', Math.min(peopleFor(me, intent, following).length, 8), 'person', 'people'],
-      ['projects', projectsFor(me).length, 'active project', 'active projects'],
-    ] as const
-  ).filter(([, n]) => n > 0);
-
-  return (
-    <section className="world-intro" data-world="intro" aria-labelledby="world-title">
-      {kind && (
-        <motion.span className="world-object" data-world-anchor aria-hidden initial={forming ? { scale: 1.35, y: 12, rotate: 4 } : false} animate={{ scale: 1, y: 0, rotate: -6 }} transition={{ ...spring.settle, delay: 0.05 }}>
-          <span className="object-tile-shadow" />
-          <span className="object-tile-asset">
-            <CraftObject kind={kind} size={76} />
-          </span>
-        </motion.span>
-      )}
-      <motion.p className="world-kicker" {...rise(forming, 0)}>
-        {craft?.label ?? me.role}
-        {me.city ? ` · ${me.city}` : ''}
-      </motion.p>
-      <motion.h1 className="world-title" id="world-title" {...rise(forming, 1)}>
-        Your world on Art and Artist
-      </motion.h1>
-      <motion.p className="world-line" {...rise(forming, 2)}>
-        Opportunities, people and projects matched to your craft, your city and what you're here to do.
-      </motion.p>
-      {counts.length > 0 && (
-        <motion.div className="world-counts" {...rise(forming, 3)}>
-          {counts.map(([id, n, one, many]) => (
-            <button key={id} className="world-count" onClick={() => jump(id)} aria-label={`${n} ${n === 1 ? one : many}, jump to section`}>
-              <b>{n}</b> {n === 1 ? one : many}
-            </button>
-          ))}
-        </motion.div>
-      )}
-    </section>
   );
 }
 
@@ -145,8 +71,4 @@ export function FirstStep() {
       </div>
     </aside>
   );
-}
-
-function rise(forming: boolean, i: number) {
-  return forming ? { initial: { y: 8 }, animate: { y: 0 }, transition: { ...spring.settle, delay: 0.12 + i * 0.05 } } : {};
 }
