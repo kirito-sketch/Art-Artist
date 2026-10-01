@@ -24,9 +24,16 @@ const need = () => {
   return sb;
 };
 
-export async function isResearcher(): Promise<boolean> {
-  const { data, error } = await need().rpc('research_is_researcher');
-  return !error && data === true;
+/**
+ * Dashboard access, decided by RLS on an ordinary research table (no RPC: the allowlist helper lives in
+ * a private schema and research_researchers is intentionally unreadable from the browser).
+ * Researchers can read research_studies; anyone else gets zero rows. A query error is reported as such,
+ * not as "no access".
+ */
+export async function researcherAccess(): Promise<'researcher' | 'denied' | 'error'> {
+  const { data, error } = await need().from('research_studies').select('id').limit(1);
+  if (error) return 'error';
+  return data && data.length > 0 ? 'researcher' : 'denied';
 }
 
 export async function loadStudies(): Promise<Study[]> {

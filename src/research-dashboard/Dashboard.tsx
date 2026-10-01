@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import './dashboard.css';
-import { configured, isResearcher, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, sb, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
+import { configured, isSurvey, researcherAccess, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, sb, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
 import { CATEGORY_LABEL, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
 
 type Route = { view: 'overview' | 'sessions' | 'tasks' | 'feedback'; id?: string };
@@ -21,7 +21,7 @@ const fmt1 = (n: number | null) => (n == null ? '-' : n.toFixed(1));
 const who = (s: Session | undefined) => s?.research_participants?.participant_code ?? '?';
 
 export default function Dashboard() {
-  const [auth, setAuth] = useState<'loading' | 'signed-out' | 'denied' | 'ok'>('loading');
+  const [auth, setAuth] = useState<'loading' | 'signed-out' | 'denied' | 'error' | 'ok'>('loading');
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,7 +31,8 @@ export default function Dashboard() {
       const { data } = await sb!.auth.getSession();
       if (!data.session) return setAuth('signed-out');
       setEmail(data.session.user.email ?? null);
-      setAuth((await isResearcher()) ? 'ok' : 'denied');
+      const access = await researcherAccess();
+      setAuth(access === 'researcher' ? 'ok' : access);
     };
     void check();
     const { data } = sb.auth.onAuthStateChange(() => void check());
@@ -41,6 +42,18 @@ export default function Dashboard() {
   if (!configured) return <Gate title="Research dashboard not configured">Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for this deployment.</Gate>;
   if (auth === 'loading') return <Gate title="Ana research">Loading…</Gate>;
   if (auth === 'signed-out') return <SignIn />;
+  if (auth === 'error')
+    return (
+      <Gate title="Couldn't check access">
+        <p>The research database didn't answer. Check the connection and the deployment's Supabase settings, then try again.</p>
+        <button className="dash-btn" onClick={() => location.reload()}>
+          Try again
+        </button>
+        <button className="dash-btn" onClick={() => sb!.auth.signOut()}>
+          Sign out
+        </button>
+      </Gate>
+    );
   if (auth === 'denied')
     return (
       <Gate title="No access">
