@@ -75,7 +75,7 @@ More holds secondary, trust and ownership actions only. **Share and Save are nev
 |---|---|---|
 | Your own | Share profile, Settings (Back only when opened as a page) | Edit profile; private rows for availability, Saved and Your activity (also in Settings) |
 | Another person | Back, Save (bookmark), Share, More (Report, Block) | Follow, Message |
-| A production house, as a visitor | Back, Share, More (Report, Block) | Follow, Message |
+| A production house, as a visitor | Back, Share, More (Report, Block) | Follow (an individual); Follow, Message (another house) |
 | Your house, acting for it | Back, Share, House settings | Edit page, Open a role |
 
 No profile is saveable, so no profile hero has a bookmark. Share is never repeated inside More.

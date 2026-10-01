@@ -178,18 +178,24 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </Button>
               ) : (
                 <>
-                  {/* V30: Follow primary, Message secondary, same as a person's profile. */}
+                  {/*
+                    V30: an individual sees one action on a production house: Follow (primary). Individuals
+                    don't message houses directly; they reach a house through its roles (Show interest), and
+                    the house decides whom to message. Another house (acting for one) can still message.
+                  */}
                   <FollowButton block size="m" primary on={isFollowing} onToggle={() => toggleFollow(id)} name={o.name} />
-                  <Button
-                    block
-                    variant="secondary"
-                    onClick={() => {
-                      const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
-                      cid && push({ name: 'conversation', id: cid });
-                    }}
-                  >
-                    Message
-                  </Button>
+                  {acting !== 'self' && (
+                    <Button
+                      block
+                      variant="secondary"
+                      onClick={() => {
+                        const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+                        cid && push({ name: 'conversation', id: cid });
+                      }}
+                    >
+                      Message
+                    </Button>
+                  )}
                 </>
               )}
             </div>
