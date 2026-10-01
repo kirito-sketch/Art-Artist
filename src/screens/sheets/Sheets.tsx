@@ -654,10 +654,10 @@ function MoreSheet({ id }: { id: string }) {
 
 const REPORT_REASONS = ['Fake profile or impersonation', 'Asking for money to apply or audition', 'Harassment or unsafe behaviour', 'Misleading role or project', 'Stolen or misused work', 'Something else'];
 
-/** Report: reason, optional detail, a clear promise, and the offer to block. */
 /**
- * A post's More menu. Someone else's post: Report post, through the same trust flow as everything
- * else. Your own post: Share only for now (editing and deleting posts don't exist yet; documented).
+ * A post's More menu: Report post, through the same trust flow as everything else. Share and Save
+ * live in the post's action row and are never repeated here. Your own post has no menu (no owner
+ * actions exist yet; documented in SAVE_MODEL.md).
  */
 function PostMenu({ id }: { id: string }) {
   const { openSheet, viewer, userPosts } = useStore();
@@ -665,14 +665,15 @@ function PostMenu({ id }: { id: string }) {
   if (!post) return <EmptyState title="This post is no longer available" />;
   const author = party(post.authorId);
   const mine = post.authorId === viewer.id;
+  if (mine) return <EmptyState title="Nothing to change here yet" body="Editing and deleting posts aren't available yet." />;
   return (
     <div className="group">
-      <Row icon={<Link2 size={20} />} label="Share post" onPress={() => openSheet({ name: 'share', label: `Post by ${author?.name ?? 'someone'}` })} />
-      {!mine && <Row icon={<Flag size={20} />} label="Report post" onPress={() => openSheet({ name: 'report', subject: `this post by ${author?.name ?? 'this person'}`, partyId: post.authorId, target: { kind: 'Post', id: post.id } })} />}
+      <Row icon={<Flag size={20} />} label="Report post" onPress={() => openSheet({ name: 'report', subject: `this post by ${author?.name ?? 'this person'}`, partyId: post.authorId, target: { kind: 'Post', id: post.id } })} />
     </div>
   );
 }
 
+/** Report: reason, optional detail, a clear promise, and the offer to block. */
 function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: string; target?: { kind: 'Post'; id: string } }) {
   const { openSheet, closeSheet, acting, viewer } = useStore();
   const [reason, setReason] = useState('');

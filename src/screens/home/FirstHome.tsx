@@ -10,7 +10,7 @@ import { project as wproject } from '../../state/world';
 import { CraftObject, type CraftObjectKind } from '../../ui/craft';
 import { PortraitCard } from '../../ui/compose';
 import { spring, stagger } from '../../ui/motion';
-import { Button, FollowButton, Photo, SectionHeader } from '../../ui/primitives';
+import { Button, FollowButton, SectionHeader } from '../../ui/primitives';
 import { FeaturedCard } from './OpportunityCard';
 
 /*
@@ -39,9 +39,9 @@ const OBJECT_FOR: Partial<Record<Craft, CraftObjectKind>> = {
 
 /*
  * Onboarding → first Home (signature, Level 3). The first time a person's world is shown, the craft
- * object arrives large from the centre and settles into the intro; the intro's words, then its
- * call sheet, then the sections resolve around it. About 0.8 s in all, input is never blocked,
- * and it happens once per person per session. Reduced motion: a plain fade (MotionConfig).
+ * object arrives slightly larger and settles into its corner; the intro's words, then its counts,
+ * then the sections nudge into place. Nothing starts hidden: the static layout is complete from the
+ * first frame, motion only settles it. Once per person per session; reduced motion: no travel.
  */
 const formed = new Set<string>();
 
@@ -58,7 +58,7 @@ export function useWorldForming(active: boolean) {
 /** A first-run section resolving into place after the intro. */
 export function Resolve({ forming, i, children }: { forming: boolean; i: number; children: ReactNode }) {
   return (
-    <motion.div initial={forming ? { opacity: 0, y: 28 } : false} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.settle, delay: 0.42 + i * 0.08 }}>
+    <motion.div initial={forming ? { y: 18 } : false} animate={{ y: 0 }} transition={{ ...spring.settle, delay: 0.3 + i * 0.07 }}>
       {children}
     </motion.div>
   );
@@ -66,65 +66,57 @@ export function Resolve({ forming, i, children }: { forming: boolean; i: number;
 
 const jump = (id: string) => document.querySelector(`[data-world="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+/*
+ * The intro is static-first and compact: context, title, one line, then the real counts. The craft
+ * object is a small supporting mark at the upper right; it never reserves space of its own. Counts
+ * that are zero are left out, and the module shrinks with them. Motion (forming) only nudges
+ * things into place; nothing is ever hidden waiting for an animation.
+ */
 export function WorldIntro({ goDiscover, forming = false }: { goDiscover: (scope?: string) => void; forming?: boolean }) {
-  const { viewer, availability } = useStore();
+  const { viewer } = useStore();
   const me = person(viewer.id);
   const craft = craftDef(me.craft);
   const blocked = blockedBy(viewer.id);
-  const roles = recommendedRoles(viewer.id, me.craft, blocked).length;
-  const people = (seed.suggestedFor[viewer.id] ?? []).filter((id) => !blocked.includes(id)).length;
-  const projects = discoverableProjects(blocked).length;
-  const houses = searchableHouses(blocked).length;
   const kind = OBJECT_FOR[me.craft];
-  const langs = me.languages?.length ? ` who works in ${listOf(me.languages)}` : '';
-  const stills = discoverableProjects(blocked)
-    .filter((w) => w.media.id !== 'ph')
-    .slice(0, 3);
+  const counts = (
+    [
+      ['roles', recommendedRoles(viewer.id, me.craft, blocked).length, 'role', 'roles'],
+      ['people', (seed.suggestedFor[viewer.id] ?? []).filter((id) => !blocked.includes(id)).length, 'person', 'people'],
+      ['projects', discoverableProjects(blocked).length, 'project', 'projects'],
+      ['houses', searchableHouses(blocked).length, 'production house', 'production houses'],
+    ] as const
+  ).filter(([, n]) => n > 0);
 
   return (
-    <motion.section className="world-intro" data-world="intro" aria-labelledby="world-title" initial={forming ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }}>
-      <motion.div className="world-visual" data-world-anchor aria-hidden initial={forming ? { x: -110, y: 160, scale: 1.7 } : false} animate={{ x: 0, y: 0, scale: 1 }} transition={{ ...spring.settle, delay: 0.05 }}>
-        {kind ? (
-          <span className="world-object">
-            <span className="object-tile-shadow" />
-            <span className="object-tile-asset">
-              <CraftObject kind={kind} size={120} />
-            </span>
+    <section className="world-intro" data-world="intro" aria-labelledby="world-title">
+      {kind && (
+        <motion.span className="world-object" data-world-anchor aria-hidden initial={forming ? { scale: 1.35, y: 12, rotate: 4 } : false} animate={{ scale: 1, y: 0, rotate: -6 }} transition={{ ...spring.settle, delay: 0.05 }}>
+          <span className="object-tile-shadow" />
+          <span className="object-tile-asset">
+            <CraftObject kind={kind} size={76} />
           </span>
-        ) : (
-          <span className="world-stills">
-            {stills.map((w) => (
-              <Photo key={w.id} media={w.stills[0] ?? w.media} showPlay={false} />
-            ))}
-          </span>
-        )}
-      </motion.div>
+        </motion.span>
+      )}
       <motion.p className="world-kicker" {...rise(forming, 0)}>
-        {craft?.label ?? me.role} · {me.city}
+        {craft?.label ?? me.role}
+        {me.city ? ` · ${me.city}` : ''}
       </motion.p>
       <motion.h1 className="world-title" id="world-title" {...rise(forming, 1)}>
         Your world on Ana
       </motion.h1>
       <motion.p className="world-line" {...rise(forming, 2)}>
-        Picked for {article(craft?.person ?? me.role)} {(craft?.person ?? me.role).toLowerCase()} in {me.city}
-        {langs}.{availability.open ? ` You're shown as available ${availability.from === 'Now' ? 'now' : `from ${availability.from}`}.` : ''}
+        A personalised view of roles, people and projects relevant to your craft.
       </motion.p>
-      <dl className="world-sheet">
-        {(
-          [
-            ['roles', 'Roles', roles],
-            ['people', 'People', people],
-            ['projects', 'Projects', projects],
-            ['houses', 'Houses', houses],
-          ] as const
-        ).map(([id, label, n], i) => (
-          <motion.button {...rise(forming, 3 + i)} key={id} className="world-sheet-cell" onClick={() => (id === 'roles' ? goDiscover('roles') : jump(id))} aria-label={id === 'roles' ? `${n} open roles in your craft, open in Discover` : `${n} ${label.toLowerCase()}, jump to section`}>
-            <dt>{label}</dt>
-            <dd>{n}</dd>
-          </motion.button>
-        ))}
-      </dl>
-    </motion.section>
+      {counts.length > 0 && (
+        <motion.div className="world-counts" {...rise(forming, 3)}>
+          {counts.map(([id, n, one, many]) => (
+            <button key={id} className="world-count" onClick={() => (id === 'roles' ? goDiscover('roles') : jump(id))} aria-label={id === 'roles' ? `${n} open roles in your craft, open in Discover` : `${n} ${n === 1 ? one : many}, jump to section`}>
+              <b>{n}</b> {n === 1 ? one : many}
+            </button>
+          ))}
+        </motion.div>
+      )}
+    </section>
   );
 }
 
@@ -218,13 +210,5 @@ export function FirstStep() {
 }
 
 function rise(forming: boolean, i: number) {
-  return forming ? { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, transition: { ...spring.settle, delay: 0.18 + i * 0.05 } } : {};
-}
-
-function listOf(xs: string[]) {
-  return xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
-}
-
-function article(word: string) {
-  return /^[aeiou]/i.test(word) ? 'an' : 'a';
+  return forming ? { initial: { y: 8 }, animate: { y: 0 }, transition: { ...spring.settle, delay: 0.12 + i * 0.05 } } : {};
 }

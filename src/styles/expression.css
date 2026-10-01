@@ -1368,62 +1368,46 @@
 
 /* =========================================== First-run Home */
 /*
- * The opening moment: the one sand field on this screen, the person's craft and city as a caps
- * kicker, and a call sheet of what Ana already has for them. The craft object (or, for crafts
- * without one, three real stills) is the anchor the Phase 2 transition resolves around.
+ * A compact editorial introduction on the one sand field: context, title, one line, the real
+ * counts. The craft object is a 76 px mark in the upper-right corner and reserves no space; the
+ * text column simply stops short of it. The module is as tall as its content, never more.
  */
 .world-intro {
   position: relative;
   margin: 4px 0 0;
-  padding: 24px 20px 0;
+  padding: 18px 18px 16px;
   border-radius: var(--r-l);
   background: var(--sand);
   --text-2: color-mix(in srgb, var(--text) 70%, var(--sand));
-  overflow: hidden;
-}
-
-.world-visual {
-  position: absolute;
-  top: 10px;
-  right: 8px;
-  width: 120px;
-  height: 120px;
-  pointer-events: none;
 }
 
 .world-object {
-  --object-tilt: -6deg;
+  --object-tilt: 0deg;
   --object-lift: 0px;
   --object-scale: 1;
   --object-shadow: 1;
   --object-duration: 0ms;
   position: absolute;
-  inset: 0;
+  top: 8px;
+  right: 10px;
+  width: 76px;
+  height: 76px;
+  pointer-events: none;
 }
 
 .world-object .craft-shadow {
   display: none;
 }
 
-.world-stills {
-  position: absolute;
-  inset: 6px 0 0 12px;
+.world-kicker,
+.world-title,
+.world-line {
+  margin-right: 84px;
 }
-
-.world-stills > .photo {
-  position: absolute !important;
-  width: 64px;
-  height: 80px;
-  border-radius: var(--r-s);
-  box-shadow: var(--shadow-2);
-}
-
-.world-stills > .photo:nth-child(1) { left: 0; top: 18px; transform: rotate(-6deg); }
-.world-stills > .photo:nth-child(2) { left: 26px; top: 0; z-index: 1; }
-.world-stills > .photo:nth-child(3) { left: 48px; top: 22px; transform: rotate(5deg); }
 
 .world-kicker {
-  margin: 0;
+  margin-top: 0;
+  margin-bottom: 0;
   font-size: var(--label);
   font-weight: 700;
   letter-spacing: var(--label-track);
@@ -1432,54 +1416,44 @@
 }
 
 .world-title {
-  margin: 8px 0 0;
-  max-width: 62%;
-  font-size: 30px;
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  text-wrap: balance;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
 }
 
 .world-line {
-  margin: 10px 0 0;
-  max-width: 34ch;
-  font-size: var(--t-4);
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-size: var(--t-5);
   line-height: 1.4;
   color: var(--text-2);
 }
 
-.world-sheet {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 20px -20px 0;
-  border-top: 1px solid rgba(40, 30, 20, 0.14);
+.world-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
 }
 
-.world-sheet-cell {
-  padding: 12px 0 14px 20px;
-  text-align: left;
-  color: inherit;
+.world-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(40, 30, 20, 0.1);
+  font-size: var(--t-5);
+  color: var(--text);
 }
 
-.world-sheet-cell + .world-sheet-cell {
-  border-left: 1px solid rgba(40, 30, 20, 0.14);
-  padding-left: 12px;
-}
-
-.world-sheet dt {
-  font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
-  color: var(--text-2);
-}
-
-.world-sheet dd {
-  margin: 2px 0 0;
-  font-size: 22px;
+.world-count b {
   font-weight: 800;
-  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 

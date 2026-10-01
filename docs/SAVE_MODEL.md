@@ -9,7 +9,7 @@ The product rules behind every bookmark, Follow control and post action in Ana.
 | **Follow** | Keep a relationship; see relevant updates | People, Production Houses |
 | **Save** | Privately keep something to revisit | Posts, Roles, Projects |
 
-**Not saveable:** People and Production Houses (use Follow), Credits and Project associations (professional records), Messages, Notifications, Trust and Admin records.
+**Not saveable:** People and Production Houses (use Follow), profiles themselves, Credits and Project associations (professional records), Messages, Notifications, Trust and Admin records. No profile hero ever shows a bookmark.
 
 Words: "Save" in text, the bookmark as the icon, **Saved** as the one screen title. There is no separate "Bookmarks".
 
@@ -18,7 +18,7 @@ Words: "Save" in text, the bookmark as the icon, **Saved** as the one screen tit
 - One private **Saved** screen (`saved` route, `src/screens/profile/SavedScreen.tsx`).
 - Filters: **All · Posts · Roles · Projects** (filter chips, with counts). All shows each kind in its own family, the most recently saved kind first, with "See all" switching the filter.
 - Each kind keeps its composition family: Posts in the media grid (opening the post stream), Roles as role rows, Projects as poster tiles.
-- **Entry:** one tap from your own Profile, the bookmark utility button in the profile header ("Saved"). It appears only on your own profile, never to visitors, and is not in Settings or the bottom navigation. "Your activity" also links to it.
+- **Entry:** one tap from your own Profile: the private "Saved" row (with its count) under your availability, beside "Your activity". It appears only on your own profile, never to visitors, and is not in the profile hero (a bookmark there would read as saving the profile), not in Settings and not in the bottom navigation.
 - Saved is never a public profile section.
 
 ## State
@@ -48,14 +48,27 @@ Withheld items are counted ("1 saved item is no longer available to you") and ne
 
 Every post (the Discover stream, Home "Latest posts", Profile posts) has:
 
-- **Header:** avatar, name, role · time (project context below the caption when there is one), and **More** (⋯) on the right.
+- **Header:** avatar, name, role · time (project context below the caption when there is one), and **More** (⋯) on the right for other people's posts.
 - **Action row** under the work: **Like** (with its count), **Share** (the existing share sheet), **Save** (right-aligned bookmark).
 - **No comments:** no comment button, count, composer or "View comments". The `comments` field in seed data is unused internally and never shown.
 - The Discover Posts grid stays media-only: no actions on tiles, only the small set/video marks.
 
 ### More menu and Report Post
 
-- Someone else's post: **Share post**, **Report post**. Report uses the existing trust flow (reasons, optional note, "Also block" afterwards). The payload carries type = Post, the post id, the author and the reason; the reporter is visible to Ana staff only, and the author is told nothing about who reported.
-- Your own post: **Share post** only. Editing and deleting posts don't exist in the prototype yet; this is a documented gap, not a hidden feature.
+More holds secondary, trust and ownership actions only. **Share and Save are never repeated in More**: Share is a common content action and lives in the action row.
+
+- Someone else's post: **Report post**. Report uses the existing trust flow (reasons, optional note, "Also block" afterwards). The payload carries type = Post, the post id, the author and the reason; the reporter is visible to Ana staff only, and the author is told nothing about who reported.
+- Your own post: Edit and Delete would live here, but neither exists in the prototype yet, so your own posts show **no More button** (never "Report your own post"). This is a documented gap, not a hidden feature.
 - Opening Report is neutral; only "Also block" (a destructive confirmation) is red.
 - In the prototype the report is recorded in `src/state/reports.ts` for QA (there is no report store in the shared world).
+
+## Profile hero controls
+
+| Profile | Hero (light utility controls) | Action area |
+|---|---|---|
+| Your own | Share profile, Settings (Back only when opened as a page) | Edit profile; private rows for availability, Saved and Your activity |
+| Another person | Back, Share, More (Report, Block) | Follow, Message |
+| A production house, as a visitor | Back, Share, More (Report, Block) | Follow, Message |
+| Your house, acting for it | Back, Share, House settings | Edit page, Open a role |
+
+No profile is saveable, so no profile hero has a bookmark. Share is never repeated inside More.

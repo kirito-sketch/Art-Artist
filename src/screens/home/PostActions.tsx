@@ -33,9 +33,14 @@ export function PostActions({ post }: { post: Post }) {
   );
 }
 
-/** More: the post's menu. Neutral icon on paper; it opens a quiet sheet. */
+/**
+ * More: secondary, trust and ownership actions only, never Share or Save again. On someone else's
+ * post it holds Report post. Your own post has no supported owner actions yet (no edit or delete in
+ * the prototype), so it shows no More at all rather than an empty menu.
+ */
 export function PostMore({ post }: { post: Post }) {
-  const { openSheet } = useStore();
+  const { openSheet, viewer } = useStore();
+  if (post.authorId === viewer.id) return null;
   return (
     <IconButton label="More" className="post-more" onClick={() => openSheet({ name: 'postMore', id: post.id })}>
       <MoreHorizontal size={20} />

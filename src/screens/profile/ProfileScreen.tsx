@@ -51,7 +51,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, acting, setActing, cannotReach } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -126,22 +126,13 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <Photo media={hero} className="phero-photo" alt={p.name} />
         </div>
         <div className="phero-bar">
-          {isTab ? (
-            <IconButton label="Your activity" className="icon-btn--float" onClick={() => openSheet({ name: 'activity' })}>
-              <List size={20} />
-            </IconButton>
-          ) : (
+          {/* Your own profile: no Back unless it was opened as a page; never Save, Follow or Message. */}
+          {!isTab && (
             <IconButton label="Back" className="icon-btn--float" onClick={pop}>
               <ChevronLeft size={24} />
             </IconButton>
           )}
           <span className="flex" />
-          {own && (
-            // Private, one tap: the person's Saved list. Only on their own profile, never shown to visitors.
-            <IconButton label="Saved" className="icon-btn--float" onClick={() => push({ name: 'saved' })}>
-              <Bookmark size={18} />
-            </IconButton>
-          )}
           <IconButton label="Share profile" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
             <Share size={18} />
           </IconButton>
@@ -210,6 +201,9 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               }
               onPress={() => openSheet({ name: 'availability' })}
             />
+            {/* Private to you, one tap each: what you saved and what you sent. Profiles themselves are never saved. */}
+            <Row icon={<Bookmark size={18} />} label="Saved" value={saved.length ? String(saved.length) : undefined} onPress={() => push({ name: 'saved' })} />
+            <Row icon={<List size={18} />} label="Your activity" onPress={() => openSheet({ name: 'activity' })} />
           </div>
         )}
 
