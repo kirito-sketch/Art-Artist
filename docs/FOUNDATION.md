@@ -113,7 +113,7 @@ Invite (email or SMS link) ─► Entry, with a banner: "Konark Pictures invited
 
 ### B. Self-serve setup (when the house isn't on Ana yet)
 
-From Create or Settings: **Set up a production house**.
+Not available to individuals in the app (V30): there is no "Set up a production house" in Create or Settings. Houses join through Art and Artist (team invitation and verification). The setup screen remains for internal QA scenarios (Edge Case Lab, HONB).
 
 1. **Basics:** name, logo, city, type of work (features, series, ads, documentary, music videos).
 2. **About:** a two-line description, website or Instagram (optional).

@@ -104,12 +104,14 @@ function Personal() {
         )}
       </Group>
 
-      <Group title="Organisations you can act for" note="A house's owner decides who can act for it. Leaving removes only your permission; your credits stay yours.">
-        {memberships.map((m) => (
-          <Row key={m} icon={<Avatar party={org(m)} size={32} />} label={org(m).name} value={org(m).verified ? 'Member' : 'Verification pending'} onPress={() => setActing(m)} />
-        ))}
-        <Row label="Set up a production house" onPress={() => push({ name: 'houseSetup' })} />
-      </Group>
+      {/* Individuals don't set up production houses from the app; houses join through Art and Artist (invites, verification). */}
+      {memberships.length > 0 && (
+        <Group title="Organisations you can act for" note="A house's owner decides who can act for it. Leaving removes only your permission; your credits stay yours.">
+          {memberships.map((m) => (
+            <Row key={m} icon={<Avatar party={org(m)} size={32} />} label={org(m).name} value={org(m).verified ? 'Member' : 'Verification pending'} onPress={() => setActing(m)} />
+          ))}
+        </Group>
+      )}
 
       <Group title="Legal and safety">
         <Row label="Terms of Service" onPress={() => push({ name: 'legal', doc: 'terms' })} />
