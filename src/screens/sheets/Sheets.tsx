@@ -12,6 +12,7 @@ import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
 import { world, project as wproject } from '../../state/world';
 import { INTENTS } from '../../domain/relevance';
 import { sentReports } from '../../state/reports';
+import { DateField, fmtDay, fmtRange, parseDays, todayIso } from '../../ui/fields';
 
 export function SheetHost() {
   const { sheet, closeSheet } = useStore();
@@ -203,7 +204,6 @@ function Notifications() {
 
 /* ------------------------------------------------------------ Availability */
 
-const FROM = ['Now', '3 Oct', '15 Oct', '1 Nov'];
 
 /**
  * V30: what the person is trying to do right now. It reorders Home and re-ranks it; nothing is
@@ -239,8 +239,10 @@ function IntentForm() {
 function AvailabilityForm() {
   const { availability, setAvailability, closeSheet, scenario, setScenario } = useStore();
   const [open, setOpen] = useState(availability.open || scenario.newUser);
-  const [from, setFrom] = useState(availability.from);
+  const [later, setLater] = useState(availability.from !== 'Now');
+  const [fromDay, setFromDay] = useState(() => parseDays(availability.from).start);
   const [scope, setScope] = useState(availability.scope);
+  const from = later && fromDay ? fmtDay(fromDay) : 'Now';
   return (
     <div className="stack">
       <div className="group">
@@ -251,12 +253,14 @@ function AvailabilityForm() {
       {open && (
         <>
           <div className="chips">
-            {FROM.map((f) => (
-              <button key={f} className={`chip ${from === f ? 'is-on' : ''}`} onClick={() => setFrom(f)}>
-                {f === 'Now' ? 'From now' : `From ${f}`}
-              </button>
-            ))}
+            <button className={`chip ${!later ? 'is-on' : ''}`} onClick={() => setLater(false)}>
+              From now
+            </button>
+            <button className={`chip ${later ? 'is-on' : ''}`} onClick={() => setLater(true)}>
+              From a date
+            </button>
           </div>
+          {later && <DateField className="field" value={fromDay} onChange={setFromDay} label="Available from" placeholder="Choose a start date" />}
           <input id="avail-scope" className="field" value={scope} onChange={(e) => setScope(e.target.value)} placeholder="City, and whether you travel" aria-label="Where" />
         </>
       )}
@@ -817,7 +821,11 @@ function EditRole({ id }: { id: string }) {
   const o = { ...base, ...roleEdits[id] };
   const [about, setAbout] = useState(o.about);
   const [city, setCity] = useState(o.city);
-  const [dates, setDates] = useState(o.dates);
+  const [start, setStart] = useState(() => parseDays(o.dates).start);
+  const [end, setEnd] = useState(() => parseDays(o.dates).end);
+  const [touched, setTouched] = useState(false);
+  // Dates written in a looser form ("Nov, 9 days") stay as they are until a day is picked.
+  const dates = touched && start ? fmtRange(start, end) : o.dates;
   const [state, setState] = useState<'idle' | 'saving' | 'failed'>('idle');
   const material = [city !== o.city && 'location', dates !== o.dates && 'dates'].filter(Boolean) as string[];
   const dirty = material.length > 0 || about !== o.about;
@@ -834,8 +842,34 @@ function EditRole({ id }: { id: string }) {
         <input id="er-city" className="field" value={city} onChange={(e) => setCity(e.target.value)} />
       </div>
       <div>
-        <label className="field-label" htmlFor="er-dates">Dates</label>
-        <input id="er-dates" className="field" value={dates} onChange={(e) => setDates(e.target.value)} />
+        <span className="field-label">Dates</span>
+        <div className="field-row">
+          <DateField
+            className="field"
+            value={start}
+            onChange={(v) => {
+              setTouched(true);
+              setStart(v);
+              if (end && v && end < v) setEnd('');
+            }}
+            label="Starts"
+            placeholder="Starts"
+            min={start && start < todayIso() ? start : undefined}
+          />
+          <DateField
+            className="field"
+            value={end}
+            onChange={(v) => {
+              setTouched(true);
+              setEnd(v);
+            }}
+            label="Ends"
+            placeholder="Ends (optional)"
+            min={start || undefined}
+            clearable
+          />
+        </div>
+        {!start && o.dates && <p className="meta field-hint">Shown now as "{o.dates}". Pick the days to replace it.</p>}
       </div>
       <div>
         <label className="field-label" htmlFor="er-about">About the role</label>

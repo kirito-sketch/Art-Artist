@@ -11,6 +11,7 @@ import { Avatar, Button, Photo, Toggle, Verified } from '../ui/primitives';
 import { Logo } from '../ui/Logo';
 import { StatusBar } from '../ui/chrome';
 import { Sheet } from '../ui/Sheet';
+import { DateField, fmtDay } from '../ui/fields';
 import { MediaPicker } from '../screens/create/PostComposer';
 import { research } from '../research-data/client';
 import { INTENTS, type Intent } from '../domain/relevance';
@@ -88,7 +89,7 @@ export function EntryFlow() {
 
   const finishProfile = () => {
     const role = headline(primary!);
-    const availability: Availability = asksAvailability ? { open: true, from: avail === 'from' && availFrom.trim() ? availFrom.trim() : 'Now', scope: city.trim() } : { open: false, from: 'Now', scope: city.trim() };
+    const availability: Availability = asksAvailability ? { open: true, from: avail === 'from' && availFrom ? fmtDay(availFrom) : 'Now', scope: city.trim() } : { open: false, from: 'Now', scope: city.trim() };
     const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel: false, languages: [], availability, work: [], email, intent: intent ?? undefined });
     setPersonId(id);
     if (invite) return go('invite');
@@ -263,7 +264,7 @@ export function EntryFlow() {
                       </button>
                     ))}
                   </div>
-                  {avail === 'from' && <input className="field" value={availFrom} onChange={(e) => setAvailFrom(e.target.value)} placeholder="e.g. 15 Nov" aria-label="Available from" />}
+                  {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Available from" placeholder="Choose a start date" />}
                 </>
               )}
               <Button block size="l" disabled={!intent || !city.trim()} onClick={finishProfile}>

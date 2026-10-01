@@ -2217,3 +2217,5 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .consent-optional-text { display: flex; flex-direction: column; gap: 1px; }
 .consent-optional-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .pc-note { margin: 10px 2px 0; font-size: 12px; line-height: 1.4; color: #8a5a00; background: #fff3d6; border-radius: 8px; padding: 8px 10px; }
+.field-row--pay { grid-template-columns: 1fr 1fr 92px; margin-top: 10px; }
+.field-select { padding: 0 12px; appearance: none; cursor: pointer; color: var(--text); }

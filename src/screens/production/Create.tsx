@@ -8,6 +8,7 @@ import { org, person } from '../../state/selectors';
 import { DEPTS, FORMATS, LANGUAGES, STAGES, creditState, project, publicName, world, type Format } from '../../state/world';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, Row, SectionHeader, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
+import { DateField, fmtPay, fmtRange, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
 
 /* ============================================================ New project */
 
@@ -432,10 +433,13 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
   const p = project(projectId)!;
   const [role, setRole] = useState('');
   const [about, setAbout] = useState('');
-  const [dates, setDates] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
   const [city, setCity] = useState('');
   const [paid, setPaid] = useState(true);
-  const [range, setRange] = useState('');
+  const [min, setMin] = useState('');
+  const [max, setMax] = useState('');
+  const [unit, setUnit] = useState<PayUnit>('day');
   const [qs, setQs] = useState<string[]>([]);
   const houseVerified = !p.houseId || org(p.houseId).verified;
   const [vis, setVis] = useState<'private' | 'open'>(houseVerified ? 'open' : 'private');
@@ -456,15 +460,25 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
         <label className="field-label" htmlFor="ar-about">What it involves</label>
         <textarea id="ar-about" className="field field--area" rows={3} maxLength={400} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="A few lines are enough" />
       </div>
-      <div className="field-row">
-        <div>
-          <label className="field-label" htmlFor="ar-when">When</label>
-          <input id="ar-when" className="field" value={dates} onChange={(e) => setDates(e.target.value)} placeholder="e.g. Nov, 30 days" />
+      <div>
+        <span className="field-label">When</span>
+        <div className="field-row">
+          <DateField
+            className="field"
+            value={start}
+            onChange={(v) => {
+              setStart(v);
+              if (end && v && end < v) setEnd('');
+            }}
+            label="Starts"
+            placeholder="Starts"
+          />
+          <DateField className="field" value={end} onChange={setEnd} label="Ends" placeholder="Ends (optional)" min={start || undefined} clearable />
         </div>
-        <div>
-          <label className="field-label" htmlFor="ar-where">Where</label>
-          <input id="ar-where" className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
-        </div>
+      </div>
+      <div>
+        <label className="field-label" htmlFor="ar-where">Where</label>
+        <input id="ar-where" className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
       </div>
       <div>
         <span className="field-label">Pay</span>
@@ -476,7 +490,19 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
             Unpaid
           </button>
         </div>
-        {paid && <input className="field" value={range} onChange={(e) => setRange(e.target.value)} placeholder="Range (optional), e.g. ₹15k–20k / day" />}
+        {paid && (
+          <div className="field-row field-row--pay">
+            <MoneyField className="field" value={min} onChange={setMin} label="From amount" placeholder="From" />
+            <MoneyField className="field" value={max} onChange={setMax} label="Up to amount" placeholder="Up to" />
+            <select className="field field-select" value={unit} onChange={(e) => setUnit(e.target.value as PayUnit)} aria-label="Paid">
+              {PAY_UNITS.map(([k, l]) => (
+                <option key={k} value={k}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <div>
         <span className="field-label">Questions (optional, up to 3)</span>
@@ -508,7 +534,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
         size="l"
         disabled={!role.trim()}
         onClick={() => {
-          addRole(projectId, { role: role.trim(), about: about.trim(), dates: dates.trim(), city: city.trim(), paid, compensation: range.trim(), questions: qs, visibility: vis });
+          addRole(projectId, { role: role.trim(), about: about.trim(), dates: fmtRange(start, end), city: city.trim(), paid, compensation: paid ? fmtPay(min, max, unit) : '', questions: qs, visibility: vis });
           done();
           showToast({ text: vis === 'open' ? `${role} is open on Art and Artist` : `${role} added. Only your house can see it.` });
         }}
@@ -573,7 +599,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
           <>
             <p className="meta">This stays inside your project. It doesn't create an Art and Artist profile, can't be found in search and can't be credited until they join.</p>
             <input className="field" value={pending.name} onChange={(e) => setPending({ ...pending, name: e.target.value })} placeholder="Name" />
-            <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value })} placeholder="Phone (to invite them to Art and Artist)" inputMode="tel" />
+            <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value.replace(/(?!^\+)[^\d]/g, '').slice(0, 15) })} placeholder="Phone (to invite them to Art and Artist)" inputMode="tel" />
             <Button block disabled={!pending.name.trim()} onClick={() => setStep('role')}>
               Continue
             </Button>

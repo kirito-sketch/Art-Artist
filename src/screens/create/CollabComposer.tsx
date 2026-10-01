@@ -7,6 +7,7 @@ import { org, person } from '../../state/selectors';
 import { Avatar, Button, IconButton, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { MediaPicker } from './PostComposer';
+import { DateField, fmtPay, fmtRange, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
 
 const ROLES = ['Cinematographer', '1st AC', 'Gaffer', 'Editor', 'Colourist', 'Sound recordist', 'Actor'];
 const TYPES = ['Short film', 'Feature film', 'Web series', 'Music video', 'Ad film', 'Documentary'];
@@ -29,15 +30,16 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
   const [city, setCity] = useState(me.city);
   const [pay, setPay] = useState('Paid');
   const [amount, setAmount] = useState('');
+  const [unit, setUnit] = useState<PayUnit>(available ? 'day' : 'flat');
   const [about, setAbout] = useState('');
   const [cover, setCover] = useState<Media | null>(null);
   const [allowDM, setAllowDM] = useState(available);
   const [picker, setPicker] = useState(false);
   const [discard, setDiscard] = useState(false);
 
-  const valid = role.trim() && start.trim() && city.trim() && (available || project.trim());
+  const valid = role.trim() && start && city.trim() && (available || project.trim());
   const dirty = !!(project || start || about || cover || (!available && role));
-  const dates = end ? `${start} – ${end}` : start;
+  const dates = fmtRange(start, end);
 
   const publish = () => {
     const o: Opportunity = {
@@ -51,7 +53,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
       allowDM,
       city: city.trim(),
       dates,
-      compensation: pay === 'Paid' ? amount.trim() || 'Paid' : pay,
+      compensation: pay === 'Paid' ? fmtPay(amount, '', unit) || 'Paid' : pay,
       paid: pay === 'Paid',
       stage: available ? 'Available' : 'In development',
       about: about.trim() || (available ? `Available for ${role.toLowerCase()} work.` : 'Details to follow.'),
@@ -130,8 +132,21 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
               <span className="timeline-dot timeline-dot--hollow" />
             </span>
             <div className="timeline-rows">
-              <Row label={available ? 'From' : 'Start'} value={<input id="c-start" className="row-input row-input--right" value={start} onChange={(e) => setStart(e.target.value)} placeholder="9 Nov" aria-label="Start" />} />
-              <Row label={available ? 'Until' : 'End'} value={<input id="c-end" className="row-input row-input--right" value={end} onChange={(e) => setEnd(e.target.value)} placeholder={available ? 'Open' : '21 Nov'} aria-label="End" />} />
+              <Row
+                label={available ? 'From' : 'Start'}
+                value={
+                  <DateField
+                    value={start}
+                    onChange={(v) => {
+                      setStart(v);
+                      if (end && v && end < v) setEnd(''); // an end never sits before the start
+                    }}
+                    label="Start"
+                    placeholder="Choose"
+                  />
+                }
+              />
+              <Row label={available ? 'Until' : 'End'} value={<DateField value={end} onChange={setEnd} label="End" placeholder={available ? 'Open' : 'Choose'} min={start || undefined} clearable />} />
             </div>
           </div>
         </div>
@@ -142,7 +157,16 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
             icon={<IndianRupee size={20} />}
             label={
               pay === 'Paid' ? (
-                <input id="c-amount" className="row-input" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={available ? 'Day rate' : 'Amount, e.g. ₹60k flat'} aria-label="Amount" />
+                <span className="pay-amount">
+                  <MoneyField value={amount} onChange={setAmount} label="Amount" placeholder="Amount" prefix={false} />
+                  <select id="c-unit" className="row-select" value={unit} onChange={(e) => setUnit(e.target.value as PayUnit)} aria-label="Paid">
+                    {PAY_UNITS.map(([k, l]) => (
+                      <option key={k} value={k}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </span>
               ) : (
                 pay
               )

@@ -1009,3 +1009,67 @@
   font-size: var(--t-5);
   color: var(--text-2);
 }
+
+/* Structured inputs (src/ui/fields.tsx): dates come from the calendar, money is digits only. */
+.date-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.date-field-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-3);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.date-field.has-value .date-field-text { color: var(--text); }
+.date-field-text svg { color: var(--text-3); flex: none; }
+.date-field-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 16px; /* no iOS zoom */
+}
+.date-field-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.date-field.field { display: flex; justify-content: flex-start; }
+.date-field.field .date-field-text { width: 100%; justify-content: space-between; }
+.date-field:focus-within .date-field-text { text-decoration: underline; text-underline-offset: 3px; }
+.date-field.field:focus-within { box-shadow: inset 0 0 0 1.5px var(--text); }
+.date-field.field:focus-within .date-field-text { text-decoration: none; }
+
+.money-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+.money-field-prefix { color: var(--text-2); font-size: var(--t-3); }
+.money-field-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: var(--t-3);
+  font-variant-numeric: tabular-nums;
+}
+.money-field-input::placeholder { color: var(--text-3); }
+.money-field.field:focus-within { box-shadow: inset 0 0 0 1.5px var(--text); }
+.pay-amount { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.pay-amount .row-select { flex: none; }
