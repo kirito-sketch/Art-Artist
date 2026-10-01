@@ -127,7 +127,6 @@ function CreateMenu() {
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
       <Row icon={<CircleCheck size={22} />} label="Available for work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
       <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
-      <Row icon={<Plus size={22} />} label="Set up a production house" onPress={() => push({ name: 'houseSetup' })} />
     </div>
   );
 }
