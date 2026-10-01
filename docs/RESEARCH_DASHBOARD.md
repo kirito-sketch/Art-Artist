@@ -15,27 +15,23 @@ export.
 
 ## Access model
 
-`/research` is an internal prototype dashboard for one researcher. It **opens directly**: there is no
-sign-in, no email/password, no Supabase Auth and no "No access" screen.
+`/research` sits behind the **shared access password** (`APP_ACCESS_PASSWORD`), the same one that
+unlocks the normal app. There is no researcher sign-in, no Supabase Auth and no separate dashboard key.
+See docs/ACCESS.md.
 
 ```
-Browser /research
-  → GET/POST /api/research/dashboard/*      (server-side, same Vercel function as the research API)
+Browser /research ──(no access cookie)──> password page (Vercel middleware)
+Browser /research ──(access cookie)─────> dashboard
+  → GET/POST /api/research/dashboard/*      (same cookie required; checked in middleware and API)
   → Supabase with SUPABASE_SERVICE_ROLE_KEY (server-only)
 ```
 
-- The browser holds **no Supabase client and no Supabase key** (not even the anon key). The service-role
-  key stays in the server environment. Verified: a production build with placeholder keys contains
-  none of them, and the dashboard chunk has no Supabase code.
+- The browser holds **no Supabase client and no Supabase key** (not even the anon key), and no
+  password or key in storage: only the HttpOnly access cookie the server set.
 - The API returns only the columns the dashboard shows: never token hashes, client idempotency ids
   or other internals.
-- **Optional light protection:** set `RESEARCH_DASHBOARD_KEY` (server-only) in Vercel. Every dashboard
-  call then needs it; open `/research?key=<value>` once and the browser keeps it locally and sends it as
-  a header. Unset (the default) means open. Vercel Deployment Protection also covers the URL while it is
-  on.
-- Note: with no key set, anyone who can reach the deployment can read the research data through
-  `/api/research/dashboard/*`. That is acceptable for this internal prototype; set the key before
-  sharing the deployment more widely.
+- If the access expires (7 days) or the password changes, the dashboard says so; reloading shows the
+  password page.
 - `research_researchers`, `research_is_researcher()` and the RLS read policies remain in the database,
   unused by the dashboard. Nothing was dropped.
 
@@ -49,8 +45,8 @@ Browser /research
 | `GET /api/research/dashboard/events?attempts=<id,id,…>` | Events for a set of task attempts (up to 200) |
 | `POST /api/research/dashboard/feedback-status` `{id, status}` | Sets a feedback item's review status (new, reviewed, actionable, fixed, wont_fix) |
 
-Invalid ids return 400, wrong methods 405, a missing key (when one is set) 401, an unconfigured
-backend 503.
+Invalid ids return 400, wrong methods 405, no valid access cookie 401, `APP_ACCESS_PASSWORD` or the
+backend not configured 503.
 
 ## Information architecture
 

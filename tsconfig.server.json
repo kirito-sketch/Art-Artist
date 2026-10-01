@@ -12,5 +12,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["server", "api", "src/research-data/taxonomy.ts", "src/version.ts"]
+  "include": ["server", "api", "middleware.ts", "src/research-data/taxonomy.ts", "src/version.ts"]
 }

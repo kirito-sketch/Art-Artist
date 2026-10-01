@@ -175,7 +175,7 @@ data.
 | `POST /api/research/feedback` | `id`, `category`, `comment`, `screen`, `attemptId`, `eventId`, `context{persona, route, tab, sheet, acting, taskKey, lastSequence, source, question, rating}` | Stores once. The server copies `prototype_version` from the session. `source` is `button` (Feedback control), `stuck` (I'm stuck), `survey` (final survey answer, with `question` and, for the 1–5 question, `rating`) or `first_run` (the questions after Task 1, Getting started, same shape) |
 | `POST /api/research/session/complete` | `status` (completed / abandoned) | Closes the session and abandons any open attempts. Repeats are ignored |
 | `GET /api/research/study` | header `x-study-type` (individual_creative / production_house) | The newest active study of that type: slug, title, description, task count. Participant-facing only. It also keeps the Individual Creative task list in sync with server/research/studies.ts (adds Task 1, Getting started; moves the product tasks to 2 to 7): idempotent, by key, never deletes; a failure is logged and never blocks the participant |
-| `GET /api/research/dashboard/*`, `POST /api/research/dashboard/feedback-status` | | Research Dashboard read API (docs/RESEARCH_DASHBOARD.md). Server-side, service role; optional `RESEARCH_DASHBOARD_KEY` |
+| `GET /api/research/dashboard/*`, `POST /api/research/dashboard/feedback-status` | | Research Dashboard read API (docs/RESEARCH_DASHBOARD.md). Server-side, service role. Private: requires the shared access cookie (`APP_ACCESS_PASSWORD`, docs/ACCESS.md); 401 without it |
 | `GET /api/research/health` | | `{ ok, configured, database: reachable / unreachable / not_configured, latencyMs }`, from a head-only round trip to `research_studies`. 200 when reachable, 503 otherwise. Reveals no data or error detail |
 | `GET /api/research/debug/page`, `GET /api/research/debug` | header `x-research-debug-key` | Internal development view. Returns **404 unless `RESEARCH_DEBUG_KEY` is set**, and 401 without the right key |
 
@@ -254,8 +254,8 @@ prototype opened later in the same tab records nothing. Test Mode also uses `res
 | **Signed-in user not listed** | Nothing: RLS filters every row out | |
 
 **Current `/research` model:** the dashboard does not sign anyone in. It reads through the server-side
-dashboard API (`/api/research/dashboard/*`) with the service role, optionally gated by a
-`RESEARCH_DASHBOARD_KEY` (docs/RESEARCH_DASHBOARD.md). The authenticated-researcher rows above
+dashboard API (`/api/research/dashboard/*`) with the service role, behind the shared access password
+(`APP_ACCESS_PASSWORD`, docs/ACCESS.md), the same one as the normal app. The authenticated-researcher rows above
 (`research_researchers` and its RLS read policies) remain in the database but are currently unused.
 
 ## 12. Example queries and data flow
@@ -355,8 +355,8 @@ You need a Supabase account (free tier is fine), Node 18+, and this repository.
     `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project's environment variables
     (Production and Preview), not as `VITE_` variables.
 
-The Research Dashboard needs no extra setup: open `/research` on the deployment (optionally protected
-with `RESEARCH_DASHBOARD_KEY`, see docs/RESEARCH_DASHBOARD.md).
+The Research Dashboard and the normal app need `APP_ACCESS_PASSWORD` (server-only) in the Vercel
+environment; `/test` stays public. See docs/ACCESS.md.
 
 ## Validation done in this phase
 

@@ -15,14 +15,15 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { syncStudyTasks } from './studies.js';
+import { hasAccess } from '../access.js';
 import { ATTEMPT_OUTCOMES, FEEDBACK_CATEGORIES, isResearchEventName, sanitizeMetadata, sanitizeToken, RESEARCH_OBJECT_TYPES } from '../../src/research-data/taxonomy.js';
 
 export type ResearchEnv = {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   RESEARCH_DEBUG_KEY?: string;
-  /** Optional. When set, the dashboard read API requires it (x-research-dashboard-key). Unset: open. */
-  RESEARCH_DASHBOARD_KEY?: string;
+  /** The shared private-access password (server/access.ts). The dashboard API requires its cookie. */
+  APP_ACCESS_PASSWORD?: string;
 };
 export type ResearchRequest = { method: string; action: string; headers: Record<string, string | undefined>; body: unknown; query?: Record<string, string> };
 export type ResearchResponse = { status: number; body: unknown; contentType?: string };
@@ -380,8 +381,9 @@ async function submitFeedback(sb: SupabaseClient, s: SessionRow, b: Record<strin
  *   GET  dashboard/events?attempts=<id,id,...>     events for a set of task attempts
  *   POST dashboard/feedback-status {id, status}    researcher review status
  *
- * Open by default (internal prototype; the deployment may add Vercel protection). If
- * RESEARCH_DASHBOARD_KEY is set, every call must send it as x-research-dashboard-key.
+ * Private: every call needs the shared access cookie (APP_ACCESS_PASSWORD, server/access.ts), the
+ * same one that unlocks the app and /research. Vercel middleware checks it first; this checks again
+ * so the API is protected on any host. Without APP_ACCESS_PASSWORD the dashboard API stays closed.
  */
 const SESSION_COLS = 'id, status, prototype_version, selected_persona, device_type, viewport_width, viewport_height, started_at, completed_at, research_participants(participant_code, display_name, primary_craft, experience_level, participant_type)';
 const ATTEMPT_COLS = 'id, session_id, task_id, outcome, success_detected, difficulty_rating, expectation_match, feedback_text, duration_ms, started_at, completed_at';
@@ -390,12 +392,8 @@ const EVENT_COLS = 'sequence, event_name, screen, object_type, object_id, metada
 const FEEDBACK_STATUSES = ['new', 'reviewed', 'actionable', 'fixed', 'wont_fix'];
 
 async function dashboard(req: ResearchRequest, env: ResearchEnv): Promise<ResearchResponse> {
-  const key = env.RESEARCH_DASHBOARD_KEY;
-  if (key) {
-    const given = Buffer.from(req.headers['x-research-dashboard-key'] ?? '');
-    const want = Buffer.from(key);
-    if (given.length !== want.length || !timingSafeEqual(given, want)) return fail(401, 'dashboard_key_required');
-  }
+  if (!env.APP_ACCESS_PASSWORD) return fail(503, 'access_not_configured');
+  if (!(await hasAccess(req.headers['cookie'], env.APP_ACCESS_PASSWORD))) return fail(401, 'access_required');
   const sb = db(env);
   if (!sb) return fail(503, 'research_backend_not_configured');
   const q = req.query ?? {};

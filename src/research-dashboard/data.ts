@@ -17,35 +17,20 @@ export type Feedback = { id: string; session_id: string; task_attempt_id: string
 export type StudyData = { tasks: Task[]; sessions: Session[]; attempts: Attempt[]; feedback: Feedback[] };
 
 /**
- * Optional light protection: if the server sets RESEARCH_DASHBOARD_KEY, open /research?key=<value>
- * once; the key is kept in this browser's localStorage and sent as a header. Unset: no key needed.
+ * Access: /research and this API sit behind the shared access password (server/access.ts). The
+ * browser only holds the HttpOnly access cookie the server set, sent automatically on same-origin
+ * requests. No key, password or token is kept in browser storage.
  */
-const KEY_STORE = 'aa-research-dashboard-key';
-function dashboardKey(): string | null {
-  try {
-    const fromUrl = new URLSearchParams(location.search).get('key');
-    if (fromUrl) {
-      localStorage.setItem(KEY_STORE, fromUrl);
-      const u = new URL(location.href);
-      u.searchParams.delete('key');
-      history.replaceState(null, '', u.toString());
-    }
-    return localStorage.getItem(KEY_STORE);
-  } catch {
-    return null;
-  }
-}
-const KEY = typeof window !== 'undefined' ? dashboardKey() : null;
-
 export class DashboardError extends Error {
-  constructor(public status: number) {
+  constructor(public status: number, public code?: string) {
     super(`dashboard_${status}`);
   }
 }
+const fail = async (r: Response) => new DashboardError(r.status, ((await r.json().catch(() => null)) as { error?: string } | null)?.error);
 
 async function get<T>(path: string): Promise<T> {
-  const r = await fetch(`${API}/${path}`, { headers: KEY ? { 'x-research-dashboard-key': KEY } : {}, cache: 'no-store' });
-  if (!r.ok) throw new DashboardError(r.status);
+  const r = await fetch(`${API}/${path}`, { cache: 'no-store' });
+  if (!r.ok) throw await fail(r);
   return (await r.json()) as T;
 }
 
@@ -74,10 +59,10 @@ export async function loadEventsForAttempts(attemptIds: string[]): Promise<Event
 export async function setFeedbackStatus(id: string, status: string) {
   const r = await fetch(`${API}/feedback-status`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(KEY ? { 'x-research-dashboard-key': KEY } : {}) },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id, status }),
   });
-  if (!r.ok) throw new DashboardError(r.status);
+  if (!r.ok) throw await fail(r);
 }
 
 /**

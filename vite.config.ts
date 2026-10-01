@@ -1,5 +1,7 @@
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer, type PreviewServer } from 'vite';
 import react from '@vitejs/plugin-react';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { accessGate } from './server/access';
 
 /**
  * Research API during `npm run dev` and `npm run preview`: mounts /api/research/* on the local server.
@@ -9,7 +11,7 @@ import react from '@vitejs/plugin-react';
  */
 function researchApi(mode: string): Plugin {
   const all = loadEnv(mode, process.cwd(), '');
-  const env = { SUPABASE_URL: all.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: all.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: all.RESEARCH_DEBUG_KEY, RESEARCH_DASHBOARD_KEY: all.RESEARCH_DASHBOARD_KEY };
+  const env = { SUPABASE_URL: all.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: all.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: all.RESEARCH_DEBUG_KEY, APP_ACCESS_PASSWORD: all.APP_ACCESS_PASSWORD };
   const mount = (server: ViteDevServer | PreviewServer, load: () => Promise<{ handleNodeRequest: (...a: unknown[]) => Promise<void> }>) => {
     server.middlewares.use('/api/research', async (req, res) => {
       try {
@@ -37,8 +39,40 @@ function researchApi(mode: string): Plugin {
   };
 }
 
+/**
+ * Private access on the local dev and preview servers: the same gate Vercel runs in middleware.ts
+ * (server/access.ts). Only active when APP_ACCESS_PASSWORD is set in .env.local, so plain local
+ * prototype work needs no password. /test is always public.
+ */
+function privateAccess(mode: string): Plugin {
+  const password = loadEnv(mode, process.cwd(), '').APP_ACCESS_PASSWORD || undefined;
+  const gate = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+    if (!password) return next();
+    try {
+      const url = `http://${req.headers.host ?? 'localhost'}${req.url ?? '/'}`;
+      const isLogin = req.method === 'POST' && (req.url ?? '').split('?')[0] === '/api/access';
+      const body = isLogin ? await new Promise<Buffer>((ok) => { const c: Buffer[] = []; req.on('data', (d: Buffer) => c.push(d)); req.on('end', () => ok(Buffer.concat(c))); }) : undefined;
+      const headers = new Headers();
+      for (const [k, v] of Object.entries(req.headers)) if (typeof v === 'string') headers.set(k, v);
+      const out = await accessGate(new Request(url, { method: req.method, headers, body: body ? new Uint8Array(body) : undefined }), password);
+      if (!out) return next();
+      res.statusCode = out.status;
+      out.headers.forEach((v, k) => res.setHeader(k, v));
+      res.end(Buffer.from(await out.arrayBuffer()));
+    } catch {
+      res.statusCode = 500;
+      res.end('access check failed');
+    }
+  };
+  return {
+    name: 'art-and-artist-private-access',
+    configureServer: (server) => void server.middlewares.use(gate),
+    configurePreviewServer: (server) => void server.middlewares.use(gate),
+  };
+}
+
 // Relative base so the build can be served from any path (artifact, static host, file preview).
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [react(), researchApi(mode)],
+  plugins: [privateAccess(mode), react(), researchApi(mode)],
 }));

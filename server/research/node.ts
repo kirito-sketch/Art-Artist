@@ -37,7 +37,7 @@ function safeParse(s: string) {
 }
 
 export function envFrom(source: Record<string, string | undefined>): ResearchEnv {
-  return { SUPABASE_URL: source.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: source.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: source.RESEARCH_DEBUG_KEY, RESEARCH_DASHBOARD_KEY: source.RESEARCH_DASHBOARD_KEY };
+  return { SUPABASE_URL: source.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: source.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: source.RESEARCH_DEBUG_KEY, APP_ACCESS_PASSWORD: source.APP_ACCESS_PASSWORD };
 }
 
 export async function handleNodeRequest(req: IncomingMessage & { body?: unknown }, res: ServerResponse, env: ResearchEnv = envFrom(process.env)) {

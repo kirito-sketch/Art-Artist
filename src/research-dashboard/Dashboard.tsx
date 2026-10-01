@@ -30,8 +30,10 @@ export default function Dashboard() {
 
 const loadError = (e: unknown, what: string) =>
   e instanceof DashboardError && e.status === 401
-    ? 'This dashboard needs its access key: open /research?key=… once in this browser.'
-    : e instanceof DashboardError && e.status === 503
+    ? 'Your access has expired. Reload the page to enter the access password again.'
+    : e instanceof DashboardError && e.code === 'access_not_configured'
+      ? 'Private access (APP_ACCESS_PASSWORD) is not configured on this deployment.'
+      : e instanceof DashboardError && e.status === 503
       ? 'The research backend is not configured on this deployment.'
       : `Could not load ${what}. Check the connection and refresh.`;
 
