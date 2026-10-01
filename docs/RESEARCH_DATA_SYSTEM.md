@@ -132,11 +132,12 @@ touched.
 | Group | Events |
 |---|---|
 | Research lifecycle | `session_started`, `session_completed`, `task_started`, `task_completed`, `task_skipped`, `feedback_opened`, `feedback_submitted`, `stuck_reported`, `task_instruction_opened`, `survey_submitted` |
-| First run | `onboarding_step_viewed` {step}, `onboarding_step_back` {from}, `onboarding_step_skipped` {step}, `first_home_reached` {via: created, signin} |
+| First run | `onboarding_step_viewed` {step}, `onboarding_step_back` {from}, `onboarding_step_skipped` {step}, `first_home_reached` {via: created, signin; intent} |
+| Intent (V30) | `intent_changed` {from, to: work, hire, collaborate, network, explore} |
 | Navigation | `home_viewed`, `discover_opened`, `inbox_opened`, `own_profile_viewed`, `screen_opened` {route}, `navigated_back` {from}, `sheet_opened` {sheet} |
 | Discovery | `discover_tab_selected` {tab}, `discover_filter_selected` {filter} |
 | Objects opened | `role_opened`, `project_opened`, `person_profile_opened`, `house_profile_opened`, `post_opened`, `conversation_opened`, `notifications_opened`, `saved_opened`, `settings_opened` |
-| Actions / state | `role_saved` / `_unsaved`, `project_saved` / `_unsaved`, `post_saved` / `_unsaved`, `person_followed` / `_unfollowed`, `house_followed` / `_unfollowed`, `interest_sent`, `interest_withdrawn`, `message_sent`, `credit_accepted`, `identity_switched` {from, to}, `availability_changed` {open} |
+| Actions / state | `role_saved` / `_unsaved`, `project_saved` / `_unsaved`, `post_saved` / `_unsaved`, `person_saved` / `_unsaved` (V30), `person_followed` / `_unfollowed`, `house_followed` / `_unfollowed`, `interest_sent`, `interest_withdrawn`, `message_sent`, `credit_accepted`, `identity_switched` {from, to}, `availability_changed` {open} |
 | Production House (reserved) | `interest_reviewed`, `project_member_added`, `credit_issued`, `role_published` |
 
 Object types: role, project, person, house, post, conversation, credit, task.

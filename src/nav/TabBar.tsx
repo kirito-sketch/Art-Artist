@@ -12,7 +12,11 @@ const ITEMS: { id: Tab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
 ];
 
-/** Light floating pill. Icons only; the active tab is black, the rest grey. Create is the one filled control. */
+/**
+ * Light floating pill. V30: every tab is labelled, and the active one is unmistakable (tinted well,
+ * dark icon, bold label), so Home and Discover always say which environment you are in.
+ * Create is the one filled control.
+ */
 export function TabBar() {
   const { tab, setTab, openSheet, sheet, closeSheet, conversations, interestsReceived, viewer, acting } = useStore();
   const unread = conversations.some((c) => c.unread) || interestsReceived.some((i) => !i.withdrawn && !i.review);
@@ -46,8 +50,8 @@ export function TabBar() {
             </motion.span>
           )}
         </motion.span>
+        <span className="tab-label">{it.label}</span>
         {it.id === 'inbox' && unread && <span className="tab-dot" />}
-        {active && <motion.span layoutId="tab-mark" className="tab-mark" transition={spring.snappy} />}
       </motion.button>
     );
   };

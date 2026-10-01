@@ -13,6 +13,7 @@ import { StatusBar } from '../ui/chrome';
 import { Sheet } from '../ui/Sheet';
 import { MediaPicker } from '../screens/create/PostComposer';
 import { research } from '../research-data/client';
+import { INTENTS, type Intent } from '../domain/relevance';
 
 /*
  * How someone enters Art and Artist. One splash (only as long as loading), one entry screen, then account,
@@ -20,14 +21,12 @@ import { research } from '../research-data/client';
  * Apple, Google and email are the ways in. Phone is verification and linking only, never a login.
  */
 
-type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'forgot' | 'consent' | 'verify' | 'you' | 'craft' | 'where' | 'looking' | 'work' | 'invite' | 'inviteTip';
+type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'forgot' | 'consent' | 'verify' | 'you' | 'now' | 'invite' | 'inviteTip';
 
 /** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
 const KNOWN: Record<string, string> = { kiran: 'kiran', tara: 'tara', aditi: 'aditi' };
 const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata'];
-const LANGS = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
-const KINDS = ['Paid crew or cast work', 'Collaborations', 'Short films', 'Ads', 'Series', 'Features'];
 const art = (n: string): Media => ({ id: `entry-${n}`, kind: 'image', src: `images/brand/entry/${n}.jpg` });
 
 export function EntryFlow() {
@@ -45,17 +44,16 @@ export function EntryFlow() {
   // Profile
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<string | undefined>();
+  // V30: onboarding asks only what personalises the first Home (identity, craft, intent, city, and
+  // availability when it matters). Everything else is profile completion, later. Every choice is
+  // kept when you go Back, and can be changed or cleared.
   const [primary, setPrimary] = useState<Craft | null>(invite ? 'production' : null);
-  const [more, setMore] = useState<Craft[]>([]);
-  const [spec, setSpec] = useState('');
+  const [intent, setIntent] = useState<Intent | null>(invite ? 'hire' : null);
   const [city, setCity] = useState('');
-  const [travel, setTravel] = useState(false);
-  const [langs, setLangs] = useState<string[]>([]);
-  const [avail, setAvail] = useState<'now' | 'from' | 'no'>('now');
+  const [avail, setAvail] = useState<'now' | 'from'>('now');
   const [availFrom, setAvailFrom] = useState('');
-  const [kinds, setKinds] = useState<string[]>([]);
-  const [work, setWork] = useState<Media[]>([]);
   const [personId, setPersonId] = useState<string | null>(null);
+  const asksAvailability = intent === 'work' || intent === 'collaborate';
 
   // Splash lasts only as long as "loading" (simulated as a moment), then fades into entry.
   useEffect(() => {
@@ -89,9 +87,9 @@ export function EntryFlow() {
   };
 
   const finishProfile = () => {
-    const role = headline(primary!, spec);
-    const availability: Availability = avail === 'no' ? { open: false, from: 'Now', scope: city } : { open: true, from: avail === 'now' ? 'Now' : availFrom || 'Soon', scope: `${city}${travel ? ' · will travel' : ''}` };
-    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: more, specialisation: spec, role, city, travel, languages: langs, availability, work, email });
+    const role = headline(primary!);
+    const availability: Availability = asksAvailability ? { open: true, from: avail === 'from' && availFrom.trim() ? availFrom.trim() : 'Now', scope: city.trim() } : { open: false, from: 'Now', scope: city.trim() };
+    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel: false, languages: [], availability, work: [], email, intent: intent ?? undefined });
     setPersonId(id);
     if (invite) return go('invite');
     endEntry();
@@ -100,10 +98,10 @@ export function EntryFlow() {
     showToast({ text: `Welcome to Art and Artist, ${name.split(' ')[0]}` });
   };
 
-  const steps: Step[] = invite ? ['you', 'craft', 'where'] : ['you', 'craft', 'where', 'looking', 'work'];
+  const steps: Step[] = ['you', 'now'];
   const stepIndex = steps.indexOf(step);
 
-  const overImage = ['intro', 'entry', 'you', 'craft', 'where', 'looking', 'work', 'invite', 'inviteTip'].includes(step);
+  const overImage = ['intro', 'entry', 'you', 'now', 'invite', 'inviteTip'].includes(step);
   return (
     <div className="entry">
       <div className="entry-status">
@@ -196,7 +194,7 @@ export function EntryFlow() {
           {step === 'verify' && <Verify email={email} onBack={back} onDone={() => go('you')} />}
 
           {step === 'you' && (
-            <Onboard step={stepIndex} total={steps.length} image="badge" title="How you'll appear" onBack={back}>
+            <Onboard step={stepIndex} total={steps.length} image="badge" title="About you" onBack={back}>
               <div className="ob-photo">
                 <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo }} size={88} />
                 <PhotoPicker onPick={setPhoto} has={!!photo} />
@@ -204,129 +202,74 @@ export function EntryFlow() {
               <Field label="Your name">
                 <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoFocus />
               </Field>
-              <p className="meta">Use the name you work under. It's how productions will credit you.</p>
-              <Button block size="l" disabled={!name.trim()} onClick={() => go('craft')}>
-                Continue
-              </Button>
-            </Onboard>
-          )}
-
-          {step === 'craft' && (
-            <Onboard step={stepIndex} total={steps.length} image="camera" title="What do you do?" onBack={back}>
-              <p className="meta">Pick your main craft. You can add more.</p>
-              <div className="craft-grid">
+              <p className="meta">The name you work under. Productions credit you by it. Photo is optional.</p>
+              <p className="field-label">Your main craft</p>
+              <div className="craft-grid" role="radiogroup" aria-label="Your main craft">
                 {CRAFTS.map((c) => (
-                  <button
-                    key={c.id}
-                    className={`craft-tile ${primary === c.id ? 'is-on' : ''} ${more.includes(c.id) ? 'is-more' : ''}`}
-                    onClick={() => {
-                      setPrimary(c.id);
-                      setMore((m) => m.filter((x) => x !== c.id));
-                    }}
-                  >
+                  <button key={c.id} role="radio" aria-checked={primary === c.id} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => setPrimary(primary === c.id ? null : c.id)}>
                     {c.label}
                   </button>
                 ))}
               </div>
-              {primary && (
-                <>
-                  <p className="field-label">Also do (up to 4)</p>
-                  <div className="chips">
-                    {CRAFTS.filter((c) => c.id !== primary).map((c) => (
-                      <button
-                        key={c.id}
-                        className={`chip ${more.includes(c.id) ? 'is-on' : ''}`}
-                        disabled={!more.includes(c.id) && more.length >= 4}
-                        onClick={() => setMore((m) => (m.includes(c.id) ? m.filter((x) => x !== c.id) : [...m, c.id]))}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-                  <Field label="Specialisation (optional)">
-                    <input className="field" value={spec} onChange={(e) => setSpec(e.target.value)} placeholder="e.g. Anamorphic, night exteriors" maxLength={60} />
-                  </Field>
-                  <p className="meta">
-                    Your profile will read: <b>{headline(primary, spec)}</b>
-                  </p>
-                </>
-              )}
-              <Button block size="l" disabled={!primary} onClick={() => go('where')}>
+              <p className="meta">Do more than one thing? Add other crafts from your profile later.</p>
+              <Button block size="l" disabled={!name.trim() || !primary} onClick={() => go('now')}>
                 Continue
               </Button>
             </Onboard>
           )}
 
-          {step === 'where' && (
-            <Onboard step={stepIndex} total={steps.length} image="valley" title="Where do you work?" onBack={back}>
-              <Field label="City">
+          {step === 'now' && (
+            <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={back}>
+              <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>
+              <div className="intent-list" role="radiogroup" aria-label="What are you looking to do right now?">
+                {INTENTS.map((it) => (
+                  <button key={it.id} role="radio" aria-checked={intent === it.id} className={`intent-option ${intent === it.id ? 'is-on' : ''}`} onClick={() => setIntent(it.id)}>
+                    <span className="intent-option-label">{it.label}</span>
+                    <span className="meta">{it.hint}</span>
+                  </button>
+                ))}
+              </div>
+              <Field label="Where are you based?">
                 <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" />
               </Field>
               <div className="chips chips--tight">
                 {CITIES.map((c) => (
-                  <button key={c} className={`chip ${city === c ? 'is-on' : ''}`} onClick={() => setCity(c)}>
+                  <button key={c} className={`chip ${city === c ? 'is-on' : ''}`} onClick={() => setCity(city === c ? '' : c)} aria-pressed={city === c}>
                     {c}
                   </button>
                 ))}
               </div>
-              <div className="ob-row">
-                <span>Open to travel for work</span>
-                <Toggle on={travel} onChange={setTravel} label="Open to travel" />
-              </div>
-              <p className="field-label">Languages you work in</p>
-              <div className="chips">
-                {LANGS.map((l) => (
-                  <button key={l} className={`chip ${langs.includes(l) ? 'is-on' : ''}`} onClick={() => setLangs((x) => (x.includes(l) ? x.filter((y) => y !== l) : [...x, l]))}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-              <Button block size="l" disabled={!city.trim() || !langs.length} onClick={() => (invite ? finishProfile() : go('looking'))}>
-                Continue
+              {asksAvailability && (
+                <>
+                  <p className="field-label">When can you start?</p>
+                  <div className="seg" role="radiogroup" aria-label="When can you start?">
+                    {(
+                      [
+                        ['now', 'Now'],
+                        ['from', 'From a date'],
+                      ] as const
+                    ).map(([k, l]) => (
+                      <button
+                        key={k}
+                        role="radio"
+                        aria-checked={avail === k}
+                        className={avail === k ? 'is-on' : ''}
+                        onClick={() => {
+                          setAvail(k);
+                          if (k === 'now') setAvailFrom(''); // a date never lingers behind "Now"
+                        }}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                  {avail === 'from' && <input className="field" value={availFrom} onChange={(e) => setAvailFrom(e.target.value)} placeholder="e.g. 15 Nov" aria-label="Available from" />}
+                </>
+              )}
+              <Button block size="l" disabled={!intent || !city.trim()} onClick={finishProfile}>
+                {invite ? 'Continue' : 'Show me what matters'}
               </Button>
-            </Onboard>
-          )}
-
-          {step === 'looking' && (
-            <Onboard step={stepIndex} total={steps.length} image="search" title="What are you looking for?" onBack={back} onSkip={() => (research.track('onboarding_step_skipped', { metadata: { step: 'looking' } }), go('work'))}>
-              <p className="field-label">Availability</p>
-              <div className="seg">
-                {(
-                  [
-                    ['now', 'Available now'],
-                    ['from', 'From a date'],
-                    ['no', 'Not looking'],
-                  ] as const
-                ).map(([k, l]) => (
-                  <button key={k} className={avail === k ? 'is-on' : ''} onClick={() => setAvail(k)}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-              {avail === 'from' && <input className="field" value={availFrom} onChange={(e) => setAvailFrom(e.target.value)} placeholder="e.g. 15 Nov" />}
-              <p className="field-label">Kinds of work</p>
-              <div className="chips">
-                {KINDS.map((k) => (
-                  <button key={k} className={`chip ${kinds.includes(k) ? 'is-on' : ''}`} onClick={() => setKinds((x) => (x.includes(k) ? x.filter((y) => y !== k) : [...x, k]))}>
-                    {k}
-                  </button>
-                ))}
-              </div>
-              <p className="meta">This shapes the roles we show you. Change it any time.</p>
-              <Button block size="l" onClick={() => go('work')}>
-                Continue
-              </Button>
-            </Onboard>
-          )}
-
-          {step === 'work' && (
-            <Onboard step={stepIndex} total={steps.length} image="moodboard" title="Show your work" onBack={back} onSkip={() => (research.track('onboarding_step_skipped', { metadata: { step: 'work' } }), finishProfile())} skipLabel="Skip for now">
-              <p className="meta">Stills, frames or a reel help people understand what you do. Add them now or later from your profile.</p>
-              <WorkPicker work={work} setWork={setWork} />
-              <p className="inline-note">Credits come from productions. When a production credits you on Art and Artist, you'll be asked to accept it.</p>
-              <Button block size="l" onClick={finishProfile}>
-                {work.length ? 'Finish' : 'Finish without work'}
-              </Button>
+              <p className="meta ob-later">Your work, other crafts, languages and a bio can be added from your profile whenever you like.</p>
             </Onboard>
           )}
 
@@ -498,35 +441,6 @@ function PhotoPicker({ onPick, has }: { onPick: (src: string) => void; has: bool
           selected={[]}
           onDone={(ms: Media[]) => {
             if (ms[0]) onPick(ms[0].src);
-            setOpen(false);
-          }}
-        />
-      </Sheet>
-    </>
-  );
-}
-
-function WorkPicker({ work, setWork }: { work: Media[]; setWork: (m: Media[]) => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      {work.length > 0 && (
-        <div className="grid-3">
-          {work.map((m) => (
-            <span key={m.id} className="grid-item">
-              <Photo media={m} />
-            </span>
-          ))}
-        </div>
-      )}
-      <Button block variant="outline" onClick={() => setOpen(true)}>
-        {work.length ? 'Change selection' : 'Add photos or a reel'}
-      </Button>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Add your work" size="tall">
-        <MediaPicker
-          selected={work}
-          onDone={(ms: Media[]) => {
-            setWork(ms);
             setOpen(false);
           }}
         />

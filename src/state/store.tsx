@@ -5,6 +5,7 @@ import { TEST_MODE } from '../research-data/surface';
 import { BOOT } from '../qa/boot';
 import * as act from '../domain/actions';
 import { notificationsFor } from '../domain/discovery';
+import { defaultIntent, type Intent } from '../domain/relevance';
 
 /** Research sessions start as Aditi acting for Konark; an edge-case scenario starts where it says; everything else starts as Kiran. */
 // Participant Test Mode (/test) is the Individual Creative study: always Kiran, always the seed state.
@@ -44,7 +45,8 @@ export type Route =
   | { name: 'posts'; ids: string[]; index: number }
   | { name: 'saved' };
 
-export type SavedKind = 'post' | 'role' | 'project';
+/** V30: one Saved model for the four things people come back to. People are saved privately (a shortlist), never shown to them. */
+export type SavedKind = 'person' | 'role' | 'project' | 'post';
 export interface SavedItem {
   kind: SavedKind;
   id: string;
@@ -55,6 +57,7 @@ export type Sheet =
   | { name: 'create' }
   | { name: 'notifications' }
   | { name: 'availability' }
+  | { name: 'intent' }
   | { name: 'respond'; id: string }
   | { name: 'showInterest'; id: string }
   | { name: 'reviewInterest'; opportunityId?: string }
@@ -115,6 +118,9 @@ const VIEWERS: Record<string, Viewer> = {
   tara: { id: 'tara', craft: 'actor', firstName: 'Tara' },
   aditi: { id: 'aditi', craft: 'production', firstName: 'Aditi' },
 };
+
+/** What each seeded persona is trying to do at the start. Anyone can change it from Home at any time. */
+const DEFAULT_INTENT: Record<string, Intent> = { kiran: 'work', tara: 'work', aditi: 'hire' };
 
 const DEFAULT_FOLLOWING = ['meera', 'arjun', 'rhea', 'vikram', 'devika', 'sameer', 'ishaan', 'nandini'];
 
@@ -191,6 +197,9 @@ function useStoreValue() {
   ]);
   const [policyUpdate, setPolicyUpdate] = useState(BOOT?.policyUpdate ?? false);
   const [newPeople, setNewPeople] = useState<string[]>([]);
+  /** V30: professional intent per person ("what are you trying to do right now?"). Drives Home's order and ranking. */
+  const [intents, setIntents] = useState<Record<string, Intent>>({});
+  const intent: Intent = intents[viewer.id] ?? DEFAULT_INTENT[viewer.id] ?? defaultIntent(viewer.craft);
   const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
   const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
   /** VALIDATE: one Interest model everywhere (A) vs Interest for collaborations plus Respond for crew and casting (B). */
@@ -269,7 +278,7 @@ function useStoreValue() {
       // The bookmark confirms itself. While acting for a house we say whose list it went to; the very
       // first save says once where Saved lives, with a way straight there.
       if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'View', run: () => push({ name: 'saved' }) } });
-      else if (on && saved.length === 0) showToast({ text: 'Saved. Find it on your profile.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
+      else if (on && saved.length === 0) showToast({ text: 'Saved. Find everything you save in Saved.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
     },
     [saved, showToast, acting, push],
   );
@@ -521,8 +530,10 @@ function useStoreValue() {
     policyUpdate,
     setPolicyUpdate,
     isNewPerson: newPeople.includes(viewer.id),
+    intent,
+    setIntent: (i: Intent) => setIntents((m) => ({ ...m, [viewer.id]: i })),
     /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
-    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string }) => {
+    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent }) => {
       const id = `you-${Date.now().toString(36)}`;
       const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, visibility: 'public', identityVerified: false };
       seed.people.push(p);
@@ -542,6 +553,7 @@ function useStoreValue() {
         .slice(0, 5)
         .map((x) => x.id);
       setNewPeople((n) => [...n, id]);
+      if (d.intent) setIntents((m) => ({ ...m, [id]: d.intent! }));
       return id;
     },
     addMembership: (personId: string, orgId: string) => setMemberMap((m) => ({ ...m, [personId]: [...new Set([...(m[personId] ?? []), orgId])] })),
@@ -747,6 +759,8 @@ function useStoreValue() {
     userPosts,
     userCollabs,
     userPortfolio,
+    /** Adds work straight to the signed-in person's portfolio (Edit profile → Showreel and work). */
+    addToPortfolio: (ms: Media[]) => setUserPortfolio((pf) => [...ms.filter((m) => !pf.some((x) => x.id === m.id)), ...pf]),
     publishing,
     publishPost,
     publishCollab,

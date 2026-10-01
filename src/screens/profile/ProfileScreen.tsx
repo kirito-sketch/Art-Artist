@@ -71,6 +71,7 @@ function useNameFit(name: string) {
 }
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
+  const { isSaved, toggleSave } = useStore();
   const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach } = useStore();
   const p = person(id);
   const own = id === viewer.id;
@@ -156,6 +157,12 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </IconButton>
           )}
           <span className="flex" />
+          {/* V30: people can be saved, privately, like anything else worth coming back to (a shortlist). */}
+          {!own && (
+            <IconButton label={isSaved('person', id) ? `Remove ${p.name} from Saved` : `Save ${p.name}`} className={`icon-btn--float ${isSaved('person', id) ? 'is-saved' : ''}`} onClick={() => toggleSave(id, 'person')}>
+              <Bookmark size={18} fill={isSaved('person', id) ? 'currentColor' : 'none'} />
+            </IconButton>
+          )}
           <IconButton label="Share profile" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
             <Share size={18} />
           </IconButton>
@@ -252,7 +259,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           )}
         </div>
 
-        {/* Private to you, one quiet line: what you saved and what you sent. Profiles themselves are never saved. */}
+        {/* Private to you, one quiet line: what you saved and what you sent. */}
         {own && (
           <div className="pid-private">
             <button className="pid-private-link" onClick={() => push({ name: 'saved' })}>
@@ -268,7 +275,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         {own && pendingCredits.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title="Waiting for you" />
+            <SectionHeader title="Waiting for your confirmation" />
             {pendingCredits.map((c) => (
               <div key={c.id} className="pending-credit">
                 <Photo media={c.media} className="pending-credit-poster" showPlay={false} />
@@ -303,6 +310,33 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </section>
         )}
 
+        <section className="section section--flush">
+          <SectionHeader title="Verified credits" />
+          {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them. */}
+          <p className="meta evidence-note">
+            <Verified size={12} /> Issued by the production and confirmed by {own ? 'you' : p.name.split(' ')[0]}. No one can add their own credits.
+          </p>
+          {credits.length ? (
+            <div className="rail">
+              {credits.map((c) => (
+                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={c.title}>
+                  <span className="rail-poster-wrap">
+                    <Photo media={c.media} className="rail-poster" showPlay={false} />
+                    {justAccepted === c.id && <CreditSeal />}
+                  </span>
+                  <p className="item-title">{c.title}</p>
+                  <p className="meta">{c.role}</p>
+                  <p className="meta rail-issuer">
+                    {org(c.orgId).name} <Verified size={12} />
+                  </p>
+                </Pressable>
+              ))}
+            </div>
+          ) : (
+            <p className="meta">{own ? 'No verified credits yet. When a production credits you, you confirm it here.' : 'No verified credits yet.'}</p>
+          )}
+        </section>
+
         {reel && (
           <section className="section section--flush">
             <SectionHeader title="Showreel" />
@@ -323,7 +357,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title="Portfolio" />
+            <SectionHeader title="Selected work" />
             <div className="stills-mosaic">
               {stills.map((m, i) => (
                 <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i })} scale={0.97}>
@@ -334,31 +368,17 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           </section>
         )}
 
-        <section className="section section--flush">
-          <SectionHeader title="Credits" />
-          <p className="meta evidence-note">
-            <Verified size={12} /> Issued by productions and accepted by {own ? 'you' : p.name.split(' ')[0]}
-          </p>
-          {credits.length ? (
-            <div className="rail">
-              {credits.map((c) => (
-                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={c.title}>
-                  <span className="rail-poster-wrap">
-                    <Photo media={c.media} className="rail-poster" showPlay={false} />
-                    {justAccepted === c.id && <CreditSeal />}
-                  </span>
-                  <p className="item-title">{c.title}</p>
-                  <p className="meta">{c.role}</p>
-                  <p className="meta rail-issuer">
-                    {org(c.orgId).name} <Verified size={12} />
-                  </p>
-                </Pressable>
-              ))}
-            </div>
-          ) : (
-            <p className="meta">No credits yet</p>
-          )}
-        </section>
+        {(d.about || p.gear) && (
+          <section className="section section--flush">
+            <SectionHeader title="About" />
+            {d.about && <p className="body">{d.about}</p>}
+            {p.gear && (
+              <ul className="facts facts--tight facts--after">
+                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
+              </ul>
+            )}
+          </section>
+        )}
 
         {d.projects.length > 0 && (
           <section className="section section--flush">
@@ -430,18 +450,6 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </section>
           );
         })()}
-
-        {(d.about || p.gear) && (
-          <section className="section section--flush">
-            <SectionHeader title="About" />
-            {d.about && <p className="body">{d.about}</p>}
-            {p.gear && (
-              <ul className="facts facts--tight facts--after">
-                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
-              </ul>
-            )}
-          </section>
-        )}
 
         {collabs.length > 0 && !own && (
           <section className="section section--flush">

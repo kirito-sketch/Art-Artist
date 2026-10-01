@@ -10,6 +10,7 @@ import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
 import { world, project as wproject } from '../../state/world';
+import { INTENTS } from '../../domain/relevance';
 import { sentReports } from '../../state/reports';
 
 export function SheetHost() {
@@ -23,6 +24,9 @@ export function SheetHost() {
       </Sheet>
       <Sheet open={is('availability')} onClose={closeSheet} title="Availability">
         <AvailabilityForm />
+      </Sheet>
+      <Sheet open={is('intent')} onClose={closeSheet} title="What are you looking to do right now?">
+        <IntentForm />
       </Sheet>
       <Sheet open={is('respond')} onClose={closeSheet} title="Respond" size="tall">
         {sheet?.name === 'respond' && <RespondForm id={sheet.id} />}
@@ -202,6 +206,37 @@ function Notifications() {
 
 const FROM = ['Now', '3 Oct', '15 Oct', '1 Nov'];
 
+/**
+ * V30: what the person is trying to do right now. It reorders Home and re-ranks it; nothing is
+ * hidden for good, and everything stays in Discover. Changing it is instant and reversible.
+ */
+function IntentForm() {
+  const { intent, setIntent, closeSheet, showToast } = useStore();
+  return (
+    <div className="stack">
+      <p className="meta">Home puts what matters for this first. Everything else is still in Discover.</p>
+      <div className="intent-list" role="radiogroup" aria-label="What are you looking to do right now?">
+        {INTENTS.map((it) => (
+          <button
+            key={it.id}
+            role="radio"
+            aria-checked={intent === it.id}
+            className={`intent-option ${intent === it.id ? 'is-on' : ''}`}
+            onClick={() => {
+              setIntent(it.id);
+              closeSheet();
+              if (it.id !== intent) showToast({ text: `Home updated for: ${it.label}` });
+            }}
+          >
+            <span className="intent-option-label">{it.label}</span>
+            <span className="meta">{it.hint}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AvailabilityForm() {
   const { availability, setAvailability, closeSheet, scenario, setScenario } = useStore();
   const [open, setOpen] = useState(availability.open || scenario.newUser);
@@ -247,7 +282,8 @@ function RespondForm({ id }: { id: string }) {
   const { respond, userCollabs, viewer, attempt } = useStore();
   const [failed, setFailed] = useState(false);
   const o = findOpportunity(id, userCollabs)!;
-  const reel = seed.portfolio[viewer.id][0];
+  // A new account may have no work yet: then there is simply no reel to attach (V29 crashed here).
+  const reel = (seed.portfolio[viewer.id] ?? [])[0];
   const credits = world.credits.filter((c) => c.personId === viewer.id && c.status === 'accepted').length;
   const [answers, setAnswers] = useState<string[]>(() => (o.questions ?? []).map(() => ''));
   const [withReel, setWithReel] = useState(true);
@@ -266,7 +302,7 @@ function RespondForm({ id }: { id: string }) {
 
       <div className="group">
         <Row label="Your profile" value={<Check size={18} className="accent" />} />
-        <Row label={reel.caption ?? 'Showreel'} onPress={() => setWithReel((v) => !v)} chevron={false} value={withReel ? <Check size={18} className="accent" /> : <span className="meta">Add</span>} />
+        {reel && <Row label={reel.caption ?? 'Showreel'} onPress={() => setWithReel((v) => !v)} chevron={false} value={withReel ? <Check size={18} className="accent" /> : <span className="meta">Add</span>} />}
         <Row label={`${credits} credits`} onPress={() => setWithCredits((v) => !v)} chevron={false} value={withCredits ? <Check size={18} className="accent" /> : <span className="meta">Add</span>} />
       </div>
 
@@ -296,7 +332,7 @@ function RespondForm({ id }: { id: string }) {
             setFailed(false);
             attempt(
               `respond-${id}`,
-              () => respond(id, ['Profile', ...(withReel ? ['Showreel'] : []), ...(withCredits ? ['Credits'] : [])]),
+              () => respond(id, ['Profile', ...(withReel && reel ? ['Showreel'] : []), ...(withCredits ? ['Credits'] : [])]),
               () => {
                 setSending(false);
                 setFailed(true);
@@ -325,15 +361,28 @@ function InterestForm({ id }: { id: string }) {
   const [answers, setAnswers] = useState<string[]>(() => qs.map(() => ''));
   return (
     <div className="stack">
-      <p className="meta">{firstName(author)} sees your profile and decides whether to message you.</p>
+      {/* V30: the model in plain steps. Interest shares your profile; it does not open a chat. */}
+      <ol className="next-steps" aria-label="What happens next">
+        <li>
+          <b>{firstName(author)} sees your profile</b>, your verified credits and your work.
+        </li>
+        <li>
+          <b>If it's a fit, they message you.</b> You can't message them from here.
+        </li>
+        <li>
+          <b>You can withdraw</b> any time before they message you.
+        </li>
+      </ol>
+      {qs.length > 0 && <p className="meta">Everything below is optional. Nothing needs uploading: paste a link if you have one.</p>}
       {qs.map((q, i) => (
         <div key={q}>
-          <label className="field-label">{q} <span className="meta">(optional)</span></label>
-          <input className="field" value={answers[i]} maxLength={120} onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
+          <label className="field-label" htmlFor={`iq${i}`}>
+            {q} <span className="meta">(optional)</span>
+          </label>
+          <input id={`iq${i}`} className="field" value={answers[i]} maxLength={120} placeholder="Paste a link or write a short answer" onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
         </div>
       ))}
-      <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" />
-      <p className="meta">You can withdraw it any time before they message you.</p>
+      <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" aria-label="Note (optional)" />
       {state === 'failed' && <p className="field-error">Couldn't send your interest. Nothing was shared.</p>}
       <Button
         block

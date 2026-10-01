@@ -1,41 +1,47 @@
 import { Bookmark, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
-import type { Opportunity, Post } from '../../data/types';
+import type { Opportunity, Person, Post } from '../../data/types';
 import type { Work } from '../../data/works';
-import { blockedBy, publicProjects } from '../../domain/discovery';
+import { blockedBy, publicProjects, publicCreditsFor } from '../../domain/discovery';
 import { useStore, type SavedItem } from '../../state/store';
 import { findOpportunity, org, person } from '../../state/selectors';
 import { world } from '../../state/world';
 import { FrameLabel, PosterTile } from '../../ui/compose';
 import { shared } from '../../ui/motion';
-import { Chip, EmptyState, IconButton, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Chip, EmptyState, IconButton, PressCard, SectionHeader, Verified } from '../../ui/primitives';
 import { PostGrid } from '../discover/PostGrid';
 import { RoleRow } from '../discover/RoleRow';
 
 /*
- * Saved (docs/SAVE_MODEL.md): the private list of Posts, Roles and Projects the person kept to
- * revisit. Never public, never a profile section, one tap from their own Profile. Privacy and
+ * Saved (docs/SAVE_MODEL.md, V30): one private list of the People, Opportunities, Projects and Posts
+ * the person kept to come back to. Saving a person is a private shortlist: they are never told. Never public, never a profile section, one tap from their own Profile. Privacy and
  * blocking always win over a save: anything the person can no longer see is withheld here too,
  * and only counted ("no longer available"), never shown.
  */
 
-type Filter = 'all' | 'post' | 'role' | 'project';
+type Filter = 'all' | 'person' | 'role' | 'project' | 'post';
 
 interface Resolved {
+  people: Person[];
   posts: Post[];
   roles: { o: Opportunity; note?: string }[];
   projects: Work[];
   hidden: number;
-  latest: Record<'post' | 'role' | 'project', number>;
+  latest: Record<'person' | 'post' | 'role' | 'project', number>;
 }
 
 function resolve(saved: SavedItem[], viewerId: string, userPosts: Post[], userCollabs: Opportunity[], roleStatus: Record<string, { state: string }>): Resolved {
   const blocked = blockedBy(viewerId);
   const visibleProjects = publicProjects();
-  const out: Resolved = { posts: [], roles: [], projects: [], hidden: 0, latest: { post: 0, role: 0, project: 0 } };
+  const out: Resolved = { people: [], posts: [], roles: [], projects: [], hidden: 0, latest: { person: 0, post: 0, role: 0, project: 0 } };
   for (const s of saved) {
-    if (s.kind === 'post') {
+    if (s.kind === 'person') {
+      const p = seed.people.find((x) => x.id === s.id);
+      // A private, removed or blocked profile is withheld, only counted.
+      if (!p || p.visibility !== 'public' || blocked.includes(p.id)) out.hidden++;
+      else out.people.push(p);
+    } else if (s.kind === 'post') {
       const p = userPosts.find((x) => x.id === s.id) ?? seed.posts.find((x) => x.id === s.id);
       // A deleted post, or one by someone blocked either way, is gone from Saved.
       if (!p || blocked.includes(p.authorId)) out.hidden++;
@@ -64,10 +70,29 @@ export function SavedScreen() {
   const { pop, push, saved, viewer, userPosts, userCollabs, roleStatus } = useStore();
   const [filter, setFilter] = useState<Filter>('all');
   const r = resolve(saved, viewer.id, userPosts, userCollabs, roleStatus as Record<string, { state: string }>);
-  const counts = { post: r.posts.length, role: r.roles.length, project: r.projects.length };
-  const total = counts.post + counts.role + counts.project;
+  const counts = { person: r.people.length, post: r.posts.length, role: r.roles.length, project: r.projects.length };
+  const total = counts.person + counts.post + counts.role + counts.project;
   const openPost = (list: Post[], i: number) => push({ name: 'posts', ids: list.map((p) => p.id), index: i });
 
+  const people = (limit?: number) => (
+    <div className="list list--flush">
+      {r.people.slice(0, limit).map((p) => {
+        const n = publicCreditsFor(p.id).length;
+        return (
+          <PressCard key={p.id} className="prow" onPress={() => push({ name: 'profile', id: p.id })} scale={0.985}>
+            <Avatar party={p} size={48} available={!!p.availableFrom} />
+            <div className="prow-text">
+              <p className="item-title">{p.name}</p>
+              <p className="meta">
+                {p.role} · {p.city}
+                {n ? ` · ${n} verified ${n === 1 ? 'credit' : 'credits'}` : ''}
+              </p>
+            </div>
+          </PressCard>
+        );
+      })}
+    </div>
+  );
   const roles = (limit?: number) => (
     <div className="list list--flush">
       {r.roles.slice(0, limit).map(({ o, note }) => (
@@ -93,8 +118,8 @@ export function SavedScreen() {
   const posts = (limit?: number) => <PostGrid posts={r.posts.slice(0, limit)} onOpen={(i) => openPost(r.posts, i)} />;
 
   // "All": each kind as its own family, the most recently saved kind first.
-  const order = (['role', 'project', 'post'] as const).filter((k) => counts[k]).sort((a, b) => r.latest[b] - r.latest[a]);
-  const titles = { role: 'Roles', project: 'Projects', post: 'Posts' };
+  const order = (['person', 'role', 'project', 'post'] as const).filter((k) => counts[k]).sort((a, b) => r.latest[b] - r.latest[a]);
+  const titles = { person: 'People', role: 'Opportunities', project: 'Projects', post: 'Posts' };
 
   return (
     <div className="screen canvas saved-screen">
@@ -106,16 +131,17 @@ export function SavedScreen() {
         <span className="stream-bar-spacer" />
       </header>
       <p className="saved-private">
-        <Bookmark size={13} /> Private to you. Posts, roles and projects you save.
+        <Bookmark size={13} /> Private to you. People, opportunities, projects and posts you save. No one is told.
       </p>
 
       <div className="chips chips--scroll chips--pad saved-filters" role="group" aria-label="Show saved">
         {(
           [
             ['all', 'All', total],
-            ['post', 'Posts', counts.post],
-            ['role', 'Roles', counts.role],
+            ['person', 'People', counts.person],
+            ['role', 'Opportunities', counts.role],
             ['project', 'Projects', counts.project],
+            ['post', 'Posts', counts.post],
           ] as const
         ).map(([id, label, n]) => (
           <Chip key={id} active={filter === id} onClick={() => setFilter(id)}>
@@ -130,14 +156,14 @@ export function SavedScreen() {
           order.map((k) => (
             <section key={k} className="saved-section">
               <SectionHeader title={titles[k]} action={counts[k] > 4 ? 'See all' : undefined} onAction={() => setFilter(k)} />
-              {k === 'role' ? roles(4) : k === 'project' ? projects(4) : posts(6)}
+              {k === 'person' ? people(4) : k === 'role' ? roles(4) : k === 'project' ? projects(4) : posts(6)}
             </section>
           ))
         ) : (
-          <EmptyState title="Nothing saved yet" body="Use the bookmark on a post, role or project to keep it here. Only you can see this list." />
+          <EmptyState title="Nothing saved yet" body="Use the bookmark on a person, opportunity, project or post to keep it here. Only you can see this list." />
         )
       ) : counts[filter] ? (
-        <section className="saved-section">{filter === 'role' ? roles() : filter === 'project' ? projects() : posts()}</section>
+        <section className="saved-section">{filter === 'person' ? people() : filter === 'role' ? roles() : filter === 'project' ? projects() : posts()}</section>
       ) : (
         <EmptyState title={`No saved ${titles[filter].toLowerCase()}`} body="Use the bookmark to keep one here." />
       )}

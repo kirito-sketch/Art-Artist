@@ -2036,3 +2036,113 @@
   vertical-align: -0.08em;
   margin-left: 6px;
 }
+
+/* ------------------------------------------------------------------ V30 (docs/V30.md) */
+
+/* Home: why you see what you see, and the one control that changes it. */
+.intent-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 6px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  text-align: left;
+  width: 100%;
+}
+.intent-bar-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.intent-bar-kicker { font-size: 12px; font-weight: 600; color: var(--text-2); letter-spacing: 0.01em; }
+.intent-bar-value { font-size: var(--t-4); font-weight: 650; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.intent-bar-value .meta { font-weight: 400; }
+.intent-bar-change { display: inline-flex; align-items: center; gap: 2px; flex: none; font-size: 14px; font-weight: 600; color: var(--action); }
+
+/* Intent choices (onboarding and the Home sheet): one tappable row each, the selected one marked. */
+.intent-list { display: flex; flex-direction: column; gap: 8px; }
+.intent-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  background: var(--surface);
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.intent-option.is-on { border-color: var(--action); box-shadow: inset 0 0 0 1px var(--action); background: var(--action-tint); }
+.intent-option-label { font-size: 15px; font-weight: 650; }
+.ob-later { margin-top: 2px; text-align: center; }
+
+/* Activity that matters: actions you owe come first, set apart by an icon instead of a face. */
+.nrow-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--action-tint);
+  color: var(--action);
+}
+.nrow--action .row-chevron { color: var(--text-3); flex: none; }
+
+/* Media limits are said before you reach them. */
+.picker-limit { margin: 0 0 10px; }
+
+/* Bottom navigation (V30): labelled tabs; the active tab has a tinted well, a dark icon and a bold label. */
+.tab-item {
+  width: 60px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--text-2);
+}
+.tab-item.is-on { color: var(--text); }
+.tab-label { position: relative; font-size: 10.5px; font-weight: 550; line-height: 1; letter-spacing: 0.01em; }
+.tab-item.is-on .tab-label { font-weight: 750; color: var(--action); }
+.tab-well {
+  top: 3px;
+  left: 50%;
+  width: 50px;
+  height: 30px;
+  margin-left: -25px;
+  border-radius: 15px;
+  background: var(--action-tint-strong);
+}
+.tab-item .tab-icon { height: 30px; }
+.tab-dot { top: 4px; right: 12px; }
+.tabbar-pill { padding: 5px 8px; }
+
+/* Discover (V30): one line on what Discover is for; person results carry availability and verified credits. */
+.title-sub { margin: 4px 0 0; font-size: var(--t-5); color: var(--text-2); }
+.prow-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 2px; }
+.prow-facts span { display: inline-flex; align-items: center; gap: 3px; }
+.prow-available { color: var(--available, #1f7a45); font-weight: 600; }
+.list-count { padding: 0 var(--gutter, 20px); margin: 4px 0 0; }
+.craft-chips { margin-top: -4px; }
+
+/* Show interest: what happens next, as three short numbered steps. */
+.next-steps { margin: 0; padding: 12px 14px 12px 32px; border-radius: 12px; background: var(--action-tint); display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; color: var(--text); }
+.next-steps b { font-weight: 650; }
+
+/* Conversation: how direct messages work, shown once in an empty thread. */
+.convo-hint { margin: 8px 16px; padding: 10px 12px; border-radius: 12px; background: var(--fill); text-align: center; }
+
+/* A saved person: the bookmark on their profile fills. */
+.icon-btn--float.is-saved { color: var(--action); }
+
+/* A sheet opened inside a tab (Discover filters, Saved...) sits under the floating tab bar's layer.
+   While one is open the bar steps away, so the sheet's actions are never covered. */
+.tabbar { transition: opacity 0.18s, transform 0.18s; }
+.phone-screen:has(.tab-layer .sheet-layer) .tabbar { opacity: 0; transform: translateY(16px); pointer-events: none; }
+.intent-bar-prefix { font-weight: 500; color: var(--text-2); }
+.intent-bar-kicker { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

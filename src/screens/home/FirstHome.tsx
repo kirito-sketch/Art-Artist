@@ -3,14 +3,12 @@ import { useEffect, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { craftDef } from '../../data/crafts';
 import type { Craft } from '../../data/types';
-import { blockedBy, discoverableProjects, recommendedRoles, searchableHouses } from '../../domain/discovery';
+import { opportunitiesFor, peopleFor, projectsFor } from '../../domain/relevance';
 import { useStore } from '../../state/store';
-import { forYou, person } from '../../state/selectors';
+import { person } from '../../state/selectors';
 import { CraftObject, type CraftObjectKind } from '../../ui/craft';
-import { PortraitCard } from '../../ui/compose';
-import { spring, stagger } from '../../ui/motion';
-import { Button, FollowButton, SectionHeader } from '../../ui/primitives';
-import { FeaturedCard } from './OpportunityCard';
+import { spring } from '../../ui/motion';
+import { Button } from '../../ui/primitives';
 
 /*
  * First-run Home: the first screen after onboarding. It is built only from what onboarding captured
@@ -71,18 +69,17 @@ const jump = (id: string) => document.querySelector(`[data-world="${id}"]`)?.scr
  * that are zero are left out, and the module shrinks with them. Motion (forming) only nudges
  * things into place; nothing is ever hidden waiting for an animation.
  */
-export function WorldIntro({ goDiscover, forming = false }: { goDiscover: (scope?: string) => void; forming?: boolean }) {
-  const { viewer } = useStore();
+export function WorldIntro({ forming = false }: { forming?: boolean }) {
+  const { viewer, intent, following } = useStore();
   const me = person(viewer.id);
   const craft = craftDef(me.craft);
-  const blocked = blockedBy(viewer.id);
   const kind = OBJECT_FOR[me.craft];
+  // Real counts from the same relevance model Home ranks with. Zero counts are left out.
   const counts = (
     [
-      ['roles', recommendedRoles(viewer.id, me.craft, blocked).length, 'role', 'roles'],
-      ['people', (seed.suggestedFor[viewer.id] ?? []).filter((id) => !blocked.includes(id)).length, 'person', 'people'],
-      ['projects', discoverableProjects(blocked).length, 'project', 'projects'],
-      ['houses', searchableHouses(blocked).length, 'production house', 'production houses'],
+      ['roles', opportunitiesFor(me, intent).length, 'opportunity', 'opportunities'],
+      ['people', Math.min(peopleFor(me, intent, following).length, 8), 'person', 'people'],
+      ['projects', projectsFor(me).length, 'active project', 'active projects'],
     ] as const
   ).filter(([, n]) => n > 0);
 
@@ -104,72 +101,17 @@ export function WorldIntro({ goDiscover, forming = false }: { goDiscover: (scope
         Your world on Art and Artist
       </motion.h1>
       <motion.p className="world-line" {...rise(forming, 2)}>
-        A personalised view of roles, people and projects relevant to your craft.
+        Opportunities, people and projects matched to your craft, your city and what you're here to do.
       </motion.p>
       {counts.length > 0 && (
         <motion.div className="world-counts" {...rise(forming, 3)}>
           {counts.map(([id, n, one, many]) => (
-            <button key={id} className="world-count" onClick={() => (id === 'roles' ? goDiscover('roles') : jump(id))} aria-label={id === 'roles' ? `${n} open roles in your craft, open in Discover` : `${n} ${n === 1 ? one : many}, jump to section`}>
+            <button key={id} className="world-count" onClick={() => jump(id)} aria-label={`${n} ${n === 1 ? one : many}, jump to section`}>
               <b>{n}</b> {n === 1 ? one : many}
             </button>
           ))}
         </motion.div>
       )}
-    </section>
-  );
-}
-
-export function FirstRoles({ goDiscover }: { goDiscover: (scope?: string) => void }) {
-  const { viewer, scenario, push } = useStore();
-  const me = person(viewer.id);
-  const opps = forYou(viewer, scenario);
-  // Say only what matching actually used: the craft, and the city where the role is in it.
-  const why = opps.some((o) => o.city.includes(me.city)) ? 'your craft and your city' : 'your craft';
-  return (
-    <section className="cards-roles v-section" data-world="roles">
-      <SectionHeader title="Roles for you" action="See all" onAction={() => goDiscover('roles')} />
-      <p className="world-why">Matched on {why}. Every open role is in Discover.</p>
-      {opps.length ? (
-        <div className="carousel carousel--roles">
-          {opps.map((o, i) => (
-            <motion.div key={o.id} className="carousel-item" {...stagger(i, 0.05)}>
-              <FeaturedCard o={o} onOpen={() => push({ name: 'opportunity', id: o.id, from: 'card' })} />
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <p className="meta">No roles match your craft yet. More appear as productions post; every open role is in Discover.</p>
-      )}
-    </section>
-  );
-}
-
-/** People in your craft, each shown on their own credited work, with the reason they are here. */
-export function FirstPeople() {
-  const { viewer, following, toggleFollow, push } = useStore();
-  const me = person(viewer.id);
-  const blocked = blockedBy(viewer.id);
-  const ids = (seed.suggestedFor[viewer.id] ?? []).filter((id) => !blocked.includes(id));
-  if (!ids.length) return null;
-  return (
-    <section className="v-section" data-world="people">
-      <SectionHeader title="People in your craft" />
-      <div className="portrait-rail">
-        {ids.map((id) => {
-          const p = person(id);
-          const sameCraft = p.craft === me.craft || (me.crafts ?? []).includes(p.craft);
-          const reason = sameCraft && p.city === me.city ? `Your craft, in ${me.city}` : sameCraft ? `Your craft · ${p.city}` : `In ${p.city}`;
-          return (
-            <PortraitCard
-              key={id}
-              person={p}
-              context={reason}
-              onPress={() => push({ name: 'profile', id })}
-              action={<FollowButton on={following.includes(id)} onToggle={() => toggleFollow(id)} name={p.name} block />}
-            />
-          );
-        })}
-      </div>
     </section>
   );
 }

@@ -126,10 +126,15 @@ export function ConversationScreen({ id }: { id: string }) {
   const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage, cannotReach, blocked, unblock } = useStore();
   const c = conversations.find((x) => x.id === id);
   const [text, setText] = useState('');
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => markConversationRead(id), [id, markConversationRead]);
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), [c?.messages.length]);
+  // Scroll only this conversation's own list. scrollIntoView also scrolled every ancestor (the phone,
+  // the /test frame, the page), which can leave a blank view after sending on mobile browsers.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [c?.messages.length]);
 
   if (!c) return <EmptyState title="Conversation unavailable" />;
   const p = party(c.withId)!;
@@ -155,7 +160,7 @@ export function ConversationScreen({ id }: { id: string }) {
         <Avatar party={p} size={36} />
       </header>
 
-      <div className="convo-scroll">
+      <div className="convo-scroll" ref={scrollRef}>
         <Pressable className="convo-context" onClick={() => ref && push({ name: 'opportunity', id: ref.id })} scale={0.99}>
           {c.media && <Photo media={c.media} className="convo-context-thumb" showPlay={false} />}
           <span className="convo-context-text">
@@ -186,7 +191,11 @@ export function ConversationScreen({ id }: { id: string }) {
               )}
             </motion.div>
           ))}
-          <div ref={endRef} />
+          {c.messages.length === 0 && c.context.refId === 'direct' && (
+            <p className="convo-hint meta">
+              Messages go straight to {p.kind === 'org' ? p.name : p.name.split(' ')[0]}. About a role or collaboration? Show interest on it instead, and the person who posted it will decide whether to message you.
+            </p>
+          )}
         </div>
       </div>
 

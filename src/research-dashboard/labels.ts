@@ -13,7 +13,7 @@ const SHEET: Record<string, string> = { showInterest: 'Show interest', respond: 
 const TAB: Record<string, string> = { roles: 'Roles', people: 'People', projects: 'Projects', posts: 'Posts' };
 const SCREEN: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Messages', own_profile: 'Your profile', person_profile: 'Profile', role: 'Role', project: 'Project', house: 'House', post: 'Post', saved: 'Saved', settings: 'Settings', conversation: 'Conversation', notifications: 'Notifications' };
 /** First-run steps (the product's own entry flow, src/entry/Entry.tsx). */
-const STEP: Record<string, string> = { splash: 'Splash', intro_1: 'Intro 1', intro_2: 'Intro 2', intro_3: 'Intro 3', entry: 'Welcome', email: 'Email sign-up', signin: 'Sign in', forgot: 'Forgot password', consent: 'Terms', verify: 'Verify', you: 'Profile: you', craft: 'Profile: craft', where: 'Profile: where', looking: 'Profile: looking for', work: 'Profile: work', invite: 'Invitation', inviteTip: 'Invitation tip' };
+const STEP: Record<string, string> = { splash: 'Splash', intro_1: 'Intro 1', intro_2: 'Intro 2', intro_3: 'Intro 3', entry: 'Welcome', email: 'Email sign-up', signin: 'Sign in', forgot: 'Forgot password', consent: 'Terms', verify: 'Verify', you: 'Profile: you', now: 'What brings you here', craft: 'Profile: craft', where: 'Profile: where', looking: 'Profile: looking for', work: 'Profile: work', invite: 'Invitation', inviteTip: 'Invitation tip' };
 export const stepLabel = (s: unknown) => STEP[s as string] ?? String(s ?? '');
 export const screenLabel = (s: string | null | undefined) => (s ? SCREEN[s] ?? s.replace(/_/g, ' ') : '-');
 
@@ -35,6 +35,8 @@ function objectName(type: string | null, id: string | null): string | null {
   return id;
 }
 
+const INTENT_LABEL: Record<string, string> = { work: 'Find work', hire: 'Find people for a project', collaborate: 'Collaborate', network: 'Grow my network', explore: 'Just exploring' };
+
 /** One line per event, for the trail. */
 export function eventLabel(e: EventRow): string {
   const m = e.metadata ?? {};
@@ -54,6 +56,9 @@ export function eventLabel(e: EventRow): string {
     case 'onboarding_step_back': return `First run: back from ${stepLabel(m.from)}`;
     case 'onboarding_step_skipped': return `First run: skipped ${stepLabel(m.step)}`;
     case 'first_home_reached': return m.via === 'signin' ? 'Reached the main product (signed in)' : 'Reached the main product (new account)';
+    case 'intent_changed': return `Changed Home to: ${INTENT_LABEL[m.to as string] ?? String(m.to)}`;
+    case 'person_saved': return `Saved ${name}`;
+    case 'person_unsaved': return `Removed ${name} from Saved`;
     case 'home_viewed': return 'Opened Home';
     case 'discover_opened': return 'Opened Discover';
     case 'inbox_opened': return 'Opened Messages';

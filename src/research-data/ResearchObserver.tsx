@@ -56,7 +56,7 @@ function openedEvent(r: Route, viewerId: string): { name: ResearchEventName; obj
 }
 
 const TAB_EVENT: Record<string, ResearchEventName> = { home: 'home_viewed', discover: 'discover_opened', inbox: 'inbox_opened', profile: 'own_profile_viewed' };
-const SAVE_EVENT: Record<string, [ResearchEventName, ResearchEventName]> = { post: ['post_saved', 'post_unsaved'], role: ['role_saved', 'role_unsaved'], project: ['project_saved', 'project_unsaved'] };
+const SAVE_EVENT: Record<string, [ResearchEventName, ResearchEventName]> = { person: ['person_saved', 'person_unsaved'], post: ['post_saved', 'post_unsaved'], role: ['role_saved', 'role_unsaved'], project: ['project_saved', 'project_unsaved'] };
 
 function diff(prev: Set<string>, next: Set<string>) {
   return { added: [...next].filter((x) => !prev.has(x)), removed: [...prev].filter((x) => !next.has(x)) };
@@ -73,7 +73,7 @@ export function ResearchObserver() {
   research.setContext({ screen, persona, acting: s.acting, tab: s.tab, sheet: s.sheet?.name });
 
   // Baselines reset when the prototype switches persona: a persona switch is not a participant action.
-  const base = useRef<{ viewer: string; saved: Set<string>; following: Set<string>; interests: Set<string>; mine: Set<string>; acting: string; open: boolean; stack: number } | null>(null);
+  const base = useRef<{ viewer: string; saved: Set<string>; following: Set<string>; interests: Set<string>; mine: Set<string>; acting: string; open: boolean; stack: number; intent: string } | null>(null);
   const savedKeys = new Set(s.saved.map((x) => `${x.kind}:${x.id}`));
   const followKeys = new Set(s.following);
   const interestKeys = new Set(Object.keys(s.interestsSent));
@@ -81,7 +81,7 @@ export function ResearchObserver() {
 
   useEffect(() => {
     const b = base.current;
-    const fresh = { viewer: viewerId, saved: savedKeys, following: followKeys, interests: interestKeys, mine: myMessages, acting: s.acting, open: s.availability.open, stack: s.stack.length };
+    const fresh = { viewer: viewerId, saved: savedKeys, following: followKeys, interests: interestKeys, mine: myMessages, acting: s.acting, open: s.availability.open, stack: s.stack.length, intent: s.intent };
     base.current = fresh;
     if (!b || b.viewer !== viewerId || !research.isActive()) return;
 
@@ -110,6 +110,7 @@ export function ResearchObserver() {
     for (const k of diff(b.mine, myMessages).added) research.track('message_sent', { objectType: 'conversation', objectId: k.split(':')[0] });
     if (b.acting !== s.acting) research.track('identity_switched', { metadata: { from: b.acting === 'self' ? 'individual' : b.acting, to: s.acting === 'self' ? 'individual' : s.acting } });
     if (b.open !== s.availability.open) research.track('availability_changed', { metadata: { open: s.availability.open } });
+    if (b.intent !== s.intent) research.track('intent_changed', { metadata: { from: b.intent, to: s.intent } });
   });
 
   // Navigation: tab changes, routes opened, and back.
@@ -145,7 +146,7 @@ export function ResearchObserver() {
   useEffect(() => {
     const was = inEntry.current;
     inEntry.current = !!s.entry;
-    if (was && !s.entry && research.isActive()) research.track('first_home_reached', { metadata: { via: s.isNewPerson ? 'created' : 'signin' } });
+    if (was && !s.entry && research.isActive()) research.track('first_home_reached', { metadata: { via: s.isNewPerson ? 'created' : 'signin', intent: s.intent } });
   }, [s.entry]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A credit stamped as accepted.

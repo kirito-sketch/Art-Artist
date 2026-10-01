@@ -23,7 +23,8 @@ export const RESEARCH_EVENTS = {
   onboarding_step_viewed: 'A first-run screen shown (metadata.step: splash, intro_1..3, entry, email, consent, you, craft ...)',
   onboarding_step_back: 'Went back a step during first run (metadata.from)',
   onboarding_step_skipped: 'Skipped a first-run step (metadata.step)',
-  first_home_reached: 'First run finished and the main product is showing (metadata.via: created, signin)',
+  first_home_reached: 'First run finished and the main product is showing (metadata.via: created, signin; metadata.intent)',
+  intent_changed: 'The person changed what Home is showing for (metadata.from, metadata.to: work, hire, collaborate, network, explore)',
 
   // Navigation
   home_viewed: 'Home tab shown',
@@ -65,6 +66,8 @@ export const RESEARCH_EVENTS = {
   message_sent: 'A message was sent (count only, never the text)',
   credit_accepted: 'A credit was accepted',
   identity_switched: 'Acting identity changed (metadata.from, metadata.to)',
+  person_saved: 'A person was saved (private shortlist)',
+  person_unsaved: 'A person was removed from Saved',
   availability_changed: 'Availability changed (metadata.open)',
 
   // Production House flows (reserved for the house study)

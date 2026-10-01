@@ -9,7 +9,9 @@ The product rules behind every bookmark, Follow control and post action in Ana.
 | **Follow** | Keep a relationship; see relevant updates | People, Production Houses |
 | **Save** | Privately keep something to revisit | Posts, Roles, Projects |
 
-**Not saveable:** People and Production Houses (use Follow), profiles themselves, Credits and Project associations (professional records), Messages, Notifications, Trust and Admin records. No profile hero ever shows a bookmark.
+**V30: People are saveable.** One Saved model covers People, Opportunities (roles, casting, collaborations), Projects and Posts. Saving a person is a private shortlist for hiring and collaborating (V29 research: a director wanted to keep people for later outreach); they are never told, and it is separate from Follow, which is a public relationship. Saved organises by type: People · Opportunities · Projects · Posts. No folders or collections yet.
+
+**Not saveable:** Production Houses (use Follow, or save their projects), Credits and Project associations (professional records), Messages, Notifications, Trust and Admin records.
 
 Words: "Save" in text, the bookmark as the icon, **Saved** as the one screen title. There is no separate "Bookmarks".
 
@@ -72,7 +74,7 @@ More holds secondary, trust and ownership actions only. **Share and Save are nev
 | Profile | Hero (light utility controls) | Action area |
 |---|---|---|
 | Your own | Share profile, Settings (Back only when opened as a page) | Edit profile; private rows for availability, Saved and Your activity (also in Settings) |
-| Another person | Back, Share, More (Report, Block) | Follow, Message |
+| Another person | Back, Save (bookmark), Share, More (Report, Block) | Follow, Message |
 | A production house, as a visitor | Back, Share, More (Report, Block) | Follow, Message |
 | Your house, acting for it | Back, Share, House settings | Edit page, Open a role |
 

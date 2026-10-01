@@ -170,9 +170,9 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
 function Phone() {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
-  const [discoverScope, setDiscoverScope] = useState<Scope>('roles');
+  const [discoverScope, setDiscoverScope] = useState<Scope>('people');
   const goDiscover = (scope?: string) => {
-    setDiscoverScope((scope as Scope) ?? 'roles');
+    setDiscoverScope((scope as Scope) ?? 'people');
     setTab('discover');
   };
 

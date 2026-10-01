@@ -58,7 +58,8 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
       lookingFor: [],
       match: [],
       forCrafts: [],
-      media: cover ?? seed.portfolio[viewer.id][0],
+      // A new account may have no work yet: fall back to a neutral Art and Artist image, never undefined.
+      media: cover ?? (seed.portfolio[viewer.id] ?? [])[0] ?? { id: 'collab-cover', kind: 'image', src: 'images/brand/entry/camera.jpg' },
       postedAgo: 'now',
     };
     publishCollab(o);

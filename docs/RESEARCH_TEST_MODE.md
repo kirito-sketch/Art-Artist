@@ -102,8 +102,9 @@ project or role, Find a role and show interest, Understand your profile).
 - **Measured** (all from existing tables): time from splash to the main product (the attempt's
   `duration_ms`: the attempt starts on Open Art and Artist); screens visited
   (`onboarding_step_viewed` {step: splash, intro_1..3, entry, email, signin, consent, verify, you,
-  craft, where, looking, work}); backtracking (`onboarding_step_back` {from}); skips
-  (`onboarding_step_skipped` {step: intro_n, looking, work}); abandonment (ending the test during
+  now}; V29 builds also had craft, where, looking, work: V30 reduced profile setup to two steps,
+  see docs/V30.md); backtracking (`onboarding_step_back` {from}); skips
+  (`onboarding_step_skipped` {step: intro_n; V29 also looking, work}); abandonment (ending the test during
   Task 1 leaves the attempt `abandoned`); I'm stuck and Feedback during onboarding (normal feedback
   rows attached to the Task 1 attempt).
 - **Questions after Task 1** (instead of the standard task questions), stored as feedback rows with

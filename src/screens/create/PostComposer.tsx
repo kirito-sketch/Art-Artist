@@ -9,7 +9,7 @@ import { spring } from '../../ui/motion';
 import { Avatar, Button, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 
-const MEDIA_LIMIT = 10;
+export const MEDIA_LIMIT = 10;
 
 /** One composer for text, photos and video. */
 export function PostComposer() {
@@ -112,6 +112,12 @@ export function MediaPicker({ selected, onDone, single }: { selected: Media[]; o
   };
   return (
     <div>
+      {/* V30: the limit is stated up front, not discovered by a tap that does nothing. */}
+      {!single && (
+        <p className="meta picker-limit" role="status">
+          {picked.length >= MEDIA_LIMIT ? `That's the limit: ${MEDIA_LIMIT} photos or videos at a time.` : `Choose up to ${MEDIA_LIMIT} photos or videos. ${picked.length} selected.`}
+        </p>
+      )}
       <div className="picker">
         {seed.cameraRoll.map((m) => {
           const idx = picked.findIndex((x) => x.id === m.id);
