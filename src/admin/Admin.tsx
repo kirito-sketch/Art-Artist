@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { closeAdmin } from './adminMode';
 
 /*
- * Ana Trust & Safety: internal web console. Separate from the app and its identities; staff sign in
+ * Art and Artist Trust & Safety: internal web console. Separate from the app and its identities; staff sign in
  * with company accounts. Focused on one job: review reports and handle trust and safety problems.
  * Reporter identity is visible to staff only. Credits are records: moderators can't delete them.
  * All notices sent to people are drafts for legal review.
@@ -124,10 +124,10 @@ export function AdminConsole({ start }: { start?: { report?: string } } = {}) {
       <div className="admin admin-gate">
         <div className="admin-gate-card">
           <ShieldCheck size={28} />
-          <h1>Ana Trust & Safety</h1>
+          <h1>Art and Artist Trust & Safety</h1>
           <p>Internal tool. Staff accounts only. Every action is logged.</p>
           <button className="admin-btn admin-btn--primary" onClick={() => setSignedIn(true)}>
-            Sign in with Ana staff account
+            Sign in with Art and Artist staff account
           </button>
           <button className="admin-link" onClick={closeAdmin}>
             Back to prototype
@@ -140,7 +140,7 @@ export function AdminConsole({ start }: { start?: { report?: string } } = {}) {
     <div className="admin">
       <header className="admin-top">
         <span className="admin-brand">
-          <ShieldCheck size={18} /> Ana Trust & Safety
+          <ShieldCheck size={18} /> Art and Artist Trust & Safety
         </span>
         <span className="admin-who">{STAFF}</span>
         <button className="admin-link" onClick={closeAdmin}>
@@ -218,7 +218,7 @@ export function AdminConsole({ start }: { start?: { report?: string } } = {}) {
                 <p className="admin-sub">{r.sub}</p>
                 {r.removed && (
                   <p className="admin-flag">
-                    <Lock size={13} /> Content removed from Ana
+                    <Lock size={13} /> Content removed from Art and Artist
                   </p>
                 )}
               </div>

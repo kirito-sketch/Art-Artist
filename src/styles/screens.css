@@ -901,7 +901,7 @@
   color: var(--text);
 }
 
-/* Filter selected: a solid fill with light text, as before; the fill is now Ana action green. */
+/* Filter selected: a solid fill with light text, as before; the fill is now Art and Artist action green. */
 .craft.is-on {
   background: var(--action);
   color: var(--on-action);
@@ -2106,7 +2106,7 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .intro-dots button.is-on { width: 22px; background: #fff; }
 .intro .btn--primary { background: #fff; color: #111; }
 
-/* ============================================================ Prototype console (not part of Ana) */
+/* ============================================================ Prototype console (not part of Art and Artist) */
 .stage-phone { position: relative; }
 .stage-notice { position: absolute; left: 0; right: 0; top: -30px; display: flex; justify-content: center; gap: 8px; z-index: 2; }
 .stage-notice-item { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,.08); }

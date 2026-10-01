@@ -4,7 +4,7 @@ import { Button } from '../ui/primitives';
 import { Sheet } from '../ui/Sheet';
 import { DraftTag, LegalDocView } from './docs';
 
-/** Material policy change: shown once on next launch; agreeing is required to keep using Ana. */
+/** Material policy change: shown once on next launch; agreeing is required to keep using Art and Artist. */
 export function PolicyUpdate() {
   const { setPolicyUpdate, recordConsent, push, showToast } = useStore();
   const [read, setRead] = useState(false);

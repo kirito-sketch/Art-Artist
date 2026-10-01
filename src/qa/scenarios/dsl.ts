@@ -113,7 +113,7 @@ export function area(num: number, code: string, name: string, start: [string, st
 
 const NAMES: Record<string, string> = { kiran: 'Kiran', tara: 'Tara', aditi: 'Aditi', konark: 'Konark Pictures', tidewater: 'Tidewater Films' };
 function fixtureStart(f: Fixture, state: string): [string, string, string] {
-  if (f.surface === 'admin') return ['Ana staff', 'Moderator', 'Moderation console'];
+  if (f.surface === 'admin') return ['Art and Artist staff', 'Moderator', 'Moderation console'];
   const where = f.entry ? `Entry (${f.entry === 'new' ? 'sign-up' : f.entry === 'signin' ? 'sign in' : 'house invite'})` : f.stack?.length ? routeLabel(f.stack[f.stack.length - 1]) : f.sheet ? `${f.sheet.name[0].toUpperCase()}${f.sheet.name.slice(1)} sheet` : f.tab && f.tab !== 'home' ? f.tab[0].toUpperCase() + f.tab.slice(1) : state;
   return [NAMES[f.persona], f.acting && f.acting !== 'self' ? NAMES[f.acting] ?? f.acting : 'Personal', where];
 }

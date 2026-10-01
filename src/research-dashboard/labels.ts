@@ -116,7 +116,7 @@ export const OUTCOME_LABEL: Record<string, string> = { in_progress: 'In progress
 export const CATEGORY_LABEL: Record<string, string> = { confusing: 'Confusing', couldnt_find: "Couldn't find", visual_issue: 'Visual issue', didnt_work: "Didn't work", suggestion: 'Suggestion', other: 'Other' };
 export const STATUS_LABEL: Record<string, string> = { new: 'New', reviewed: 'Reviewed', actionable: 'Actionable', fixed: 'Fixed', wont_fix: "Won't fix" };
 export const SURVEY_ORDER = ['overall_ease', 'what_is_ana_for', 'most_confusing', 'would_make_you_use'];
-export const SURVEY_LABEL: Record<string, string> = { overall_ease: 'Overall, how easy was Ana to understand? (1 very difficult, 5 very easy)', what_is_ana_for: 'What do you think Ana is for?', most_confusing: 'What was the most confusing part?', would_make_you_use: 'What, if anything, would make you want to use Ana?' };
+export const SURVEY_LABEL: Record<string, string> = { overall_ease: 'Overall, how easy was Art and Artist to understand? (1 very difficult, 5 very easy)', what_is_ana_for: 'What do you think Art and Artist is for?', most_confusing: 'What was the most confusing part?', would_make_you_use: 'What, if anything, would make you want to use Art and Artist?' };
 
 export const fmtDuration = (ms: number | null | undefined) => {
   if (ms == null) return '-';

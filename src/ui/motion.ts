@@ -1,5 +1,5 @@
 /**
- * Ana motion vocabulary (docs/MOTION_MICROINTERACTION_SYSTEM.md). One small family: four durations,
+ * Art and Artist motion vocabulary (docs/MOTION_MICROINTERACTION_SYSTEM.md). One small family: four durations,
  * two eases, six springs. Springs over durations where the thing moved is physical (a card, a
  * sheet, a control) so interrupted gestures stay continuous; durations where it is a fade.
  */

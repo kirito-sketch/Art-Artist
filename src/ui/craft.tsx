@@ -255,7 +255,7 @@ export function CraftObject({ kind, size = 120, className = '' }: { kind: CraftO
 }
 
 /**
- * The crafts Home offers as objects. Labels are Ana's craft names; routes go to existing Discover.
+ * The crafts Home offers as objects. Labels are Art and Artist's craft names; routes go to existing Discover.
  * `asset` is the supplied Craft Object Asset (e.g. 'images/craft/lens.webp'). While it is unset
  * the Object Tile shows the placeholder drawing in the same slot, so layout never changes.
  */

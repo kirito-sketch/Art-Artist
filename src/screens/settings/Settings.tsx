@@ -124,7 +124,7 @@ function Personal() {
       </Group>
 
       <Group title="Help">
-        <Row label="Contact support" value="support@ana.film" chevron={false} />
+        <Row label="Contact support" value="support@artandartist.film" chevron={false} />
       </Group>
 
       <Group title="Security">

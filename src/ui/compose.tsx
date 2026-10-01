@@ -7,7 +7,7 @@ import { CraftObject, type CraftObjectKind } from './craft';
 import { Avatar, PersonPhoto, Photo, PressCard, Verified } from './primitives';
 
 /*
- * Ana composition families (docs/VISUAL_COMPOSITION_SYSTEM.md, section 5). Each family is one
+ * Art and Artist composition families (docs/VISUAL_COMPOSITION_SYSTEM.md, section 5). Each family is one
  * component so every screen composes from the same grammar: type styles, radii, surfaces and the
  * frame label never vary per screen. Only the composition does.
  */
@@ -50,7 +50,7 @@ export function displayTitle(text: string, max: 40 | 36 | 32 = 40): { lang?: 'te
 }
 
 /**
- * Frame label: the one way Ana writes status on media. Small caps on a smoked plate, like the
+ * Frame label: the one way Art and Artist writes status on media. Small caps on a smoked plate, like the
  * label on a film can or a slate. Stage, kind, closing time, privacy. Never a coloured pill.
  */
 export function FrameLabel({ children, tone = 'plate', icon }: { children: ReactNode; tone?: 'plate' | 'paper' | 'urgent'; icon?: ReactNode }) {
@@ -65,7 +65,7 @@ export function FrameLabel({ children, tone = 'plate', icon }: { children: React
 /**
  * Portrait Card: person-led. One image, the person's own profile photo, as a 4:5 portrait; then
  * name, craft, one line of real context (why they are here, or credited work) and Follow. No cover
- * or banner image, no avatar on top of another picture: Ana never asks for a banner. Without a
+ * or banner image, no avatar on top of another picture: Art and Artist never asks for a banner. Without a
  * photo the portrait area carries their initials as a quiet monogram.
  */
 export function PortraitCard({ person, context, action, onPress }: { person: Person; context?: ReactNode; action?: ReactNode; onPress: () => void }) {
@@ -133,7 +133,7 @@ export function TitleCard({ title, locked }: { title: string; locked?: boolean }
 }
 
 /**
- * Object Tile: a craft, represented by its tool. The tile is Ana's UI component; the object inside
+ * Object Tile: a craft, represented by its tool. The tile is Art and Artist's UI component; the object inside
  * it is a Craft Object Asset supplied separately (a transparent WebP/PNG). The asset sits in a
  * fixed square slot that overhangs the tile top, so swapping the placeholder drawing for the real
  * artwork never changes layout. The asset is decorative: the tile's own text names it.

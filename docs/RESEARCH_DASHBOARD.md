@@ -1,6 +1,10 @@
 # Research Dashboard (`/research`)
 
-A researcher-only view of usability-test data. Desktop-first, in Ana's paper and type. It shows the
+> **Product name: Art and Artist.** Legacy/internal codename: Ana. The codename survives only in
+> technical identifiers (for example storage keys, the `ana_research` local database name, the
+> `ANA_PROTOTYPE_VERSION` constant and some file names). It never appears in visible UI.
+
+A researcher-only view of usability-test data. Desktop-first, in Art and Artist's paper and type. It shows the
 raw research data clearly and correctly. There are no AI summaries, heatmaps, replay, screenshots or
 export.
 

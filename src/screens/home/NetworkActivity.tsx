@@ -5,7 +5,7 @@ import { findOpportunity, person } from '../../state/selectors';
 import { stagger } from '../../ui/motion';
 import { Avatar, PressCard, Photo } from '../../ui/primitives';
 
-/** One sentence per event. Credits are always production-issued on Ana, so they need no extra label. */
+/** One sentence per event. Credits are always production-issued on Art and Artist, so they need no extra label. */
 function sentence(e: NetworkEvent, role?: string, city?: string) {
   const [first, ...rest] = e.actorIds.map(person);
   const who = rest.length ? (

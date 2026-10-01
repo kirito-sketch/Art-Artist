@@ -66,7 +66,7 @@ export const projects = [
     [10, 'Duplicate Interest', 'P0', 'Da', 'L', 'One Interest per person per role. Re-sending replaces.', 'A', 'AU', { why: 'Duplicates inflate counts and spam the house.', not: ['Two Interests from one person'], auto: ['AC-13'], nofx: 'Covered by the automated check.' }],
     [11, 'Interest while the role closes', 'P0', 'Da', 'IL', 'If the role closed first, the Interest is refused with "This role just closed".', 'IAB', 'FA', { why: 'A closed role must stay closed.', do: 'Close a role, then send Interest to it.', not: ['Interest recorded on a closed role'], fx: asKiran({ ops: ['closeRole:o-neela-dop'], stack: [{ name: 'opportunity', id: 'o-neela-dop' }] }), auto: ['AC-17'] }],
     [12, 'Role fills during a response', 'P1', 'Da', 'I', 'Same as EC-ROLE-011.', 'IA', 'FA', { auto: ['AC-17'] }],
-    [13, 'Filled outside Ana', 'P2', 'Us', 'I', 'Close with reason "Filled outside Ana". Interested people told politely.', 'U', 'IM', {}],
+    [13, 'Filled outside Art and Artist', 'P2', 'Us', 'I', 'Close with reason "Filled outside Art and Artist". Interested people told politely.', 'U', 'IM', {}],
     [14, 'Selected person drops out', 'P2', 'Da', 'I', 'Open a new role for the same craft (EC-ROLE-016).', 'U', 'IM', {}],
     [15, 'Closed role reopened', 'P1', 'Da', 'I', 'Reopening a closed role is allowed; earlier Interests are still there.', 'U', 'IM', { fx: asKonark({ ops: ['closeRole:o-neela-dop'], stack: [{ name: 'opportunity', id: 'o-neela-dop' }] }) }],
     [16, 'Filled role cannot reopen', 'P0', 'Rec', 'IL', 'A filled role is a record of who was chosen. "Hire again" creates a new role.', 'IAB', 'FA', { why: 'Reopening would rewrite who was hired.', do: 'Fill a role, then try to reopen it.', not: ['The same role reopens'], fx: asKonark({ ops: ['fillRole:o-neela-dop'], stack: [{ name: 'opportunity', id: 'o-neela-dop' }] }), auto: ['AC-18'], notes: 'The UI offers Hire again; the reopen action itself does not check.' }],
@@ -124,7 +124,7 @@ export const projects = [
     [20, 'Two co-producers add the same person', 'P2', 'Da', 'L', 'Two associations, one per house.', 'B', 'PD', { nofx: NO_MULTI }],
   ]),
 
-  ...area(17, 'PEND', 'People not yet on Ana', ['Aditi', 'Konark Pictures', 'Project workspace'], [
+  ...area(17, 'PEND', 'People not yet on Art and Artist', ['Aditi', 'Konark Pictures', 'Project workspace'], [
     [1, 'Same phone added twice', 'P1', 'Da', 'L', 'One pending record per phone per project.', 'AB', 'NU', {}],
     [2, 'Wrong phone number', 'P0', 'Pv', 'L', 'The invite SMS names only the house, never the project. Recipient can say "Not me", which stops invites.', 'BL', 'PD', { why: 'A stranger receives it.', not: ['Project title in the SMS'], nofx: 'SMS not modelled.' }],
     [3, 'Recycled phone number', 'P0', 'Id Pv', 'L', 'Pending records match on join only after the person confirms the project and role. A match is never automatic.', 'BL', 'PD', { why: 'Recycled numbers deliver someone else\'s work history.', not: ['Credits attached to the new owner of a number'], nofx: 'Needs matching model.' }],
@@ -135,13 +135,13 @@ export const projects = [
     [8, 'Wants no more invites', 'P1', 'Pv Le', 'L', 'Opt-out stops all future invites to that number.', 'BL', 'NL', {}],
     [9, 'Pending person is a minor', 'P0', 'Sa', 'L', 'See EC-AGE-008.', 'BL', 'NL', { nofx: 'Needs legal rule.' }],
     [10, 'Phone visible to the wrong member', 'P1', 'Pv', 'L', 'Phones visible only to members of the house that added them.', 'AB', 'RD', {}],
-    [11, 'Pending record leaks publicly', 'P0', 'Pv', 'L', 'Pending names and phones never appear on public surfaces.', 'A', 'AU', { why: 'Personal data of people who never joined Ana.', not: ['Name or phone public'], fx: asKiran({ ops: ['pending:neela:Ravi Kumar:+91 98480 00000'], stack: [{ name: 'work', id: 'neela' }] }), auto: ['AC-19'] }],
+    [11, 'Pending record leaks publicly', 'P0', 'Pv', 'L', 'Pending names and phones never appear on public surfaces.', 'A', 'AU', { why: 'Personal data of people who never joined Art and Artist.', not: ['Name or phone public'], fx: asKiran({ ops: ['pending:neela:Ravi Kumar:+91 98480 00000'], stack: [{ name: 'work', id: 'neela' }] }), auto: ['AC-19'] }],
     [12, 'Joins after the project is public', 'P2', 'Rec', 'L', 'Credit can then be issued.', 'B', 'RD', {}],
     [13, 'Joins after expected credit timing', 'P2', 'Rec', 'L', 'Same.', 'B', 'RD', {}],
     [14, 'Duplicate pending records need merging', 'P2', 'Da', 'L', 'Merged by phone.', 'B', 'NR', {}],
-    [15, 'Wrong Ana account linked', 'P0', 'Id Rec', 'I', 'Person says "Not me"; the link undoes, no credit issued.', 'UB', 'PD', { why: 'Wrong person gets a record.', not: ['Credit accepted by the wrong person'], nofx: 'Needs matching model.' }],
+    [15, 'Wrong Art and Artist account linked', 'P0', 'Id Rec', 'I', 'Person says "Not me"; the link undoes, no credit issued.', 'UB', 'PD', { why: 'Wrong person gets a record.', not: ['Credit accepted by the wrong person'], nofx: 'Needs matching model.' }],
     [16, 'Pending record deleted', 'P2', 'Pv', 'L', 'Phone erased.', 'B', 'RD', {}],
     [17, 'Member loses access but saw phones', 'P1', 'Pv', 'L', 'Access removed immediately; phones not exportable.', 'B', 'PD', {}],
-    [18, 'Pending person joins Ana', 'P0', 'Id Rec Pv', 'L', 'The pending relationship links to the real account only after the person proves control of the invited phone or email, and confirms the project and role. Until then the placeholder stays private to the house: not searchable, not a profile, and it cannot accept a public credit.', 'B', 'RD', { why: 'A stranger must never inherit someone else\'s work history.', not: ['Automatic match on name', 'Placeholder visible anywhere public'], nofx: 'Linking is not built; rule recorded.' }],
+    [18, 'Pending person joins Art and Artist', 'P0', 'Id Rec Pv', 'L', 'The pending relationship links to the real account only after the person proves control of the invited phone or email, and confirms the project and role. Until then the placeholder stays private to the house: not searchable, not a profile, and it cannot accept a public credit.', 'B', 'RD', { why: 'A stranger must never inherit someone else\'s work history.', not: ['Automatic match on name', 'Placeholder visible anywhere public'], nofx: 'Linking is not built; rule recorded.' }],
   ]),
 ];

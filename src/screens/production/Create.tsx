@@ -113,7 +113,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
   if (!p) return <EmptyState title="Project not found" />;
   const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
   const canAct = p.houseId ? acting === p.houseId : acting === 'self' && viewer.id === p.ownerId;
-  // Trust-sensitive actions (public roles, sharing, credits) unlock only once Ana verifies the house.
+  // Trust-sensitive actions (public roles, sharing, credits) unlock only once Art and Artist verifies the house.
   const verified = !p.houseId || org(p.houseId).verified;
   const roles = world.roles.filter((r) => r.projectId === id);
   const people = world.associations.filter((a) => a.projectId === id && a.status !== 'removed');
@@ -136,7 +136,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
         </p>
         <h1 className="large-title">{p.workingTitle}</h1>
         <p className="meta ws-visibility">
-          {p.shared ? <Globe2 size={13} /> : <Lock size={13} />} {p.shared ? `Shared on Ana as "${publicName(p)}"` : `Only ${owner} can see this project`}
+          {p.shared ? <Globe2 size={13} /> : <Lock size={13} />} {p.shared ? `Shared on Art and Artist as "${publicName(p)}"` : `Only ${owner} can see this project`}
         </p>
       </div>
 
@@ -152,14 +152,14 @@ export function HouseProjectScreen({ id }: { id: string }) {
           )}
         </p>
       )}
-      {!verified && <p className="inline-note ws-pad">Verification pending. You can prepare this project privately; opening roles, sharing and credits unlock once Ana verifies {owner}.</p>}
+      {!verified && <p className="inline-note ws-pad">Verification pending. You can prepare this project privately; opening roles, sharing and credits unlock once Art and Artist verifies {owner}.</p>}
 
       {!p.shared && (
         <div className="ws-announce">
           <p className="item-title">Not announced</p>
           <p className="meta">Add details and roles privately. Share when you're ready, and you'll see exactly what becomes public.</p>
           <Button disabled={!canAct || !verified} onClick={() => setSheet('share')}>
-            Share on Ana
+            Share on Art and Artist
           </Button>
         </div>
       )}
@@ -182,7 +182,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
           {roles.map((r) => {
             const st = roleStatus[r.id];
             const ints = interestsReceived.filter((i) => i.opportunityId === r.id && !i.withdrawn).length;
-            const label = st ? (st.state === 'filled' ? 'Filled' : 'Closed') : r.visibility === 'private' ? `Only ${owner}` : `Open on Ana${ints ? ` · ${ints} interested` : ''}`;
+            const label = st ? (st.state === 'filled' ? 'Filled' : 'Closed') : r.visibility === 'private' ? `Only ${owner}` : `Open on Art and Artist${ints ? ` · ${ints} interested` : ''}`;
             return (
               <div key={r.id} className="prow">
                 <div className="prow-text">
@@ -200,10 +200,10 @@ export function HouseProjectScreen({ id }: { id: string }) {
                       // On an unannounced project, opening a role is a deliberate, previewed disclosure.
                       if (!p.shared) return setConfirmRole(r.id);
                       setRoleVisibility(r.id, 'open');
-                      showToast({ text: `${r.role} is open on Ana` });
+                      showToast({ text: `${r.role} is open on Art and Artist` });
                     }}
                   >
-                    Open on Ana
+                    Open on Art and Artist
                   </Button>
                 ) : (
                   <Button size="s" variant="secondary" onClick={() => push({ name: 'opportunity', id: r.id })}>
@@ -230,7 +230,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
             const c = pending ?? current;
             const amending = amendment?.status === 'open';
             const who = a.personId ? person(a.personId) : null;
-            const label = pending ? (pending.supersedes ? 'Revision proposed' : CREDIT_LABEL[pending.status]) : amending ? 'Amendment asked' : current ? 'Credited' : a.pending ? 'Not on Ana' : 'Added';
+            const label = pending ? (pending.supersedes ? 'Revision proposed' : CREDIT_LABEL[pending.status]) : amending ? 'Amendment asked' : current ? 'Credited' : a.pending ? 'Not on Art and Artist' : 'Added';
             return (
               <PressCard key={a.id} className="prow" onPress={() => canAct && setSheet({ edit: a.id })} scale={0.99}>
                 {who ? <Avatar party={who} size={40} /> : <span className="ph-initial">{a.pending!.name[0]}</span>}
@@ -263,7 +263,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
             ))}
       </section>
 
-      <Sheet open={!!confirmRole} onClose={() => setConfirmRole(null)} title="Open on Ana?">
+      <Sheet open={!!confirmRole} onClose={() => setConfirmRole(null)} title="Open on Art and Artist?">
         {confirmRole && (
           <div className="stack">
             <RoleDisclosure projectId={id} />
@@ -274,15 +274,15 @@ export function HouseProjectScreen({ id }: { id: string }) {
                 const r = world.roles.find((x) => x.id === confirmRole)!;
                 setRoleVisibility(confirmRole, 'open');
                 setConfirmRole(null);
-                showToast({ text: `${r.role} is open on Ana as part of "${publicName(p)}"` });
+                showToast({ text: `${r.role} is open on Art and Artist as part of "${publicName(p)}"` });
               }}
             >
-              Open on Ana
+              Open on Art and Artist
             </Button>
           </div>
         )}
       </Sheet>
-      <Sheet open={sheet === 'share'} onClose={() => setSheet(null)} title="Share on Ana" size="tall">
+      <Sheet open={sheet === 'share'} onClose={() => setSheet(null)} title="Share on Art and Artist" size="tall">
         {sheet === 'share' && <ShareProject id={id} done={() => setSheet(null)} />}
       </Sheet>
       <Sheet open={sheet === 'details'} onClose={() => setSheet(null)} title="Details" size="tall">
@@ -307,7 +307,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
   );
 }
 
-/* ------------------------------------------------------------ Share on Ana */
+/* ------------------------------------------------------------ Share on Art and Artist */
 
 /** Publishing is deliberate: show exactly what becomes public and what stays private. */
 function ShareProject({ id, done }: { id: string; done: () => void }) {
@@ -362,10 +362,10 @@ function ShareProject({ id, done }: { id: string; done: () => void }) {
         onClick={() => {
           updateProject(id, { shared: true, publicTitle: title.trim() || undefined });
           done();
-          showToast({ text: `Shared on Ana as "${shownTitle}"`, tone: 'success' });
+          showToast({ text: `Shared on Art and Artist as "${shownTitle}"`, tone: 'success' });
         }}
       >
-        Share on Ana
+        Share on Art and Artist
       </Button>
     </div>
   );
@@ -497,10 +497,10 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
             <Lock size={13} /> Only {p.houseId ? org(p.houseId).name : 'you'}
           </button>
           <button className={`chip ${vis === 'open' ? 'is-on' : ''}`} disabled={!houseVerified} onClick={() => setVis('open')}>
-            <Globe2 size={13} /> Open on Ana
+            <Globe2 size={13} /> Open on Art and Artist
           </button>
         </div>
-        {!houseVerified && <p className="meta field-hint">Public roles unlock once Ana verifies {org(p.houseId!).name}.</p>}
+        {!houseVerified && <p className="meta field-hint">Public roles unlock once Art and Artist verifies {org(p.houseId!).name}.</p>}
         {vis === 'open' && !p.shared && <RoleDisclosure projectId={projectId} />}
       </div>
       <Button
@@ -510,7 +510,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
         onClick={() => {
           addRole(projectId, { role: role.trim(), about: about.trim(), dates: dates.trim(), city: city.trim(), paid, compensation: range.trim(), questions: qs, visibility: vis });
           done();
-          showToast({ text: vis === 'open' ? `${role} is open on Ana` : `${role} added. Only your house can see it.` });
+          showToast({ text: vis === 'open' ? `${role} is open on Art and Artist` : `${role} added. Only your house can see it.` });
         }}
       >
         Add role
@@ -542,7 +542,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
       <div className="stack">
         {!pending ? (
           <>
-            <input className="field" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people on Ana" />
+            <input className="field" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people on Art and Artist" />
             <div className="list list--flush">
               {results.map((x) => (
                 <PressCard
@@ -566,14 +566,14 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
               ))}
             </div>
             <button className="link" onClick={() => setPending({ name: '', phone: '' })}>
-              Not on Ana? Add them privately
+              Not on Art and Artist? Add them privately
             </button>
           </>
         ) : (
           <>
-            <p className="meta">This stays inside your project. It doesn't create an Ana profile, can't be found in search and can't be credited until they join.</p>
+            <p className="meta">This stays inside your project. It doesn't create an Art and Artist profile, can't be found in search and can't be credited until they join.</p>
             <input className="field" value={pending.name} onChange={(e) => setPending({ ...pending, name: e.target.value })} placeholder="Name" />
-            <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value })} placeholder="Phone (to invite them to Ana)" inputMode="tel" />
+            <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value })} placeholder="Phone (to invite them to Art and Artist)" inputMode="tel" />
             <Button block disabled={!pending.name.trim()} onClick={() => setStep('role')}>
               Continue
             </Button>
@@ -595,7 +595,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
           {picked ? <Avatar party={person(picked)} size={44} /> : <span className="ph-initial">{name[0]}</span>}
           <span>
             <span className="item-title">{name}</span>
-            <span className="meta">{picked ? person(picked).role : 'Not on Ana'}</span>
+            <span className="meta">{picked ? person(picked).role : 'Not on Art and Artist'}</span>
           </span>
         </div>
         <div>
@@ -790,8 +790,8 @@ function PersonActions({ id, issue, revise, done }: { id: string; issue: () => v
       <div className="group">
         {canCredit && <Row label={c?.status === 'correction' ? 'Issue corrected credit' : 'Issue credit'} onPress={issue} />}
         {!p.houseId && <Row label={<span className="meta">Credits for independent projects aren't available yet</span>} chevron={false} />}
-        {p.houseId && !org(p.houseId).verified && <Row label={<span className="meta">Credits unlock once Ana verifies {org(p.houseId).name}</span>} chevron={false} />}
-        {a.pending && <Row label={<span className="meta">Can be credited once they join Ana</span>} chevron={false} />}
+        {p.houseId && !org(p.houseId).verified && <Row label={<span className="meta">Credits unlock once Art and Artist verifies {org(p.houseId).name}</span>} chevron={false} />}
+        {a.pending && <Row label={<span className="meta">Can be credited once they join Art and Artist</span>} chevron={false} />}
         {amending && (
           <>
             <Row label="Propose revised credit" onPress={() => revise(amending.id)} />
@@ -933,7 +933,7 @@ export function AssociationScreen({ id }: { id: string }) {
         <p className="inline-note ws-pad">
           {owner.name} kept the credit as it is, so "{current?.line}" stays your current record. If this is fraud or someone misusing your identity,{' '}
           <button className="link" onClick={() => openSheet({ name: 'report', subject: `Credit on ${publicName(p)}`, partyId: p.houseId })}>
-            report it to Ana
+            report it to Art and Artist
           </button>
           .
         </p>
@@ -1000,7 +1000,7 @@ function RoleDisclosure({ projectId }: { projectId: string }) {
   return (
     <div className="disclosure">
       <p className="meta">
-        <Globe2 size={12} /> People on Ana will see: <b>{publicName(p)}</b> by {owner}, {p.format.toLowerCase()}, {p.languages.join(', ')}, {p.stage.toLowerCase()}, and this role's details.
+        <Globe2 size={12} /> People on Art and Artist will see: <b>{publicName(p)}</b> by {owner}, {p.format.toLowerCase()}, {p.languages.join(', ')}, {p.stage.toLowerCase()}, and this role's details.
       </p>
       <p className="meta">
         <Lock size={12} /> They won't see: the working title, artwork, people on the project, other roles or any credits. Keep the title out of the description.

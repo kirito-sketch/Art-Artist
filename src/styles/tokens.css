@@ -1,5 +1,5 @@
 /*
- * Ana v2 tokens. Neutral light, SF only.
+ * Art and Artist v2 tokens. Neutral light, SF only.
  * Hierarchy comes from five type sizes and two weights. Colour is reserved for state:
  * one accent (links, active chip, unread, verified), green for available, red for errors.
  */
@@ -20,7 +20,7 @@
   --text-3: #aeaeb2;
   --on-dark: #ffffff;
 
-  /* Ana action: the one interaction colour (docs/CTA_SYSTEM.md). Never hard-code the hex. */
+  /* Art and Artist action: the one interaction colour (docs/CTA_SYSTEM.md). Never hard-code the hex. */
   --action: #275c50;
   --action-pressed: #1e4a40;
   --action-hover: #22534a;
@@ -30,7 +30,7 @@
   --on-action: #ffffff;
   --focus-ring: rgba(39, 92, 80, 0.55);
 
-  /* State. Accent is the Ana action colour used as a mark (dots, rules, active tab). Red is not a
+  /* State. Accent is the Art and Artist action colour used as a mark (dots, rules, active tab). Red is not a
      brand colour: it is --danger, for destructive actions and genuine errors only. */
   --accent: var(--action);
   --accent-soft: var(--action-tint);

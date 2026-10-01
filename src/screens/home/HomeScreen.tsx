@@ -320,7 +320,7 @@ function FirstRun() {
         </div>
       )}
       <section className="section section--flush">
-        <SectionHeader title={houses.some((h) => h.city === me.city) ? `Productions in ${me.city}` : 'Productions on Ana'} />
+        <SectionHeader title={houses.some((h) => h.city === me.city) ? `Productions in ${me.city}` : 'Productions on Art and Artist'} />
         <div className="list list--flush">
           {houses.map((o) => (
             <PressCard key={o.id} className="prow" onPress={() => push({ name: 'org', id: o.id })} scale={0.985}>

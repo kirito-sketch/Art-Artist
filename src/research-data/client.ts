@@ -18,6 +18,7 @@
  *    (2 s, 5 s, 15 s, 30 s, 60 s), then are dropped. The participant never notices.
  */
 import { ANA_PROTOTYPE_VERSION_LABEL } from '../version';
+import { brand } from './brand';
 import { isResearchEventName, sanitizeMetadata, sanitizeToken, type AttemptOutcome, type FeedbackCategory, type Metadata, type ResearchEventName, type ResearchObjectType } from './taxonomy';
 
 const API = ((import.meta.env.VITE_RESEARCH_API_BASE as string | undefined) || '/api/research').replace(/\/$/, '');
@@ -183,7 +184,8 @@ export const research = {
     if (!ENABLED || !token) return null;
     attached = true;
     if (queue.length) setTimeout(() => void flush(), 500);
-    return store.json<SessionInfo | null>(K.info, null);
+    const info = store.json<SessionInfo | null>(K.info, null);
+    return info && { ...info, study: { ...info.study, title: brand(info.study.title) }, tasks: info.tasks.map((t) => ({ ...t, title: brand(t.title), instruction: brand(t.instruction) })) };
   },
 
   /** The session this tab holds, if any (without attaching to it). */
@@ -201,7 +203,8 @@ export const research = {
     try {
       const r = await fetch(API + '/study', { headers: { 'x-study-type': type } });
       if (!r.ok) return null;
-      return ((await r.json()) as { study: { slug: string; title: string; description: string | null; taskCount: number } }).study;
+      const st = ((await r.json()) as { study: { slug: string; title: string; description: string | null; taskCount: number } }).study;
+      return { ...st, title: brand(st.title), description: brand(st.description) };
     } catch {
       return null;
     }
@@ -239,7 +242,7 @@ export const research = {
         attempts = {};
         done = [];
         store.set(K.token, token);
-        const info: SessionInfo = { participantCode: data.participantCode, study: data.study, tasks: data.tasks };
+        const info: SessionInfo = { participantCode: data.participantCode, study: { ...data.study, title: brand(data.study.title) }, tasks: data.tasks.map((t) => ({ ...t, title: brand(t.title), instruction: brand(t.instruction) })) };
         store.set(K.info, JSON.stringify(info));
         persist();
         research.track('session_started', { metadata: { persona: opts.persona ?? context.persona ?? null } });

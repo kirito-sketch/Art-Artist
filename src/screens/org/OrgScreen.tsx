@@ -149,7 +149,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <p className="body">{o.about}</p>
           <p className="pid-stats">
             <span>
-              <b>{ws.length}</b> projects on Ana
+              <b>{ws.length}</b> projects on Art and Artist
             </span>
             <span>
               <b>{people.length}</b> credited people
@@ -164,7 +164,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             <div className="profile-actions">
               {own ? (
                 <>
-                  <Button block variant="secondary" onClick={() => showToast({ text: 'House details are set up with Ana during onboarding' })}>
+                  <Button block variant="secondary" onClick={() => showToast({ text: 'House details are set up with Art and Artist during onboarding' })}>
                     Edit page
                   </Button>
                   <Button block variant="outline" onClick={() => openSheet({ name: 'pickProject' })}>
@@ -191,9 +191,9 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </>
               )}
             </div>
-            {own && <p className="meta org-own-note">This is how people on Ana see {o.name}.</p>}
+            {own && <p className="meta org-own-note">This is how people on Art and Artist see {o.name}.</p>}
             {sections}
-            {!ws.length && !roles.length && <EmptyState title="Nothing public yet" body={own ? 'Projects appear here once you share them on Ana.' : `${o.name} hasn't shared any projects yet.`} />}
+            {!ws.length && !roles.length && <EmptyState title="Nothing public yet" body={own ? 'Projects appear here once you share them on Art and Artist.' : `${o.name} hasn't shared any projects yet.`} />}
           </>
         )}
       </div>

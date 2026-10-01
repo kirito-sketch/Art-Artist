@@ -4,8 +4,8 @@ import { useState } from 'react';
 export function Logo() {
   const [failed, setFailed] = useState(false);
   return (
-    <span className="logo" aria-label="Ana">
-      {failed ? <span className="wordmark">Ana</span> : <img src="images/brand/logo.png" alt="" onError={() => setFailed(true)} />}
+    <span className="logo" aria-label="Art and Artist">
+      {failed ? <span className="wordmark">Art and Artist</span> : <img src="images/brand/logo.png" alt="" onError={() => setFailed(true)} />}
     </span>
   );
 }

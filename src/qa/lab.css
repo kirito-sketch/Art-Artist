@@ -1,4 +1,4 @@
-/* Edge Case Lab and the scenario bar. Internal tooling: neutral, dense, desktop first. Not part of Ana's design. */
+/* Edge Case Lab and the scenario bar. Internal tooling: neutral, dense, desktop first. Not part of Art and Artist's design. */
 
 .lab, .sb { font-family: Inter, system-ui, sans-serif; font-size: 13px; line-height: 1.4; color: #1a1a1a; }
 .lab button, .lab select, .lab input, .sb button { font: inherit; color: inherit; }

@@ -307,7 +307,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
           )}
 
           <p className="meta detail-trust">
-            Ana never charges to apply or audition.{' '}
+            Art and Artist never charges to apply or audition.{' '}
             <button className="link link--small" onClick={() => openSheet({ name: 'report', subject: `${o.role} · ${o.project}` })}>
               Report
             </button>

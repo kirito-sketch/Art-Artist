@@ -43,7 +43,7 @@ export function Specimen() {
   return (
     <div className="spec">
       <header className="spec-head">
-        <h1>Ana visual composition specimen</h1>
+        <h1>Art and Artist visual composition specimen</h1>
         <p>Design-system test only. Real components, stress fixtures.</p>
       </header>
 
@@ -177,7 +177,7 @@ export function Specimen() {
         </div>
       </Block>
 
-      <Block id="red" title="Ana green marks; red means danger" note="Five states told apart by structure and language first. Attention uses the Ana green dot; red appears only for errors and destructive confirmations">
+      <Block id="red" title="Art and Artist green marks; red means danger" note="Five states told apart by structure and language first. Attention uses the Art and Artist green dot; red appears only for errors and destructive confirmations">
         <div className="spec-states">
           <div className="spec-state">
             <Clock3 size={16} />

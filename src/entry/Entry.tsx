@@ -14,15 +14,15 @@ import { Sheet } from '../ui/Sheet';
 import { MediaPicker } from '../screens/create/PostComposer';
 
 /*
- * How someone enters Ana. One splash (only as long as loading), one entry screen, then account,
+ * How someone enters Art and Artist. One splash (only as long as loading), one entry screen, then account,
  * consent, a short onboarding, and (for an invited person) the organisation invitation.
  * Apple, Google and email are the ways in. Phone is verification and linking only, never a login.
  */
 
 type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'forgot' | 'consent' | 'verify' | 'you' | 'craft' | 'where' | 'looking' | 'work' | 'invite' | 'inviteTip';
 
-/** The demo invitation: Ana's team set up Saffron Reel Studios and invited Meena by work email. */
-const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Ana team', canIssue: true };
+/** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
+const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
 const KNOWN: Record<string, string> = { kiran: 'kiran', tara: 'tara', aditi: 'aditi' };
 const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata'];
 const LANGS = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
@@ -90,7 +90,7 @@ export function EntryFlow() {
     endEntry();
     setActing('self');
     switchViewer(id);
-    showToast({ text: `Welcome to Ana, ${name.split(' ')[0]}` });
+    showToast({ text: `Welcome to Art and Artist, ${name.split(' ')[0]}` });
   };
 
   const steps: Step[] = invite ? ['you', 'craft', 'where'] : ['you', 'craft', 'where', 'looking', 'work'];
@@ -130,7 +130,7 @@ export function EntryFlow() {
                   <div className="invite-banner">
                     <Avatar party={org(INVITE.orgId)} size={36} />
                     <span>
-                      <b>{org(INVITE.orgId).name}</b> invited you to act for them on Ana
+                      <b>{org(INVITE.orgId).name}</b> invited you to act for them on Art and Artist
                     </span>
                   </div>
                 )}
@@ -147,7 +147,7 @@ export function EntryFlow() {
                   </button>
                 </div>
                 <p className="entry-signin">
-                  Already on Ana?{' '}
+                  Already on Art and Artist?{' '}
                   <button className="link" onClick={() => go('signin')}>
                     Sign in
                   </button>
@@ -316,7 +316,7 @@ export function EntryFlow() {
             <Onboard step={stepIndex} total={steps.length} image="moodboard" title="Show your work" onBack={back} onSkip={finishProfile} skipLabel="Skip for now">
               <p className="meta">Stills, frames or a reel help people understand what you do. Add them now or later from your profile.</p>
               <WorkPicker work={work} setWork={setWork} />
-              <p className="inline-note">Credits come from productions. When a production credits you on Ana, you'll be asked to accept it.</p>
+              <p className="inline-note">Credits come from productions. When a production credits you on Art and Artist, you'll be asked to accept it.</p>
               <Button block size="l" onClick={finishProfile}>
                 {work.length ? 'Finish' : 'Finish without work'}
               </Button>
@@ -545,7 +545,7 @@ function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; inv
   return (
     <div className="stack">
       <p className="title-2">{kind === 'google' ? 'Choose an account' : 'Sign in with Apple'}</p>
-      <p className="meta">to continue to Ana</p>
+      <p className="meta">to continue to Art and Artist</p>
       <div className="list list--flush">
         {accounts.map((a) => (
           <button key={a.email} className="prow provider-row" onClick={() => onPick(a)}>
@@ -581,7 +581,7 @@ function SignIn({ onBack, onForgot, onDone, onCreate, onProvider }: { onBack: ()
       <PasswordField value={password} onChange={(s) => (setPassword(s), setError('none'))} />
       {error === 'nouser' && (
         <p className="field-error">
-          No Ana account uses this email.{' '}
+          No Art and Artist account uses this email.{' '}
           <button className="link" onClick={onCreate}>
             Create one
           </button>
@@ -632,7 +632,7 @@ function Forgot({ onBack, onDone }: { onBack: () => void; onDone: (id: string) =
       )}
       {stage === 'code' && (
         <>
-          <p className="meta">If an Ana account uses {email}, we've sent it a 6-digit code.</p>
+          <p className="meta">If an Art and Artist account uses {email}, we've sent it a 6-digit code.</p>
           <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" />
           <Button block size="l" disabled={code.length !== 6} onClick={() => setStage('new')}>
             Continue
@@ -657,8 +657,8 @@ function Consent({ onBack, openDoc, onAgree }: { onBack: () => void; openDoc: (d
   const [age, setAge] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const cards: { d: DocId; h: string; p: string }[] = [
-    { d: 'terms', h: 'What Ana is for', p: 'Finding each other, working together, and a true record of work. Credits come from productions; you accept or correct them.' },
-    { d: 'privacy', h: 'What we collect and why', p: 'Your profile, work and messages, to run Ana. Your phone number is never public. We never sell personal data.' },
+    { d: 'terms', h: 'What Art and Artist is for', p: 'Finding each other, working together, and a true record of work. Credits come from productions; you accept or correct them.' },
+    { d: 'privacy', h: 'What we collect and why', p: 'Your profile, work and messages, to run Art and Artist. Your phone number is never public. We never sell personal data.' },
     { d: 'conduct', h: 'How people treat each other', p: 'Real identities, no fees to apply or audition, no harassment, honest roles.' },
   ];
   return (
@@ -771,7 +771,7 @@ function Invitation({ accountEmail, onSwitchEmail, onAccept, onDecline }: { acco
             <p className="meta">Your own profile and credits stay yours. {o.name} can remove your access at any time.</p>
             <DraftTag />
             <Check2 on={authorised} set={setAuthorised}>
-              I'm authorised by {o.name} to act for it on Ana
+              I'm authorised by {o.name} to act for it on Art and Artist
             </Check2>
             <Button block size="l" disabled={!authorised} onClick={onAccept}>
               Accept
@@ -797,7 +797,7 @@ function AppleMark() {
 
 /**
  * First-launch intro for people who arrive with no context: three screens, each saying one true thing
- * about Ana. Skippable, swipeable, never shown to invited people or on sign-in.
+ * about Art and Artist. Skippable, swipeable, never shown to invited people or on sign-in.
  */
 const INTRO = [
   { art: 'search', title: 'Find the people behind the work', body: 'Discover crew, cast and productions by craft, city and language.', chip: 'Real people, real work' },

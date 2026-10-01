@@ -4,7 +4,7 @@ import { party, person } from '../state/selectors';
 import { world, wid, publicName, project as wproject, type Amendment, type Association, type Format, type HouseProject, type Thread } from '../state/world';
 
 /*
- * The actions that change Ana's shared records (projects, roles, associations, credits, interests and
+ * The actions that change Art and Artist's shared records (projects, roles, associations, credits, interests and
  * the notifications they cause). The app's store calls these, and so do the automated edge-case checks,
  * so a check exercises exactly the code the prototype runs. Screens never write to the world directly.
  *

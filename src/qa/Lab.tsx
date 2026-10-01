@@ -9,8 +9,8 @@ import type { Priority, Risk, Scenario, Status } from './types';
 import './lab.css';
 
 /*
- * Edge Case Lab: an internal QA page, not part of Ana. Search and filter the scenario manifest, read
- * what Ana should do, open any scenario as a fresh prototype load, and see the automated checks.
+ * Edge Case Lab: an internal QA page, not part of Art and Artist. Search and filter the scenario manifest, read
+ * what Art and Artist should do, open any scenario as a fresh prototype load, and see the automated checks.
  * Opened from the prototype console (Advanced, Testing) or ?lab. Never reachable in Research Mode.
  */
 
@@ -268,7 +268,7 @@ function Detail({ s, status, results, copied, onCopy, onRun, onPick }: { s: Scen
         {!s.fixture && <p className="lab-note">{s.noFixture ?? 'No fixture yet. P0 scenarios are staged first; this one is not staged.'}</p>}
       </div>
 
-      <Field label="What should Ana do?">{linkify(s.expected)}</Field>
+      <Field label="What should Art and Artist do?">{linkify(s.expected)}</Field>
       {s.why && <Field label="Why this matters">{s.why}</Field>}
       <Field label="Starting context">
         {s.start.persona} · {s.start.identity} · {s.start.state}

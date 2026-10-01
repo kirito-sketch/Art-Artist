@@ -5,6 +5,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { EventRow } from './labels';
+import { brand } from '../research-data/brand';
 
 const URL_ = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -39,7 +40,7 @@ export async function researcherAccess(): Promise<'researcher' | 'denied' | 'err
 export async function loadStudies(): Promise<Study[]> {
   const { data, error } = await need().from('research_studies').select('id, slug, title, status, participant_type, prototype_version').order('created_at');
   if (error) throw error;
-  return data as Study[];
+  return (data as Study[]).map((x) => ({ ...x, title: brand(x.title) }));
 }
 
 /** Everything a study's views need, in four queries. Events load per session or feedback item. */
@@ -56,7 +57,7 @@ export async function loadStudy(studyId: string): Promise<StudyData> {
     c.from('research_feedback').select('id, session_id, task_attempt_id, category, screen, participant_comment, prototype_version, persona, trail_until_sequence, interaction_context, status, researcher_note, created_at, research_sessions!inner(study_id)').eq('research_sessions.study_id', studyId).order('created_at', { ascending: false }),
   ]);
   for (const r of [tasks, sessions, attempts, feedback]) if (r.error) throw r.error;
-  return { tasks: tasks.data as Task[], sessions: sessions.data as unknown as Session[], attempts: attempts.data as unknown as Attempt[], feedback: feedback.data as unknown as Feedback[] };
+  return { tasks: (tasks.data as Task[]).map((t) => ({ ...t, title: brand(t.title), instruction: brand(t.instruction) })), sessions: sessions.data as unknown as Session[], attempts: attempts.data as unknown as Attempt[], feedback: feedback.data as unknown as Feedback[] };
 }
 
 export async function loadEvents(sessionId: string, untilSequence?: number): Promise<EventRow[]> {

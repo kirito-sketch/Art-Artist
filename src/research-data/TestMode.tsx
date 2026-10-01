@@ -1,15 +1,15 @@
 /**
- * Participant Test Mode (/test): an unmoderated, task-based usability test of the real Ana prototype.
+ * Participant Test Mode (/test): an unmoderated, task-based usability test of the real Art and Artist prototype.
  *
  * Layout rule: nothing belonging to the study is ever drawn inside the simulated phone. The phone renders
  * exactly as it does outside /test. All research UI (task, feedback, I'm stuck, task questions, survey)
  * lives OUTSIDE the device: a side panel beside the phone on wide screens, or a bar and sheet attached
  * to the browser viewport below the phone on small screens.
  *
- * Flow: intro, consent, a few optional details, then one task at a time. While a task is active Ana is
+ * Flow: intro, consent, a few optional details, then one task at a time. While a task is active Art and Artist is
  * fully usable. Success is noticed from the task's semantic success events, after the product action has
  * settled, and the panel then turns into the task questions. A short survey closes the session.
- * Everything is written through the research client, which never blocks Ana.
+ * Everything is written through the research client, which never blocks Art and Artist.
  * See docs/RESEARCH_TEST_MODE.md.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -135,14 +135,14 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     });
   }, [stage, task?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Never interrupt mid-action: wait until Ana's own sheet has closed and the screen has settled.
+  // Never interrupt mid-action: wait until Art and Artist's own sheet has closed and the screen has settled.
   useEffect(() => {
     if (!succeeded || stage !== 'task' || store.sheet || view) return;
     const t = setTimeout(() => setStage('task-done'), 1100);
     return () => clearTimeout(t);
   }, [succeeded, stage, store.sheet, store.stack.length, view]);
 
-  // Between tasks and while answering, Ana is visible but not operable (so nothing leaks into the next task).
+  // Between tasks and while answering, Art and Artist is visible but not operable (so nothing leaks into the next task).
   useEffect(() => {
     const el = device.current;
     if (!el) return;
@@ -201,7 +201,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   // Before the first task and after the last, there is no phone: just the research page.
   const solo = (body: ReactNode) => (
     <div className="test-stage test-stage--solo">
-      <aside className="rp rp--solo" aria-label="Ana user test">
+      <aside className="rp rp--solo" aria-label="Art and Artist User Test">
         {body}
       </aside>
     </div>
@@ -340,7 +340,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     body = (
       <>
         <header className="rp-head">
-          <p className="rp-eyebrow">Ana user test</p>
+          <p className="rp-eyebrow">Art and Artist User Test</p>
           <h2 className="rp-title">End the test?</h2>
         </header>
         <p>Your answers so far will be kept. You can't come back to this test afterwards.</p>
@@ -390,12 +390,12 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   const showBar = compact && stage === 'task' && !view && !expanded;
   return (
     <div className={`test-stage ${compact ? 'test-stage--compact' : ''} ${showBar ? 'has-bar' : ''}`}>
-      <div className="test-device" ref={device} aria-label="Ana prototype">
+      <div className="test-device" ref={device} aria-label="Art and Artist prototype">
         {phone}
       </div>
       {!compact && (
         <aside className="rp rp--side" aria-label="Research test">
-          <p className="rp-brand">Ana user test</p>
+          <p className="rp-brand">Art and Artist User Test</p>
           {body}
         </aside>
       )}
@@ -424,7 +424,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
         <div className="rp-sheet-layer">
           <div className="rp-sheet-scrim" aria-hidden onClick={stage === 'task' ? back : undefined} />
           <aside className="rp rp--sheet" role="dialog" aria-label="Research test">
-            <p className="rp-brand">Ana user test</p>
+            <p className="rp-brand">Art and Artist User Test</p>
             {body}
             {stage === 'task' && !view && (
               <button className="rp-link" onClick={back}>
@@ -440,12 +440,12 @@ export function TestMode({ phone }: { phone: ReactNode }) {
 
 // ------------------------------------------------------------------------------------------ screens
 /** A research page (intro, consent, details, survey, thanks): shown on its own, outside any phone. */
-function Panel({ label, title, children, footer }: { label: string; title?: string; children: ReactNode; footer?: ReactNode }) {
+function Panel({ label, title, children, footer, eyebrow = 'Art and Artist User Test' }: { label: string; title?: string; children: ReactNode; footer?: ReactNode; eyebrow?: string }) {
   const h = useRef<HTMLHeadingElement>(null);
   useEffect(() => h.current?.focus(), [title]);
   return (
     <section className="rp-page" aria-label={label}>
-      <p className="rp-brand">Ana user test</p>
+      <p className="rp-brand">{eyebrow}</p>
       {title && (
         <h1 className="rp-page-title" ref={h} tabIndex={-1}>
           {title}
@@ -457,12 +457,16 @@ function Panel({ label, title, children, footer }: { label: string; title?: stri
   );
 }
 
+/**
+ * Product introduction: what Art and Artist is, before consent and before Task 1. Context only: it never
+ * names screens, features' locations or how to do any task (we are testing findability).
+ */
 function Intro({ onNext }: { onNext: () => void }) {
   return (
-    <Panel label="Introduction" title="Thanks for helping us test Ana" footer={<Button block onClick={onNext}>Continue</Button>}>
-      <p>This is a prototype, so some things may not work yet.</p>
-      <p>We're testing the product, not you. There are no wrong answers.</p>
-      <p className="rp-quiet">It takes about 10 minutes. You'll get a few short tasks, one at a time.</p>
+    <Panel label="About Art and Artist" eyebrow="Art and Artist" title="A professional network for the creative industry" footer={<Button block onClick={onNext}>Continue</Button>}>
+      <p>Art and Artist helps people in film and creative work build a credible professional profile, discover people and projects, find opportunities, and connect with others they may want to work with.</p>
+      <p>Projects and credits are designed to reflect real work people have been part of, while production houses can share projects, find collaborators and credit their teams.</p>
+      <p className="rp-intro-note">During this test, use the prototype as if it were a real app. There are no wrong taps, and some parts of the prototype may still be incomplete. We're testing Art and Artist, not you.</p>
     </Panel>
   );
 }
@@ -485,7 +489,7 @@ function Consent({ onNext, onBack }: { onNext: () => void; onBack: () => void })
       }
     >
       <ul className="rp-list">
-        <li>We record what you do in the prototype (screens you open, actions you take) to improve Ana.</li>
+        <li>We record what you do in the prototype (screens you open, actions you take) to improve Art and Artist.</li>
         <li>Anything you choose to write in feedback is stored with it.</li>
         <li>We never capture passwords or private messages, and nothing you type into the prototype itself.</li>
         <li>You can stop at any time. What you've done so far is kept.</li>
@@ -676,10 +680,10 @@ function Survey({ onSubmit }: { onSubmit: (a: { ease: number | null; purpose: st
   const [wouldUse, setWouldUse] = useState('');
   return (
     <Panel label="Final questions" title="Last few questions" footer={<Button block onClick={() => onSubmit({ ease, purpose, confusing, wouldUse })}>Finish</Button>}>
-      <p className="rp-q">Overall, how easy was Ana to understand?</p>
+      <p className="rp-q">Overall, how easy was Art and Artist to understand?</p>
       <Scale value={ease} onChange={setEase} low="Very difficult" high="Very easy" label="Overall ease, 1 very difficult to 5 very easy" />
       <label className="rp-field">
-        <span>What do you think Ana is for?</span>
+        <span>What do you think Art and Artist is for?</span>
         <textarea className="field" rows={2} value={purpose} onChange={(e) => setPurpose(e.target.value)} maxLength={1000} />
       </label>
       <label className="rp-field">
@@ -687,7 +691,7 @@ function Survey({ onSubmit }: { onSubmit: (a: { ease: number | null; purpose: st
         <textarea className="field" rows={2} value={confusing} onChange={(e) => setConfusing(e.target.value)} maxLength={1000} />
       </label>
       <label className="rp-field">
-        <span>What, if anything, would make you want to use Ana? (optional)</span>
+        <span>What, if anything, would make you want to use Art and Artist? (optional)</span>
         <textarea className="field" rows={2} value={wouldUse} onChange={(e) => setWouldUse(e.target.value)} maxLength={1000} />
       </label>
     </Panel>

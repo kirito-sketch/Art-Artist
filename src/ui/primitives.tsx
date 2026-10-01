@@ -145,7 +145,7 @@ export function initials(name: string) {
 }
 
 /**
- * The one source of a person's (or house's) image across Ana: the profile photo they chose (logo for
+ * The one source of a person's (or house's) image across Art and Artist: the profile photo they chose (logo for
  * a house). A failed load is remembered per source, so a component that later shows someone else,
  * or the same person with a new photo, tries again instead of staying on initials.
  */

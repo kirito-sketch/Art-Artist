@@ -1,7 +1,7 @@
 /**
  * Observes the prototype for research. It reads the store and turns state changes into semantic events
  * (role_opened, post_saved, person_followed, interest_sent, identity_switched, ...). It never calls a
- * product action and never changes state, so it cannot alter how Ana behaves. Without an active research
+ * product action and never changes state, so it cannot alter how Art and Artist behaves. Without an active research
  * session every research.track call is a no-op.
  */
 import { useEffect, useRef } from 'react';

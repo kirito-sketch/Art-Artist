@@ -101,7 +101,7 @@ export function WorldIntro({ goDiscover, forming = false }: { goDiscover: (scope
         {me.city ? ` · ${me.city}` : ''}
       </motion.p>
       <motion.h1 className="world-title" id="world-title" {...rise(forming, 1)}>
-        Your world on Ana
+        Your world on Art and Artist
       </motion.h1>
       <motion.p className="world-line" {...rise(forming, 2)}>
         A personalised view of roles, people and projects relevant to your craft.

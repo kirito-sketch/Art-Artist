@@ -14,7 +14,7 @@ import lastRun from '../qa/last-run.json';
 const P0_REMAINING = SCENARIOS.filter((s) => s.priority === 'P0' && !isSettled(effective(s, lastRun.results as never).status)).length;
 
 /*
- * Prototype console. Outside the phone and never part of Ana.
+ * Prototype console. Outside the phone and never part of Art and Artist.
  * Three audiences, three levels: stakeholders explore (always visible), research launches a clean
  * session (one clear action), design/QA tools live under Advanced (collapsed).
  * Everything shown is read from the live app state, so the console can't disagree with the phone.
@@ -39,8 +39,8 @@ const TEST_STATES = [
 
 const STATUS = {
   decided: ['Large Cards is the individual Home', 'People can’t claim their own credits', 'Added to project is not a credit', 'One account; acting for a house is separate', 'A house’s profile is its public page', 'Minimal is the only active visual', 'Apple, Google and email sign-in', 'Unverified houses can’t post roles or credits', '18+ at launch', 'Deleting an account keeps accepted credits', 'No comments on posts', 'Members are permissions, not a team product'],
-  validating: ['Who issues credits inside a house', 'Whether “Added to project” is real in practice', 'Recruiting for unannounced projects', 'Interest vs structured responses', 'When final credits are decided', 'Who operates Ana for a house', 'Slate and Work first'],
-  deferred: ['Credits for independent projects', 'Linking people not yet on Ana', 'Bulk credit issuance', 'Guardian / minor accounts', 'Project publication lifecycle'],
+  validating: ['Who issues credits inside a house', 'Whether “Added to project” is real in practice', 'Recruiting for unannounced projects', 'Interest vs structured responses', 'When final credits are decided', 'Who operates Art and Artist for a house', 'Slate and Work first'],
+  deferred: ['Credits for independent projects', 'Linking people not yet on Art and Artist', 'Bulk credit issuance', 'Guardian / minor accounts', 'Project publication lifecycle'],
 };
 
 const RESET_KEY = 'ana-reset';
@@ -154,19 +154,19 @@ export function PrototypeControls() {
     <aside className="pc" aria-label="Prototype console">
       <div className="pc-sticky">
         <div className="pc-top">
-          <span className="pc-title">Ana prototype</span>
+          <span className="pc-title">Art and Artist prototype</span>
           <button className="pc-quiet" onClick={resetPrototype} title="Return everything to the starting state">
             <RotateCcw size={13} /> Reset
           </button>
         </div>
 
         <section className="pc-now" aria-live="polite">
-          <p className="pc-label">You're viewing Ana as</p>
+          <p className="pc-label">You're viewing Art and Artist as</p>
           <div className="pc-now-row">
             <span className={`pc-avatar ${house && !signedOut ? 'pc-avatar--org' : ''} ${signedOut ? 'pc-avatar--empty' : ''}`}>{signedOut ? '?' : (house?.name ?? me.name).split(' ').map((w) => w[0]).slice(0, 2).join('')}</span>
             <span className="pc-now-text">
               <span className="pc-now-name">{signedOut ? 'Not signed in' : house?.name ?? me.name}</span>
-              <span className="pc-now-sub">{signedOut ? 'Entering Ana' : house ? `${me.name.split(' ')[0]} acting for the house` : me.role}</span>
+              <span className="pc-now-sub">{signedOut ? 'Entering Art and Artist' : house ? `${me.name.split(' ')[0]} acting for the house` : me.role}</span>
             </span>
           </div>
           {!signedOut && (
@@ -212,7 +212,7 @@ export function PrototypeControls() {
           <Row label="Sign in" hint="Returning person" onClick={() => flow('signin')} />
           <Row label="Accept a house invite" hint="Joining Saffron Reel Studios" onClick={() => flow('invite')} />
           <Row label="Policy update" hint="Agreeing to changed terms" onClick={() => flow('policy')} />
-          <Row label="Moderation console" hint="Internal tool for Ana staff" onClick={openAdmin} external />
+          <Row label="Moderation console" hint="Internal tool for Art and Artist staff" onClick={openAdmin} external />
         </div>
       </section>
 
@@ -253,7 +253,7 @@ export function PrototypeControls() {
                 <button className="pc-quiet" onClick={clearTests} disabled={!activeTests.length}>
                   Reset test states
                 </button>
-                <button className="pc-quiet" onClick={() => (verifyPendingHouses(), showToast({ text: 'Pending houses verified (as the Ana team)' }))}>
+                <button className="pc-quiet" onClick={() => (verifyPendingHouses(), showToast({ text: 'Pending houses verified (as the Art and Artist team)' }))}>
                   Verify pending houses
                 </button>
               </div>

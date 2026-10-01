@@ -7,7 +7,7 @@ import type { Interest, Media, Notification, Opportunity } from '../data/types';
  * switching between Kiran, Tara and a house in the prototype panel, which is what lets the end-to-end
  * story be tested. Every concept is its own record:
  *   Project      private to its owner until deliberately shared
- *   Role         one object: private → open on Ana → filled / closed (an Opportunity with a projectId)
+ *   Role         one object: private → open on Art and Artist → filled / closed (an Opportunity with a projectId)
  *   Association  "this production currently associates you with this project in this working role"
  *   Credit       production-issued record: prepared → proposed → accepted | correction
  * An association is never a credit, and adding someone never makes anything public.
@@ -44,7 +44,7 @@ export interface HouseProject {
 export interface Association {
   id: string;
   projectId: string;
-  /** A real Ana person, or a private placeholder for someone not on Ana (never a profile). */
+  /** A real Art and Artist person, or a private placeholder for someone not on Art and Artist (never a profile). */
   personId?: string;
   pending?: { name: string; phone: string };
   workingRole: string;

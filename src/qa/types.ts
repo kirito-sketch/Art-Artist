@@ -84,7 +84,7 @@ export interface Scenario {
   priority: Priority;
   risks: Risk[];
   kinds: Kind[];
-  /** What Ana should do. Always answered first. */
+  /** What Art and Artist should do. Always answered first. */
   expected: string;
   why?: string;
   /** Starting context in words: persona, identity and state. */

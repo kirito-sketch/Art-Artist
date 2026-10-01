@@ -1,6 +1,10 @@
 # Participant Test Mode (`/test`)
 
-An unmoderated, task-based usability test of the real Ana prototype. Participants use Ana itself; a
+> **Product name: Art and Artist.** Legacy/internal codename: Ana. The codename survives only in
+> technical identifiers (for example storage keys, the `ana_research` local database name, the
+> `ANA_PROTOTYPE_VERSION` constant and some file names). It never appears in visible UI.
+
+An unmoderated, task-based usability test of the real Art and Artist prototype. Participants use Art and Artist itself; a
 quiet test layer gives them one task at a time, notices when they succeed, and collects short feedback.
 Everything is stored through the research data system (docs/RESEARCH_DATA_SYSTEM.md).
 
@@ -13,23 +17,24 @@ Everything is stored through the research data system (docs/RESEARCH_DATA_SYSTEM
 
 ## Layout rule: research UI never sits inside the phone
 
-The simulated Ana phone renders exactly as it does outside `/test`: the same size (417 × 876 framed on
+The simulated Art and Artist phone renders exactly as it does outside `/test`: the same size (417 × 876 framed on
 large screens), the same status bar, header, content and navigation. Nothing belonging to the study is
-drawn inside the device, so participants can always tell **Ana** from **the research controls**.
+drawn inside the device, so participants can always tell **Art and Artist** from **the research controls**.
 
 - **Large screens (800 px and wider):** the phone, with a compact floating research panel beside it
-  (300 px; warm paper, hairline border, soft shadow, 20 px radius, Ana green for the primary research
+  (300 px; warm paper, hairline border, soft shadow, 20 px radius, Art and Artist green for the primary research
   action). The panel holds everything: the task card, Task details, Feedback, I'm stuck, the task
   questions, skip and end.
 - **Small screens (under 800 px):** during an active task, a compact bar attached to the browser
   viewport below the device: `Task 2/6 · Find someone…`, plus Feedback and I'm stuck icon buttons, and
   **Done** only on tasks without an automatic success event. Tapping the task, or any research step,
   opens a sheet attached to the **browser viewport**, never to the simulated phone. On phone-width
-  screens the device takes the viewport height minus the bar, constant for the whole session, so Ana
+  screens the device takes the viewport height minus the bar, constant for the whole session, so Art and Artist
   never shifts.
 - Between tasks and while answering task questions, the phone stays visible but is not operable
   (`inert`, shown at reduced opacity), so nothing leaks into the next task.
-- Intro, consent, details, survey and thank-you are research pages shown on their own, with no phone.
+- Product introduction, consent, details, survey and thank-you are research pages shown on their own,
+  with no phone.
 - Verified on Home, Discover, Role Detail, Profile, Post Detail and the Create sheet, at desktop and
   phone sizes. There were zero research elements inside the phone, the status bar was present, and on
   desktop nothing overlapped the phone screen; the phone matched the normal prototype size exactly. On
@@ -38,16 +43,32 @@ drawn inside the device, so participants can always tell **Ana** from **the rese
 
 ## Participant flow
 
-1. **Intro.** "Ana user test. Thanks for helping us test Ana. This is a prototype, so some things may not
-   work yet. We're testing the product, not you. There are no wrong answers." Plus the expected length.
-2. **Consent** (see below). Continue is disabled until the box is ticked.
+1. **Product introduction** ("What is this product?"), on its own page, before consent:
+   > **ART AND ARTIST** · A professional network for the creative industry
+   >
+   > Art and Artist helps people in film and creative work build a credible professional profile,
+   > discover people and projects, find opportunities, and connect with others they may want to work with.
+   >
+   > Projects and credits are designed to reflect real work people have been part of, while production
+   > houses can share projects, find collaborators and credit their teams.
+   >
+   > During this test, use the prototype as if it were a real app. There are no wrong taps, and some
+   > parts of the prototype may still be incomplete. We're testing Art and Artist, not you.
+   >
+   > **Continue**
+
+   It is product context only. It never names screens, sections, buttons or navigation, never says
+   where a feature lives, and is not repeated before each task. Task instructions likewise never
+   give location hints ("go to Discover", "open People", "tap Roles", "use Search").
+2. **Consent** ("What information is being recorded?"), see below. A separate page from the
+   introduction. Continue is disabled until the box is ticked.
 3. **A little about you.** All optional: first name, craft (a short list), experience band. No email,
    phone or demographics. The participant code (P001...) is generated by the server and never shown.
 4. **Session starts** (`POST /api/research/session`): the participant row (with `consented_at`), the
    session (study, prototype version, persona `kiran`, device), and the study's tasks.
 5. **Task intro** (in the panel): "Task 2 of 6", the title and the instruction, then **Start task**
    (primary) or **End test**. Only the current task is shown; later tasks are never listed.
-6. **Active task.** Ana is fully usable. The panel shows the task and instruction with **Task details**
+6. **Active task.** Art and Artist is fully usable. The panel shows the task and instruction with **Task details**
    (instruction plus Skip this task), **Feedback** and **I'm stuck**, and End test as a text action.
    **I've finished this task** (or **Done** in the small-screen bar) appears only on tasks without an
    automatic success event (task 1, "Understand Home").
@@ -60,7 +81,7 @@ The study is chosen by participant type: the newest *active* study of that type
 ## Consent copy
 
 > **Before you start**
-> - We record what you do in the prototype (screens you open, actions you take) to improve Ana.
+> - We record what you do in the prototype (screens you open, actions you take) to improve Art and Artist.
 > - Anything you choose to write in feedback is stored with it.
 > - We never capture passwords or private messages, and nothing you type into the prototype itself.
 > - You can stop at any time. What you've done so far is kept.
@@ -72,14 +93,14 @@ The session API refuses to start without `consent: true`. The server stores `con
 ## Task model
 
 - Tasks come from `research_tasks` for the study, in `sequence` order, with `success_events`.
-- Research UI uses Ana's tokens (paper, hairline, Ana green for the one primary action, existing type),
+- Research UI uses Art and Artist's tokens (paper, hairline, Art and Artist green for the one primary action, existing type),
   but always outside the device (see "Layout rule").
 
 ## Success detection
 
 - While a task is active, Test Mode subscribes to the research client's semantic events. When an
   event matches the task's `success_events` (and `success_object_type`, if set), the task has succeeded.
-- **Never mid-action:** the panel only turns into the task questions after Ana's own sheet has closed
+- **Never mid-action:** the panel only turns into the task questions after Art and Artist's own sheet has closed
   (for example the Show Interest sheet after Send), then about 1.1 s more for the transition to settle.
   The phone is never replaced.
 - The server marks `success_detected` independently from the same events.
@@ -111,7 +132,7 @@ Skipped is never counted as success.
 
 ## Feedback button
 
-**Feedback** (in the panel, or the viewport sheet on small screens; never a modal inside Ana) → a
+**Feedback** (in the panel, or the viewport sheet on small screens; never a modal inside Art and Artist) → a
 category:
 - Something was confusing
 - I couldn't find something
@@ -142,10 +163,10 @@ becomes `abandoned`. The participant sees a thank-you screen; nothing is discard
 
 ## Final survey
 
-1. Overall, how easy was Ana to understand? (1–5, **1 very difficult, 5 very easy**)
-2. What do you think Ana is for? (free text)
+1. Overall, how easy was Art and Artist to understand? (1–5, **1 very difficult, 5 very easy**)
+2. What do you think Art and Artist is for? (free text)
 3. What was the most confusing part? (optional)
-4. What, if anything, would make you want to use Ana? (optional)
+4. What, if anything, would make you want to use Art and Artist? (optional)
 
 No schema change was needed. Each answer is a `research_feedback` row with category `other`,
 `interaction_context.source = 'survey'`, `question` (`overall_ease`, `what_is_ana_for`,
@@ -178,3 +199,11 @@ closed browser, starts a new session.
   prototype in the same tab after a test records nothing; the client stays inactive.
 - `/test` is the only participant surface that starts sessions. Existing Research Mode (`?research`,
   moderated, Aditi for Konark) is unchanged and separate.
+
+## Naming in hosted data
+
+Study titles and task text live in the database. `supabase/seed.sql` now uses "Art and Artist". A
+project seeded earlier keeps its old wording until the seed is re-run (it is idempotent: SQL Editor,
+paste `supabase/seed.sql`, Run). Until then, Test Mode and the dashboard replace any legacy product name
+in database-sourced text before display (`src/research-data/brand.ts`), so nothing visible changes
+either way.

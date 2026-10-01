@@ -13,7 +13,7 @@ import { useLoad } from '../../ui/useLoad';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
 
 /**
- * Public project page. What anyone on Ana sees: what it is, who made it, who is credited, whether it
+ * Public project page. What anyone on Art and Artist sees: what it is, who made it, who is credited, whether it
  * is hiring. The house's private workspace is a different screen and a different context.
  */
 export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
@@ -37,7 +37,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             <ChevronLeft size={26} />
           </IconButton>
         </header>
-        <EmptyState title="This project isn't public" body="The production hasn't shared it on Ana yet." />
+        <EmptyState title="This project isn't public" body="The production hasn't shared it on Art and Artist yet." />
       </div>
     );
   }
@@ -149,7 +149,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
         ) : (
         <section className="section section--flush">
           <SectionHeader title="Credits" />
-          {!w.credits.length && <p className="meta">{released ? 'No credits issued on Ana yet.' : 'Credits appear once the production issues them and each person accepts.'}</p>}
+          {!w.credits.length && <p className="meta">{released ? 'No credits issued on Art and Artist yet.' : 'Credits appear once the production issues them and each person accepts.'}</p>}
           {depts.map((d) => (
             <div key={d} className="ph-dept">
               <p className="meta">{d}</p>

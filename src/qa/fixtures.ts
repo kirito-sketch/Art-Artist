@@ -37,7 +37,7 @@ export const OPS: Record<string, (...args: string[]) => void> = {
   added: (personId, projectId, line, dept = 'Production') => {
     association(personId, projectId, line, dept);
   },
-  /** Someone not on Ana is on the project by phone. */
+  /** Someone not on Art and Artist is on the project by phone. */
   pending: (projectId, name, phone) => {
     world.associations.push({ id: wid('wa'), projectId, pending: { name, phone }, workingRole: 'Assistant Director', dept: 'Direction', status: 'added' });
   },
@@ -51,7 +51,7 @@ export const OPS: Record<string, (...args: string[]) => void> = {
   },
   /** The role has been closed, or filled. */
   closeRole: (roleId) => act.closeRole(setupActor('konark'), roleId, 'closed', 'Closed early'),
-  fillRole: (roleId) => act.closeRole(setupActor('konark'), roleId, 'filled', 'Filled on Ana'),
+  fillRole: (roleId) => act.closeRole(setupActor('konark'), roleId, 'filled', 'Filled on Art and Artist'),
   /** This person has shown Interest in this role. */
   interest: (personId, roleId) => {
     act.sendInterest({ viewerId: personId, acting: 'self', memberships: [], canIssue: false }, roleId, '');

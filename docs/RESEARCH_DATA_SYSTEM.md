@@ -1,5 +1,9 @@
 # Research data system
 
+> **Product name: Art and Artist.** Legacy/internal codename: Ana. The codename survives only in
+> technical identifiers (for example storage keys, the `ana_research` local database name, the
+> `ANA_PROTOTYPE_VERSION` constant and some file names). It never appears in visible UI.
+
 The data foundation for unmoderated usability testing of the Ana prototype: storage, security and
 instrumentation. The participant experience is documented in docs/RESEARCH_TEST_MODE.md (`/test`) and
 the researcher view in docs/RESEARCH_DASHBOARD.md (`/research`).

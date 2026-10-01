@@ -65,11 +65,11 @@ export function YourData() {
             <ul className="block-list">
               <li>Credits you've accepted stay on those films under your name, with no link to a profile</li>
               <li>Messages stay with the people you wrote to, shown as "Deleted account"</li>
-              <li>Reports stay with Ana's safety team for a limited time</li>
+              <li>Reports stay with Art and Artist's safety team for a limited time</li>
             </ul>
           </div>
           {lastOwner ? (
-            <p className="inline-error">You own {memberships.filter((m) => m.startsWith('h-')).map((m) => org(m).name).join(', ')}. Transfer it to someone else, or contact Ana, before deleting your account.</p>
+            <p className="inline-error">You own {memberships.filter((m) => m.startsWith('h-')).map((m) => org(m).name).join(', ')}. Transfer it to someone else, or contact Art and Artist, before deleting your account.</p>
           ) : (
             <>
               <Button block size="l" variant="secondary" onClick={() => showToast({ text: "We'll email you a copy within 48 hours" })}>

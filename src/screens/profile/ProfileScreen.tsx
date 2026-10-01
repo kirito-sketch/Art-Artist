@@ -118,7 +118,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             <ChevronLeft size={26} />
           </IconButton>
         </header>
-        <EmptyState icon={<Ban />} title={`You blocked ${p.name}`} body="You won't see each other on Ana. They haven't been told." />
+        <EmptyState icon={<Ban />} title={`You blocked ${p.name}`} body="You won't see each other on Art and Artist. They haven't been told." />
         <Button variant="secondary" onClick={() => unblock(id)} className="center-btn">
           Unblock
         </Button>
@@ -137,7 +137,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const isFollowing = following.includes(id);
   const backdrop = reel ?? work[0] ?? d.credits[0]?.media;
   // The hero is the person's work; the person themself is the portrait in the identity block below
-  // (Person, Craft, Work, Credibility). With no work yet a neutral Ana illustration stands in (the
+  // (Person, Craft, Work, Credibility). With no work yet a neutral Art and Artist illustration stands in (the
   // photo would only repeat the portrait), never a broken image.
   const heroSrc = backdrop?.src ?? 'images/brand/entry/camera.jpg';
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };

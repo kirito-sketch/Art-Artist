@@ -5,7 +5,7 @@ const NO_MOD = 'The moderation console is a single-moderator prototype with samp
 const NO_DEL = 'Account deletion has no data model in the prototype; Your data describes the rule.';
 
 export const trust = [
-  ...area(25, 'MOD', 'Moderation', ['Ana staff', 'Moderator', 'Moderation console'], [
+  ...area(25, 'MOD', 'Moderation', ['Art and Artist staff', 'Moderator', 'Moderation console'], [
     [1, 'Two moderators open the same report', 'P1', 'Da', 'L', 'The case shows "Being reviewed by Priya". A second action asks to confirm.', 'UB', 'NU', { nofx: NO_MOD }],
     [2, 'Conflicting moderator actions', 'P0', 'Da Tr', 'L', 'The first action wins; the second is refused with the current state. Both are in the audit log.', 'AB', 'PD', { why: 'Enforcement must be consistent.', not: ['A suspension silently undone by a warning'], nofx: NO_MOD }],
     [3, 'Wrong account suspended', 'P0', 'Tr', 'I', 'Reversible from the case with a reason; the person is told and restored.', 'UB', 'PD', { why: 'Mistakes happen; recovery must be fast.', nofx: NO_MOD }],
@@ -17,7 +17,7 @@ export const trust = [
     [9, 'Private project report', 'P0', 'Pv', 'L', 'Moderators see only what the reporter could see, plus metadata.', 'BL', 'PD', { not: ['Full private project exposed to staff by default'], nofx: NO_MOD }],
     [10, 'Direct message report', 'P0', 'Pv', 'L', 'See EC-MSG-017.', 'BL', 'RD', { fx: asModerator('R-1039') }],
     [11, 'Excessive internal data exposure', 'P0', 'Pv Se', 'L', 'Console shows the minimum needed. Phone numbers and emails masked.', 'UB', 'RD', { fx: asModerator('R-1040') }],
-    [12, 'Suspended last owner of a house', 'P1', 'Pe', 'L', 'Ana support becomes custodian (EC-HOUSE-011).', 'B', 'PD', {}],
+    [12, 'Suspended last owner of a house', 'P1', 'Pe', 'L', 'Art and Artist support becomes custodian (EC-HOUSE-011).', 'B', 'PD', {}],
     [13, 'Suspended organisation', 'P1', 'Tr', 'L', 'See EC-ID-013.', 'B', 'PD', {}],
     [14, 'Warning ignored', 'P2', 'Sa', 'L', 'Escalation guidance in the console.', 'B', 'NR', {}],
     [15, 'Restriction expires', 'P1', 'Rv', 'L', 'Lifted automatically; person told.', 'B', 'RD', {}],
@@ -61,10 +61,10 @@ export const trust = [
     [2, 'Signs in during deactivation', 'P0', 'Rv', 'I', 'See EC-AUTH-011.', 'UIB', 'NU', { fx: asTara({ stack: [{ name: 'settings' }, { name: 'yourData' }] }) }],
     [3, 'Proposed credits exist', 'P0', 'Rec', 'L', 'Unanswered proposals are withdrawn; the house is told the person left.', 'AB', 'NU', { not: ['Proposals linger for a deleted person'], nofx: NO_DEL }],
     [4, 'Accepted credits exist', 'P0', 'Rec', 'L', 'See EC-CREDIT-021.', 'ABL', 'NU', { auto: ['AC-06'], nofx: NO_DEL }],
-    [5, 'Private project associations exist', 'P0', 'Pv', 'L', 'Removed. Houses see "Left Ana".', 'AB', 'NU', { nofx: NO_DEL }],
+    [5, 'Private project associations exist', 'P0', 'Pv', 'L', 'Removed. Houses see "Left Art and Artist".', 'AB', 'NU', { nofx: NO_DEL }],
     [6, 'Open Interests', 'P1', 'Da', 'L', 'Withdrawn.', 'AB', 'NU', {}],
     [7, 'Active conversations', 'P1', 'Pv', 'L', 'Stay with the other side as "Deleted account".', 'B', 'RD', {}],
-    [8, 'Sole organisation owner', 'P0', 'Pe Rec', 'I', 'Blocked until ownership is transferred or Ana takes custody.', 'UIAB', 'FA', { why: 'A house must never be orphaned.', do: 'Aditi (the only person who can act for Konark and Tidewater) tries to delete her account.', not: ['Deletion proceeds and leaves the houses without anyone'], fx: asAditi({ stack: [{ name: 'settings' }, { name: 'yourData' }] }), auto: ['AC-25'], notes: 'Only houses created in this session count as owned; seeded memberships do not.' }],
+    [8, 'Sole organisation owner', 'P0', 'Pe Rec', 'I', 'Blocked until ownership is transferred or Art and Artist takes custody.', 'UIAB', 'FA', { why: 'A house must never be orphaned.', do: 'Aditi (the only person who can act for Konark and Tidewater) tries to delete her account.', not: ['Deletion proceeds and leaves the houses without anyone'], fx: asAditi({ stack: [{ name: 'settings' }, { name: 'yourData' }] }), auto: ['AC-25'], notes: 'Only houses created in this session count as owned; seeded memberships do not.' }],
     [9, 'Open moderation case', 'P1', 'Sa', 'L', 'Deletion allowed; case evidence kept for a limited time.', 'BL', 'NL', {}],
     [10, 'Has reported others', 'P1', 'Pv', 'L', 'Reports continue anonymously.', 'B', 'RD', {}],
     [11, 'Under investigation', 'P0', 'Sa Le', 'L', 'Deletion paused while a safety investigation is open.', 'BL', 'NL', { why: 'Deleting to escape enforcement.', nofx: NO_DEL }],
@@ -79,7 +79,7 @@ export const trust = [
 
   ...area(29, 'ORG', 'Organisation closure', ['Aditi', 'Konark Pictures', 'House settings'], [
     [1, 'Company closes', 'P1', 'Rec', 'L', 'Archive, never delete. Page says "No longer active".', 'UB', 'PD', {}],
-    [2, 'House leaves Ana', 'P1', 'Rec', 'L', 'Same as closure.', 'B', 'PD', {}],
+    [2, 'House leaves Art and Artist', 'P1', 'Rec', 'L', 'Same as closure.', 'B', 'PD', {}],
     [3, 'Public projects remain', 'P0', 'Rec', 'L', 'Shared projects and their accepted credits stay public.', 'AB', 'RD', { why: 'Films outlive companies.', not: ['Projects disappear with the house'], nofx: NO_STATUS_ORG() }],
     [4, 'Accepted credits remain', 'P0', 'Rec', 'L', 'Yes.', 'AB', 'RD', { nofx: NO_STATUS_ORG() }],
     [5, 'Active roles', 'P1', 'Da', 'L', 'Closed with a neutral reason.', 'B', 'RD', {}],

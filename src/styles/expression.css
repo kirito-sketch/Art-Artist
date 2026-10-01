@@ -1,5 +1,5 @@
 /*
- * Ana visual expression layer (docs/VISUAL_COMPOSITION_SYSTEM.md).
+ * Art and Artist visual expression layer (docs/VISUAL_COMPOSITION_SYSTEM.md).
  * Proven on four screens first: Individual Home, House Home (Slate), Individual Profile, Role Detail.
  * New surfaces and families are opted into with the .canvas class; trust and functional screens
  * are untouched until the grammar is approved and propagated.
@@ -1485,7 +1485,7 @@
 /*
  * Back, Share, Save and More over imagery are one utility control: a light, near-white floating
  * circle with an ink icon and the soft float shadow. They are never filled with the action colour;
- * only a stateful control (Save) shows its selected state, in the glyph (Ana green, filled).
+ * only a stateful control (Save) shows its selected state, in the glyph (Art and Artist green, filled).
  */
 .icon-btn--float,
 .save--floating {
@@ -1812,7 +1812,7 @@
 /*
  * Filters select what is shown; they never borrow button styling. On the paper canvas the default
  * filter is a warm surface that reads against the page (the old grey-on-white logic, in warm
- * tones); selected is a solid Ana-green fill with light text; disabled is faded.
+ * tones); selected is a solid Art and Artist-green fill with light text; disabled is faded.
  */
 .canvas {
   --filter-bg: var(--tint);

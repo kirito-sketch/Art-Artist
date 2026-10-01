@@ -503,7 +503,7 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
         <p className="meta">
           Fraud, a fake credit or someone using your identity?{' '}
           <button className="link link--small" onClick={() => openSheet({ name: 'report', subject: `Credit on ${title}`, partyId: house })}>
-            Report to Ana
+            Report to Art and Artist
           </button>
         </p>
       )}
@@ -613,7 +613,7 @@ function ShareSheet({ label }: { label: string }) {
         />
         <Row
           icon={<Send size={22} />}
-          label="Share outside Ana"
+          label="Share outside Art and Artist"
           chevron={false}
           onPress={() => {
             closeSheet();
@@ -683,7 +683,7 @@ function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: 
     return (
       <div className="stack">
         <p className="title-2">Thanks. We'll look at it.</p>
-        <p className="body">Ana reviews reports within 24 hours. {target ? 'The author' : subject} won't be told who reported. If we act, you'll get a notification.</p>
+        <p className="body">Art and Artist reviews reports within 24 hours. {target ? 'The author' : subject} won't be told who reported. If we act, you'll get a notification.</p>
         {partyId && (
           <Button block size="l" variant="danger" onClick={() => openSheet({ name: 'block', id: partyId })}>
             Also block
@@ -712,7 +712,7 @@ function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: 
         onClick={() => {
           setStep('sending');
           // The payload the trust queue receives: what was reported (type, id, author) and why. The
-          // reporter travels with it for Ana staff only; the author is never told who reported.
+          // reporter travels with it for Art and Artist staff only; the author is never told who reported.
           sentReports.push({ kind: target?.kind ?? 'Other', objectId: target?.id, authorId: partyId, subject, reason, note: detail || undefined, reporterId: viewer.id });
           window.setTimeout(() => setStep('done'), 700);
         }}
@@ -824,7 +824,7 @@ function EditRole({ id }: { id: string }) {
 }
 
 const CLOSE_REASONS: { state: 'filled' | 'closed'; label: string; tells: string }[] = [
-  { state: 'filled', label: 'Filled through Ana', tells: 'Filled' },
+  { state: 'filled', label: 'Filled through Art and Artist', tells: 'Filled' },
   { state: 'filled', label: 'Filled another way', tells: 'Filled' },
   { state: 'closed', label: 'No longer needed', tells: 'No longer needed' },
   { state: 'closed', label: 'Project paused', tells: 'Project paused' },
@@ -844,7 +844,7 @@ function CloseRole({ id }: { id: string }) {
         <p className="meta">Who did you choose? Everyone else who showed interest is told the role is filled.</p>
         <div className="list list--flush">
           {waiting.map((i) => (
-            <PressCard key={i.id} className="prow" onPress={() => { closeRole(id, 'filled', 'Filled through Ana', i.personId); setWho(i.personId); setStep('add'); }} scale={0.985}>
+            <PressCard key={i.id} className="prow" onPress={() => { closeRole(id, 'filled', 'Filled through Art and Artist', i.personId); setWho(i.personId); setStep('add'); }} scale={0.985}>
               <Avatar party={person(i.personId)} size={40} />
               <div className="prow-text">
                 <p className="item-title">{person(i.personId).name}</p>
@@ -853,7 +853,7 @@ function CloseRole({ id }: { id: string }) {
             </PressCard>
           ))}
         </div>
-        <button className="link" onClick={() => { closeRole(id, 'filled', 'Filled through Ana'); closeSheet(); showToast({ text: 'Role marked as filled' }); }}>
+        <button className="link" onClick={() => { closeRole(id, 'filled', 'Filled through Art and Artist'); closeSheet(); showToast({ text: 'Role marked as filled' }); }}>
           Skip
         </button>
       </div>
@@ -868,14 +868,14 @@ function CloseRole({ id }: { id: string }) {
           <Row key={r.label} label={r.label} onPress={() => setPick(i)} chevron={false} value={pick === i ? <Check size={18} className="accent" /> : undefined} />
         ))}
       </div>
-      <p className="meta">{waiting.length ? `${waiting.length} ${waiting.length === 1 ? 'person' : 'people'} who showed interest will be told the role is ${pick !== null ? CLOSE_REASONS[pick].tells.toLowerCase() : 'closed'}. ` : ''}The role stops appearing on Ana.</p>
+      <p className="meta">{waiting.length ? `${waiting.length} ${waiting.length === 1 ? 'person' : 'people'} who showed interest will be told the role is ${pick !== null ? CLOSE_REASONS[pick].tells.toLowerCase() : 'closed'}. ` : ''}The role stops appearing on Art and Artist.</p>
       <Button
         block
         size="l"
         disabled={pick === null}
         onClick={() => {
           const r = CLOSE_REASONS[pick!];
-          // Filled through Ana on a project role: choose the person, then offer to add them to the project.
+          // Filled through Art and Artist on a project role: choose the person, then offer to add them to the project.
           if (pick === 0 && wr && waiting.length) return setStep('who');
           closeRole(id, r.state, r.label);
           closeSheet();

@@ -63,7 +63,7 @@ export function ProductionHome() {
 function Pending() {
   const { acting } = useStore();
   if (org(acting).verified) return null;
-  return <p className="inline-note ws-pad">Verification pending. Ana checks houses within 2 working days. Until then you can edit your page and prepare private projects; public roles and credits unlock after.</p>;
+  return <p className="inline-note ws-pad">Verification pending. Art and Artist checks houses within 2 working days. Until then you can edit your page and prepare private projects; public roles and credits unlock after.</p>;
 }
 
 function SlateHome() {
@@ -322,7 +322,7 @@ function Slate({ compact }: { compact?: boolean }) {
   );
 }
 
-/** People on Ana who fit roles the house hasn't opened yet: the network doing the work a job board would. */
+/** People on Art and Artist who fit roles the house hasn't opened yet: the network doing the work a job board would. */
 function PeopleForRoles() {
   const { push } = useStore();
   const h = useHouse();

@@ -1,7 +1,7 @@
 /**
  * Research event taxonomy (shared by the browser client and the server API).
  *
- * Events are semantic: they say what the participant did in Ana terms ("role_opened"), never which
+ * Events are semantic: they say what the participant did in Art and Artist terms ("role_opened"), never which
  * element they touched ("button_14_clicked"). Unknown names are dropped on both sides. Nothing typed
  * by the participant is ever an event payload: see sanitizeMetadata.
  * Documented in docs/RESEARCH_DATA_SYSTEM.md, "Event taxonomy".

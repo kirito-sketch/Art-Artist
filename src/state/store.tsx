@@ -545,7 +545,7 @@ function useStoreValue() {
       return id;
     },
     addMembership: (personId: string, orgId: string) => setMemberMap((m) => ({ ...m, [personId]: [...new Set([...(m[personId] ?? []), orgId])] })),
-    /** Self-serve setup: the house exists immediately but is unverified until the Ana team checks it. */
+    /** Self-serve setup: the house exists immediately but is unverified until the Art and Artist team checks it. */
     createHouse: (d: { name: string; city: string; about: string; work: string[]; website: string; logo?: string }) => {
       const id = `h-${Date.now().toString(36)}`;
       const o = { id, kind: 'org' as const, name: d.name, city: d.city, tone: 2, verified: false, logo: d.logo, about: d.about || `${d.work.join(', ')}.` };

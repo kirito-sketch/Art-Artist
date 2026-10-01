@@ -2,19 +2,19 @@
 -- DEVELOPMENT research fixtures. Safe to run more than once (upserts by slug / key).
 -- `supabase db reset` runs this file automatically after the migrations; on a hosted project paste it
 -- into the SQL editor once (see docs/RESEARCH_DATA_SYSTEM.md, "Setup").
--- These are research fixtures only. They never touch Ana's prototype/demo data.
+-- These are research fixtures only. They never touch Art and Artist's prototype/demo data.
 -- =====================================================================================================
 
 insert into public.research_studies (slug, title, description, status, participant_type, prototype_version, notes, started_at)
 values
   ('ana-individual-creative-v29',
-   'Ana Individual Creative Usability Test (V29)',
-   'Development study: can an individual creative understand Ana, find people and work in their craft, save, and show interest in a role?',
+   'Art and Artist Individual Creative Usability Test (V29)',
+   'Development study: can an individual creative understand Art and Artist, find people and work in their craft, save, and show interest in a role?',
    'active', 'individual_creative', 'V29',
    'DEVELOPMENT FIXTURE. Persona: Kiran Varma (Director of Photography, Hyderabad).',
    now()),
   ('ana-production-house-v29',
-   'Ana Production House Usability Test (V29)',
+   'Art and Artist Production House Usability Test (V29)',
    'Development study (draft): can a production house member run a project from the Slate, review interest and issue credits?',
    'draft', 'production_house', 'V29',
    'DEVELOPMENT FIXTURE. Persona: Aditi Ghosh acting for Konark Pictures. Not active yet.',
@@ -29,7 +29,7 @@ insert into public.research_tasks (study_id, key, sequence, title, instruction, 
 select s.id, t.key, t.seq, t.title, t.instruction, 'individual_creative', t.success_events, t.object_type
 from s, (values
   ('understand-home', 1, 'Understand Home',
-   'Take a minute on the Home screen. In your own words, what does Ana offer someone in your craft?',
+   'Take a minute on the Home screen. In your own words, what does Art and Artist offer someone in your craft?',
    '{}'::text[], null),
   ('find-craft-person', 2, 'Find someone in your craft',
    'Find another cinematographer you might want to work with and open their profile.',

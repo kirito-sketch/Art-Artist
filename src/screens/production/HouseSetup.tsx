@@ -12,9 +12,9 @@ const WORK = ['Features', 'Series', 'Ads', 'Documentary', 'Music videos', 'Short
 const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata'];
 
 /**
- * Self-serve setup (secondary path; most houses are set up by the Ana team and invite people).
+ * Self-serve setup (secondary path; most houses are set up by the Art and Artist team and invite people).
  * The house exists at once, but trust-sensitive actions (public roles, credits, sharing projects)
- * stay locked until Ana verifies it. Not business registration: four short things, then a check.
+ * stay locked until Art and Artist verifies it. Not business registration: four short things, then a check.
  */
 export function HouseSetup() {
   const { pop, createHouse, setActing, showToast, recordConsent } = useStore();
@@ -44,7 +44,7 @@ export function HouseSetup() {
       {step === 0 && (
         <div className="ws-pad stack">
           <h1 className="large-title">Set up a production house</h1>
-          <p className="meta">Most houses are set up with the Ana team. If yours isn't on Ana yet, start here. You'll be its owner.</p>
+          <p className="meta">Most houses are set up with the Art and Artist team. If yours isn't on Art and Artist yet, start here. You'll be its owner.</p>
           <div className="ob-photo">
             <Avatar party={draft} size={72} />
             <button className="link" onClick={() => setPicker('logo')}>
@@ -101,7 +101,7 @@ export function HouseSetup() {
       {step === 2 && !id && (
         <div className="ws-pad stack">
           <h1 className="large-title">Verification</h1>
-          <p className="meta">Ana checks every production house before it can post public roles or issue credits. It protects people from fake productions and keeps credits trustworthy.</p>
+          <p className="meta">Art and Artist checks every production house before it can post public roles or issue credits. It protects people from fake productions and keeps credits trustworthy.</p>
           <button className="doc-pick" onClick={() => setPicker('doc')}>
             <FileText size={20} />
             <span>
@@ -116,7 +116,7 @@ export function HouseSetup() {
           <DraftTag />
           <button className={`check-row ${authorised ? 'is-on' : ''}`} onClick={() => setAuthorised(!authorised)} role="checkbox" aria-checked={authorised}>
             <span className="check-box">{authorised ? '✓' : ''}</span>
-            <span>I'm authorised to set up {name} on Ana and act for it</span>
+            <span>I'm authorised to set up {name} on Art and Artist and act for it</span>
           </button>
           <Button
             block
@@ -139,11 +139,11 @@ export function HouseSetup() {
             <ShieldCheck size={32} />
           </div>
           <h1 className="large-title">{org(id).name} is set up</h1>
-          <p className="body">Ana checks houses within 2 working days. Until then you can edit your page and prepare private projects.</p>
+          <p className="body">Art and Artist checks houses within 2 working days. Until then you can edit your page and prepare private projects.</p>
           <ul className="block-list">
             <li>Public roles unlock after verification</li>
             <li>Credits unlock after verification</li>
-            <li>Sharing projects on Ana unlocks after verification</li>
+            <li>Sharing projects on Art and Artist unlocks after verification</li>
           </ul>
           <Button
             block

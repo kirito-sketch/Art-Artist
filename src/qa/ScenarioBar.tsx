@@ -52,7 +52,7 @@ export function ScenarioBar({ compact = false }: { compact?: boolean }) {
         {actions}
       </div>
       <div className="sb-body">
-        <p className="sb-label">What should Ana do?</p>
+        <p className="sb-label">What should Art and Artist do?</p>
         <p className="sb-text">{s.expected}</p>
         {s.action && (
           <>

@@ -405,7 +405,7 @@ export const CHECKS: Check[] = [
       const rid = act.addRole(member('konark'), id, ROLE);
       act.sendInterest(person('tara'), rid, '');
       act.sendInterest(person('kiran'), rid, '');
-      act.closeRole(member('konark'), rid, 'filled', 'Filled through Ana', 'tara');
+      act.closeRole(member('konark'), rid, 'filled', 'Filled through Art and Artist', 'tara');
       const kiran = world.notifications.filter((n) => n.toPersonId === 'kiran' && n.route?.id === rid);
       const tara = world.notifications.filter((n) => n.toPersonId === 'tara' && n.route?.id === rid);
       if (kiran.length !== 1) return fail(`Kiran got ${kiran.length} outcome notifications.`);

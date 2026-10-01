@@ -1,4 +1,4 @@
-/* Research Dashboard (/research): desktop-first, Ana's paper and type, Ana green only for the one
+/* Research Dashboard (/research): desktop-first, Art and Artist's paper and type, Art and Artist green only for the one
  * primary action and selected states. Loaded only with the dashboard chunk. */
 html, body, #root { height: auto; min-height: 100%; }
 body:has(.dash) { background: var(--base, #f6f4f0); overflow: auto; }

@@ -25,7 +25,7 @@ export default function Dashboard() {
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Ana research';
+    document.title = 'Art and Artist Research';
     if (!sb) return setAuth('signed-out');
     const check = async () => {
       const { data } = await sb!.auth.getSession();
@@ -40,7 +40,7 @@ export default function Dashboard() {
   }, []);
 
   if (!configured) return <Gate title="Research dashboard not configured">Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for this deployment.</Gate>;
-  if (auth === 'loading') return <Gate title="Ana research">Loading…</Gate>;
+  if (auth === 'loading') return <Gate title="Art and Artist Research">Loading…</Gate>;
   if (auth === 'signed-out') return <SignIn />;
   if (auth === 'error')
     return (
@@ -70,7 +70,7 @@ function Gate({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main className="dash dash-gate">
       <div className="dash-gate-card">
-        <p className="dash-eyebrow">Ana research</p>
+        <p className="dash-eyebrow">Art and Artist Research</p>
         <h1>{title}</h1>
         <div className="dash-gate-body">{children}</div>
       </div>
@@ -158,7 +158,7 @@ function Workspace({ email }: { email: string | null }) {
     <main className="dash">
       <header className="dash-top">
         <div className="dash-brand">
-          <span className="dash-eyebrow">Ana research</span>
+          <span className="dash-eyebrow">Art and Artist Research</span>
           <select aria-label="Study" value={studyId ?? ''} onChange={(e) => setStudyId(e.target.value)}>
             {studies.map((s) => (
               <option key={s.id} value={s.id}>

@@ -42,7 +42,7 @@ export function buildMatrix(results: Record<string, Outcome>, when: string) {
   out.push('# Edge case matrix', '');
   out.push('> Generated from `src/qa/scenarios` by `npm run test:edge`. Do not edit by hand: change the manifest and regenerate.', '');
   out.push(`Last automated run: ${when}.`, '');
-  out.push('**What should Ana do?** is answered first for every scenario (the Expected behaviour column). Whether it then needs UI, an interaction test, a business rule, an automated test, a legal decision or user validation follows from that answer. Scenario IDs are permanent: numbers are only ever appended, never reused.', '');
+  out.push('**What should Art and Artist do?** is answered first for every scenario (the Expected behaviour column). Whether it then needs UI, an interaction test, a business rule, an automated test, a legal decision or user validation follows from that answer. Scenario IDs are permanent: numbers are only ever appended, never reused.', '');
   out.push('## Summary', '');
   out.push(`| Total | P0 | P1 | P2 | Need UI | Need interaction test | Need automated test | Need backend/business rule | Need legal review | Need user validation | Reproducible in the Lab |`);
   out.push('|---|---|---|---|---|---|---|---|---|---|---|');

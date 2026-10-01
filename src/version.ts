@@ -1,5 +1,5 @@
 /**
- * The one source of truth for which Ana build is running. Bump it whenever a build is shared for
+ * The one source of truth for which Art and Artist build is running. Bump it whenever a build is shared for
  * testing. Every research session records it once, at start, and keeps it forever.
  */
 export const ANA_PROTOTYPE_VERSION = 'V29';

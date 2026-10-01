@@ -44,7 +44,7 @@ export function MotionReview() {
   return (
     <div className="spec">
       <header className="spec-head">
-        <h1>Ana motion review</h1>
+        <h1>Art and Artist motion review</h1>
         <p>Internal. Inventory, purpose, reduced-motion behaviour and live demos. Spec: docs/MOTION_MICROINTERACTION_SYSTEM.md.</p>
       </header>
       {INTERACTIONS.map((it) => (
