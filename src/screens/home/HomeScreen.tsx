@@ -7,9 +7,11 @@ import { useStore } from '../../state/store';
 import { availableFor, homeOrder, housesFor, industryActivity, intentDef, opportunitiesFor, peopleFor, projectsFor, stageOf, workFor, type HomeSection, type Signals, type Stage } from '../../domain/relevance';
 import { FrameLabel, PortraitCard, PosterTile } from '../../ui/compose';
 import { findOpportunity, forYou, kindLabel, networkFor, org, person } from '../../state/selectors';
+import { worksForOrg } from '../../state/world';
+import { isLive } from '../../data/works';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { shared, spring, stagger } from '../../ui/motion';
-import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
+import { Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { NetworkRow } from './NetworkActivity';
 import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
@@ -245,7 +247,7 @@ function PeopleFor({ me, signals, goDiscover }: HomeCtx) {
     .slice(0, 10);
   if (!list.length) return null;
   const title = intent === 'hire' ? 'People for your next project' : intent === 'collaborate' ? 'People to collaborate with' : intent === 'work' ? (me.craft === 'actor' ? 'Directors and producers' : 'People in your world') : 'People worth knowing';
-  const why = team ? 'Other crafts, credible and nearby first. Save people to keep a shortlist.' : intent === 'work' ? 'Your craft, and the directors and producers who hire.' : 'People in your craft and city, and credible professionals beyond it.';
+  const why = team ? 'Other crafts, credible and nearby first. Open a profile to save someone to your shortlist.' : intent === 'work' ? 'Your craft, and the directors and producers who hire.' : 'People in your craft and city, and credible professionals beyond it.';
   return (
     <section className="v-section" data-world="people">
       <SectionHeader title={title} action="See all" onAction={() => goDiscover('people')} />
@@ -265,7 +267,7 @@ function PeopleFor({ me, signals, goDiscover }: HomeCtx) {
               )
             }
             onPress={() => push({ name: 'profile', id: p.id })}
-            action={team ? <PersonSave id={p.id} name={p.name} /> : <FollowButton on={following.includes(p.id)} onToggle={() => toggleFollow(p.id)} name={p.name} block />}
+            action={<FollowButton primary on={following.includes(p.id)} onToggle={() => toggleFollow(p.id)} name={p.name} block />}
           />
         ))}
       </div>
@@ -275,7 +277,7 @@ function PeopleFor({ me, signals, goDiscover }: HomeCtx) {
 
 /** Professionals available now: the second tray for someone assembling a team. */
 function AvailableNow({ me, goDiscover }: HomeCtx) {
-  const { following, push } = useStore();
+  const { following, toggleFollow, push } = useStore();
   const list = availableFor(me, following).slice(0, 10);
   if (list.length < AVAILABLE_MIN) return null;
   return (
@@ -284,32 +286,10 @@ function AvailableNow({ me, goDiscover }: HomeCtx) {
       <p className="world-why">Professionals in other crafts who can start soon.</p>
       <div className="portrait-rail">
         {list.map(({ item: p, why }) => (
-          <PortraitCard key={p.id} person={p} context={why} onPress={() => push({ name: 'profile', id: p.id })} action={<PersonSave id={p.id} name={p.name} />} />
+          <PortraitCard key={p.id} person={p} context={why} onPress={() => push({ name: 'profile', id: p.id })} action={<FollowButton primary on={following.includes(p.id)} onToggle={() => toggleFollow(p.id)} name={p.name} block />} />
         ))}
       </div>
     </section>
-  );
-}
-
-/** Save a person: a private shortlist for hiring and collaborating. They are not told. */
-export function PersonSave({ id, name, block = true }: { id: string; name: string; block?: boolean }) {
-  const { isSaved, toggleSave } = useStore();
-  const on = isSaved('person', id);
-  return (
-    <Button
-      size="s"
-      block={block}
-      variant={on ? 'secondary' : 'outline'}
-      icon={<Bookmark size={14} fill={on ? 'currentColor' : 'none'} />}
-      aria-pressed={on}
-      aria-label={on ? `Remove ${name} from Saved` : `Save ${name}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleSave(id, 'person');
-      }}
-    >
-      {on ? 'Saved' : 'Save'}
-    </Button>
   );
 }
 
@@ -398,44 +378,54 @@ function ActiveProjects({ me, stage, goDiscover }: HomeCtx) {
   if (!list.length) return null;
   const title = intent === 'work' || intent === 'collaborate' ? 'Projects you could join' : intent === 'hire' ? 'Projects and production houses' : 'Active projects';
   const released = list.some((x) => !x.live);
+  // One card design for every item: same size, image ratio, hierarchy and tap behaviour. No featured
+  // first item. Houses are shown by what they are making, so they share the project card.
+  const cards = [
+    ...list.map(({ w, hiring, live }) => ({
+      key: w.id,
+      media: w.media.id === 'ph' ? undefined : w.stills[0] ?? w.media,
+      label: live ? w.stage : `Released ${w.year}`,
+      title: w.title,
+      meta: (
+        <>
+          {org(w.orgIds[0]).name} <Verified size={12} />
+        </>
+      ),
+      sub: hiring ? `Hiring ${hiring}` : w.format,
+      sharedId: w.media.id === 'ph' ? undefined : shared.work(w.id),
+      go: () => push({ name: 'work', id: w.id, from: 'card' }),
+    })),
+    ...houses.map(({ o, hiring, live }) => {
+      const ws = worksForOrg(o.id);
+      const lead = ws.find(isLive) ?? ws[0];
+      return {
+        key: o.id,
+        media: lead && lead.media.id !== 'ph' ? lead.stills[0] ?? lead.media : undefined,
+        label: 'Production house',
+        title: o.name,
+        meta: (
+          <>
+            {o.city} <Verified size={12} />
+          </>
+        ),
+        sub: hiring ? `Hiring ${hiring}` : live && lead ? `Making ${lead.title}` : o.about,
+        sharedId: undefined as string | undefined,
+        go: () => push({ name: 'org', id: o.id }),
+      };
+    }),
+  ];
   return (
     <section className="v-section" data-world="projects">
       <SectionHeader title={title} action="See all" onAction={() => goDiscover('projects')} />
-      <p className="world-why">Being made now by verified productions, hiring first{released ? ', then recent releases' : ''}.</p>
-      <div className="poster-rail">
-        {list.map(({ w, hiring, live }, i) => (
-          <PosterTile
-            key={w.id}
-            lead={i === 0}
-            media={w.media.id === 'ph' ? undefined : w.stills[0] ?? w.media}
-            title={w.title}
-            meta={
-              <>
-                {org(w.orgIds[0]).name} <Verified size={12} />
-                {hiring ? ` · Hiring ${hiring}` : ''}
-              </>
-            }
-            label={<FrameLabel>{live ? w.stage : `Released ${w.year}`}</FrameLabel>}
-            sharedId={w.media.id === 'ph' ? undefined : shared.work(w.id)}
-            onPress={() => push({ name: 'work', id: w.id, from: 'card' })}
-          />
+      <p className="world-why">
+        Being made now by verified productions, hiring first{released ? ', then recent releases' : ''}
+        {houses.length ? '. Then the houses making them.' : '.'}
+      </p>
+      <div className="poster-rail project-rail">
+        {cards.map((c) => (
+          <PosterTile key={c.key} media={c.media} title={c.title} meta={c.meta} sub={c.sub} label={<FrameLabel>{c.label}</FrameLabel>} sharedId={c.sharedId} onPress={c.go} />
         ))}
       </div>
-      {houses.length > 0 && (
-        <div className="house-tray" role="list" aria-label="Production houses">
-          {houses.map(({ o, hiring, live }) => (
-            <PressCard key={o.id} className="house-chip" onPress={() => push({ name: 'org', id: o.id })} scale={0.97} role="listitem">
-              <Avatar party={o} size={36} />
-              <span className="house-chip-text">
-                <span className="item-title">
-                  {o.name} <Verified size={11} />
-                </span>
-                <span className="meta">{hiring ? `Hiring ${hiring}` : live ? 'Making something now' : o.city}</span>
-              </span>
-            </PressCard>
-          ))}
-        </div>
-      )}
     </section>
   );
 }

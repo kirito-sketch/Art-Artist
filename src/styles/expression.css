@@ -2151,17 +2151,15 @@
 .carousel-item { position: relative; }
 .tier-note { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--text-2); }
 
-/* Production houses riding along with projects: a compact horizontal tray. */
-.house-tray { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin: 14px calc(-1 * var(--gutter)) 0; padding: 2px var(--gutter); }
-.house-tray::-webkit-scrollbar { display: none; }
-.house-chip { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); }
-.house-chip-text { display: flex; flex-direction: column; line-height: 1.2; }
-.house-chip-text .item-title { font-size: 14px; white-space: nowrap; }
-.house-chip-text .meta { font-size: 12px; white-space: nowrap; }
-
 /* Creative work tray: smaller tiles than projects, so work stays subordinate to professional utility. */
 .work-rail .poster-tile { width: 128px; }
 .work-rail .poster-tile-media { aspect-ratio: 4 / 5; }
 /* First sessions: slightly shorter opportunity cards, so the next kind of value (people) starts above the fold. */
 .carousel--first .feature { height: 340px; }
 .carousel--first .carousel-item { width: 280px; }
+
+/* Projects and production houses: one card, one size. Richness from imagery and content, not from a featured first item. */
+.project-rail .poster-tile { width: 168px; align-self: flex-start; }
+.project-rail .poster-tile-media { aspect-ratio: 4 / 5; border-radius: var(--r-m); }
+.project-rail .poster-tile-title { font-size: 15px; font-weight: 650; }
+.project-rail .poster-tile-sub { color: var(--text-2); }

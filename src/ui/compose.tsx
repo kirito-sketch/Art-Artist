@@ -90,7 +90,7 @@ export function PortraitCard({ person, context, action, onPress }: { person: Per
 }
 
 /** Poster / Stills: the work carries the tile. Lead items are larger; the rail varies its rhythm. */
-export function PosterTile({ media, title, meta, label, lead, locked, sharedId, onPress, children }: { media?: Media; title: string; meta?: ReactNode; label?: ReactNode; lead?: boolean; locked?: boolean; sharedId?: string; onPress: () => void; children?: ReactNode }) {
+export function PosterTile({ media, title, meta, sub, label, lead, locked, sharedId, onPress, children }: { media?: Media; title: string; meta?: ReactNode; sub?: ReactNode; label?: ReactNode; lead?: boolean; locked?: boolean; sharedId?: string; onPress: () => void; children?: ReactNode }) {
   return (
     <PressCard className={`poster-tile ${lead ? 'poster-tile--lead' : ''}`} onPress={onPress} scale={0.97} aria-label={title}>
       <div className="poster-tile-media">
@@ -108,6 +108,7 @@ export function PosterTile({ media, title, meta, label, lead, locked, sharedId, 
         {keepSeparators(title)}
       </p>
       {meta && <p className="meta poster-tile-meta">{meta}</p>}
+      {sub && <p className="meta poster-tile-meta poster-tile-sub">{sub}</p>}
     </PressCard>
   );
 }
