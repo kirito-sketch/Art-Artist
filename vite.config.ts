@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react';
  */
 function researchApi(mode: string): Plugin {
   const all = loadEnv(mode, process.cwd(), '');
-  const env = { SUPABASE_URL: all.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: all.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: all.RESEARCH_DEBUG_KEY };
+  const env = { SUPABASE_URL: all.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: all.SUPABASE_SERVICE_ROLE_KEY, RESEARCH_DEBUG_KEY: all.RESEARCH_DEBUG_KEY, RESEARCH_DASHBOARD_KEY: all.RESEARCH_DASHBOARD_KEY };
   const mount = (server: ViteDevServer | PreviewServer, load: () => Promise<{ handleNodeRequest: (...a: unknown[]) => Promise<void> }>) => {
     server.middlewares.use('/api/research', async (req, res) => {
       try {
