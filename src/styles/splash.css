@@ -1,0 +1,55 @@
+/*
+ * The splash and its mark (src/ui/splashCore.ts). Inlined into index.html by vite.config.ts so the
+ * installed app's first paint is already the splash, before any JavaScript; the app bundle does not
+ * import it again. Animates only transform, opacity and the brush's stroke-dashoffset.
+ *
+ * Timeline (from the first painted frame, 1.35s):
+ *   68ms     the mark fades in at 97.5% size and starts settling to 100% (ends 1350ms)
+ *   68ms     the brush lead-in, inner tip to apex (158ms)
+ *   225ms    the main stroke, apex to tail (765ms, ends 990ms)
+ *   923ms    the true fill fades in over the brush (180ms); the brush is then removed (1110ms)
+ *   945ms    the red drop lands, 4px (293ms, ends 1238ms)
+ * Reduce Motion: the finished mark fades in (200ms) and holds to 600ms.
+ */
+
+/* In-app splash (entry flow): fills its screen. */
+.splash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--surface, #fff); transition: opacity 300ms ease-out; }
+.splash.is-leaving { opacity: 0; pointer-events: none; }
+
+/* Launch splash (installed app): the whole viewport, above everything. The index.html copy (#aa-boot)
+   is shown only when its boot script marks a Home Screen launch. */
+.launch-splash { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: #fff; transition: opacity 300ms ease-out; will-change: opacity; }
+.launch-splash.is-leaving { opacity: 0; pointer-events: none; }
+/* The app under the launch splash: laid out and loading, but not painted until the mark has finished. */
+.app-shell--covered { visibility: hidden; }
+#aa-boot { display: none; }
+html.aa-launch #aa-boot { display: flex; }
+#aa-boot .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The mark: a fixed 72 x 73 box (80 x 81 viewBox, centred), never sized by layout. It settles on its own
+   CSS box, so the transform origin is its exact centre in every browser; kept on its own layer for the
+   whole run so the last frame is not re-rasterised (no end-of-animation snap). */
+.splash-mark-host { display: block; width: 72px; height: 73px; flex: none; }
+.splash-mark { display: block; width: 72px; height: 73px; overflow: visible; transform-origin: 50% 50%; will-change: transform, opacity; animation: splash-settle 1282ms cubic-bezier(.2,.7,.2,1) 68ms both; }
+.splash-mark-draw { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: splash-draw 765ms cubic-bezier(0,0,.3,1) 225ms both; }
+.splash-mark-lead { animation: splash-draw 158ms cubic-bezier(.5,0,1,1) 68ms both; }
+.splash-mark-fill { opacity: 0; animation: splash-fade 180ms linear 923ms both; }
+.splash-mark-brush { animation: splash-off 1ms linear 1110ms both; }
+.splash-mark-drop { transform-box: fill-box; animation: splash-drop 293ms cubic-bezier(.2,.8,.3,1) 945ms both; }
+
+/* Held on its first frame until playSplashMark has a painted, visible page; paused while hidden. */
+.splash-mark:not(.is-playing), .splash-mark:not(.is-playing) *, .splash-mark.is-paused, .splash-mark.is-paused * { animation-play-state: paused; }
+
+@keyframes splash-draw { to { stroke-dashoffset: 0; } }
+@keyframes splash-fade { to { opacity: 1; } }
+@keyframes splash-off { to { opacity: 0; } }
+@keyframes splash-settle { 0% { opacity: 0; transform: scale(.975); } 8% { opacity: 1; } 100% { opacity: 1; transform: scale(1); } }
+@keyframes splash-drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes splash-reduced { 0% { opacity: 0; } 33% { opacity: 1; } 100% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-mark { animation: splash-reduced 600ms linear both; transform: none; }
+  .splash-mark-draw, .splash-mark-lead, .splash-mark-fill, .splash-mark-brush, .splash-mark-drop { animation: none; }
+  .splash-mark-fill { opacity: 1; }
+  .splash-mark-brush { opacity: 0; }
+}

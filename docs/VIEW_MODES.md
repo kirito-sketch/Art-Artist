@@ -27,12 +27,14 @@ Steps: open the app URL in Safari, enter the access password, choose App if need
 
 ## Launch splash (Home Screen app only)
 
-The installed app plays the existing logo animation as a launch layer (`src/ui/LaunchSplash.tsx`). Safari, Prototype mode, `/test` and `/research` never show it.
+The installed app plays the logo animation as a launch layer. Safari, Prototype mode, `/test` and `/research` never show it.
 
-- **Standalone** is `isStandalone()` in `src/dev/viewMode.tsx`: `matchMedia('(display-mode: standalone)')` or iOS `navigator.standalone`.
-- **When it plays:** on a cold start, and when the app comes back after at least `LAUNCH_RESUME_MS` (45 seconds) in the background. A shorter interruption returns straight to the app. iOS often resumes from memory without reloading, so this is tracked with `visibilitychange`, `pagehide` and `pageshow`, not page load alone.
-- **Once per launch:** while the splash is showing, further lifecycle events are ignored; the next launch needs a new trip to the background.
-- **State:** the splash covers the app and never remounts it. The screen, open sheets, persona and saved items are exactly as left; the app is inert under the splash and interactive as soon as it fades (about 1.5s; Reduce Motion about 0.9s).
+- **Standalone** is `isStandalone()` in `src/dev/viewMode.tsx`: `matchMedia('(display-mode: standalone)')` or iOS `navigator.standalone`. The inline boot script in `index.html` uses the same test.
+- **Cold start:** `index.html` already contains the splash (inlined at build time from `src/ui/splashCore.ts` and `src/styles/splash.css`), so the first paint after the iOS launch screen is the splash ground, never the grey prototype canvas. Every other page removes it before the first paint. The mark starts when the app has rendered and the main thread is free (the brush draw runs on the main thread), and `src/ui/LaunchSplash.tsx` takes it over.
+- **Resume:** when the app comes back after at least `LAUNCH_RESUME_MS` (45 seconds) in the background. A shorter interruption returns straight to the app. iOS often resumes from memory without reloading, so this is tracked with `visibilitychange`, `pagehide` and `pageshow`, not page load alone.
+- **Mark and app are separate states:** the app renders underneath (inert, and unpainted so arriving images cost nothing while the mark draws). The splash leaves only when the mark's final animation has ended AND the screen underneath has its fonts and on-screen images decoded; the app is then painted under the finished, static mark, and the splash fades (300ms) and is removed after the fade. Capped at 4s from the start on a slow network.
+- **Once per launch:** while a splash is showing, lifecycle events are ignored; the mark pauses while the app is hidden and continues from the same frame.
+- **State:** the splash never remounts the app: the screen, open sheets, persona and saved items are exactly as left.
 - **Access password:** unchanged. A cold start loads the page, so an expired access cookie shows the password page first (served before the app), then the splash after signing in. A resume from memory never asks again.
 
 **Known limitation:** an iPhone Home Screen app keeps its own cookies, separate from Safari, so the first launch shows the access password page once (the access cookie then lasts 7 days, as in the browser). The icons are drawn from the current 80 px logo; a high-resolution mark would make them sharper.

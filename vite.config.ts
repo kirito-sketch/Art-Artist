@@ -1,7 +1,10 @@
 import { defineConfig, loadEnv, type Plugin, type ViteDevServer, type PreviewServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { accessGate } from './server/access';
+import { bootScript, bootSplashHtml } from './src/ui/splashCore';
 
 /**
  * Research API during `npm run dev` and `npm run preview`: mounts /api/research/* on the local server.
@@ -71,8 +74,24 @@ function privateAccess(mode: string): Plugin {
   };
 }
 
+/**
+ * The installed app's launch splash in index.html itself: its styles, its markup and a tiny boot script
+ * (src/ui/splashCore.ts). On a Home Screen launch the splash is the first thing painted and starts
+ * playing before the app's JavaScript has loaded; every other page (Safari, /test, /research) removes it
+ * before the first paint. One source for the mark: the app uses the same module.
+ */
+function launchSplashHtml(): Plugin {
+  return {
+    name: 'art-and-artist-launch-splash',
+    transformIndexHtml(html) {
+      const css = readFileSync(resolve(process.cwd(), 'src/styles/splash.css'), 'utf8');
+      return html.replace('</head>', `<style data-splash>${css}</style>\n  </head>`).replace('<body>', `<body>\n    ${bootSplashHtml()}<script>${bootScript()}</script>`);
+    },
+  };
+}
+
 // Relative base so the build can be served from any path (artifact, static host, file preview).
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [privateAccess(mode), react(), researchApi(mode)],
+  plugins: [privateAccess(mode), launchSplashHtml(), react(), researchApi(mode)],
 }));

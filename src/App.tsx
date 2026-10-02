@@ -35,7 +35,7 @@ import { research } from './research-data/client';
 import { RESEARCH_DASHBOARD, TEST_MODE } from './research-data/surface';
 import { TestMode } from './research-data/TestMode';
 import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
-import { LaunchSplash } from './ui/LaunchSplash';
+import { LaunchSplash, type LaunchPhase } from './ui/LaunchSplash';
 
 // The researcher dashboard loads only on /research, so its code (and the Supabase browser client)
 // never ship to the prototype or to participants.
@@ -374,6 +374,10 @@ function Phone({ app = false }: { app?: boolean }) {
 }
 
 export default function App() {
+  // The index.html launch splash belongs to the normal app; any other surface releases it at once.
+  useEffect(() => {
+    if (!document.querySelector('.app-shell')) document.getElementById('aa-boot')?.remove();
+  }, []);
   // Research mode: Shift+E leaves it (for the researcher; participants never see a control).
   useEffect(() => {
     if (!RESEARCH) return;
@@ -434,8 +438,9 @@ export default function App() {
 function NormalApp() {
   const [mode, setMode] = useState<ViewMode>(initialViewMode);
   const standalone = isStandalone();
-  // Installed Home Screen app: the launch splash covers the app (inert underneath) until it finishes.
-  const [launching, setLaunching] = useState(standalone);
+  // Installed Home Screen app: the launch splash covers the app (inert, and unpainted while the mark
+  // draws) until it finishes.
+  const [launch, setLaunch] = useState<LaunchPhase>(standalone ? 'covered' : 'off');
   useEffect(() => {
     installAppHead();
     applySystemTextSize();
@@ -452,7 +457,7 @@ function NormalApp() {
     <StoreProvider>
       <ResearchObserver />
       {mode === 'app' ? (
-        <div className="app-shell" {...inertProps(launching)}>
+        <div className={`app-shell${launch === 'covered' ? ' app-shell--covered' : ''}`} {...inertProps(launch !== 'off')}>
           <Phone app />
         </div>
       ) : (
@@ -464,7 +469,7 @@ function NormalApp() {
           <PrototypeControls view={{ mode, onChange: choose }} />
         </div>
       )}
-      <LaunchSplash enabled={standalone} onActiveChange={setLaunching} />
+      <LaunchSplash enabled={standalone} onPhase={setLaunch} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}
       {!standalone && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
     </StoreProvider>
