@@ -2,6 +2,10 @@
 
 Audit only. Nothing in the product was changed. Date: 2 Oct 2026. Build: current `claude/ana-product-strategy-in22y2`.
 
+**Scope: the Art and Artist app only**, in both the Individual and Production House experiences. The `/test`
+research environment, the `/research` dashboard, the access password page and the prototype side console are
+out of scope.
+
 ## Verdict
 
 The visual layer is in better shape than the interaction layer. Real buttons are used almost everywhere, the
@@ -17,21 +21,21 @@ so most of the fix count is small even though the issue count is large.
 | Severity | Count | Nature |
 |---|---|---|
 | A. Critical | 4 | Focus and layering in the app shell and sheets |
-| B. High | 13 | Nested controls, names, contrast tokens, forms, focus on inputs, toasts, /test panel |
-| C. Medium | 16 | Headings and landmarks, status messages, targets, truncation, patterns, dashboard |
-| D. Low | 10 | Labels with context, ring consistency, internal tools, polish |
+| B. High | 12 | Nested controls, names, contrast tokens, forms, focus on inputs, toasts |
+| C. Medium | 14 | Headings and landmarks, status messages, targets, truncation, patterns, error prevention |
+| D. Low | 8 | Labels with context, ring consistency, polish |
 
 ## How this was tested
 
 | Method | What it covered |
 |---|---|
-| Code review | `ui/primitives.tsx`, `Sheet.tsx`, `chrome.tsx`, `App.tsx` (Phone shell, MediaViewer), `nav/TabBar.tsx`, `entry/Entry.tsx`, `screens/**`, `research-data/TestMode.tsx`, `research-dashboard/Dashboard.tsx`, `server/access.ts`, all CSS |
-| axe-core 4 (WCAG 2.0/2.1/2.2 A and AA + best practice) | 38 product states, `/test` at every stage (desktop and mobile), `/research` gate (correct and wrong password) and dashboard. Installed in a scratch folder only; **no dependency was added to the project** |
+| Code review | `ui/primitives.tsx`, `Sheet.tsx`, `chrome.tsx`, `App.tsx` (Phone shell, MediaViewer), `nav/TabBar.tsx`, `entry/Entry.tsx`, `screens/**`, `legal/**`, all app CSS |
+| axe-core 4 (WCAG 2.0/2.1/2.2 A and AA + best practice) | 38 app states across both experiences, including entry flows. Installed in a scratch folder only; **no dependency was added to the project** |
 | Rendered contrast sweep | Every visible text node, placeholder and icon in 15 states, computed from real rendered colours and blended backgrounds. Text over photos measured against the actual photo pixels (crop behind the text, 5th percentile) |
-| Keyboard | Scripted Tab, Shift+Tab, Enter, Space, Escape through Home, Discover, role detail, sheets, Create, `/test` (desktop and mobile) and `/research`, logging where focus lands, whether it is visible, and which layer it is in |
+| Keyboard | Scripted Tab, Shift+Tab, Enter, Space, Escape through Home, Discover, role detail, sheets and Create, logging where focus lands, whether it is visible, and which layer it is in |
 | Accessible names | Every control in the top layer of 22 states: name, role, state, size, label association |
 | Headings and landmarks | Heading outline and landmarks for 16 screens |
-| Zoom and reflow | 320 CSS px (equal to 400% zoom), 320 px with all type tokens at 1.5x, 390 px with WCAG 1.4.12 text spacing, 150/200/250% zoom on desktop for `/` and `/test`, clipping and horizontal scroll detection |
+| Zoom and reflow | 320 CSS px (equal to 400% zoom), 320 px with all type tokens at 1.5x, 390 px with WCAG 1.4.12 text spacing, 150/200/250% zoom, clipping and horizontal scroll detection |
 | Reduced motion | `prefers-reduced-motion: reduce` emulated, transforms sampled during tab switch and screen push, running animations listed |
 | Focus visibility | Close-up captures of the ring on cards, chips, tab bar, Create, fields and buttons |
 | Focus not obscured | Overlap of each focused element with the floating tab bar at 390x844 |
@@ -61,19 +65,19 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 - **Issue:** After opening a role from Discover, focus stays where it was (or falls to `body`). The covered Discover screen keeps all its controls: **94 tab stops before the first control on the visible screen**. Nothing tells a screen reader the screen changed. Going back does not return focus to the card that opened it.
 - **Why it matters:** Keyboard users tab through a screen they cannot see. Screen-reader users do not know a new screen opened and keep reading the old one.
 - **WCAG:** 2.4.3 Focus Order, 1.3.2, 4.1.3 Status Messages (context change not conveyed).
-- **Suggested fix:** Make every layer under the top route `inert`. On push, move focus to the new screen's `h1` (`tabIndex={-1}`, already the pattern in `/test`) or to Back. On pop, restore focus to the element that opened it.
+- **Suggested fix:** Make every layer under the top route `inert`. On push, move focus to the new screen's `h1` (`tabIndex={-1}`) or to Back. On pop, restore focus to the element that opened it.
 - **Scope:** Global.
 
 ### A3. Sheets and dialogs never receive focus and do not contain it
-- **Screen / component:** `src/ui/Sheet.tsx` (all 19 sheets: Show interest, Notifications, Availability, Intent, Respond, Review interest, Report, Share, More, Edit role, Close role, Block, New project, and others), `CreateSurface`, the house project sheets in `production/Create.tsx`, the `/test` mobile research sheet.
+- **Screen / component:** `src/ui/Sheet.tsx` (all 19 sheets: Show interest, Notifications, Availability, Intent, Respond, Review interest, Report, Share, More, Edit role, Close role, Block, New project, and others), `CreateSurface`, and the house project sheets in `production/Create.tsx`.
 - **Issue:** Sheets declare `role="dialog" aria-modal="true"` but focus is not moved in, Tab is not contained, the page behind stays reachable, and focus is not returned on close. With Show interest open, **40 Tab presses never entered the sheet**; all landed behind it. Escape does close sheets (global handler), which is good.
 - **Why it matters:** Keyboard users cannot reach sheet content without tabbing through the whole app. Screen readers are told it is modal, then allowed to wander behind it.
 - **WCAG:** 2.4.3 Focus Order, 4.1.2, 1.3.1.
-- **Suggested fix:** In `Sheet`: on open, focus the first field or the title; contain Tab inside; mark the rest of the phone `inert`; on close, restore focus to the opener. Label with `aria-labelledby` pointing at the title. Same for `CreateSurface` and the `/test` sheet.
-- **Scope:** Global (one component plus two siblings).
+- **Suggested fix:** In `Sheet`: on open, focus the first field or the title; contain Tab inside; mark the rest of the phone `inert`; on close, restore focus to the opener. Label with `aria-labelledby` pointing at the title. Same for `CreateSurface` and the house project sheets.
+- **Scope:** Global (one component plus its siblings).
 
 ### A4. On a phone, a screen-reader user cannot close a sheet
-- **Screen / component:** `Sheet.tsx`, `CreateSurface`, `/test` mobile sheet.
+- **Screen / component:** `Sheet.tsx`, `CreateSurface`.
 - **Issue:** Sheets close by dragging the grabber, tapping the backdrop or pressing Escape. The grabber is a drag-only `span`, the backdrop is an unnamed `div` that is not focusable, and phones have no Escape key (the VoiceOver "escape" gesture does not fire a `keydown`). Sheets have no Close or Done control. Notifications, Share, More, Report, Availability are all affected.
 - **Why it matters:** A VoiceOver or TalkBack user can open a sheet and be unable to leave it.
 - **WCAG:** 2.1.1 Keyboard, 2.5.1 Pointer Gestures / 2.5.7 Dragging Movements (drag is the only labelled path), 4.1.2.
@@ -117,7 +121,7 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 - **Scope:** Global (token).
 
 ### B5. Status colours too light for text
-- **Screen / component:** `--available #1e9e5a` as text ("Available from 5 Oct" in Discover rows), `--danger #d83a2e` as text on paper ("Remove from project", inline errors, `/research` error).
+- **Screen / component:** `--available #1e9e5a` as text ("Available from 5 Oct" in Discover rows), `--danger #d83a2e` as text on paper ("Remove from project", inline errors).
 - **Issue:** Available green: 3.14:1 on paper, 3.45:1 on white, 2.90:1 on tint. Danger red: 4.19:1 on paper (passes on white at 4.60).
 - **Why it matters:** Availability is a key decision signal for hiring; errors must be readable.
 - **WCAG:** 1.4.3.
@@ -137,12 +141,12 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 - **Issue:** Error text is plain `<p>`: no `role="alert"`, no `aria-invalid`, not linked with `aria-describedby`. The password hint is not associated either. On sign-up the button just stays disabled with no message about what is missing. There is no `aria-describedby` anywhere in the app; `aria-invalid` appears zero times.
 - **Why it matters:** Screen-reader users do not hear that sign-in failed. Everyone with a disabled Continue has to guess what is wrong.
 - **WCAG:** 3.3.1 Error Identification, 3.3.3 Error Suggestion, 4.1.3 Status Messages, 1.3.1.
-- **Suggested fix:** A `Field` pattern with hint and error slots wired through `aria-describedby`, `aria-invalid` on error, errors announced with `role="alert"`. Either explain what is missing beside a disabled button or enable it and show errors on submit. The password gate (`server/access.ts`) already does this correctly and can be the reference.
+- **Suggested fix:** A `Field` pattern with hint and error slots wired through `aria-describedby`, `aria-invalid` on error, errors announced with `role="alert"`. Either explain what is missing beside a disabled button or enable it and show errors on submit.
 - **Scope:** Global (Field component) plus local call sites.
 
 ### B8. No autocomplete on personal data fields
 - **Screen / component:** Sign-up and sign-in email and password, account name, phone in Add person.
-- **Issue:** No `autocomplete` attribute (only the gate has `current-password`).
+- **Issue:** No `autocomplete` attribute on any field in the app.
 - **Why it matters:** People with motor or cognitive disabilities depend on autofill and password managers.
 - **WCAG:** 1.3.5 Identify Input Purpose.
 - **Suggested fix:** `email`, `current-password` / `new-password`, `name`, `tel`.
@@ -179,14 +183,6 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 - **WCAG:** 2.1.1 Keyboard.
 - **Suggested fix:** A real "More" button after the clamped text.
 - **Scope:** Local.
-
-### B13. `/test`: participants cannot reach "I'm stuck" by keyboard in reasonable effort
-- **Screen / component:** `research-data/TestMode.tsx`.
-- **Issue:** On desktop the research panel follows the whole phone in the tab order, so Feedback, I'm stuck and End test sit behind every phone control (including the invisible tab layers from A1). On mobile, opening the research sheet leaves focus on `body`, Tab leaves the sheet into the phone, and Escape does not close it. Opening I'm stuck does not move focus to it.
-- **Why it matters:** A keyboard or screen-reader participant cannot ask for help or give feedback, which also skews the research.
-- **WCAG:** 2.4.3, 2.4.1 Bypass Blocks, 2.1.1.
-- **Suggested fix:** A skip link or landmark shortcut between "Prototype" and "Research test", sheet focus management as in A3, focus moved to the newly opened panel heading. Research controls stay visually and structurally outside the phone (they already are).
-- **Scope:** Local (TestMode), reuses A1 to A3.
 
 ---
 
@@ -238,7 +234,7 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 - **Scope:** Global.
 
 ### C8. Single-choice groups and tabs do not use arrow keys
-- **Screen / component:** Onboarding craft grid, intent list, "When can you start?" segmented control, `/test` rating scales and yes/no, Discover scope `Tabs`.
+- **Screen / component:** Onboarding craft grid, intent list, "When can you start?" segmented control, Discover scope `Tabs`.
 - **Issue:** Correct roles and `aria-checked` / `aria-selected`, but every option is a separate tab stop and arrows do nothing; tabs have no `tabpanel` / `aria-controls`.
 - **WCAG:** 4.1.2 (expected interaction for the role), 2.1.1 works via Tab so not blocking.
 - **Suggested fix:** Roving tabindex with arrow keys in a shared radiogroup helper and in `Tabs`.
@@ -279,11 +275,9 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 |---|---|---|---|---|
 | `--text-2` on tint band | #6e6e73 | #efebe4 | 4.27 | 4.5 |
 | `--text-2` on sand (where the override is missing) | #6e6e73 | #e8dfcf | 3.84 | 4.5 |
-| `--text-2` on fill-strong (initials avatar) | #6e6e73 | #e5e5ea | 4.04 | 4.5 (decorative, see D6) |
+| `--text-2` on fill-strong (initials avatar) | #6e6e73 | #e5e5ea | 4.04 | 4.5 (decorative, see D5) |
 | Focus ring on dark surfaces (viewer, intro, dark cards) | #275c50 | #151413 | 2.39 | 3 |
-| `/test` and `/research` focus ring (55% alpha) | rgba(39,92,80,.55) | paper | 2.56 | 3 |
 | Identity switch label while visible | #575552 | #151413 | 2.48 | 4.5 |
-| `/research` error text | #d83a2e | #f6f4f0 | 4.19 | 4.5 |
 
 - **WCAG:** 1.4.3, 1.4.11.
 - **Scope:** Global (tokens and ring).
@@ -307,18 +301,6 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 - **Suggested fix:** Undo for removal; a short confirmation for accepting a permanent credit (product decision).
 - **Scope:** Local.
 
-### C15. `/research` dashboard structure
-- **Screen / component:** `research-dashboard/Dashboard.tsx`.
-- **Issue:** No h1 (axe `page-has-heading-one`); tables have no caption; at 390 px the tables push the page 556 px sideways instead of scrolling in their own region; switching views by hash does not move focus or announce; status update errors use `window.alert`; focus ring is the 2.56:1 alpha ring.
-- **WCAG:** 1.3.1, 1.4.10, 2.4.3, 1.4.11.
-- **Scope:** Local.
-
-### C16. `/test` on a zoomed desktop
-- **Screen / component:** TestMode compact layout.
-- **Issue:** At 200% zoom the layout correctly switches to the unscaled phone (zoom does enlarge it), but the fixed research bar covers the bottom of the phone, where its tab bar is, and the phone is taller than the window.
-- **WCAG:** 1.4.10, 2.4.11 (bar can sit over focused phone controls).
-- **Scope:** Local.
-
 ---
 
 ## D. Low
@@ -329,12 +311,10 @@ mode was not tested. Physical-device zoom and OS text-size settings were not tes
 | D2 | Focus ring | Forced `border-radius: 8px` on every focus ring, so pill and round controls get a squared ring | 2.4.7 (consistency) | Inherit the control's radius | Global |
 | D3 | Floating tab bar | 12 of 53 focus stops on Home sit partly under it (up to 67%), none fully hidden: passes AA 2.4.11, fails AAA 2.4.12 | 2.4.11 / 2.4.12 | `scroll-padding-bottom` equal to the bar | Global |
 | D4 | Disabled primary buttons | White on 35% action is 1.92:1 (disabled is exempt) | n/a | Fine to keep; pair with B7 messaging | Global |
-| D5 | Prototype console (`/` side panel) | #777 and #888 at 11 to 11.5 px (3.5 to 4.5:1) | 1.4.3 | Internal tool, low priority | Local |
-| D6 | Initials avatars | #6e6e73 on #e5e5ea 4.04:1; avatar is `aria-hidden` and the name is beside it | 1.4.3 | Darken with the C11 change | Global |
-| D7 | Identity switch overlay | Transient label contrast while it fades | 1.4.3 | Darker label | Local |
-| D8 | Desktop prototype at 200% | Fixed-height phone frame inside a scrolling page: two nested scrolls | 1.4.10 | Prototype frame only | Local |
-| D9 | Repeated stops | Portrait card and its Follow button, rows and their Follow, are separate stops for the same person | 2.4.3 | Resolved by B1 | Global |
-| D10 | Copy | See Language section | 3.3.2, 2.4.6 | Targeted wording only | Local |
+| D5 | Initials avatars | #6e6e73 on #e5e5ea 4.04:1; avatar is `aria-hidden` and the name is beside it | 1.4.3 | Darken with the C11 change | Global |
+| D6 | Identity switch overlay | Transient label contrast while it fades | 1.4.3 | Darker label | Local |
+| D7 | Repeated stops | Portrait card and its Follow button, rows and their Follow, are separate stops for the same person | 2.4.3 | Resolved by B1 | Global |
+| D8 | Copy | See Language section | 3.3.2, 2.4.6 | Targeted wording only | Local |
 
 ---
 
@@ -376,7 +356,7 @@ Only copy that can cause comprehension problems; no general rewrite.
 - `IconButton` requires a label, so every icon-only button is named; the password field has Show / Hide password.
 - `PressCard` handles Enter and Space; Home role cards and portrait cards carry concise labels, and portrait labels include ", available".
 - `FollowButton` uses `aria-pressed` and the person's name; `Toggle` is `role="switch"` with a label; `Chip` uses `aria-pressed`; the consent checkbox is a labelled `role="checkbox"`; onboarding choices are radiogroups.
-- Auth fields are wrapped in `<label>`; Edit profile fields use `for`; dashboard filters are labelled.
+- Auth fields are wrapped in `<label>`; Edit profile fields use `for`.
 - Reduced motion: `MotionConfig reducedMotion="user"` plus a global CSS rule. Screen push becomes instant, object tilt is removed, opacity feedback stays. Nothing autoplays or flashes.
 - Toasts are in a polite live region; the identity switch is announced through `role="status"`.
 - Escape closes the open sheet, then the top screen; closing Create with Escape leaves focus on the Create button.
@@ -384,20 +364,17 @@ Only copy that can cause comprehension problems; no general rewrite.
 - Text over photos sits on scrims: 12 to 19:1 measured against the real image pixels on visible cards.
 - Main text 17:1 on paper; white on the action colour 7.7:1; `--text-2` on paper 4.62:1; the sand band already darkens secondary text to 6.2:1.
 - Dates are calendar-only and money is digits-only with a numeric keypad; both are labelled.
-- `/test`: heading receives focus on every step, the phone is `inert` outside tasks, consent is a real checkbox, errors use `role="alert"`, research controls are labelled and sit outside the device.
-- Password gate: visible label, `autocomplete="current-password"`, `aria-invalid` and `role="alert"` on a wrong password, focus kept on the field, h1, `lang`.
-- `/research`: section nav with `aria-current`, labelled selects, `aria-pressed` filter chips, statuses written as words rather than colour, rows contain real links.
 - Destructive confirmations exist for close role, block, report and delete account.
 
 ## 2. Global issues to solve once in the component layer
 
 | Fix | Resolves | Where |
 |---|---|---|
-| `inert` on inactive tab layers and on everything under the top route | A1, A2, D9, part of B13 and C1 | `App.tsx` Phone |
+| `inert` on inactive tab layers and on everything under the top route | A1, A2, D7, part of C1 | `App.tsx` Phone |
 | Route focus: focus new screen heading on push, restore on pop | A2 | Route stack |
-| Dialog behaviour: focus in, contain, `inert` background, restore, `aria-labelledby`, accessible Close | A3, A4, C5 | `Sheet`, `CreateSurface`, `/test` sheet |
-| Card pattern with a single real link or button and sibling actions | B1, D9 | `PressCard` |
-| Contrast tokens for meta / placeholder text, available text, danger text, ring on dark | B4, B5, C11, D6 | `tokens.css`, `expression.css` |
+| Dialog behaviour: focus in, contain, `inert` background, restore, `aria-labelledby`, accessible Close | A3, A4, C5 | `Sheet`, `CreateSurface`, house project sheets |
+| Card pattern with a single real link or button and sibling actions | B1, D7 | `PressCard` |
+| Contrast tokens for meta / placeholder text, available text, danger text, ring on dark | B4, B5, C11, D5 | `tokens.css`, `expression.css` |
 | Focus-within ring for inline inputs and selects | B9 | CSS |
 | `Field` with hint and error wiring, `aria-invalid`, alerts | B7 | New shared component |
 | Stable names on toggles with object context | C6, D1 | `SaveButton`, `FollowButton`, `IconButton` callers |
@@ -435,9 +412,6 @@ Only copy that can cause comprehension problems; no general rewrite.
 | Empty states | Fine semantically; "You're all caught up" contrast (B4) |
 | Error states | `PageError` not announced, no focus move (C3) |
 | Loading states | Skeletons only `aria-busy`; spinner label dropped (C3, C4) |
-| Password gate | Passes |
-| `/test` | Research panel reachability, mobile sheet, I'm stuck focus (B13), rating radios arrows (C8), zoomed layout overlap (C16), alpha ring (C11) |
-| `/research` | No h1, captions, overflow, view-change focus, alert(), ring (C15) |
 
 ## 4. Top 10 fixes by impact
 
@@ -463,7 +437,7 @@ Only copy that can cause comprehension problems; no general rewrite.
 | `FollowButton` | Stable name; keep `aria-pressed` |
 | Raw chip toggles | `aria-pressed` or radio semantics |
 | `Tabs` | `tabpanel`, `aria-controls`, arrow keys |
-| Radiogroups (onboarding, `/test`) | Roving tabindex, arrow keys |
+| Radiogroups (onboarding) | Roving tabindex, arrow keys |
 | `Button` (`loading`) | Announced loading text |
 | Field pattern | `aria-invalid`, `aria-describedby` for hint and error, required state |
 | `DateField` / `MoneyField` | Invalid and required states, hint association |
@@ -515,13 +489,11 @@ arrow keys, `lang`) is invisible to sighted mouse users.
 | `aria-prohibited-attr` | Most states | Logo, loader, progress (C4) |
 | `heading-order` | Sheets | h3 titles (C1) |
 | `landmark-no-duplicate-banner`, `landmark-unique` | Pushed screens | Multiple headers (C2) |
-| `color-contrast` | Discover, thread, add role, `/research` | Under-reports inside the scaled phone; the manual sweep found more (B4, B5, C11) |
-| `target-size` | Intro dots, `/test` | C9 |
-| `page-has-heading-one` | `/research` | C15 |
-| `region` | `/` stage | Content outside landmarks (C2) |
+| `color-contrast` | Discover, thread, add role | Under-reports inside the scaled phone; the manual sweep found more (B4, B5, C11) |
+| `target-size` | Intro dots | C9 |
+| `region` | Home | Content outside landmarks (C2) |
 
-Zero automated errors on the password gate and on the `/test` intro, consent and task pages. As expected, axe
-found none of the critical issues in section A: those came from the keyboard runs.
+As expected, axe found none of the critical issues in section A: those came from the keyboard runs.
 
 ## Appendix: token contrast matrix
 
