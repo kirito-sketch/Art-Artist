@@ -35,6 +35,7 @@ import { research } from './research-data/client';
 import { RESEARCH_DASHBOARD, TEST_MODE } from './research-data/surface';
 import { TestMode } from './research-data/TestMode';
 import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
+import { LaunchSplash } from './ui/LaunchSplash';
 
 // The researcher dashboard loads only on /research, so its code (and the Supabase browser client)
 // never ship to the prototype or to participants.
@@ -433,6 +434,8 @@ export default function App() {
 function NormalApp() {
   const [mode, setMode] = useState<ViewMode>(initialViewMode);
   const standalone = isStandalone();
+  // Installed Home Screen app: the launch splash covers the app (inert underneath) until it finishes.
+  const [launching, setLaunching] = useState(standalone);
   useEffect(() => {
     installAppHead();
     applySystemTextSize();
@@ -449,7 +452,7 @@ function NormalApp() {
     <StoreProvider>
       <ResearchObserver />
       {mode === 'app' ? (
-        <div className="app-shell">
+        <div className="app-shell" {...inertProps(launching)}>
           <Phone app />
         </div>
       ) : (
@@ -461,6 +464,7 @@ function NormalApp() {
           <PrototypeControls view={{ mode, onChange: choose }} />
         </div>
       )}
+      <LaunchSplash enabled={standalone} onActiveChange={setLaunching} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}
       {!standalone && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
     </StoreProvider>
