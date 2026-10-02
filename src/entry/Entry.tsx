@@ -10,6 +10,7 @@ import { useStore, type Availability } from '../state/store';
 import { org } from '../state/selectors';
 import { Avatar, Button, Photo, Toggle, Verified } from '../ui/primitives';
 import { Logo } from '../ui/Logo';
+import { SplashMark } from '../ui/SplashMark';
 import { StatusBar } from '../ui/chrome';
 import { Sheet } from '../ui/Sheet';
 import { DateField, fmtDay } from '../ui/fields';
@@ -57,12 +58,34 @@ export function EntryFlow() {
   const [personId, setPersonId] = useState<string | null>(null);
   const asksAvailability = intent === 'work' || intent === 'collaborate';
 
-  // Splash lasts only as long as "loading" (simulated as a moment), then fades into entry.
+  // Splash: the mark draws itself once (about 1.2s), then the next screen follows as soon as its first
+  // image is ready. A slow load holds the finished mark still (no replay); capped so it never hangs.
+  const [markDone, setMarkDone] = useState(false);
+  const [nextReady, setNextReady] = useState(false);
+  const after: Step = entry?.mode === 'new' ? 'intro' : 'entry';
   useEffect(() => {
     if (step !== 'splash') return;
-    const t = window.setTimeout(() => setStep(entry?.mode === 'new' ? 'intro' : 'entry'), 2300);
-    return () => window.clearTimeout(t);
+    let live = true;
+    const ready = () => live && setNextReady(true);
+    const img = new Image();
+    img.onload = img.onerror = ready;
+    img.src = art(after === 'intro' ? INTRO[0].art : 'chair').src;
+    if (img.complete) ready();
+    const cap = window.setTimeout(ready, 4000);
+    return () => {
+      live = false;
+      window.clearTimeout(cap);
+    };
   }, [step]);
+  useEffect(() => {
+    if (step === 'splash' && markDone && nextReady) setStep(after);
+  }, [step, markDone, nextReady]);
+  const [splashGone, setSplashGone] = useState(step !== 'splash');
+  useEffect(() => {
+    if (step === 'splash' || splashGone) return;
+    const t = window.setTimeout(() => setSplashGone(true), 500); // in case transitionend never fires
+    return () => window.clearTimeout(t);
+  }, [step, splashGone]);
 
   // Research observation only (a no-op outside a test session): which first-run screen is showing.
   useEffect(() => {
@@ -127,18 +150,9 @@ export function EntryFlow() {
         <StatusBar tone={overImage ? 'light' : 'dark'} />
       </div>
       <AnimatePresence mode="wait">
+        {step !== 'splash' && (
         <motion.div key={step} className="entry-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
           {step === 'intro' && <Intro onDone={() => setStep('entry')} />}
-
-          {step === 'splash' && (
-            <div className="splash">
-              <motion.img src="images/brand/logo.png" alt="" className="splash-logo" initial={{ opacity: 0, scale: 0.86 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }} />
-              <motion.div className="splash-loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.3 }} role="status">
-                <span aria-hidden />
-                <span className="sr-only">Loading Art and Artist</span>
-              </motion.div>
-            </div>
-          )}
 
           {step === 'entry' && (
             <div className="entry-home">
@@ -355,7 +369,18 @@ export function EntryFlow() {
             </div>
           )}
         </motion.div>
+        )}
       </AnimatePresence>
+      {/* The splash sits above and fades out while the next screen fades in: one continuous crossfade,
+          no empty frame between them. A CSS transition, so its last frame is never repainted. */}
+      {!splashGone && (
+        <div className={`splash${step === 'splash' ? '' : ' is-leaving'}`} aria-hidden={step !== 'splash' || undefined} onTransitionEnd={(e) => e.target === e.currentTarget && setSplashGone(true)}>
+          <SplashMark onDone={() => setMarkDone(true)} />
+          <span className="sr-only" role="status">
+            Loading Art and Artist
+          </span>
+        </div>
+      )}
 
       <Sheet open={!!provider} onClose={() => setProvider(null)} title="" label={provider === 'apple' ? 'Sign in with Apple' : 'Choose a Google account'}>
         {provider && (

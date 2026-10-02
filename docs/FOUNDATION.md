@@ -28,6 +28,10 @@ Launch ─► Splash (brand over one illustration; shown only while the app load
 
 **Splash:** the director's-chair illustration (tile 1 of the supplied set), full bleed, with the Ana mark. It lasts as long as loading takes, typically under a second, and cross-fades into Entry. No promotional sequence.
 
+*Current splash (supersedes the illustration above):* the mark on the plain ground, with no loading bar. The logo is the animation (`src/ui/SplashMark.tsx`, SVG and CSS only): a mask follows the brush stroke from the inner tip over the apex, down and across to the tail (60 to 880ms), the red drop lands (840 to 1100ms) and the mark settles from 97.5% to full size by 1200ms. The next screen then cross-fades in (300ms) as soon as its first image is ready. A slow load holds the finished mark still, never replays it, and is capped at 4s. With Reduce Motion the finished mark fades in (200ms) and holds until 600ms. No bounce, pulse, spinner, percentage or glow.
+
+*Current splash (supersedes the illustration above):* the mark on the plain ground, with no loading bar. The logo is the animation (`src/ui/SplashMark.tsx`, SVG and CSS only): a mask follows the brush stroke from the inner tip over the apex, down and across to the tail (60 to 880ms), the red drop lands (840 to 1100ms) and the mark settles from 97.5% to full size by 1200ms. The next screen then cross-fades in (300ms) as soon as its first image is ready. A slow load holds the finished mark still, never replays it, and is capped at 4s. With Reduce Motion the finished mark fades in (200ms) and holds until 600ms. No bounce, pulse, spinner, percentage or glow.
+
 **Entry** (one screen):
 - The same illustration, cropped to the top half. The mark and one line: "Where film people find each other and build a record of their work." (Film for now; see §9 on fine arts.)
 - Buttons: **Continue with Apple**, **Continue with Google**, **Continue with email**.
