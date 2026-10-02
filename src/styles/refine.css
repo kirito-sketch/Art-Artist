@@ -357,3 +357,127 @@
 .phone .screen--hero:has(> .psheet) {
   padding-bottom: var(--tabbar-clearance);
 }
+
+/* ================================================================ bottom navigation: selected state
+ * No capsule: the active destination is the same icon, filled, in the action green, lifted 1.5px and
+ * scaled to 1.05, with a semibold green label; the avatar gains a 2px green ring. The old state eases
+ * out as the new one eases in (190ms, ease-out, no overshoot), on the class change itself, so the tap
+ * answers before the screen has rendered. Item width, icon box and label baseline never change.
+ * Create keeps its solid disc and never takes a selected state.
+ */
+.phone .tab-item {
+  --tab-ease: cubic-bezier(0.22, 0.8, 0.32, 1);
+  color: var(--text-2);
+  transition: color 190ms var(--tab-ease);
+}
+
+.phone .tab-item.is-on {
+  color: var(--action);
+}
+
+.phone .tab-item .tab-icon {
+  width: 30px;
+  transform: none;
+  transition: transform 190ms var(--tab-ease);
+}
+
+.phone .tab-item.is-on .tab-icon {
+  transform: translateY(-1.5px) scale(1.05);
+}
+
+.phone .tab-glyph path,
+.phone .tab-glyph circle {
+  stroke-width: 1.9;
+  transition: stroke-width 190ms var(--tab-ease);
+}
+
+.phone .tab-item.is-on .tab-glyph path,
+.phone .tab-item.is-on .tab-glyph circle {
+  stroke-width: 2.1;
+}
+
+.phone .tab-glyph .tab-glyph-fill {
+  fill-opacity: 0;
+  transition: fill-opacity 190ms var(--tab-ease);
+}
+
+.phone .tab-item.is-on .tab-glyph .tab-glyph-fill {
+  fill-opacity: 1;
+}
+
+/* Label: colour and weight only; the baseline and width of the item stay fixed. */
+.phone .tab-label {
+  transition: color 190ms var(--tab-ease);
+}
+
+.phone .tab-item.is-on .tab-label {
+  color: var(--action);
+  font-weight: 650;
+}
+
+/* Profile: the same avatar, full strength in both states; selected adds a 2px green ring (on a frame
+   that never re-mounts) with a hairline of the bar between ring and photo. */
+.phone .tab-avatar-frame {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+.phone .tab-avatar,
+.phone .tab-avatar.is-on {
+  opacity: 1;
+  box-shadow: none;
+}
+
+.phone .tab-avatar-frame::after {
+  content: '';
+  position: absolute;
+  inset: -3.5px;
+  border: 2px solid var(--action);
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.86);
+  transition: opacity 190ms var(--tab-ease), transform 190ms var(--tab-ease);
+  pointer-events: none;
+}
+
+.phone .tab-avatar-frame:has(.tab-avatar--org) {
+  border-radius: 26%;
+}
+
+.phone .tab-avatar-frame:has(.tab-avatar--org)::after {
+  border-radius: 30%;
+}
+
+.phone .tab-item.is-on .tab-avatar-frame::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* The unread dot belongs to the item, not to the selection: same place, same colour in both states,
+   its white ring keeping it distinct against a filled green bubble. */
+.phone .tab-dot {
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone .tab-item .tab-icon,
+  .phone .tab-item.is-on .tab-icon {
+    transform: none;
+    transition: none;
+  }
+
+  .phone .tab-avatar-frame::after,
+  .phone .tab-item.is-on .tab-avatar-frame::after {
+    transform: none;
+  }
+
+  .phone .tab-item,
+  .phone .tab-label,
+  .phone .tab-glyph path,
+  .phone .tab-glyph circle,
+  .phone .tab-glyph .tab-glyph-fill,
+  .phone .tab-avatar-frame::after {
+    transition-duration: 100ms;
+  }
+}

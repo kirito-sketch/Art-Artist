@@ -2061,7 +2061,8 @@
 /* Media limits are said before you reach them. */
 .picker-limit { margin: 0 0 10px; }
 
-/* Bottom navigation (V30): labelled tabs; the active tab has a tinted well, a dark icon and a bold label. */
+/* Bottom navigation: labelled tabs of one fixed width; icon, then the label on one shared baseline.
+   The selected state (green, filled icon, slight lift, semibold label) lives in src/styles/refine.css. */
 .tab-item {
   width: 60px;
   height: 56px;
@@ -2069,21 +2070,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   color: var(--text-2);
 }
-.tab-item.is-on { color: var(--text); }
 .tab-label { position: relative; font-size: 10.5px; font-weight: 550; line-height: 1; letter-spacing: 0.01em; }
-.tab-item.is-on .tab-label { font-weight: 750; color: var(--action); }
-.tab-well {
-  top: 3px;
-  left: 50%;
-  width: 50px;
-  height: 30px;
-  margin-left: -25px;
-  border-radius: 15px;
-  background: var(--action-tint-strong);
-}
 .tab-item .tab-icon { height: 30px; }
 .tab-dot { top: 4px; right: 12px; }
 .tabbar-pill { padding: 5px 8px; }

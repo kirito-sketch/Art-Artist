@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion';
-import { Compass, House, MessageCircle, Plus } from 'lucide-react';
+import { startTransition, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { Plus } from 'lucide-react';
 import { useStore, type Tab } from '../state/store';
 import { org, person } from '../state/selectors';
 import { Avatar } from '../ui/primitives';
 import { shared, spring } from '../ui/motion';
 import { focusables, inertProps } from '../ui/a11y';
+import { TabIcon } from './TabIcon';
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -14,9 +17,10 @@ const ITEMS: { id: Tab; label: string }[] = [
 ];
 
 /**
- * Light floating pill. V30: every tab is labelled, and the active one is unmistakable (tinted well,
- * dark icon, bold label), so Home and Discover always say which environment you are in.
- * Create is the one filled control.
+ * Light floating pill. Every tab is labelled; the active one is green with its filled icon (the avatar
+ * gains a green ring), lifted slightly, with a semibold label: clear without a capsule behind it, and
+ * never by colour alone. The selected state is CSS (src/styles/refine.css), so it changes on the tap
+ * itself. Create is the one solid control: an action, not a destination, so it never takes a tab state.
  */
 export function TabBar() {
   const { tab, setTab, openSheet, sheet, closeSheet, conversations, interestsReceived, viewer, acting } = useStore();
@@ -24,36 +28,41 @@ export function TabBar() {
   const unread = unreadCount > 0;
   const createOpen = sheet?.name === 'create';
 
+  // The selected state answers the tap at once: the bar re-renders on its own first, and the screen
+  // change follows as a non-blocking transition, so the new tab never waits for the screen to render.
+  const [shown, setShown] = useState(tab);
+  useEffect(() => setShown(tab), [tab]);
+
   const item = (it: (typeof ITEMS)[number]) => {
-    const active = tab === it.id;
+    const active = shown === it.id;
     return (
       <motion.button
         key={it.id}
         className={`tab-item ${active ? 'is-on' : ''}`}
-        whileTap={{ scale: 0.88 }}
+        whileTap={{ scale: 0.94 }}
         transition={spring.press}
         onClick={() => {
           if (active) document.querySelector(`[data-scroll="${it.id}"]`)?.scrollTo({ top: 0, behavior: 'smooth' });
-          setTab(it.id);
+          flushSync(() => setShown(it.id));
+          startTransition(() => setTab(it.id));
         }}
         aria-label={it.id === 'profile' && acting !== 'self' ? `Profile, acting as ${org(acting).name}` : it.id === 'inbox' && unread ? `Inbox, ${unreadCount} new` : it.label}
         // While Create is open, only the + (its close control) stays operable in the bar.
         {...inertProps(createOpen)}
         aria-current={active ? 'page' : undefined}
       >
-        {/* The well slides to the active tab; the icon lifts 2px into it. Spatial, not decorative. */}
-        {active && <motion.span layoutId="tab-well" className="tab-well" transition={spring.snappy} />}
-        <motion.span className="tab-icon" animate={{ y: active ? -2 : 0 }} transition={spring.snappy}>
-          {it.id === 'home' && <House size={24} strokeWidth={active ? 2.4 : 1.9} />}
-          {it.id === 'discover' && <Compass size={24} strokeWidth={active ? 2.4 : 1.9} />}
-          {it.id === 'inbox' && <MessageCircle size={24} strokeWidth={active ? 2.4 : 1.9} />}
-          {it.id === 'profile' && (
-            // The avatar is the identity: it morphs when you switch who you act as.
-            <motion.span layout key={acting} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring.settle} className={`tab-avatar ${active ? 'is-on' : ''} ${acting !== 'self' ? 'tab-avatar--org' : ''}`}>
-              <Avatar party={acting !== 'self' ? org(acting) : person(viewer.id)} size={26} />
-            </motion.span>
+        <span className="tab-icon">
+          {it.id === 'profile' ? (
+            // The ring frame stays put; inside it the avatar morphs when you switch who you act as.
+            <span className="tab-avatar-frame">
+              <motion.span layout key={acting} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={spring.settle} className={`tab-avatar ${acting !== 'self' ? 'tab-avatar--org' : ''}`}>
+                <Avatar party={acting !== 'self' ? org(acting) : person(viewer.id)} size={26} />
+              </motion.span>
+            </span>
+          ) : (
+            <TabIcon tab={it.id} />
           )}
-        </motion.span>
+        </span>
         <span className="tab-label">{it.label}</span>
         {it.id === 'inbox' && unread && <span className="tab-dot" aria-hidden />}
       </motion.button>

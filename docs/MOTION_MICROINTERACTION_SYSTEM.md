@@ -18,7 +18,7 @@ Principles taken from the 60fps.design references (morphing, shared elements, ta
 
 | Level | Where | What |
 |---|---|---|
-| **1 Functional** | Almost everywhere | Press, focus, tab well, sheets, button states, Follow, Save, filters |
+| **1 Functional** | Almost everywhere | Press, focus, tab selection, sheets, button states, Follow, Save, filters |
 | **2 Expressive** | Home, Discover, Profiles, Projects, Roles | Shared elements (tile → post, card → detail), section stagger, object lift, Create morph |
 | **3 Signature** | Rare, earned moments | Onboarding → first Home, identity switch, Credit accepted |
 
@@ -36,7 +36,7 @@ Principles taken from the 60fps.design references (morphing, shared elements, ta
 | Spring | Stiffness / damping / mass | Use |
 |---|---|---|
 | `press` | 600 / 32 / 0.6 | Press and release of controls and cards |
-| `snappy` | 520 / 38 | Indicators: tab well, underline, Follow width |
+| `snappy` | 520 / 38 | Indicators: underline, Follow width |
 | `sheet` | 380 / 38 / 0.9 | Sheets and the Create surface |
 | `push` | 360 / 40 / 1 | Screen pushes and shared elements |
 | `settle` | 260 / 26 / 0.9 | Objects and marks settling (craft object, seal, identity slate) |
@@ -48,7 +48,7 @@ Press scales: controls 0.86–0.96, cards 0.97–0.985, save 0.8. Only transform
 
 | # | Interaction | Level | Why it moves | Behaviour | Reduced motion |
 |---|---|---|---|---|---|
-| 1 | **Bottom nav** | 1 | Place and feedback | A tint well slides to the active tab (snappy); icon lifts 2 px; press 0.88; the green mark stays | No travel; state still shown |
+| 1 | **Bottom nav** | 1 | Place and feedback | No capsule: the active icon eases to its filled variant in green, lifts 1.5 px and scales to 1.05; label turns green and semibold; Profile's avatar gains a 2 px green ring. 190 ms ease-out, no overshoot, on the tap itself; press 0.94. Create never takes a tab state | No lift or scale; colour and fill change in 100 ms |
 | 2 | **Create +** | 2 | Continuity with its origin | Green disc grows into the Create surface (shared layout, sheet spring, green → white); actions stagger 30 ms; closing returns into the + (× on deep green) | Surface fades in place |
 | 3 | **Discover grid → post** | 2 | Object continuity | Tile image expands into the post media (shared element); stream fades in around it; back resolves into the tile; grid scroll and filter kept | Crossfade; scroll kept |
 | 4 | **Card press** | 1 | Tactile feedback | 0.97–0.985 with press spring on interactive cards only | No scale |
