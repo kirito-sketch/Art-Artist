@@ -10,16 +10,17 @@ import { Button, IconButton, Row } from '../../ui/primitives';
  * Deletion must not destroy other people's professional records. The retention rules below are a
  * product proposal marked for legal review (DECISIONS / FOUNDATION §6), not final policy.
  */
-export function YourData() {
+export function YourData({ start }: { start?: 'delete' } = {}) {
   const { pop, consents, showToast, memberships, startEntry } = useStore();
-  const [step, setStep] = useState<'home' | 'delete' | 'confirm'>('home');
+  // Settings › Delete account opens straight on the explanation; Back from there returns to Settings.
+  const [step, setStep] = useState<'home' | 'delete' | 'confirm'>(start ?? 'home');
   const [typed, setTyped] = useState('');
   const lastOwner = memberships.some((m) => m.startsWith('h-'));
 
   return (
     <div className="screen">
       <header className="topbar topbar--nav">
-        <IconButton label="Back" onClick={() => (step === 'home' ? pop() : setStep('home'))}>
+        <IconButton label="Back" onClick={() => (step === 'home' || (start && step === 'delete') ? pop() : setStep(step === 'confirm' && start ? 'delete' : 'home'))}>
           <ChevronLeft size={26} />
         </IconButton>
       </header>
@@ -42,7 +43,7 @@ export function YourData() {
               <h2 className="settings-h">Your information</h2>
               <div className="group">
                 <Row label="Download your data" onPress={() => showToast({ text: "We'll email you a copy within 48 hours" })} />
-                <Row label={<span className="danger-text">Delete account</span>} onPress={() => setStep('delete')} />
+                <Row label={<span className="danger-text">Delete account</span>} chevron={false} onPress={() => setStep('delete')} />
               </div>
             </section>
           </div>

@@ -35,7 +35,7 @@ export type Route =
   | { name: 'settings' }
   | { name: 'houseSetup' }
   | { name: 'legal'; doc: 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority' }
-  | { name: 'yourData' }
+  | { name: 'yourData'; step?: 'delete' }
   | { name: 'hproject'; id: string }
   | { name: 'association'; id: string }
   | { name: 'org'; id: string }

@@ -549,3 +549,101 @@
 .phone .next-steps--short .how-link {
   align-self: flex-start;
 }
+
+/* ==========================================================================================
+   Notifications and Settings (docs/NOTIFICATIONS_SETTINGS_AUDIT.md): quiet utility screens
+   ========================================================================================== */
+
+/* One label style for every group: New, Earlier, From your network (the Settings section label). */
+.phone .notif-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.phone .notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+}
+.phone .notif-group + .notif-group,
+.phone .notif-group + .empty,
+.phone .empty + .notif-group {
+  margin-top: 10px;
+}
+
+/* Who, then what; the detail on its own quieter line; the time last. Unread names carry more weight. */
+.phone .notif-who {
+  font-weight: 500;
+}
+.phone .notif.is-unread .notif-who {
+  font-weight: 650;
+}
+.phone .notif-context {
+  font-size: var(--t-5);
+  color: var(--text-2);
+}
+.phone .notif-todo {
+  color: var(--action);
+  font-weight: 600;
+}
+.phone .notif-elsewhere {
+  min-height: 32px;
+  margin-top: 6px;
+}
+
+/* News from your network sits below what happened to you: smaller face, secondary text, no photo. */
+.phone .nrow--quiet {
+  padding: 10px 0;
+}
+.phone .nrow--quiet .nrow-line {
+  font-size: var(--t-5);
+  color: var(--text-2);
+}
+.phone .nrow--quiet .nrow-line b {
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Settings: flat rows on the page, hairlines between rows, section labels doing the grouping. No cards. */
+.phone .settings .group {
+  background: none;
+  border-radius: 0;
+  overflow: visible;
+}
+.phone .settings .group > .row {
+  padding-left: 0;
+  padding-right: 0;
+}
+.phone .settings .group > .row + .row::before {
+  left: 0;
+}
+.phone .settings .settings-h {
+  margin-bottom: 2px;
+}
+.phone .settings .settings-note {
+  margin: 4px 0 0;
+}
+.phone .settings-group {
+  margin-bottom: 28px;
+}
+.phone .settings-group--end {
+  margin-top: 8px;
+}
+.phone .settings-blocked > .row {
+  padding-left: 0;
+  padding-right: 0;
+}
+.phone .nrow--quiet .meta {
+  font-size: 12px;
+}
+.phone .settings > .settings-group:first-child {
+  margin-top: 6px;
+}
+.phone .settings-blocked {
+  background: none;
+  border-radius: 0;
+}

@@ -828,7 +828,7 @@ export const interests: Record<string, Interest[]> = {
 
 export const notifications: Record<string, Notification[]> = {
   kiran: [
-    { id: 'nt1', kind: 'message', actorId: 'konark', text: 'Konark Pictures replied about Director of Photography', time: '12m', unread: true, route: { name: 'conversation', id: 'c-konark' } },
+    { id: 'nt1', kind: 'message', actorId: 'konark', text: 'Konark Pictures replied about Director of Photography', time: '12m', unread: true, route: { name: 'conversation', id: 'th-konark-kiran' } },
     { id: 'nt2', kind: 'interest', actorId: 'nikhil', text: '3 people are interested in your 1st AC collaboration', time: '2h', unread: true },
     { id: 'nt3', kind: 'credit', actorId: 'tidewater', text: 'Your credit from Tidewater Films is public: Additional Camera, Monsoon Letters', time: '1d', unread: false, route: { name: 'profile', id: 'kiran' } },
     { id: 'nt4', kind: 'follow', actorId: 'zoya', text: 'Zoya Khan followed you', time: '2d', unread: false, route: { name: 'profile', id: 'zoya' } },

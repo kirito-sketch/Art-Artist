@@ -104,7 +104,7 @@ function RouteView({ r }: { r: Route }) {
     case 'legal':
       return <LegalScreen id={r.doc} />;
     case 'yourData':
-      return <YourData />;
+      return <YourData start={r.step} />;
   }
 }
 

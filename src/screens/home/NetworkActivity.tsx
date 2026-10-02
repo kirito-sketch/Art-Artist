@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import type { NetworkEvent } from '../../data/types';
 import { useStore } from '../../state/store';
 import { findOpportunity, person } from '../../state/selectors';
+import { publicProjects } from '../../domain/discovery';
 import { stagger } from '../../ui/motion';
 import { Avatar, PressCard, Photo } from '../../ui/primitives';
 
@@ -32,27 +33,35 @@ function sentence(e: NetworkEvent, role?: string, city?: string) {
   }
 }
 
-export function NetworkRow({ e, index = 0 }: { e: NetworkEvent; index?: number }) {
+/**
+ * One network event. `quiet` is the Notifications variant: news from your network sits below what
+ * happened to you, so it is lighter (smaller face, no photo, secondary text) and opens exactly what it
+ * describes: a new project opens the project (docs/NOTIFICATIONS_SETTINGS_AUDIT.md N1, N6).
+ */
+export function NetworkRow({ e, index = 0, quiet = false }: { e: NetworkEvent; index?: number; quiet?: boolean }) {
   const { push, userCollabs } = useStore();
   const first = person(e.actorIds[0]);
   const o = e.opportunityId ? findOpportunity(e.opportunityId, userCollabs) : undefined;
   const thumb = e.media?.[0];
+  const project = quiet && e.kind === 'project' && e.title ? publicProjects().find((w) => w.title.toLowerCase() === e.title!.toLowerCase()) : undefined;
 
   const open = () => {
     if (o) push({ name: 'opportunity', id: o.id });
+    else if (project) push({ name: 'work', id: project.id });
+    else if (quiet) push({ name: 'profile', id: first.id });
     else if (thumb && e.kind !== 'credit') push({ name: 'media', items: e.media!, index: 0 });
     else push({ name: 'profile', id: first.id });
   };
 
   return (
     <motion.div {...stagger(index)}>
-      <PressCard className="nrow" onPress={open} scale={0.985}>
-        <Avatar party={first} size={44} available={e.kind === 'available'} />
+      <PressCard className={`nrow ${quiet ? 'nrow--quiet' : ''}`} onPress={open} scale={0.985}>
+        <Avatar party={first} size={quiet ? 36 : 44} available={e.kind === 'available'} />
         <div className="nrow-text">
           <p className="nrow-line">{sentence(e, o?.role, o?.city)}</p>
           <p className="meta">{e.time}</p>
         </div>
-        {thumb && <Photo media={thumb} className="nrow-thumb" showPlay={false} />}
+        {thumb && !quiet && <Photo media={thumb} className="nrow-thumb" showPlay={false} />}
       </PressCard>
     </motion.div>
   );

@@ -165,88 +165,144 @@ function CreateMenu() {
  * labels. Opening an item never changes who you are acting as: the destination shows which identity
  * it belongs to and asks for an explicit switch before any action. (Hypothesis: validate.)
  */
+/**
+ * How a notification reads in the list, without changing what was stored: who (semibold), what, and the
+ * detail after the first colon on its own line (the colon stays, so it still reads as one sentence). Instructions the row already implies ("Accept it to make
+ * it official.") are dropped (docs/NOTIFICATIONS_SETTINGS_AUDIT.md N3).
+ */
+function notifCopy(n: { text: string; actorId: string }) {
+  const text = n.text.replace(/\s*(Accept it to make it official|Thanks for your interest)\.?$/, '');
+  const name = party(n.actorId)?.name;
+  const who = name && text.startsWith(name) ? name : undefined;
+  const rest = who ? text.slice(who.length) : text;
+  const cut = who || text.startsWith('Your ') ? rest.indexOf(': ') : -1;
+  return { who, what: cut > 0 ? rest.slice(0, cut) : rest, context: cut > 0 ? rest.slice(cut + 2) : undefined };
+}
+
+/** A new item that asks for a decision: a credit to accept, a correction to answer, interest to review (N4). */
+const asksForDecision = (n: { kind: string; text: string; unread: boolean }) =>
+  n.unread && ((n.kind === 'interest' && !/ (filled|closed) /.test(n.text)) || (n.kind === 'credit' && /Accept it|proposed a revised|asked to correct|asked to amend|isn't right/.test(n.text)));
+
+/**
+ * Notifications: what happened around your work. New, then earlier, then news from your network, which is
+ * lighter so it never outweighs what happened to you. Things that need you also sit on Home (Waiting on
+ * you); conversations live in Inbox.
+ */
 function Notifications() {
   const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario } = useStore();
   const [filter, setFilter] = useState<string>(acting);
   // News from your network (credits, new projects, availability) lives here, not on Home, which only
   // shows what needs you (docs/UX_HEURISTIC_AUDIT.md F2, F13). It belongs to the person, not a house.
   const network = filter === 'self' || filter === 'all' ? networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel') : [];
-  if (!notifications.length && !network.length) return <EmptyState title="No notifications yet" body="Replies, interest and credits will show up here." />;
+  const caughtUp = <EmptyState title="You're all caught up" body="New activity around your work and network will appear here." />;
+  if (!notifications.length && !network.length) return caughtUp;
   const owner = (n: (typeof notifications)[number]) => n.forId ?? 'self';
   const shown = filter === 'all' ? notifications : notifications.filter((n) => owner(n) === filter);
   const fresh = shown.filter((n) => n.unread);
   const earlier = shown.filter((n) => !n.unread);
   const identities = ['self', ...memberships.filter((m) => notifications.some((n) => n.forId === m))];
   const unreadFor = (id: string) => notifications.filter((n) => n.unread && (id === 'all' || owner(n) === id)).length;
-  const row = (n: (typeof notifications)[number]) => (
-    <Pressable
-      key={n.id}
-      className="notif"
-      scale={0.99}
-      onClick={() => {
-        markNotificationRead(n.id);
-        if (n.route) push(n.route);
-        else if (n.kind === 'interest') openSheet({ name: 'reviewInterest' });
-      }}
-    >
-      <Avatar party={party(n.actorId)!} size={40} />
-      <span className="notif-text">
-        {n.forId && filter === 'all' && <span className="notif-for">For {org(n.forId).name}</span>}
-        {n.text}
-        <span className="meta">{n.time}</span>
-      </span>
-      {n.unread && (
-        <>
-          <span className="dot dot--inline" aria-hidden />
-          <span className="sr-only">New</span>
-        </>
-      )}
-    </Pressable>
-  );
+  const label = (id: string) => (id === 'all' ? 'All' : id === 'self' ? 'You' : org(id).name);
+  // Nothing here for this identity, but another one has news: say so once, with a way there.
+  const elsewhere = identities.find((id) => id !== filter && unreadFor(id) > 0);
+  const row = (n: (typeof notifications)[number]) => {
+    const c = notifCopy(n);
+    return (
+      <Pressable
+        key={n.id}
+        className={`notif ${n.unread ? 'is-unread' : ''}`}
+        scale={0.99}
+        onClick={() => {
+          markNotificationRead(n.id);
+          if (n.route) push(n.route);
+          else if (n.kind === 'interest') openSheet({ name: 'reviewInterest' });
+        }}
+      >
+        <Avatar party={party(n.actorId)!} size={40} />
+        <span className="notif-text">
+          {n.forId && filter === 'all' && <span className="notif-for">For {org(n.forId).name}</span>}
+          <span className="notif-line">
+            {c.who && <span className="notif-who">{c.who}</span>}
+            <span>{c.context ? `${c.what}:` : c.what}</span>
+          </span>
+          {c.context && <span className="notif-context">{c.context}</span>}
+          <span className="meta">
+            {n.time}
+            {asksForDecision(n) && (
+              <>
+                {' · '}
+                <span className="notif-todo">To review</span>
+              </>
+            )}
+          </span>
+        </span>
+        {n.unread && (
+          <>
+            <span className="dot dot--inline" aria-hidden />
+            <span className="sr-only">New</span>
+          </>
+        )}
+      </Pressable>
+    );
+  };
   return (
-    <div className="stack">
+    <div className="stack notif-list">
       {identities.length > 1 && (
         <div className="chips chips--scroll">
           {[...identities, 'all'].map((id) => (
             <button key={id} className={`chip ${filter === id ? 'is-on' : ''}`} aria-pressed={filter === id} onClick={() => setFilter(id)}>
-              {id === 'all' ? 'All' : id === 'self' ? 'You' : org(id).name}
+              {label(id)}
               {unreadFor(id) > 0 && id !== filter ? ` · ${unreadFor(id)}` : ''}
             </button>
           ))}
         </div>
       )}
-      <div className="notif-head">
-        <p className="section-title--sheet">{fresh.length ? `${fresh.length} new` : 'No new notifications'}</p>
-        {fresh.length > 0 && (
-          <button className="link" onClick={() => markNotificationsReadWhere(fresh.map((n) => n.id))}>
-            Mark all as read
-          </button>
-        )}
-      </div>
-      {fresh.length > 0 && <div className="list list--flush">{fresh.map(row)}</div>}
-      {earlier.length > 0 && (
-        <>
-          <p className="meta">Earlier</p>
-          <div className="list list--flush notif-earlier">{earlier.map(row)}</div>
-        </>
-      )}
-      {!shown.length && !network.length && <p className="meta">Nothing here yet.</p>}
-      {network.length > 0 && (
-        <>
+      {fresh.length > 0 && (
+        <section className="notif-group">
           <div className="notif-head">
-            <p className="meta">From your network</p>
+            <h3 className="notif-label">New</h3>
+            <button className="link link--small" onClick={() => markNotificationsReadWhere(fresh.map((n) => n.id))}>
+              Mark all as read
+            </button>
+          </div>
+          <div className="list list--flush">{fresh.map(row)}</div>
+        </section>
+      )}
+      {earlier.length > 0 && (
+        <section className="notif-group">
+          <h3 className="notif-label">Earlier</h3>
+          <div className="list list--flush notif-earlier">{earlier.map(row)}</div>
+        </section>
+      )}
+      {!shown.length && (
+        <EmptyState
+          title="You're all caught up"
+          body={network.length ? undefined : 'New activity around your work and network will appear here.'}
+          action={
+            elsewhere ? (
+              <button className="link link--small notif-elsewhere" onClick={() => setFilter(elsewhere)}>
+                {label(elsewhere)} has {unreadFor(elsewhere)} new
+              </button>
+            ) : undefined
+          }
+        />
+      )}
+      {network.length > 0 && (
+        <section className="notif-group">
+          <div className="notif-head">
+            <h3 className="notif-label">From your network</h3>
             {network.length > 5 && (
-              <button className="link" onClick={() => push({ name: 'network' })}>
+              <button className="link link--small" onClick={() => push({ name: 'network' })}>
                 See all
               </button>
             )}
           </div>
           <div className="list list--flush">
             {network.slice(0, 5).map((e, i) => (
-              <NetworkRow key={e.id} e={e} index={i} />
+              <NetworkRow key={e.id} e={e} index={i} quiet />
             ))}
           </div>
-        </>
+        </section>
       )}
     </div>
   );
