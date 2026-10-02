@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
 import { org, person } from '../state/selectors';
 import { Toggle } from '../ui/primitives';
+import { ViewSwitch, type ViewMode } from './viewMode';
 import { startResearch } from '../research';
 import { openAdmin } from '../admin/adminMode';
 import { labUrl } from '../qa/boot';
@@ -59,7 +60,7 @@ function resetPrototype() {
   location.href = u.toString();
 }
 
-export function PrototypeControls() {
+export function PrototypeControls({ view }: { view?: { mode: ViewMode; onChange: (m: ViewMode) => void } }) {
   const s = useStore();
   const { viewer, acting, scenario, setScenario, homeLayout, setHomeLayout, look, setLook, houseHome, setHouseHome, houseProfile, setHouseProfile, roleModel, setRoleModel, canIssue, setCanIssue, startEntry, endEntry, entry, policyUpdate, setPolicyUpdate, verifyPendingHouses, showToast, setActing, switchViewer } = s;
   const [advanced, setAdvanced] = useState(false);
@@ -155,6 +156,7 @@ export function PrototypeControls() {
       <div className="pc-sticky">
         <div className="pc-top">
           <span className="pc-title">Art and Artist prototype</span>
+          {view && <ViewSwitch mode={view.mode} onChange={view.onChange} />}
           <button className="pc-quiet" onClick={resetPrototype} title="Return everything to the starting state">
             <RotateCcw size={13} /> Reset
           </button>

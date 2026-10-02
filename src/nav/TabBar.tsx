@@ -20,7 +20,8 @@ const ITEMS: { id: Tab; label: string }[] = [
  */
 export function TabBar() {
   const { tab, setTab, openSheet, sheet, closeSheet, conversations, interestsReceived, viewer, acting } = useStore();
-  const unread = conversations.some((c) => c.unread) || interestsReceived.some((i) => !i.withdrawn && !i.review);
+  const unreadCount = conversations.filter((c) => c.unread).length + interestsReceived.filter((i) => !i.withdrawn && !i.review).length;
+  const unread = unreadCount > 0;
   const createOpen = sheet?.name === 'create';
 
   const item = (it: (typeof ITEMS)[number]) => {
@@ -35,8 +36,7 @@ export function TabBar() {
           if (active) document.querySelector(`[data-scroll="${it.id}"]`)?.scrollTo({ top: 0, behavior: 'smooth' });
           setTab(it.id);
         }}
-        aria-label={it.id === 'profile' && acting !== 'self' ? `Profile, acting as ${org(acting).name}` : it.label}
-        aria-describedby={it.id === 'inbox' && unread ? 'inbox-unread' : undefined}
+        aria-label={it.id === 'profile' && acting !== 'self' ? `Profile, acting as ${org(acting).name}` : it.id === 'inbox' && unread ? `Inbox, ${unreadCount} new` : it.label}
         // While Create is open, only the + (its close control) stays operable in the bar.
         {...inertProps(createOpen)}
         aria-current={active ? 'page' : undefined}
@@ -55,14 +55,7 @@ export function TabBar() {
           )}
         </motion.span>
         <span className="tab-label">{it.label}</span>
-        {it.id === 'inbox' && unread && (
-          <>
-            <span className="tab-dot" aria-hidden />
-            <span id="inbox-unread" className="sr-only">
-              New messages
-            </span>
-          </>
-        )}
+        {it.id === 'inbox' && unread && <span className="tab-dot" aria-hidden />}
       </motion.button>
     );
   };

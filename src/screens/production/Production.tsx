@@ -30,7 +30,8 @@ function useHouse() {
 function HouseTop() {
   const { acting, openSheet, notifications } = useStore();
   const house = org(acting);
-  const unread = notifications.some((n) => n.unread && n.forId === acting);
+  const unreadCount = notifications.filter((n) => n.unread && n.forId === acting).length;
+  const unread = unreadCount > 0;
   return (
     <header className="topbar">
       <h1 className="sr-only">{house.name} home</h1>
@@ -44,16 +45,9 @@ function HouseTop() {
         </span>
       </button>
       <span className="flex" />
-      <IconButton label="Notifications" aria-describedby={unread ? 'house-unread' : undefined} onClick={() => openSheet({ name: 'notifications' })}>
+      <IconButton label={unread ? `Notifications, ${unreadCount} new` : 'Notifications'} onClick={() => openSheet({ name: 'notifications' })}>
         <Bell size={21} aria-hidden />
-        {unread && (
-          <>
-            <span className="tab-dot ph-bell-dot" aria-hidden />
-            <span className="sr-only" id="house-unread">
-              New notifications
-            </span>
-          </>
-        )}
+        {unread && <span className="tab-dot ph-bell-dot" aria-hidden />}
       </IconButton>
       <IconButton label="New project" onClick={() => openSheet({ name: 'newProject' })}>
         <Plus size={22} />

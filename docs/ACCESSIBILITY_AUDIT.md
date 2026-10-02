@@ -85,6 +85,17 @@ scripted keyboard flows pass.
 | D3 (focus under tab bar) | Fixed (`scroll-padding-bottom`) |
 | D8 (copy) | Not changed: needs product decisions (see section 6) |
 
+### Mobile-first adjustments
+
+Art and Artist is a mobile app, so the pass was tuned for touch and VoiceOver:
+
+- Focus rings appear only while a keyboard is being used (`html[data-input="keyboard"]`); taps never show a ring on cards, buttons or fields.
+- Cards look exactly as designed. Each card's open control is an invisible button covering the card (VoiceOver's highlight wraps the card); the card's other details are its description, and its text is not read twice.
+- The post "More" control is invisible unless it has keyboard focus (taps on the text expand it; VoiceOver reads the full post).
+- VoiceOver names carry counts where they help: "Notifications, 3 new", "Inbox, 4 new".
+- Type tokens follow the iOS text size setting (Dynamic Type) up to 1.6x; layouts tested at 1.3x and 1.6x.
+- 44 px invisible tap areas now also cover medium buttons (Follow on cards) and the Home intent chip.
+
 ---
 
 ## A. Critical

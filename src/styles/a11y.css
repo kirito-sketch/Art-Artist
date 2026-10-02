@@ -23,31 +23,36 @@
 }
 
 /* ---------------------------------------------------------------- focus
- * One treatment everywhere: the 2px action-colour ring. White on dark surfaces, where the green
- * ring falls under 3:1. Inline fields that removed their outline get the ring on their container.
+ * A touch app: no rings after taps. Rings appear only while someone navigates with a keyboard
+ * (html[data-input="keyboard"], src/ui/a11y.ts), in the one action-colour treatment; white with a dark
+ * halo on photos and dark surfaces. VoiceOver draws its own highlight.
  */
-.phone :focus-visible {
+html:not([data-input='keyboard']) .phone :focus-visible {
+  outline: none;
+}
+
+html[data-input='keyboard'] .phone :focus-visible {
   outline-color: var(--focus-color);
 }
 
-.phone :is(.viewer, .route-layer--media, .intro, .splash, .identity-shift, .now-card, .slate-hero, .whero) :focus-visible,
-.phone .icon-btn--on-dark:focus-visible,
-.phone .icon-btn--float:focus-visible {
+html[data-input='keyboard'] .phone :is(.viewer, .route-layer--media, .intro, .splash, .identity-shift, .now-card, .slate-hero, .whero) :focus-visible,
+html[data-input='keyboard'] .phone .icon-btn--on-dark:focus-visible,
+html[data-input='keyboard'] .phone .icon-btn--float:focus-visible {
   outline-color: #fff;
   box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55);
 }
 
-/* A focused heading that received focus programmatically (screen change) needs no ring. */
+/* A heading that received focus programmatically (screen change) needs no ring. */
 .phone :is(h1, h2)[tabindex='-1']:focus {
   outline: none;
 }
 
-.phone .search:focus-within,
-.phone .convo-field:focus,
-.phone .composer-text:focus,
-.phone .title-input:focus,
-.phone .money-field:focus-within,
-.phone .row:focus-within:has(.row-input, .row-select, .date-field) {
+html[data-input='keyboard'] .phone .search:focus-within,
+html[data-input='keyboard'] .phone .convo-field:focus,
+html[data-input='keyboard'] .phone .composer-text:focus,
+html[data-input='keyboard'] .phone .title-input:focus,
+html[data-input='keyboard'] .phone .money-field:focus-within,
+html[data-input='keyboard'] .phone .row:focus-within:has(.row-input, .row-select, .date-field) {
   outline: 2px solid var(--focus-color);
   outline-offset: 2px;
 }
@@ -57,27 +62,33 @@
 }
 
 /* ---------------------------------------------------------------- cards
- * Cards are not buttons (src/ui/primitives.tsx PressCard). Their open control is a real button with
- * no visual of its own; when it has keyboard focus the whole card shows the ring.
+ * Cards look exactly as designed. Their open control (src/ui/primitives.tsx PressCard) is an
+ * invisible button covering the card: VoiceOver's highlight wraps the card, taps pass through to it,
+ * and Save / Follow sit above as their own controls.
  */
+:where(.phone) :where(.press-card) {
+  position: relative;
+}
+
 .pc-hit {
-  position: absolute; /* at its static position: no layout, no scroll jump */
-  width: 1px;
-  height: 1px;
-  margin: -1px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 0;
   border: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
   background: none;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
 }
 
 .pc-hit:focus-visible {
   outline: none;
 }
 
-.press-card:has(> .pc-hit:focus-visible) {
+html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   outline: 2px solid var(--focus-color);
   outline-offset: 2px;
 }
@@ -159,7 +170,7 @@
   translate: -50% -50%;
 }
 
-.phone :is(.btn--s, .chip, .section-link, .link, .toggle, .ob-skip, .intro-skip, .row-select)::after {
+.phone :is(.btn--s, .btn--m, .chip, .intent-chip, .section-link, .link, .toggle, .ob-skip, .intro-skip, .row-select)::after {
   content: '';
   position: absolute;
   left: 0;
@@ -169,7 +180,7 @@
   translate: 0 -50%;
 }
 
-:where(.phone) :where(.btn--s, .chip, .section-link, .link, .toggle, .row-select, .convo-send, .search-clear, .post-more) {
+:where(.phone) :where(.btn--s, .btn--m, .chip, .intent-chip, .section-link, .link, .toggle, .row-select, .convo-send, .search-clear, .post-more) {
   position: relative; /* anchor for the hit area; any rule that positions them otherwise still wins */
 }
 
@@ -253,7 +264,20 @@
   flex: 1;
 }
 
-.post-more-text {
+/* "More" for a long post: taps on the text expand it and VoiceOver reads the whole post, so the
+   control stays invisible unless it has keyboard focus. */
+.post-more-text:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.post-more-text:focus-visible {
   display: inline-block;
   margin: -4px 0 8px;
 }
@@ -272,4 +296,24 @@
   white-space: normal;
   height: auto;
   min-height: 34px;
+}
+
+/* ---------------------------------------------------------------- text size
+ * The type tokens follow the iOS text size setting (--type-scale, set from -apple-system-body in
+ * src/ui/a11y.ts; 1 everywhere else). Cards wrap to two lines and rows wrap, so larger text grows
+ * the layout instead of clipping it.
+ */
+.phone {
+  --t-1: calc(34px * var(--type-scale, 1));
+  --t-2: calc(22px * var(--type-scale, 1));
+  --t-3: calc(17px * var(--type-scale, 1));
+  --t-4: calc(15px * var(--type-scale, 1));
+  --t-5: calc(13px * var(--type-scale, 1));
+  --t-display: calc(40px * min(var(--type-scale, 1), 1.25));
+  --label: calc(11.5px * var(--type-scale, 1));
+}
+
+/* Section titles are buttons: when larger text wraps them, they stay left-aligned like the design. */
+.phone .section-link {
+  text-align: left;
 }

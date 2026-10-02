@@ -118,3 +118,46 @@ export function mediaName(m: { kind: string; caption?: string }, i: number, n: n
 
 /** The control the user last activated (tracked by the app shell): what focus returns to. */
 export const activation: { el: HTMLElement | null } = { el: null };
+
+/**
+ * Input modality on <html data-input="keyboard|pointer">. Art and Artist is a touch app: focus rings
+ * are drawn only while someone is actually navigating with a keyboard, never after a tap.
+ */
+export function trackInputModality() {
+  const root = document.documentElement;
+  if (root.dataset.input) return () => {};
+  root.dataset.input = 'pointer';
+  const keys = new Set(['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown']);
+  const onKey = (e: KeyboardEvent) => {
+    if (keys.has(e.key)) root.dataset.input = 'keyboard';
+  };
+  const onPointer = () => {
+    root.dataset.input = 'pointer';
+  };
+  window.addEventListener('keydown', onKey, true);
+  window.addEventListener('pointerdown', onPointer, true);
+  window.addEventListener('touchstart', onPointer, { capture: true, passive: true });
+  return () => {
+    window.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('pointerdown', onPointer, true);
+    window.removeEventListener('touchstart', onPointer, true);
+    delete root.dataset.input;
+  };
+}
+
+/**
+ * iOS text size (Dynamic Type) for the type tokens: the system body size over the 17px design size,
+ * kept between 1 and 1.6 so the layout grows with the user's setting but never shrinks below design.
+ */
+export function applySystemTextSize() {
+  if (!CSS.supports?.('font', '-apple-system-body')) return;
+  const probe = document.createElement('span');
+  probe.style.font = '-apple-system-body';
+  probe.style.position = 'absolute';
+  probe.style.visibility = 'hidden';
+  document.body.appendChild(probe);
+  const px = parseFloat(getComputedStyle(probe).fontSize) || 17;
+  probe.remove();
+  const scale = Math.min(1.6, Math.max(1, px / 17));
+  document.documentElement.style.setProperty('--type-scale', String(Math.round(scale * 100) / 100));
+}

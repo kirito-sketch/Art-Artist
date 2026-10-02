@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, type HTMLMotionProps } from 'framer-motion';
-import { forwardRef, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { BadgeCheck, Check, ChevronRight, ImageOff, Play } from 'lucide-react';
 import type { Media, Party } from '../data/types';
 import { spring } from './motion';
@@ -27,7 +27,8 @@ type PressCardProps = HTMLMotionProps<'div'> & { scale?: number; onPress: () => 
 function cardText(root: HTMLElement) {
   const groups: { block: Element; text: string }[] = [];
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode: (n) => (n.parentElement?.closest('button, a, input, select, textarea, [aria-hidden="true"], .pc-hit, .sr-only') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+    // Skip controls and real decoration; text this card hid itself (data-pc-hidden) still counts.
+    acceptNode: (n) => (n.parentElement?.closest('button, a, input, select, textarea, [aria-hidden="true"]:not([data-pc-hidden]), .pc-hit, .pc-desc, .sr-only') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
   });
   for (let n = walk.nextNode(); n; n = walk.nextNode()) {
     const t = n.textContent?.replace(/\s+/g, ' ').trim();
@@ -39,30 +40,50 @@ function cardText(root: HTMLElement) {
     if (last && last.block === block) last.text += ' ' + t;
     else groups.push({ block, text: t });
   }
-  const parts = groups.map((g) => g.text.replace(/\s*[·•|]\s*/g, ', ').replace(/^, |, $/g, '').trim()).filter((t, i, all) => t && t !== all[i - 1]);
-  const s = parts.join(', ');
-  return s.length > 160 ? s.slice(0, 157) + '…' : s;
+  return groups.map((g) => g.text.replace(/\s*[·•|]\s*/g, ', ').replace(/^, |, $/g, '').trim()).filter((t, i, all) => t && t !== all[i - 1]);
 }
 
+const INTERACTIVE = 'button, a[href], input, select, textarea, [role="button"], [tabindex="0"]';
+
 /**
- * A tappable card that can hold its own actions (Save, Follow, Review). The card itself is not a
- * button, so its actions are never nested inside one (WCAG 4.1.2): the whole card opens on tap, and
- * a real button, first in the card, opens it from the keyboard and names it for screen readers.
- * Pass `aria-label` for a short name; otherwise the card's own text is used.
+ * A tappable card that can hold its own actions (Save, Follow, Review). Visually unchanged: the whole
+ * card opens on tap. For VoiceOver the card is one clean element: an open button that covers the card
+ * (so the VoiceOver highlight wraps it) named by the card's title, with its other details as the
+ * description; the card's own text is not read twice; Save / Follow / Review stay separate controls,
+ * never nested inside a button. Pass `aria-label` for a short name.
  */
 export function PressCard({ scale = 0.98, className = '', onPress, children, 'aria-label': label, ...rest }: PressCardProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [derived, setDerived] = useState('');
+  const descId = useId();
+  const [text, setText] = useState<{ name: string; desc: string }>({ name: '', desc: '' });
   useLayoutEffect(() => {
-    if (label || !ref.current) return;
-    const t = cardText(ref.current);
-    if (t !== derived) setDerived(t);
+    const root = ref.current;
+    if (!root) return;
+    const parts = cardText(root);
+    const name = label || parts[0] || '';
+    const rest = (label ? parts.filter((p) => !label.includes(p)) : parts.slice(1)).join(', ');
+    const desc = rest.length > 180 ? rest.slice(0, 177) + '…' : rest;
+    if (name !== text.name || desc !== text.desc) setText({ name, desc });
+    // The open button already says what the card says: hide text-only parts from screen readers.
+    for (const child of Array.from(root.children) as HTMLElement[]) {
+      if (child.classList.contains('pc-hit') || child.classList.contains('pc-desc')) continue;
+      const interactive = child.matches(INTERACTIVE) || !!child.querySelector(INTERACTIVE);
+      if (!interactive && !child.hasAttribute('aria-hidden')) {
+        child.setAttribute('aria-hidden', 'true');
+        child.setAttribute('data-pc-hidden', '');
+      }
+    }
   });
   return (
     // tabIndex -1: Framer Motion makes tap-animated elements tabbable; the card must not be a stop.
     <motion.div ref={ref} whileTap={{ scale }} transition={spring.press} className={`pressable press-card ${className}`} onClick={onPress} tabIndex={-1} {...rest}>
-      {/* Activating it fires a click that reaches the card (onPress). */}
-      <button type="button" className="pc-hit" aria-label={label || derived || 'Open'} />
+      {/* Activating it fires a click that reaches the card (onPress). Taps pass through it. */}
+      <button type="button" className="pc-hit" aria-label={text.name || 'Open'} aria-describedby={text.desc ? descId : undefined} />
+      {text.desc && (
+        <span id={descId} className="pc-desc" hidden>
+          {text.desc}
+        </span>
+      )}
       {children as ReactNode}
     </motion.div>
   );

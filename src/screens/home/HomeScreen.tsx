@@ -27,7 +27,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
   const loading = scenario.loading;
   const me = person(viewer.id);
   const opps = forYou(viewer, scenario);
-  const unread = notifications.some((n) => n.unread);
+  const unreadCount = notifications.filter((n) => n.unread).length;
+  const unread = unreadCount > 0;
   const cards = homeLayout === 'cards';
   // First session: a person just out of onboarding (or the "New user" test state). No network yet.
   const first = !loading && (store.isNewPerson || scenario.newUser);
@@ -53,16 +54,9 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
         <Logo />
       </span>
       <span className="flex" />
-      <IconButton label="Notifications" className="icon-btn--float" aria-describedby={unread ? 'home-unread' : undefined} onClick={() => openSheet({ name: 'notifications' })}>
+      <IconButton label={unread ? `Notifications, ${unreadCount} new` : 'Notifications'} className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
         <Bell size={19} aria-hidden />
-        {unread && (
-          <>
-            <span className="dot" aria-hidden />
-            <span className="sr-only" id="home-unread">
-              New notifications
-            </span>
-          </>
-        )}
+        {unread && <span className="dot" aria-hidden />}
       </IconButton>
     </header>
   );

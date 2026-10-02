@@ -1,0 +1,186 @@
+/*
+ * Prototype presentation modes for the normal prototype (src/dev/viewMode.tsx). Not part of the
+ * product. /test and /research never render these classes.
+ */
+
+/* ---------------------------------------------------------------- App mode
+ * Only the product, on the real viewport: no bezel, canvas, fake status bar or home indicator.
+ * The device's safe areas replace the simulated ones.
+ */
+html.view-app,
+html.view-app body,
+html.view-app #root {
+  min-height: 100%;
+  background: #f6f4f0;
+}
+
+html.view-app body {
+  margin: 0;
+  overscroll-behavior: none;
+}
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  background: #f6f4f0;
+}
+
+.phone.phone--app {
+  position: relative;
+  width: 100%;
+  max-width: 480px; /* mobile-first product: on a desktop it stays a phone-width column */
+  height: 100vh;
+  height: 100dvh;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  box-sizing: border-box;
+  --status-bar: max(env(safe-area-inset-top), 12px);
+  --tabbar-clearance: calc(100px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 481px) {
+  .phone.phone--app {
+    box-shadow: 0 0 0 1px rgba(40, 30, 20, 0.08);
+  }
+}
+
+.phone--app .phone-screen {
+  border-radius: 0;
+}
+
+/* The entry flow draws its own simulated status bar; the device has a real one. */
+.phone--app .status-bar {
+  display: none;
+}
+
+.phone--app .tabbar {
+  bottom: max(calc(env(safe-area-inset-bottom) + 4px), 14px);
+}
+
+.phone--app :is(.toast-host, .identity-shift) {
+  bottom: calc(var(--tabbar-clearance) - 4px);
+}
+
+.phone--app .create-surface {
+  bottom: calc(var(--tabbar-clearance) - 6px);
+}
+
+.phone--app .sheet {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.phone--app :is(.composer-tools, .convo-input) {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+}
+
+.phone--app .v-role .booking {
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
+}
+
+/* ---------------------------------------------------------------- the switch (development) */
+.vm-switch {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  background: #ececec;
+  gap: 2px;
+  font: 600 11px/1 -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+}
+
+.vm-switch button {
+  border: 0;
+  background: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #555;
+  cursor: pointer;
+  font: inherit;
+}
+
+.vm-switch button.is-on {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.pc-top .vm-switch {
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+/* Floating control: a small tab on the left edge, in the gutter, styled as a tool, not as product. */
+.vm-float {
+  position: fixed;
+  left: 0;
+  top: 38%;
+  z-index: 1000;
+  font: 600 11px/1 -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+}
+
+.vm-float-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 8px 4px;
+  min-width: 22px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px 0 0 8px;
+  background: rgba(20, 20, 20, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.55;
+  margin-left: env(safe-area-inset-left);
+}
+
+.vm-float-chip:hover,
+.vm-float-chip:focus-visible {
+  opacity: 1;
+}
+
+.vm-float-chip svg {
+  transform: rotate(90deg);
+}
+
+.vm-float-panel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: calc(env(safe-area-inset-left) + 6px);
+  padding: 6px 6px 6px 10px;
+  border-radius: 12px;
+  background: rgba(20, 20, 20, 0.86);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.vm-float-label {
+  opacity: 0.7;
+}
+
+.vm-float-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* In Prototype mode the console holds the switch; the floating one appears only when the console
+   is hidden (phone-sized screens). */
+@media (min-width: 521px) {
+  .vm-float--narrow-only {
+    display: none;
+  }
+}

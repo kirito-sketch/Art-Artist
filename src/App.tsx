@@ -27,13 +27,14 @@ import { StatusBar, ToastHost } from './ui/chrome';
 import { dur, ease, spring } from './ui/motion';
 import { IdentityShift } from './ui/IdentityShift';
 import { IconButton, Photo } from './ui/primitives';
-import { ModalContext, activation, currentScreen, focusEl, focusInto, inertProps, mediaName, type ModalLayer } from './ui/a11y';
+import { ModalContext, activation, applySystemTextSize, currentScreen, focusEl, focusInto, inertProps, mediaName, trackInputModality, type ModalLayer } from './ui/a11y';
 import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
 import { ResearchObserver } from './research-data/ResearchObserver';
 import { research } from './research-data/client';
 import { RESEARCH_DASHBOARD, TEST_MODE } from './research-data/surface';
 import { TestMode } from './research-data/TestMode';
+import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
 
 // The researcher dashboard loads only on /research, so its code (and the Supabase browser client)
 // never ship to the prototype or to participants.
@@ -176,7 +177,7 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
 
 const TAB_TITLE: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Inbox', profile: 'Profile' };
 
-function Phone() {
+function Phone({ app = false }: { app?: boolean }) {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
   const [discoverScope, setDiscoverScope] = useState<Scope>('people');
@@ -198,6 +199,7 @@ function Phone() {
   }, [store]);
 
   /* --- Accessibility: one operable layer at a time (docs/ACCESSIBILITY_AUDIT.md A1-A3) --- */
+  useEffect(() => trackInputModality(), []);
   const screen = useRef<HTMLDivElement>(null);
   const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
   const [modals, setModals] = useState(0);
@@ -290,9 +292,10 @@ function Phone() {
     <MotionConfig reducedMotion="user">
     <LayoutGroup>
     <ModalContext.Provider value={modalLayer}>
-    <div className="phone" data-viewer={viewer.id} data-look={store.look}>
+    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look={store.look}>
       <div className="phone-screen" ref={screen}>
-        <StatusBar tone={statusTone} />
+        {/* App mode runs on the real device: it supplies the status bar and home indicator. */}
+        {!app && <StatusBar tone={statusTone} />}
         {/* Tabs stay mounted so scroll position survives switching; only the active one is operable. */}
         {(['home', 'discover', 'inbox', 'profile'] as const).map((t) => (
           <motion.section
@@ -360,7 +363,7 @@ function Phone() {
         <div className={`modal-root ${overlay ? 'modal-root--top' : ''}`} ref={setModalRoot} />
         <ToastHost />
         <IdentityShift />
-        <div className="home-indicator" />
+        {!app && <div className="home-indicator" />}
       </div>
     </div>
     </ModalContext.Provider>
@@ -410,16 +413,56 @@ export default function App() {
       </>
     );
   if (ADMIN && !SCENARIO) return <AdminConsole />;
+  // Research sessions and Lab scenarios keep their own presentation; only the normal prototype switches.
+  if (RESEARCH || SCENARIO)
+    return (
+      <StoreProvider>
+        <ResearchObserver />
+        <div className="stage">
+          <div className="stage-phone">
+            <Phone />
+          </div>
+          {SCENARIO ? <ScenarioBar /> : null}
+        </div>
+      </StoreProvider>
+    );
+  return <NormalApp />;
+}
+
+/** The normal prototype, in Prototype mode (phone + console) or App mode (only the product). */
+function NormalApp() {
+  const [mode, setMode] = useState<ViewMode>(initialViewMode);
+  const standalone = isStandalone();
+  useEffect(() => {
+    installAppHead();
+    applySystemTextSize();
+  }, []);
+  useEffect(() => {
+    document.documentElement.classList.toggle('view-app', mode === 'app');
+    return () => document.documentElement.classList.remove('view-app');
+  }, [mode]);
+  const choose = (m: ViewMode) => {
+    saveViewMode(m);
+    setMode(m);
+  };
   return (
     <StoreProvider>
       <ResearchObserver />
-      <div className="stage">
-        <div className="stage-phone">
-          {!RESEARCH && !SCENARIO && <StageNotice />}
-          <Phone />
+      {mode === 'app' ? (
+        <div className="app-shell">
+          <Phone app />
         </div>
-        {RESEARCH ? null : SCENARIO ? <ScenarioBar /> : <PrototypeControls />}
-      </div>
+      ) : (
+        <div className="stage">
+          <div className="stage-phone">
+            <StageNotice />
+            <Phone />
+          </div>
+          <PrototypeControls view={{ mode, onChange: choose }} />
+        </div>
+      )}
+      {/* The installed Home Screen app is always App mode, with no development controls. */}
+      {!standalone && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
     </StoreProvider>
   );
 }
