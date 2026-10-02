@@ -90,7 +90,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       <div className="org-people">
         {people.slice(0, 8).map(({ p, n }) => (
           <Pressable key={p.id} className="org-person" onClick={() => push({ name: 'profile', id: p.id })} scale={0.95}>
-            <Avatar party={p} size={56} />
+            <Avatar party={p} size={64} />
             <span className="org-person-name">{p.name.split(' ')[0]}</span>
             <span className="meta">{n > 1 ? `${n} films` : p.role}</span>
           </Pressable>

@@ -12,6 +12,7 @@ import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
 import { CreditSeal } from '../../ui/CreditSeal';
+import { bentoLayout } from '../../ui/bento';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -133,6 +134,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const work = own ? [...userPortfolio, ...d.work] : d.work;
   const reel = work.find((m) => m.kind === 'video');
   const stills = work.filter((m) => m !== reel);
+  const bento = bentoLayout(stills.length);
   const posts = [...userPosts.filter((x) => x.authorId === id), ...seed.posts.filter((x) => x.authorId === id)];
   const collabs = seed.opportunities.filter((o) => o.authorId === id);
   const from = own ? (availability.open ? availability.from : null) : p.availableFrom ?? null;
@@ -364,9 +366,9 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
         {stills.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Selected work" />
-            <div className="stills-mosaic">
+            <div className="bento">
               {stills.map((m, i) => (
-                <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i, what: 'Work sample', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Work sample', `by ${p.name}`)}>
+                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Work sample', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Work sample', `by ${p.name}`)}>
                   <Photo media={m} />
                 </Pressable>
               ))}

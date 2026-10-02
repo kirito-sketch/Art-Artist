@@ -1,5 +1,6 @@
 /*
- * Mobile refinements: Discover filters, the credit confirmation card and Verified credits.
+ * Mobile refinements and the layout system: Discover filters, the credit confirmation card, rails,
+ * person cards, the portfolio bento and profile section rhythm.
  * Compact, native-feeling proportions on a 12 to 16px rhythm. Layout only: no logic lives here.
  */
 
@@ -181,4 +182,178 @@
 .phone .credit-rail .rail-poster-wrap > .credit-seal {
   right: 6px;
   bottom: 14px;
+}
+
+/* ================================================================ layout system
+ * Cards, rows and tiles size from fixed slots, never from their content: a fixed media slot, then
+ * title and metadata slots that reserve their lines even when the text is short. Cards in a rail line
+ * up from the top. Shared by every rail (Made by us, Verified credits, a house's slate), the
+ * Worked with strip and the portfolio bento.
+ */
+
+/* ---------------------------------------------------------------- rail cards
+ * ImageSlot (fixed width, fixed aspect), TitleSlot (2 lines reserved), MetaSlot (2 lines reserved).
+ * Cards are buttons, which centre their content vertically by default: they stack from the top.
+ */
+.phone .rail {
+  align-items: flex-start;
+}
+
+.phone .rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  text-align: left;
+}
+
+.phone .rail-item > :is(.rail-poster, .rail-poster-wrap) {
+  flex: none;
+  width: 100%;
+}
+
+.phone .rail-item > .item-title {
+  line-height: 1.25;
+  min-height: 2.5em;
+  -webkit-line-clamp: 2;
+}
+
+.phone .rail-item > p.meta {
+  line-height: 1.3;
+  min-height: 2.6em;
+  -webkit-line-clamp: 2;
+}
+
+/* Verified credits: the metadata is two one-line slots, the role and the issuing house. */
+.phone .credit-rail .rail-item > p.meta {
+  min-height: 1.3em;
+  -webkit-line-clamp: 1;
+}
+
+/* ---------------------------------------------------------------- person cards (Worked with)
+ * Avatar (64px circle), NameSlot (1 line reserved), MetaSlot (2 lines reserved). Scrolls edge to edge
+ * like the rails, starting on the page grid.
+ */
+.phone .org-people {
+  gap: 12px;
+  align-items: flex-start;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 0 var(--gutter) 4px;
+  scroll-padding: 0 var(--gutter);
+}
+
+.phone .org-person {
+  width: 84px;
+  gap: 0;
+  justify-content: flex-start;
+}
+
+.phone .org-person > .avatar {
+  flex: none;
+}
+
+.phone .org-person-name {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.25;
+  min-height: 1.25em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.phone .org-person .meta {
+  width: 100%;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.25;
+  min-height: 2.5em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* "11 people accepted credits on our work": on the page grid, the tick centred on the first line. */
+.phone .work-foot {
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 16px;
+  line-height: 1.35;
+}
+
+.phone .work-foot > .verified {
+  flex: none;
+  display: inline-flex;
+  margin-top: calc((1.35em - 12px) / 2);
+}
+
+/* ---------------------------------------------------------------- portfolio bento
+ * A strict 6-column grid, one 6px gap both ways, 10px corners on every tile. Tile spans and the
+ * ratio that sets each row's height come from src/ui/bento.ts; images crop to fill their tile.
+ */
+.phone .bento {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.phone .bento-tile {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--fill);
+}
+
+.phone .bento-tile[data-span='2'] { grid-column: span 2; }
+.phone .bento-tile[data-span='3'] { grid-column: span 3; }
+.phone .bento-tile[data-span='4'] { grid-column: span 4; }
+.phone .bento-tile[data-span='6'] { grid-column: span 6; }
+.phone .bento-tile[data-ratio='hero'] { aspect-ratio: 3 / 2; }
+.phone .bento-tile[data-ratio='square'] { aspect-ratio: 1; }
+.phone .bento-tile[data-ratio='wide'] { aspect-ratio: 4 / 3; }
+.phone .bento-tile[data-ratio='band'] { aspect-ratio: 2 / 1; }
+
+.phone .bento-tile .photo {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+.phone .bento-tile .photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* ---------------------------------------------------------------- profile rhythm
+ * Individual and house profiles: title to content 16px, about 30px from one section's content to the
+ * next title. A one-line note under a title belongs to the title. Content always clears the floating
+ * tab bar and the home indicator.
+ */
+.phone .psheet .section {
+  padding-top: 30px;
+}
+
+.phone .psheet .section > .section-head {
+  margin-bottom: 16px;
+}
+
+.phone .psheet .section-head + :is(.evidence-note, .ph-note) {
+  margin-top: -10px;
+  margin-bottom: 14px;
+}
+
+.phone .screen--hero:has(> .psheet) {
+  padding-bottom: var(--tabbar-clearance);
 }

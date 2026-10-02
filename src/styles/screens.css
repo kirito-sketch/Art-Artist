@@ -2115,9 +2115,11 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .intro-title { font-family: var(--display); font-size: 31px; line-height: 1.08; letter-spacing: -.02em; font-weight: 700; margin: 0; }
 .intro-copy { margin: 0; font-size: 15.5px; line-height: 1.45; color: rgba(255,255,255,.85); max-width: 320px; }
 .intro-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 12.5px; font-weight: 600; }
-.intro-dots { display: flex; justify-content: center; gap: 6px; }
-.intro-dots button { width: 6px; height: 6px; border-radius: 3px; border: 0; padding: 0; background: rgba(255,255,255,.4); transition: width .25s; cursor: pointer; }
-.intro-dots button.is-on { width: 22px; background: #fff; }
+/* Each dot is a 24px target of its own (WCAG 2.5.8, no overlapping hit areas); the visible dot is drawn inside. */
+.intro-dots { display: flex; justify-content: center; gap: 0; }
+.intro-dots button { position: relative; display: grid; place-items: center; width: 24px; height: 24px; border: 0; padding: 0; background: none; cursor: pointer; }
+.intro-dots button::before { content: ''; width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.4); transition: width .25s; }
+.intro-dots button.is-on::before { width: 22px; background: #fff; }
 .intro .btn--primary { background: #fff; color: #111; }
 
 /* ============================================================ Prototype console (not part of Art and Artist) */

@@ -160,7 +160,7 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
 /* ---------------------------------------------------------------- touch targets
  * At least 44x44 CSS px to touch, without making the visuals bigger: an invisible extension.
  */
-.phone :is(.icon-btn, .save, .search-clear, .convo-send, .pw-toggle, .viewer-dot, .intro-dots button, .post-more)::after {
+.phone :is(.icon-btn, .save, .search-clear, .convo-send, .pw-toggle, .viewer-dot, .post-more)::after {
   content: '';
   position: absolute;
   left: 50%;
@@ -193,8 +193,7 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   padding: 0;
 }
 
-.phone .viewer-dot,
-.phone .intro-dots button {
+.phone .viewer-dot {
   position: relative;
 }
 

@@ -826,34 +826,6 @@
   aspect-ratio: 16 / 9;
 }
 
-.stills-mosaic {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  grid-auto-rows: 104px;
-  gap: 6px;
-  border-radius: var(--r-l);
-  overflow: hidden;
-}
-
-.stills-mosaic > * {
-  position: relative;
-  overflow: hidden;
-}
-
-.stills-mosaic > *:nth-child(6n + 1) {
-  grid-row: span 2;
-}
-
-.stills-mosaic > *:nth-child(6n + 4) {
-  grid-column: span 2;
-  grid-row: span 2;
-}
-
-.stills-mosaic .photo {
-  position: absolute !important;
-  inset: 0;
-}
-
 .credit-record-foot {
   display: flex;
   align-items: center;
