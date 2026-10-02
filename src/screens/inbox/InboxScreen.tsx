@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { scriptLang } from '../../ui/compose';
 import { ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { Conversation } from '../../data/types';
@@ -65,7 +66,7 @@ export function InboxScreen() {
               <p className="meta">
                 {interestFor.role} · {interestFor.project}
               </p>
-              <Button size="s" variant="outline" className="thread-action" onClick={(e) => (e.stopPropagation(), openSheet({ name: 'reviewInterest' }))}>
+              <Button size="s" variant="outline" className="thread-action" aria-label={`Review interest in ${interestFor.role}`} onClick={(e) => (e.stopPropagation(), openSheet({ name: 'reviewInterest' }))}>
                 Review
               </Button>
             </div>
@@ -93,7 +94,12 @@ export function InboxScreen() {
                     {last?.text ?? 'New conversation'}
                   </p>
                   <p className="meta thread-context">
-                    {c.unread > 0 && <span className="dot dot--inline" />}
+                    {c.unread > 0 && (
+                      <>
+                        <span className="dot dot--inline" aria-hidden />
+                        <span className="sr-only">Unread</span>
+                      </>
+                    )}
                     {c.context.label} · {c.context.detail.split(' · ').pop()}
                   </p>
                   {showAction && (
@@ -147,11 +153,12 @@ export function ConversationScreen({ id }: { id: string }) {
 
   return (
     <div className="convo">
+      <h1 className="sr-only">Conversation with {p.name}</h1>
       <header className="convo-bar">
         <IconButton label="Back" onClick={pop}>
           <ChevronLeft size={26} />
         </IconButton>
-        <button className="convo-who" onClick={() => push(p.kind === 'person' ? { name: 'profile', id: p.id } : { name: 'org', id: p.id })}>
+        <button className="convo-who" aria-label={`Open profile for ${p.name}`} onClick={() => push(p.kind === 'person' ? { name: 'profile', id: p.id } : { name: 'org', id: p.id })}>
           <span className="item-title">
             {p.name} {p.kind === 'org' && p.verified && <Verified size={14} />}
           </span>
@@ -182,7 +189,7 @@ export function ConversationScreen({ id }: { id: string }) {
               transition={{ type: 'spring', stiffness: 420, damping: 32 }}
             >
               {m.senderName && m.from === 'them' && <p className="meta bubble-sender">{m.senderName.split(' · ')[0]}</p>}
-              <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`}>{m.text}</div>
+              <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`} lang={scriptLang(m.text)}>{m.text}</div>
               {m.status === 'sending' && <p className="meta bubble-status">Sending…</p>}
               {m.status === 'failed' && (
                 <button className="bubble-status bubble-retry" onClick={() => retryMessage(c.id, m.id)}>
@@ -221,8 +228,8 @@ export function ConversationScreen({ id }: { id: string }) {
         </p>
       )}
       <div className="convo-input">
-        <input id="convo-field" className="convo-field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder={scenario.offline ? 'Sends when you reconnect' : 'Message'} aria-label="Message" />
-        <motion.button className="convo-send" disabled={!text.trim()} onClick={send} whileTap={{ scale: 0.85 }} aria-label="Send" animate={{ opacity: text.trim() ? 1 : 0.3 }}>
+        <input id="convo-field" className="convo-field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder={scenario.offline ? 'Sends when you reconnect' : 'Message'} aria-label={`Message ${p.name}`} />
+        <motion.button className="convo-send" disabled={!text.trim()} onClick={send} whileTap={{ scale: 0.85 }} aria-label="Send message" animate={{ opacity: text.trim() ? 1 : 0.3 }}>
           <ArrowUp size={20} strokeWidth={2.6} />
         </motion.button>
       </div>

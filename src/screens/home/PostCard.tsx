@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { scriptLang } from '../../ui/compose';
+import { mediaName } from '../../ui/a11y';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
 import { party } from '../../state/selectors';
@@ -24,15 +26,23 @@ export function PostCard({ post }: { post: Post }) {
       </div>
 
       {post.text && (
-        <p className={`post-text ${long && !expanded ? 'is-clamped' : ''}`} onClick={() => setExpanded(true)}>
-          {post.text}
-        </p>
+        <>
+          <p className={`post-text ${long && !expanded ? 'is-clamped' : ''}`} lang={scriptLang(post.text)} onClick={() => setExpanded(true)}>
+            {post.text}
+          </p>
+          {/* A real control, so the rest of a long post can be read from the keyboard too. */}
+          {long && !expanded && (
+            <button className="link post-more-text" onClick={() => setExpanded(true)} aria-label={`Read more of ${author.name}'s post`}>
+              More
+            </button>
+          )}
+        </>
       )}
 
       {post.media.length > 0 && (
         <div className={`post-media post-media--${Math.min(post.media.length, 2)}`}>
           {post.media.slice(0, 2).map((m, i) => (
-            <Pressable key={m.id} className="post-media-item" onClick={() => push({ name: 'media', items: post.media, index: i })} scale={0.98}>
+            <Pressable key={m.id} className="post-media-item" onClick={() => push({ name: 'media', items: post.media, index: i, what: 'Photo', from: `in ${author.name}'s post` })} scale={0.98} aria-label={mediaName(m, i, post.media.length, 'Photo', `in ${author.name}'s post`)}>
               <Photo media={m} />
             </Pressable>
           ))}

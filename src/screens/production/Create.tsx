@@ -1,6 +1,7 @@
 import { CreditSeal } from '../../ui/CreditSeal';
+import { scriptLang } from '../../ui/compose';
 import { ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Media } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -8,7 +9,7 @@ import { org, person } from '../../state/selectors';
 import { DEPTS, FORMATS, LANGUAGES, STAGES, creditState, project, publicName, world, type Format } from '../../state/world';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, Row, SectionHeader, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { DateField, fmtPay, fmtRange, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
+import { DateField, fmtPay, fmtRange, MissingHint, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
 
 /* ============================================================ New project */
 
@@ -31,7 +32,7 @@ export function NewProjectForm() {
         <span className="field-label">Format</span>
         <div className="chips">
           {FORMATS.map((f) => (
-            <button key={f} className={`chip ${format === f ? 'is-on' : ''}`} onClick={() => setFormat(f)}>
+            <button key={f} className={`chip ${format === f ? 'is-on' : ''}`} aria-pressed={format === f} onClick={() => setFormat(f)}>
               {f}
             </button>
           ))}
@@ -41,7 +42,7 @@ export function NewProjectForm() {
         <span className="field-label">Language</span>
         <div className="chips">
           {LANGUAGES.map((l) => (
-            <button key={l} className={`chip ${langs.includes(l) ? 'is-on' : ''}`} onClick={() => setLangs((x) => (x.includes(l) ? x.filter((y) => y !== l) : [...x, l]))}>
+            <button key={l} className={`chip ${langs.includes(l) ? 'is-on' : ''}`} aria-pressed={langs.includes(l)} onClick={() => setLangs((x) => (x.includes(l) ? x.filter((y) => y !== l) : [...x, l]))}>
               {l}
             </button>
           ))}
@@ -135,7 +136,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
         <p className="kicker">
           {p.format} · {p.languages.join(', ')} · {p.stage}
         </p>
-        <h1 className="large-title">{p.workingTitle}</h1>
+        <h1 className="large-title" lang={scriptLang(p.workingTitle)}>{p.workingTitle}</h1>
         <p className="meta ws-visibility">
           {p.shared ? <Globe2 size={13} /> : <Lock size={13} />} {p.shared ? `Shared on Art and Artist as "${publicName(p)}"` : `Only ${owner} can see this project`}
         </p>
@@ -207,7 +208,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
                     Open on Art and Artist
                   </Button>
                 ) : (
-                  <Button size="s" variant="secondary" onClick={() => push({ name: 'opportunity', id: r.id })}>
+                  <Button size="s" variant="secondary" aria-label={`View ${r.role} role`} onClick={() => push({ name: 'opportunity', id: r.id })}>
                     View
                   </Button>
                 )}
@@ -295,7 +296,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
       <Sheet open={sheet === 'person'} onClose={() => setSheet(null)} title="Add person" size="tall">
         {sheet === 'person' && <AddPerson projectId={id} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={!!sheet && typeof sheet === 'object' && 'edit' in sheet} onClose={() => setSheet(null)} title="">
+      <Sheet open={!!sheet && typeof sheet === 'object' && 'edit' in sheet} onClose={() => setSheet(null)} title="" label="Person on this project">
         {sheet && typeof sheet === 'object' && 'edit' in sheet && <PersonActions id={sheet.edit} issue={() => setSheet({ issue: sheet.edit })} revise={(m) => setSheet({ revise: m })} done={() => setSheet(null)} />}
       </Sheet>
       <Sheet open={!!sheet && typeof sheet === 'object' && 'issue' in sheet} onClose={() => setSheet(null)} title="Issue credit" size="tall">
@@ -393,7 +394,7 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
         <span className="field-label">Stage</span>
         <div className="chips">
           {STAGES.map((s) => (
-            <button key={s} className={`chip ${stage === s ? 'is-on' : ''}`} onClick={() => setStage(s)}>
+            <button key={s} className={`chip ${stage === s ? 'is-on' : ''}`} aria-pressed={stage === s} onClick={() => setStage(s)}>
               {s}
             </button>
           ))}
@@ -450,7 +451,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
         <input id="ar-role" className="field" value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Colourist" />
         <div className="chips chips--tight">
           {QUICK_ROLES.map((r) => (
-            <button key={r} className={`chip ${role === r ? 'is-on' : ''}`} onClick={() => setRole(r)}>
+            <button key={r} className={`chip ${role === r ? 'is-on' : ''}`} aria-pressed={role === r} onClick={() => setRole(r)}>
               {r}
             </button>
           ))}
@@ -483,10 +484,10 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
       <div>
         <span className="field-label">Pay</span>
         <div className="chips">
-          <button className={`chip ${paid ? 'is-on' : ''}`} onClick={() => setPaid(true)}>
+          <button className={`chip ${paid ? 'is-on' : ''}`} aria-pressed={paid} onClick={() => setPaid(true)}>
             Paid
           </button>
-          <button className={`chip ${!paid ? 'is-on' : ''}`} onClick={() => setPaid(false)}>
+          <button className={`chip ${!paid ? 'is-on' : ''}`} aria-pressed={!paid} onClick={() => setPaid(false)}>
             Unpaid
           </button>
         </div>
@@ -507,7 +508,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
       <div>
         <span className="field-label">Questions (optional, up to 3)</span>
         {qs.map((q, i) => (
-          <input key={i} className="field field--stack" value={q} onChange={(e) => setQs((x) => x.map((y, j) => (j === i ? e.target.value : y)))} placeholder={i === 0 ? 'e.g. Which features have you worked on?' : `Question ${i + 1}`} />
+          <input key={i} className="field field--stack" aria-label={`Question ${i + 1}`} value={q} onChange={(e) => setQs((x) => x.map((y, j) => (j === i ? e.target.value : y)))} placeholder={i === 0 ? 'e.g. Which features have you worked on?' : `Question ${i + 1}`} />
         ))}
         {qs.length < 3 && (
           <button className="link" onClick={() => setQs((x) => [...x, ''])}>
@@ -519,10 +520,10 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
       <div>
         <span className="field-label">Who can see it</span>
         <div className="chips">
-          <button className={`chip ${vis === 'private' ? 'is-on' : ''}`} onClick={() => setVis('private')}>
+          <button className={`chip ${vis === 'private' ? 'is-on' : ''}`} aria-pressed={vis === 'private'} onClick={() => setVis('private')}>
             <Lock size={13} /> Only {p.houseId ? org(p.houseId).name : 'you'}
           </button>
-          <button className={`chip ${vis === 'open' ? 'is-on' : ''}`} disabled={!houseVerified} onClick={() => setVis('open')}>
+          <button className={`chip ${vis === 'open' ? 'is-on' : ''}`} aria-pressed={vis === 'open'} disabled={!houseVerified} onClick={() => setVis('open')}>
             <Globe2 size={13} /> Open on Art and Artist
           </button>
         </div>
@@ -533,6 +534,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
         block
         size="l"
         disabled={!role.trim()}
+        aria-describedby="ar-missing"
         onClick={() => {
           addRole(projectId, { role: role.trim(), about: about.trim(), dates: fmtRange(start, end), city: city.trim(), paid, compensation: paid ? fmtPay(min, max, unit) : '', questions: qs, visibility: vis });
           done();
@@ -541,6 +543,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
       >
         Add role
       </Button>
+      <MissingHint id="ar-missing" items={[!role.trim() && 'a role name']} verb="add the role" />
     </div>
   );
 }
@@ -568,7 +571,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
       <div className="stack">
         {!pending ? (
           <>
-            <input className="field" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people on Art and Artist" />
+            <input className="field" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people on Art and Artist" aria-label="Search people on Art and Artist" />
             <div className="list list--flush">
               {results.map((x) => (
                 <PressCard
@@ -598,8 +601,14 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
         ) : (
           <>
             <p className="meta">This stays inside your project. It doesn't create an Art and Artist profile, can't be found in search and can't be credited until they join.</p>
-            <input className="field" value={pending.name} onChange={(e) => setPending({ ...pending, name: e.target.value })} placeholder="Name" />
-            <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value.replace(/(?!^\+)[^\d]/g, '').slice(0, 15) })} placeholder="Phone (to invite them to Art and Artist)" inputMode="tel" />
+            <label className="ob-field">
+              <span className="field-label">Name</span>
+              <input className="field" value={pending.name} onChange={(e) => setPending({ ...pending, name: e.target.value })} autoComplete="off" />
+            </label>
+            <label className="ob-field">
+              <span className="field-label">Phone (optional, to invite them to Art and Artist)</span>
+              <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value.replace(/(?!^\+)[^\d]/g, '').slice(0, 15) })} inputMode="tel" autoComplete="off" />
+            </label>
             <Button block disabled={!pending.name.trim()} onClick={() => setStep('role')}>
               Continue
             </Button>
@@ -633,7 +642,7 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
           <span className="field-label">Department</span>
           <div className="chips chips--tight">
             {DEPTS.map((d) => (
-              <button key={d} className={`chip ${dept === d ? 'is-on' : ''}`} onClick={() => setDept(d)}>
+              <button key={d} className={`chip ${dept === d ? 'is-on' : ''}`} aria-pressed={dept === d} onClick={() => setDept(d)}>
                 {d}
               </button>
             ))}
@@ -697,7 +706,7 @@ function CreditForm({ personId, projectId, line, setLine, dept, setDept, cta, su
         <span className="field-label">Department</span>
         <div className="chips chips--tight">
           {DEPTS.map((d) => (
-            <button key={d} className={`chip ${dept === d ? 'is-on' : ''}`} onClick={() => setDept(d)}>
+            <button key={d} className={`chip ${dept === d ? 'is-on' : ''}`} aria-pressed={dept === d} onClick={() => setDept(d)}>
               {d}
             </button>
           ))}
@@ -786,6 +795,11 @@ function PersonActions({ id, issue, revise, done }: { id: string; issue: () => v
   const { current, pending, amendment } = creditState(id);
   const c = pending ?? current;
   const [roleText, setRoleText] = useState(a.workingRole);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  // The row that asked is replaced by the question: focus moves to its safe answer.
+  useEffect(() => {
+    if (confirmRemove) requestAnimationFrame(() => document.querySelector<HTMLElement>('.phone .confirm-remove [data-autofocus]')?.focus());
+  }, [confirmRemove]);
   const name = a.personId ? person(a.personId).name : a.pending!.name;
   const canCredit = !!a.personId && !!p.houseId && org(p.houseId).verified && !current && (!pending || pending.status === 'correction');
   // An accepted credit is part of the person's record. The house can't erase or rewrite it; only an amendment the person accepts replaces it.
@@ -836,15 +850,33 @@ function PersonActions({ id, issue, revise, done }: { id: string; issue: () => v
         {locked ? (
           <Row label={<span className="meta">Credit accepted. It's part of {name.split(' ')[0]}'s record: it can't be removed or edited, only amended at their request.</span>} chevron={false} />
         ) : (
-          <Row
-            label={<span className="danger-text">Remove from project</span>}
-            chevron={false}
-            onPress={() => {
-              removeAssociation(id);
-              done();
-              showToast({ text: `${name} removed from the project` });
-            }}
-          />
+          // Removing someone is hard to undo (their place, working role and any pending credit go):
+          // one confirming step first (WCAG 3.3.4).
+          confirmRemove ? (
+            <div className="confirm-remove" role="group" aria-labelledby="confirm-remove-q">
+              <p className="item-title" id="confirm-remove-q">
+                Remove {name} from {publicName(p)}?
+              </p>
+              <p className="meta">Their working role{c ? ' and the pending credit' : ''} on this project go with them. You can add them again later.</p>
+              <div className="confirm-remove-actions">
+                <Button variant="secondary" data-autofocus onClick={() => setConfirmRemove(false)}>
+                  Keep {name.split(' ')[0]}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    removeAssociation(id);
+                    done();
+                    showToast({ text: `${name} removed from the project` });
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Row label={<span className="danger-text">Remove from project</span>} chevron={false} onPress={() => setConfirmRemove(true)} />
+          )
         )}
       </div>
     </div>
@@ -897,7 +929,7 @@ export function AssociationScreen({ id }: { id: string }) {
         <p className="kicker">
           {isPublic ? <Globe2 size={12} /> : <Lock size={12} />} {isPublic ? 'Your credit is public' : `Private to you and ${owner.name}`}
         </p>
-        <h1 className="large-title">{p.workingTitle}</h1>
+        <h1 className="large-title" lang={scriptLang(p.workingTitle)}>{p.workingTitle}</h1>
         <p className="meta">
           {p.format} · {p.languages.join(', ')} · {p.stage}
         </p>

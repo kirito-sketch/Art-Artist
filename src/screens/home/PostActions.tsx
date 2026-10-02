@@ -19,15 +19,15 @@ export function PostActions({ post }: { post: Post }) {
   const author = party(post.authorId);
   return (
     <div className="post-actions">
-      <motion.button className={`post-action ${liked ? 'is-on' : ''}`} whileTap={{ scale: 0.8 }} transition={spring.press} onClick={() => setLiked((l) => !l)} aria-pressed={liked} aria-label="Like">
+      <motion.button className={`post-action ${liked ? 'is-on' : ''}`} whileTap={{ scale: 0.8 }} transition={spring.press} onClick={() => setLiked((l) => !l)} aria-pressed={liked} aria-label={`Like post by ${author?.name ?? 'someone'}`}>
         <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
         {post.likes + (liked ? 1 : 0) || null}
       </motion.button>
-      <motion.button className="post-action" whileTap={{ scale: 0.85 }} transition={spring.press} onClick={() => openSheet({ name: 'share', label: `Post by ${author?.name ?? 'someone'}` })} aria-label="Share post">
+      <motion.button className="post-action" whileTap={{ scale: 0.85 }} transition={spring.press} onClick={() => openSheet({ name: 'share', label: `Post by ${author?.name ?? 'someone'}` })} aria-label={`Share post by ${author?.name ?? 'someone'}`}>
         <Share size={19} />
       </motion.button>
       <span className="post-action-save">
-        <SaveButton id={post.id} kind="post" />
+        <SaveButton id={post.id} kind="post" name={`post by ${author?.name ?? 'someone'}`} />
       </span>
     </div>
   );
@@ -41,8 +41,9 @@ export function PostActions({ post }: { post: Post }) {
 export function PostMore({ post }: { post: Post }) {
   const { openSheet, viewer } = useStore();
   if (post.authorId === viewer.id) return null;
+  const author = party(post.authorId);
   return (
-    <IconButton label="More" className="post-more" onClick={() => openSheet({ name: 'postMore', id: post.id })}>
+    <IconButton label={`More options for post by ${author?.name ?? 'someone'}`} className="post-more" onClick={() => openSheet({ name: 'postMore', id: post.id })}>
       <MoreHorizontal size={20} />
     </IconButton>
   );

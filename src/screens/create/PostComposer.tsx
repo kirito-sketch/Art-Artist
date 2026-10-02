@@ -43,11 +43,15 @@ export function PostComposer() {
       </header>
 
       <div className="composer-body">
+        <h1 className="sr-only">New post</h1>
         <div className="composer-who">
           <Avatar party={me} size={40} />
           <span className="item-title">{me.name}</span>
         </div>
-        <textarea ref={ref} className="composer-text" placeholder="What are you working on?" value={text} onChange={(e) => setText(e.target.value)} aria-label="Post text" maxLength={2000} />
+        <label className="field-label composer-label" htmlFor="post-text">
+          What are you working on?
+        </label>
+        <textarea id="post-text" ref={ref} className="composer-text" placeholder="Write a post" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
 
         <AnimatePresence initial={false}>
           {media.length > 0 && (
@@ -57,7 +61,7 @@ export function PostComposer() {
                   {media.map((m) => (
                     <motion.div key={m.id} className="composer-thumb" layout initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={spring.snappy}>
                       <Photo media={m} />
-                      <button className="composer-remove" aria-label="Remove" onClick={() => setMedia((ms) => ms.filter((x) => x.id !== m.id))}>
+                      <button className="composer-remove" aria-label="Remove this photo" onClick={() => setMedia((ms) => ms.filter((x) => x.id !== m.id))}>
                         <X size={14} strokeWidth={2.6} />
                       </button>
                     </motion.div>
@@ -90,7 +94,7 @@ export function PostComposer() {
           }}
         />
       </Sheet>
-      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard post?">
+      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard post?" close={false}>
         <div className="stack">
           <Button block size="l" variant="danger" onClick={pop}>
             Discard

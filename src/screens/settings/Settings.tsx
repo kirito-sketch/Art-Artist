@@ -134,7 +134,7 @@ function Personal() {
         <Row label="Signed-in devices" value="2" chevron={false} />
         <Row label="Sign out" chevron={false} onPress={() => setSignOut(true)} />
       </Group>
-      <Sheet open={signOut} onClose={() => setSignOut(false)} title="Sign out?">
+      <Sheet open={signOut} onClose={() => setSignOut(false)} title="Sign out?" close={false}>
         <div className="stack">
           <p className="meta">You'll need to sign in again on this phone.</p>
           <Button block size="l" onClick={() => startEntry('signin', "You've signed out.")}>

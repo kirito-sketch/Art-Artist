@@ -1,33 +1,71 @@
 import { AnimatePresence, motion, useDragControls, type PanInfo } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { X } from 'lucide-react';
+import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { activation, currentScreen, focusInto, restoreFocus, trapTab, useModalLayer } from './a11y';
 import { spring } from './motion';
 
 interface SheetProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  /** Accessible name when the sheet shows no visible title (menus, pickers). */
+  label?: string;
   children: ReactNode;
   footer?: ReactNode;
   /** 'auto' hugs content; 'tall' reaches near the top for lists and forms. */
   size?: 'auto' | 'tall';
+  /** The visible close control. Omit it only where the sheet already has its own Cancel or Done. */
+  close?: 'Close' | 'Done' | false;
 }
 
 /**
- * iOS sheet: springs up, dims the screen, dismisses by dragging the handle or tapping outside.
- * Title is centred and quiet; the sheet's own content and its one button carry the weight.
+ * iOS sheet: springs up, dims the screen, dismisses by dragging the handle, tapping outside, Escape,
+ * or its Close button (the one way that works for everyone, including screen-reader users on a phone).
+ * It is a modal dialog: focus moves in, stays in, and returns to whatever opened it; the screens
+ * behind are inert while it is open. Title is centred and quiet.
  */
-export function Sheet({ open, onClose, title, children, footer, size = 'auto' }: SheetProps) {
+export function Sheet({ open, onClose, title, label, children, footer, size = 'auto', close = 'Close' }: SheetProps) {
   const controls = useDragControls();
+  const layer = useModalLayer();
+  const titleId = useId();
+  const panel = useRef<HTMLDivElement>(null);
+  const opener = useRef<Element | null>(null);
   const onDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.y > 110 || info.velocity.y > 650) onClose();
   };
 
-  return (
+  useEffect(() => {
+    if (!open) return;
+    const active = document.activeElement;
+    opener.current = active && active !== document.body ? active : activation.el;
+    const release = layer?.register();
+    const f = requestAnimationFrame(() => requestAnimationFrame(() => focusInto(panel.current)));
+    return () => {
+      cancelAnimationFrame(f);
+      release?.();
+      restoreFocus(opener.current, currentScreen);
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      e.preventDefault();
+      onClose();
+      return;
+    }
+    if (panel.current) trapTab(e, panel.current);
+  };
+
+  const content = (
     <AnimatePresence>
       {open && (
-        <div className="sheet-layer" role="dialog" aria-modal="true" aria-label={title ?? 'Sheet'}>
-          <motion.div className="sheet-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }} onClick={onClose} />
+        <div className="sheet-layer" role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : label || 'Sheet'} onKeyDown={onKeyDown}>
+          <motion.div className="sheet-backdrop" aria-hidden initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }} onClick={onClose} />
           <motion.div
+            ref={panel}
+            tabIndex={-1}
             className={`sheet sheet--${size}`}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -41,8 +79,17 @@ export function Sheet({ open, onClose, title, children, footer, size = 'auto' }:
             onDragEnd={onDragEnd}
           >
             <div className="sheet-head" onPointerDown={(e) => controls.start(e)}>
-              <span className="sheet-grabber" />
-              {title && <h3 className="sheet-title">{title}</h3>}
+              <span className="sheet-grabber" aria-hidden />
+              {title && (
+                <h2 className="sheet-title" id={titleId}>
+                  {title}
+                </h2>
+              )}
+              {close && (
+                <button type="button" className="sheet-close" onClick={onClose} onPointerDown={(e) => e.stopPropagation()} aria-label={close === 'Done' ? 'Done' : title || label ? `Close ${title || label}` : 'Close'}>
+                  {close === 'Done' ? <span className="sheet-close-text">Done</span> : <X size={18} strokeWidth={2.4} aria-hidden />}
+                </button>
+              )}
             </div>
             <div className="sheet-body">{children}</div>
             {footer && <div className="sheet-footer">{footer}</div>}
@@ -51,4 +98,5 @@ export function Sheet({ open, onClose, title, children, footer, size = 'auto' }:
       )}
     </AnimatePresence>
   );
+  return layer?.root ? createPortal(content, layer.root) : content;
 }

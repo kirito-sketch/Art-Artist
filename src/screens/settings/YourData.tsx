@@ -69,7 +69,7 @@ export function YourData() {
             </ul>
           </div>
           {lastOwner ? (
-            <p className="inline-error">You own {memberships.filter((m) => m.startsWith('h-')).map((m) => org(m).name).join(', ')}. Transfer it to someone else, or contact Art and Artist, before deleting your account.</p>
+            <p className="inline-error" role="alert">You own {memberships.filter((m) => m.startsWith('h-')).map((m) => org(m).name).join(', ')}. Transfer it to someone else, or contact Art and Artist, before deleting your account.</p>
           ) : (
             <>
               <Button block size="l" variant="secondary" onClick={() => showToast({ text: "We'll email you a copy within 48 hours" })}>
@@ -87,7 +87,7 @@ export function YourData() {
         <div className="ws-pad stack">
           <h1 className="large-title">Are you sure?</h1>
           <p className="meta">Type DELETE to deactivate your account now. It's permanently deleted after 30 days.</p>
-          <input className="field" value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" />
+          <input className="field" value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" aria-label="Type DELETE to confirm" />
           <Button block size="l" variant="danger" disabled={typed.trim().toUpperCase() !== 'DELETE'} onClick={() => startEntry('signin', 'Your account is deactivated and will be deleted in 30 days. Sign in before then to restore it.')}>
             Deactivate and delete
           </Button>

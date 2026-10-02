@@ -30,12 +30,19 @@ export function StatusBar({ tone = 'dark' }: { tone?: 'light' | 'dark' | 'paper'
 }
 
 export function ToastHost() {
-  const { toast, dismissToast } = useStore();
+  const { toast, dismissToast, holdToast } = useStore();
   return (
     <div className="toast-host" aria-live="polite">
       <AnimatePresence>
         {toast && (
-          <motion.div key={toast.id} className="toast" initial={{ opacity: 0, y: 16, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10 }} transition={spring.snappy}>
+          <motion.div
+            key={toast.id}
+            className="toast"
+            onMouseEnter={() => holdToast(true)}
+            onMouseLeave={() => holdToast(false)}
+            onFocus={() => holdToast(true)}
+            onBlur={() => holdToast(false)}
+            initial={{ opacity: 0, y: 16, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10 }} transition={spring.snappy}>
             <span>{toast.text}</span>
             {toast.action && (
               <button
@@ -64,7 +71,7 @@ export function PublishBar() {
         <motion.div className={`publish publish--${publishing.state}`} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={spring.gentle}>
           <div className="publish-row">
             {publishing.thumb && <Photo media={publishing.thumb} className="publish-thumb" showPlay={false} />}
-            <p className="publish-label">
+            <p className="publish-label" role="status">
               {publishing.state === 'uploading' && 'Posting…'}
               {publishing.state === 'done' && 'Posted'}
               {publishing.state === 'failed' && (scenario.offline ? 'Waiting for connection' : "Couldn't post")}
@@ -94,8 +101,8 @@ export function OfflineBanner() {
   return (
     <AnimatePresence>
       {scenario.offline && (
-        <motion.p className="offline" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-          <WifiOff size={14} /> You're offline
+        <motion.p className="offline" role="status" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+          <WifiOff size={14} aria-hidden /> You're offline
         </motion.p>
       )}
     </AnimatePresence>

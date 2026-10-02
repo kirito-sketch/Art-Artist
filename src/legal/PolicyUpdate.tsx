@@ -42,7 +42,7 @@ export function PolicyUpdate() {
           I don't agree: download or delete my data
         </button>
       </div>
-      <Sheet open={read} onClose={() => setRead(false)} title="" size="tall">
+      <Sheet open={read} onClose={() => setRead(false)} title="" label="Terms of Service" size="tall">
         <LegalDocView id="terms" />
       </Sheet>
     </div>

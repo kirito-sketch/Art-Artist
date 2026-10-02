@@ -48,6 +48,43 @@ screen-reader findings come from the DOM, ARIA and axe, and need confirming on d
 mode was not tested. Physical-device zoom and OS text-size settings were not tested. A few house-mode routes
 (house profile tab) were reviewed in code only because the scripted navigation did not reach them.
 
+## Fix pass status (app only)
+
+The fixes are in the app layer (`src/ui/a11y.ts`, `src/ui/Sheet.tsx`, `src/ui/primitives.tsx`, `src/App.tsx`,
+`src/styles/a11y.css` and the screens). `/test`, `/research`, research data and APIs, and the access gate were
+not changed. After the pass: axe-core reports no issues in any of the 38 app states checked, and 18 of 18
+scripted keyboard flows pass.
+
+| Finding | Status |
+|---|---|
+| A1 to A4 (hidden layers, screen focus, sheet focus, sheet close) | Fixed |
+| B1 (nested cards) | Fixed: cards are containers with a real open button; Follow, Save and Review are siblings |
+| B2, B3 (work images) | Fixed: portfolio, stills and post media are named; the viewer has alt text, arrow keys and labelled dots |
+| B4, B5 (contrast tokens) | Fixed at token level inside the app (`.phone`): `--text-2`, `--text-3`, `--danger`, new `--available-text` |
+| B6 (placeholder labels) | Fixed in the composers, Add person, Show interest note, Report details and availability. Search and the message field keep an aria-label and placeholder (chat and search convention) |
+| B7 (form errors, disabled buttons) | Fixed: errors announced and tied to fields; disabled Continue, Sign in, Publish and Add role say what is missing |
+| B8 (autocomplete) | Fixed |
+| B9 (input focus) | Fixed |
+| B10 (Undo toast) | Fixed: 10 s, pauses on hover or focus, reachable by Tab |
+| B11 (chip state) | Fixed: `aria-pressed` on all choice chips |
+| B12 (long posts) | Fixed: a real "More" control |
+| C1, C2 (headings, landmarks, titles) | Fixed: an h1 on every screen, one main landmark, sheet titles as h2, per-screen page title |
+| C3 (status messages) | Fixed: search results, publishing, offline, page loading and errors, loading buttons |
+| C4, C5 (dropped ARIA, unnamed dialogs) | Fixed |
+| C6 (toggle names) | Fixed for Save (stable name with its object, plus pressed state). Follow keeps "Follow X" / "Following X" so the visible text stays in the name (WCAG 2.5.3) |
+| C7 (unread by dot only) | Fixed: Inbox tab, threads, notifications and the bell describe it |
+| C8 (arrow keys) | Fixed for onboarding choice groups and Discover tabs |
+| C9 (touch targets) | Fixed with invisible 44 px hit areas; visuals unchanged |
+| C10 (truncation) | Fixed: card text wraps to two lines; action rows wrap |
+| C11 (ring on dark) | Fixed: white ring with a dark halo on photos and dark surfaces |
+| C12 (media viewer) | Fixed |
+| C13 (Telugu `lang`) | Fixed on titles, posts and messages |
+| C14 (Remove from project) | Fixed: a confirming step, focus on "Keep". Accepting a credit is unchanged: the pending card is the review step |
+| D1 (labels with context) | Fixed |
+| D2 (forced ring radius) | Fixed inside the app |
+| D3 (focus under tab bar) | Fixed (`scroll-padding-bottom`) |
+| D8 (copy) | Not changed: needs product decisions (see section 6) |
+
 ---
 
 ## A. Critical

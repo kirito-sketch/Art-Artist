@@ -7,6 +7,7 @@ import { org, person } from '../../state/selectors';
 import { Avatar, Button, IconButton, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { MediaPicker } from './PostComposer';
+import { MissingHint, RowField } from '../../ui/fields';
 import { DateField, fmtPay, fmtRange, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
 
 const ROLES = ['Cinematographer', '1st AC', 'Gaffer', 'Editor', 'Colourist', 'Sound recordist', 'Actor'];
@@ -70,11 +71,11 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
   return (
     <div className="composer">
       <header className="composer-bar">
-        <IconButton label="Close" onClick={() => (dirty ? setDiscard(true) : pop())}>
+        <IconButton label={dirty ? 'Close (asks before discarding)' : 'Close'} onClick={() => (dirty ? setDiscard(true) : pop())}>
           <X size={24} />
         </IconButton>
-        <p className="composer-title">{available ? 'Available for work' : 'Looking for someone'}</p>
-        <button className="confirm" disabled={!valid} onClick={publish} aria-label="Publish">
+        <h1 className="composer-title">{available ? 'Available for work' : 'Looking for someone'}</h1>
+        <button className="confirm" disabled={!valid} onClick={publish} aria-label="Publish" aria-describedby="collab-missing">
           <Check size={22} strokeWidth={2.6} />
         </button>
       </header>
@@ -96,7 +97,10 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
         </button>
 
         <div>
-          <input id="c-role" className="title-input" value={role} onChange={(e) => setRole(e.target.value)} placeholder={available ? 'Your role' : 'Who do you need?'} aria-label="Role" />
+          <label className="field-label" htmlFor="c-role">
+            {available ? 'Your role' : 'Who do you need?'}
+          </label>
+          <input id="c-role" className="title-input" value={role} onChange={(e) => setRole(e.target.value)} placeholder={available ? 'e.g. Cinematographer' : 'e.g. Gaffer'} />
           {!role && (
             <div className="chips chips--scroll">
               {ROLES.map((r) => (
@@ -110,7 +114,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
 
         {!available && (
           <div className="group">
-            <Row label={<input id="c-project" className="row-input" value={project} onChange={(e) => setProject(e.target.value)} placeholder="Project title" aria-label="Project title" />} />
+            <Row label={<RowField id="c-project" label="Project title"><input id="c-project" className="row-input" value={project} onChange={(e) => setProject(e.target.value)} placeholder="Working title" /></RowField>} />
             <Row
               label="Type"
               value={
@@ -152,13 +156,15 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
         </div>
 
         <div className="group">
-          <Row icon={<MapPin size={20} />} label={<input id="c-city" className="row-input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Location" aria-label="Location" />} />
+          <Row icon={<MapPin size={20} aria-hidden />} label={<RowField id="c-city" label="Location"><input id="c-city" className="row-input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" autoComplete="address-level2" /></RowField>} />
           <Row
             icon={<IndianRupee size={20} />}
             label={
               pay === 'Paid' ? (
                 <span className="pay-amount">
-                  <MoneyField value={amount} onChange={setAmount} label="Amount" placeholder="Amount" prefix={false} />
+                  <RowField id="c-amount" label="Amount (₹)">
+                    <MoneyField id="c-amount" value={amount} onChange={setAmount} label="Amount in rupees" placeholder="Optional" prefix={false} />
+                  </RowField>
                   <select id="c-unit" className="row-select" value={unit} onChange={(e) => setUnit(e.target.value as PayUnit)} aria-label="Paid">
                     {PAY_UNITS.map(([k, l]) => (
                       <option key={k} value={k}>
@@ -179,7 +185,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
               </select>
             }
           />
-          <Row label={<textarea id="c-about" className="row-input row-area" rows={2} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Add details" aria-label="Details" />} />
+          <Row label={<RowField id="c-about" label="Details"><textarea id="c-about" className="row-input row-area" rows={2} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Optional" /></RowField>} />
         </div>
 
         <div>
@@ -190,6 +196,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
           </div>
           <p className="group-note">{allowDM ? 'Anyone can message you about this.' : 'People send interest. You choose who to message.'}</p>
         </div>
+        <MissingHint id="collab-missing" items={[!role.trim() && 'a role', !available && !project.trim() && 'a project title', !start && 'a start date', !city.trim() && 'a location']} verb="publish" />
       </div>
 
       <Sheet open={picker} onClose={() => setPicker(false)} title="Cover" size="tall">
@@ -202,7 +209,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
           }}
         />
       </Sheet>
-      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard?">
+      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard?" close={false}>
         <div className="stack">
           <Button block size="l" variant="danger" onClick={pop}>
             Discard

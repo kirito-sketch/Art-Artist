@@ -63,6 +63,10 @@ img {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Outside the app only (the app keeps each control's own shape when focused). */
+:not(.phone *):focus-visible {
   border-radius: 8px;
 }
 

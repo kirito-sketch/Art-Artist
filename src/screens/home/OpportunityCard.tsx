@@ -12,13 +12,14 @@ import { displayTitle, keepSeparators, FrameLabel } from '../../ui/compose';
  * store, so the same item reads as saved everywhere. `floating` is the light utility circle over
  * media; without it, a plain icon for action rows on paper.
  */
-export function SaveButton({ id, kind = 'role', floating }: { id: string; kind?: SavedKind; floating?: boolean }) {
+export function SaveButton({ id, kind = 'role', floating, name }: { id: string; kind?: SavedKind; floating?: boolean; name?: string }) {
   const { isSaved, toggleSave } = useStore();
   const on = isSaved(kind, id);
   return (
     <motion.button
       className={`save ${floating ? 'save--floating' : ''} ${on ? 'is-on' : ''}`}
-      aria-label={on ? 'Remove from Saved' : 'Save'}
+      // A stable name that says what is saved; the pressed state says whether it is (WCAG 4.1.2).
+      aria-label={`Save ${name ?? (kind === 'role' ? 'role' : kind)}`}
       aria-pressed={on}
       whileTap={{ scale: 0.8 }}
       transition={spring.press}
@@ -28,7 +29,7 @@ export function SaveButton({ id, kind = 'role', floating }: { id: string; kind?:
       }}
     >
       <motion.span key={String(on)} initial={{ scale: on ? 0.5 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 700, damping: 14 }} style={{ display: 'inline-flex' }}>
-        <Bookmark size={18} strokeWidth={2.2} fill={on ? 'currentColor' : 'none'} />
+        <Bookmark size={18} strokeWidth={2.2} fill={on ? 'currentColor' : 'none'} aria-hidden />
       </motion.span>
     </motion.button>
   );
@@ -74,7 +75,7 @@ export function OpportunityCard({ o, onOpen }: { o: Opportunity; onOpen: () => v
       <div className="ocard-media">
         <Photo media={o.media} />
         {pill && <span className={`pill ${sent ? 'pill--done' : o.kind !== 'collab' && (o.closesInDays ?? 9) <= 3 ? 'pill--urgent' : ''}`}>{pill}</span>}
-        <SaveButton id={o.id} floating />
+        <SaveButton id={o.id} floating name={`${o.role} role`} />
       </div>
       <p className="ocard-title">{o.role}</p>
       <p className="ocard-line">
@@ -97,7 +98,7 @@ export function FeaturedCard({ o, onOpen }: { o: Opportunity; onOpen: () => void
       </motion.div>
       <div className="feature-scrim" />
       {pill && <FrameLabel tone={sent ? 'paper' : (o.closesInDays ?? 9) <= 5 ? 'urgent' : 'plate'}>{pill}</FrameLabel>}
-      <SaveButton id={o.id} floating />
+      <SaveButton id={o.id} floating name={`${o.role} role`} />
       <div className="feature-text">
         <p className="feature-title display-title" {...displayTitle(o.role, 36)}>
           {keepSeparators(o.role)}

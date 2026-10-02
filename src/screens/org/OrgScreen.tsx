@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
+import { scriptLang } from '../../ui/compose';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
 import { isLive, type Work } from '../../data/works';
@@ -117,7 +118,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </IconButton>
           )}
           <span className="flex" />
-          <IconButton label="Share" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name })}>
+          <IconButton label={`Share ${o.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name })}>
             <Share size={18} />
           </IconButton>
           {own ? (
@@ -125,7 +126,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               <Settings size={19} />
             </IconButton>
           ) : (
-            <IconButton label="More" className="icon-btn--float" onClick={() => openSheet({ name: 'more', id })}>
+            <IconButton label={`More options for ${o.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'more', id })}>
               <MoreHorizontal size={20} />
             </IconButton>
           )}
@@ -140,7 +141,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               {o.name} {o.verified && <Verified size={18} />} <ChevronDown size={18} />
             </button>
           ) : (
-            <h1 className="org-name">
+            <h1 className="org-name" lang={scriptLang(o.name)}>
               {o.name} {o.verified && <Verified size={18} label="Verified production house" />}
             </h1>
           )}

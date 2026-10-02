@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Lock, Mail, Users } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { cloneElement, isValidElement, useEffect, useId, useState, type ReactElement, type ReactNode } from 'react';
+import { focusInto, rovingIndex, rovingKeys } from '../ui/a11y';
 import { CRAFTS, headline } from '../data/crafts';
 import * as seed from '../data/seed';
 import type { Craft, Media } from '../data/types';
@@ -68,6 +69,23 @@ export function EntryFlow() {
     if (step !== 'intro') research.track('onboarding_step_viewed', { metadata: { step } });
   }, [step]);
 
+  // Each step is a new screen: focus moves to its heading (or its auto-focused field), so keyboard and
+  // screen-reader users start at the top of what is now showing.
+  useEffect(() => {
+    let f2 = 0;
+    const f1 = requestAnimationFrame(() => {
+      f2 = requestAnimationFrame(() => {
+        const page = document.querySelector('.phone .entry-page');
+        const a = document.activeElement;
+        if (page && !(a && a !== document.body && page.contains(a))) focusInto(page);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(f1);
+      cancelAnimationFrame(f2);
+    };
+  }, [step]);
+
   const go = (s: Step) => {
     setHistory((h) => [...h, step]);
     setStep(s);
@@ -115,8 +133,9 @@ export function EntryFlow() {
           {step === 'splash' && (
             <div className="splash">
               <motion.img src="images/brand/logo.png" alt="" className="splash-logo" initial={{ opacity: 0, scale: 0.86 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }} />
-              <motion.div className="splash-loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.3 }} aria-label="Loading">
-                <span />
+              <motion.div className="splash-loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.3 }} role="status">
+                <span aria-hidden />
+                <span className="sr-only">Loading Art and Artist</span>
               </motion.div>
             </div>
           )}
@@ -168,13 +187,13 @@ export function EntryFlow() {
           {step === 'email' && (
             <Form title="Create your account" onBack={back}>
               <Field label="Email">
-                <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoFocus />
+                <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" autoFocus />
               </Field>
-              <PasswordField value={password} onChange={setPassword} />
-              <p className="meta">At least 8 characters. A mix of words is easiest to remember.</p>
-              <Button block size="l" disabled={!/.+@.+\..+/.test(email) || password.length < 8} onClick={() => go('consent')}>
+              <PasswordField value={password} onChange={setPassword} autoComplete="new-password" hint="At least 8 characters. A mix of words is easiest to remember." />
+              <Button block size="l" disabled={!/.+@.+\..+/.test(email) || password.length < 8} aria-describedby="signup-missing" onClick={() => go('consent')}>
                 Continue
               </Button>
+              <Missing id="signup-missing" items={[!/.+@.+\..+/.test(email) && 'a valid email address', password.length < 8 && (password ? `${8 - password.length} more password ${8 - password.length === 1 ? 'character' : 'characters'}` : 'a password of at least 8 characters')]} />
             </Form>
           )}
 
@@ -201,37 +220,38 @@ export function EntryFlow() {
                 <PhotoPicker onPick={setPhoto} has={!!photo} />
               </div>
               <Field label="Your name">
-                <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoFocus />
+                <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoComplete="name" autoFocus />
               </Field>
               <p className="meta">The name you work under. Productions credit you by it. Photo is optional.</p>
               <p className="field-label">Your main craft</p>
-              <div className="craft-grid" role="radiogroup" aria-label="Your main craft">
-                {CRAFTS.map((c) => (
-                  <button key={c.id} role="radio" aria-checked={primary === c.id} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => setPrimary(primary === c.id ? null : c.id)}>
+              <div className="craft-grid" role="radiogroup" aria-label="Your main craft" onKeyDown={(e) => rovingKeys(e)}>
+                {CRAFTS.map((c, i) => (
+                  <button key={c.id} role="radio" aria-checked={primary === c.id} tabIndex={rovingIndex(primary === c.id, i, !!primary)} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => setPrimary(primary === c.id ? null : c.id)}>
                     {c.label}
                   </button>
                 ))}
               </div>
               <p className="meta">Do more than one thing? Add other crafts from your profile later.</p>
-              <Button block size="l" disabled={!name.trim() || !primary} onClick={() => go('now')}>
+              <Button block size="l" disabled={!name.trim() || !primary} aria-describedby="you-missing" onClick={() => go('now')}>
                 Continue
               </Button>
+              <Missing id="you-missing" items={[!name.trim() && 'your name', !primary && 'your main craft']} />
             </Onboard>
           )}
 
           {step === 'now' && (
             <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={back}>
               <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>
-              <div className="intent-list" role="radiogroup" aria-label="What are you looking to do right now?">
-                {INTENTS.map((it) => (
-                  <button key={it.id} role="radio" aria-checked={intent === it.id} className={`intent-option ${intent === it.id ? 'is-on' : ''}`} onClick={() => setIntent(it.id)}>
+              <div className="intent-list" role="radiogroup" aria-label="What are you looking to do right now?" onKeyDown={(e) => rovingKeys(e)}>
+                {INTENTS.map((it, i) => (
+                  <button key={it.id} role="radio" aria-checked={intent === it.id} tabIndex={rovingIndex(intent === it.id, i, !!intent)} className={`intent-option ${intent === it.id ? 'is-on' : ''}`} onClick={() => setIntent(it.id)}>
                     <span className="intent-option-label">{it.label}</span>
                     <span className="meta">{it.hint}</span>
                   </button>
                 ))}
               </div>
               <Field label="Where are you based?">
-                <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" />
+                <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" autoComplete="address-level2" />
               </Field>
               <div className="chips chips--tight">
                 {CITIES.map((c) => (
@@ -243,7 +263,7 @@ export function EntryFlow() {
               {asksAvailability && (
                 <>
                   <p className="field-label">When can you start?</p>
-                  <div className="seg" role="radiogroup" aria-label="When can you start?">
+                  <div className="seg" role="radiogroup" aria-label="When can you start?" onKeyDown={(e) => rovingKeys(e)}>
                     {(
                       [
                         ['now', 'Now'],
@@ -254,6 +274,7 @@ export function EntryFlow() {
                         key={k}
                         role="radio"
                         aria-checked={avail === k}
+                        tabIndex={avail === k ? 0 : -1}
                         className={avail === k ? 'is-on' : ''}
                         onClick={() => {
                           setAvail(k);
@@ -267,9 +288,10 @@ export function EntryFlow() {
                   {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Available from" placeholder="Choose a start date" />}
                 </>
               )}
-              <Button block size="l" disabled={!intent || !city.trim()} onClick={finishProfile}>
+              <Button block size="l" disabled={!intent || !city.trim()} aria-describedby="now-missing" onClick={finishProfile}>
                 {invite ? 'Continue' : 'Show me what matters'}
               </Button>
+              <Missing id="now-missing" items={[!intent && 'what brings you here', !city.trim() && 'where you are based']} />
               <p className="meta ob-later">Your work, other crafts, languages and a bio can be added from your profile whenever you like.</p>
             </Onboard>
           )}
@@ -335,7 +357,7 @@ export function EntryFlow() {
         </motion.div>
       </AnimatePresence>
 
-      <Sheet open={!!provider} onClose={() => setProvider(null)} title="">
+      <Sheet open={!!provider} onClose={() => setProvider(null)} title="" label={provider === 'apple' ? 'Sign in with Apple' : 'Choose a Google account'}>
         {provider && (
           <ProviderSheet
             kind={provider}
@@ -353,7 +375,7 @@ export function EntryFlow() {
           />
         )}
       </Sheet>
-      <Sheet open={!!legal} onClose={() => setLegal(null)} title="" size="tall">
+      <Sheet open={!!legal} onClose={() => setLegal(null)} title="" label="Legal document" size="tall">
         {legal && <LegalDocView id={legal} />}
       </Sheet>
     </div>
@@ -376,26 +398,86 @@ function Form({ title, onBack, children }: { title: string; onBack: () => void; 
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+/**
+ * A labelled field. Its hint and error are tied to the input (aria-describedby), an error marks it
+ * invalid and is announced, so the label, the instructions and what went wrong are all read out.
+ */
+function Field({ label, hint, error, children }: { label: string; hint?: ReactNode; error?: ReactNode; children: ReactNode }) {
+  const id = useId();
+  const hintId = hint ? `${id}-hint` : undefined;
+  const errId = error ? `${id}-err` : undefined;
+  const describedBy = [hintId, errId].filter(Boolean).join(' ') || undefined;
+  const control = isValidElement(children) ? cloneElement(children as ReactElement<Record<string, unknown>>, { 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined }) : children;
   return (
-    <label className="ob-field">
-      <span className="field-label">{label}</span>
-      {children}
-    </label>
+    <div className="ob-field-wrap">
+      <label className="ob-field">
+        <span className="field-label">{label}</span>
+        {control}
+      </label>
+      {hint && (
+        <p className="meta field-hint" id={hintId}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p className="field-error" id={errId} role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
-function PasswordField({ value, onChange }: { value: string; onChange: (s: string) => void }) {
-  const [show, setShow] = useState(false);
+/** Says what is still needed while a button is disabled, so nobody has to guess (WCAG 3.3.2). */
+function Missing({ id, items }: { id: string; items: (string | false)[] }) {
+  const need = items.filter(Boolean) as string[];
+  if (!need.length) return <span id={id} hidden />;
+  const list = need.length === 1 ? need[0] : `${need.slice(0, -1).join(', ')} and ${need[need.length - 1]}`;
   return (
-    <Field label="Password">
-      <span className="pw">
-        <input className="field" type={show ? 'text' : 'password'} value={value} onChange={(e) => onChange(e.target.value)} />
-        <button type="button" className="pw-toggle" aria-label={show ? 'Hide password' : 'Show password'} onClick={() => setShow((s) => !s)}>
-          {show ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </span>
-    </Field>
+    <p className="meta missing-hint" id={id}>
+      To continue, add {list}.
+    </p>
+  );
+}
+
+function PasswordField({ value, onChange, autoComplete = 'current-password', hint, error }: { value: string; onChange: (s: string) => void; autoComplete?: string; hint?: ReactNode; error?: ReactNode }) {
+  const [show, setShow] = useState(false);
+  const id = useId();
+  const hintId = hint ? `${id}-hint` : undefined;
+  const errId = error ? `${id}-err` : undefined;
+  return (
+    <div className="ob-field-wrap">
+      <div className="ob-field">
+        <label className="field-label" htmlFor={`${id}-pw`}>
+          Password
+        </label>
+        <span className="pw">
+          <input
+            id={`${id}-pw`}
+            className="field"
+            type={show ? 'text' : 'password'}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            autoComplete={autoComplete}
+            aria-describedby={[hintId, errId].filter(Boolean).join(' ') || undefined}
+            aria-invalid={error ? true : undefined}
+          />
+          <button type="button" className="pw-toggle" aria-label={show ? 'Hide password' : 'Show password'} aria-pressed={show} onClick={() => setShow((s) => !s)}>
+            {show ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+          </button>
+        </span>
+      </div>
+      {hint && (
+        <p className="meta field-hint" id={hintId}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p className="field-error" id={errId} role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -416,7 +498,7 @@ function Onboard({ step, total, image, title, onBack, onSkip, skipLabel = 'Skip'
         </div>
       </div>
       <div className="ob-body">
-        <div className="ob-progress" aria-label={`Step ${step + 1} of ${total}`}>
+        <div className="ob-progress" role="progressbar" aria-label="Profile setup" aria-valuemin={1} aria-valuemax={total} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${total}`}>
           {Array.from({ length: total }).map((_, i) => (
             <span key={i} className={i <= step ? 'is-on' : ''} />
           ))}
@@ -497,24 +579,21 @@ function SignIn({ onBack, onForgot, onDone, onCreate, onProvider }: { onBack: ()
         <span className="g-mark">G</span> Continue with Google
       </button>
       <p className="or">or</p>
-      <Field label="Email">
-        <input className="field" type="email" value={email} onChange={(e) => (setEmail(e.target.value), setError('none'))} />
+      <Field label="Email" error={error === 'nouser' ? 'No Art and Artist account uses this email. Check the spelling, or create an account.' : undefined}>
+        <input className="field" type="email" value={email} onChange={(e) => (setEmail(e.target.value), setError('none'))} autoComplete="email" />
       </Field>
-      <PasswordField value={password} onChange={(s) => (setPassword(s), setError('none'))} />
       {error === 'nouser' && (
-        <p className="field-error">
-          No Art and Artist account uses this email.{' '}
-          <button className="link" onClick={onCreate}>
-            Create one
-          </button>
-        </p>
+        <button className="link" onClick={onCreate}>
+          Create an account
+        </button>
       )}
-      {error === 'password' && <p className="field-error">That password doesn't match. Try again or reset it.</p>}
+      <PasswordField value={password} onChange={(s) => (setPassword(s), setError('none'))} error={error === 'password' ? "That password doesn't match. Try again, or reset it with Forgot password." : undefined} />
       <Button
         block
         size="l"
         loading={busy}
         disabled={!email || !password}
+        aria-describedby="signin-missing"
         onClick={() => {
           setBusy(true);
           window.setTimeout(() => {
@@ -528,6 +607,7 @@ function SignIn({ onBack, onForgot, onDone, onCreate, onProvider }: { onBack: ()
       >
         Sign in
       </Button>
+      <Missing id="signin-missing" items={[!email && 'your email', !password && 'your password']} />
       <button className="link" onClick={onForgot}>
         Forgot password?
       </button>
@@ -545,7 +625,7 @@ function Forgot({ onBack, onDone }: { onBack: () => void; onDone: (id: string) =
       {stage === 'email' && (
         <>
           <Field label="Email">
-            <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
           </Field>
           <Button block size="l" disabled={!/.+@.+\..+/.test(email)} onClick={() => setStage('code')}>
             Send code
@@ -555,7 +635,7 @@ function Forgot({ onBack, onDone }: { onBack: () => void; onDone: (id: string) =
       {stage === 'code' && (
         <>
           <p className="meta">If an Art and Artist account uses {email}, we've sent it a 6-digit code.</p>
-          <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" />
+          <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" />
           <Button block size="l" disabled={code.length !== 6} onClick={() => setStage('new')}>
             Continue
           </Button>
@@ -563,7 +643,7 @@ function Forgot({ onBack, onDone }: { onBack: () => void; onDone: (id: string) =
       )}
       {stage === 'new' && (
         <>
-          <PasswordField value={pw} onChange={setPw} />
+          <PasswordField value={pw} onChange={setPw} autoComplete="new-password" hint="At least 8 characters." />
           <Button block size="l" disabled={pw.length < 8} onClick={() => onDone(Object.keys(KNOWN).find((x) => email.includes(x)) ?? 'kiran')}>
             Save and sign in
           </Button>
@@ -628,7 +708,7 @@ function Consent({ onBack, openDoc, onAgree }: { onBack: () => void; openDoc: (d
     <Form title="Before you join" onBack={onBack}>
       <p className="meta consent-lede">A few things to know about how Art and Artist works.</p>
 
-      <div className="know-list" aria-label="What to know">
+      <div className="know-list" role="group" aria-label="What to know">
         {KNOW.map((k) => (
           <button key={k.d} type="button" className="know-row" onClick={() => setTopic(k)} aria-haspopup="dialog">
             <span className="know-icon" aria-hidden>
@@ -664,7 +744,7 @@ function Consent({ onBack, openDoc, onAgree }: { onBack: () => void; openDoc: (d
         Agree and continue
       </Button>
 
-      <Sheet open={!!topic} onClose={() => setTopic(null)} title="" size="tall">
+      <Sheet open={!!topic} onClose={() => setTopic(null)} title="" label={topic?.h ?? 'What to know'} size="tall">
         {topic && (
           <div className="stack">
             <h2 className="ob-title know-sheet-title">{topic.h}</h2>
@@ -709,7 +789,7 @@ function Verify({ email, onBack, onDone }: { email: string; onBack: () => void; 
   return (
     <Form title="Check your email" onBack={onBack}>
       <p className="meta">We sent a 6-digit code to {email}.</p>
-      <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" autoFocus />
+      <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" autoFocus />
       <Button block size="l" disabled={code.length !== 6} onClick={onDone}>
         Verify
       </Button>
@@ -755,7 +835,7 @@ function Invitation({ accountEmail, onSwitchEmail, onAccept, onDecline }: { acco
         <h1 className="ob-title">Act for {o.name}</h1>
         {mismatch ? (
           <>
-            <p className="inline-error">This invite was sent to {masked}. You signed in as {accountEmail}. Sign in with the invited address, or ask them to invite this one.</p>
+            <p className="inline-error" role="alert">This invite was sent to {masked}. You signed in as {accountEmail}. Sign in with the invited address, or ask them to invite this one.</p>
             <Button block size="l" variant="secondary" onClick={onSwitchEmail}>
               Use {masked}
             </Button>
@@ -846,9 +926,9 @@ function Intro({ onDone }: { onDone: () => void }) {
             </span>
           </motion.div>
         </AnimatePresence>
-        <div className="intro-dots" aria-label={`Screen ${i + 1} of ${INTRO.length}`}>
+        <div className="intro-dots" role="group" aria-label={`Screen ${i + 1} of ${INTRO.length}`}>
           {INTRO.map((_, k) => (
-            <button key={k} className={k === i ? 'is-on' : ''} onClick={() => setI(k)} aria-label={`Screen ${k + 1}`} />
+            <button key={k} className={k === i ? 'is-on' : ''} onClick={() => setI(k)} aria-label={`Screen ${k + 1} of ${INTRO.length}`} aria-current={k === i ? 'step' : undefined} />
           ))}
         </div>
         <Button block size="l" onClick={() => (last ? onDone() : setI(i + 1))}>

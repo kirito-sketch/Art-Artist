@@ -1,6 +1,6 @@
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Media } from './data/types';
 import { TabBar } from './nav/TabBar';
 import { CollabComposer } from './screens/create/CollabComposer';
@@ -27,6 +27,7 @@ import { StatusBar, ToastHost } from './ui/chrome';
 import { dur, ease, spring } from './ui/motion';
 import { IdentityShift } from './ui/IdentityShift';
 import { IconButton, Photo } from './ui/primitives';
+import { ModalContext, activation, currentScreen, focusEl, focusInto, inertProps, mediaName, type ModalLayer } from './ui/a11y';
 import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
 import { RESEARCH, exitResearch } from './research';
 import { ResearchObserver } from './research-data/ResearchObserver';
@@ -75,7 +76,7 @@ function RouteView({ r }: { r: Route }) {
     case 'composeCollab':
       return <CollabComposer intent={r.intent} />;
     case 'media':
-      return <MediaViewer items={r.items} index={r.index} />;
+      return <MediaViewer items={r.items} index={r.index} what={r.what} from={r.from} />;
     case 'posts':
       return <PostStream ids={r.ids} index={r.index} />;
     case 'saved':
@@ -127,23 +128,29 @@ function NetworkScreen() {
   );
 }
 
-function MediaViewer({ items, index }: { items: Media[]; index: number }) {
+function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media[]; index: number; what?: string; from?: string }) {
   const { pop } = useStore();
   const [i, setI] = useState(index);
   const m = items[i];
+  // Arrow keys move between items: swiping is never the only way (WCAG 2.5.7).
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowRight' && i < items.length - 1) setI(i + 1);
+    if (e.key === 'ArrowLeft' && i > 0) setI(i - 1);
+  };
   const onDragEnd = (_: unknown, info: PanInfo) => {
     if (Math.abs(info.offset.y) > 120) return pop();
     if (info.offset.x < -60 && i < items.length - 1) setI(i + 1);
     if (info.offset.x > 60 && i > 0) setI(i - 1);
   };
   return (
-    <div className="viewer">
+    <div className="viewer" onKeyDown={onKeyDown}>
+      <h1 className="sr-only">{mediaName(m, i, items.length, what, from)}</h1>
       <div className="viewer-bar">
         <IconButton label="Close" className="icon-btn--on-dark" onClick={pop}>
           <X size={20} />
         </IconButton>
         {items.length > 1 && (
-          <span className="viewer-count">
+          <span className="viewer-count" aria-hidden>
             {i + 1} / {items.length}
           </span>
         )}
@@ -151,21 +158,23 @@ function MediaViewer({ items, index }: { items: Media[]; index: number }) {
       <motion.div className="viewer-stage" drag dragSnapToOrigin dragElastic={0.5} onDragEnd={onDragEnd}>
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div key={m.id} className="viewer-media" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={spring.gentle}>
-            <Photo media={m} />
+            <Photo media={m} alt={m.caption ? '' : mediaName(m, i, items.length, what, from)} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
       {m.caption && <p className="viewer-caption">{m.caption}</p>}
       {items.length > 1 && (
-        <div className="viewer-dots">
+        <div className="viewer-dots" role="group" aria-label="Choose an item (or use the arrow keys)">
           {items.map((x, j) => (
-            <button key={x.id + j} className={`viewer-dot ${j === i ? 'is-on' : ''}`} onClick={() => setI(j)} aria-label={`Item ${j + 1}`} />
+            <button key={x.id + j} className={`viewer-dot ${j === i ? 'is-on' : ''}`} onClick={() => setI(j)} aria-label={`${j + 1} of ${items.length}`} aria-current={j === i ? 'true' : undefined} />
           ))}
         </div>
       )}
     </div>
   );
 }
+
+const TAB_TITLE: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Inbox', profile: 'Profile' };
 
 function Phone() {
   const store = useStore();
@@ -188,6 +197,90 @@ function Phone() {
     return () => window.removeEventListener('keydown', onKey);
   }, [store]);
 
+  /* --- Accessibility: one operable layer at a time (docs/ACCESSIBILITY_AUDIT.md A1-A3) --- */
+  const screen = useRef<HTMLDivElement>(null);
+  const [modalRoot, setModalRoot] = useState<HTMLDivElement | null>(null);
+  const [modals, setModals] = useState(0);
+  const register = useCallback(() => {
+    setModals((n) => n + 1);
+    let done = false;
+    return () => {
+      if (done) return;
+      done = true;
+      setModals((n) => n - 1);
+    };
+  }, []);
+  const modalLayer = useMemo<ModalLayer>(() => ({ root: modalRoot, register }), [modalRoot, register]);
+  const createOpen = store.sheet?.name === 'create';
+  const overlay = !!store.entry || !!store.policyUpdate;
+  const covered = modals > 0 || createOpen || overlay;
+
+  // Remember what the user activated, so focus can go back to it when the thing it opened closes.
+  useEffect(() => {
+    const el = screen.current;
+    if (!el) return;
+    const note = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      const card = t?.closest('.press-card') as HTMLElement | null;
+      const hit = card?.querySelector<HTMLElement>(':scope > .pc-hit');
+      const control = t?.closest<HTMLElement>('button, a[href], input, select, textarea, [tabindex]');
+      activation.el = control && (!card || card.contains(control)) && control !== card ? control : hit ?? control ?? null;
+    };
+    el.addEventListener('click', note, true);
+    el.addEventListener('focusin', note, true);
+    return () => {
+      el.removeEventListener('click', note, true);
+      el.removeEventListener('focusin', note, true);
+    };
+  }, []);
+
+  // Opening a screen moves focus into it; going back returns focus to what opened it.
+  const openers = useRef<(HTMLElement | null)[]>([]);
+  const prevDepth = useRef(stack.length);
+  useEffect(() => {
+    const depth = stack.length;
+    const prev = prevDepth.current;
+    prevDepth.current = depth;
+    if (depth === prev) return;
+    let f2 = 0;
+    const f1 = requestAnimationFrame(() => {
+      f2 = requestAnimationFrame(() => {
+        if (depth > prev) {
+          openers.current[depth - 1] = activation.el;
+          focusInto(currentScreen());
+        } else {
+          const back = openers.current[depth];
+          openers.current.length = depth;
+          if (!(back && back.isConnected && !back.closest('[inert]') && focusEl(back))) focusInto(currentScreen());
+        }
+      });
+    });
+    return () => {
+      cancelAnimationFrame(f1);
+      cancelAnimationFrame(f2);
+    };
+  }, [stack.length]);
+
+  // Switching tab from inside a screen (a "see all" link): focus would be stranded in the old tab.
+  useEffect(() => {
+    const f = requestAnimationFrame(() => {
+      const a = document.activeElement;
+      if (!a || a === document.body || a.closest('[inert]')) focusInto(currentScreen());
+    });
+    return () => cancelAnimationFrame(f);
+  }, [tab]);
+
+  // Each screen names the page, so the browser tab and screen readers say where the user is.
+  useEffect(() => {
+    if (TEST_MODE) return;
+    const f = requestAnimationFrame(() => {
+      const h = currentScreen()?.querySelector('h1');
+      const name = h?.textContent?.trim() || TAB_TITLE[tab] || '';
+      document.title = name ? `${name} · Art and Artist` : 'Art and Artist';
+    });
+    return () => cancelAnimationFrame(f);
+  });
+
   const top = stack[stack.length - 1];
   // The status bar turns light and transparent over full-bleed photos (media viewer, profile hero).
   const topKey = top ? (top.name === 'profile' ? `profile-${top.id}` : top.name) : tab === 'profile' ? `profile-${viewer.id}-tab` : tab;
@@ -196,12 +289,13 @@ function Phone() {
   return (
     <MotionConfig reducedMotion="user">
     <LayoutGroup>
+    <ModalContext.Provider value={modalLayer}>
     <div className="phone" data-viewer={viewer.id} data-look={store.look}>
-      <div className="phone-screen">
+      <div className="phone-screen" ref={screen}>
         <StatusBar tone={statusTone} />
-        {/* Tabs stay mounted so scroll position survives switching. */}
+        {/* Tabs stay mounted so scroll position survives switching; only the active one is operable. */}
         {(['home', 'discover', 'inbox', 'profile'] as const).map((t) => (
-          <motion.div
+          <motion.section
             key={t}
             className="tab-layer"
             initial={false}
@@ -209,6 +303,8 @@ function Phone() {
             transition={{ duration: 0.2 }}
             style={{ pointerEvents: tab === t ? 'auto' : 'none', zIndex: tab === t ? 1 : 0 }}
             aria-hidden={tab !== t}
+            role={tab === t && !stack.length ? 'main' : undefined}
+            {...inertProps(tab !== t || stack.length > 0 || covered)}
           >
             {t === 'home' && (
               // Identity switch: the home world fades up anew so the change of context is felt, not just read.
@@ -220,16 +316,19 @@ function Phone() {
             {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} />}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab />)}
-          </motion.div>
+          </motion.section>
         ))}
 
-        <TabBar />
+        <div className="tabbar-layer" {...inertProps(stack.length > 0 || overlay || modals > 0)}>
+          <TabBar />
+        </div>
 
         <AnimatePresence>
           {stack.map((r, i) => {
             const tr = transitionFor(r);
+            const isTop = i === stack.length - 1;
             return (
-              <motion.div
+              <motion.section
                 key={`${r.name}-${'id' in r ? r.id : ''}-${i}`}
                 className={`route-layer route-layer--${r.name}`}
                 style={{ zIndex: 20 + i }}
@@ -237,21 +336,34 @@ function Phone() {
                 animate={tr.animate}
                 exit={tr.exit}
                 transition={spring.push}
+                role={isTop ? 'main' : undefined}
+                {...inertProps(!isTop || covered)}
               >
                 <RouteView r={r} />
-              </motion.div>
+              </motion.section>
             );
           })}
         </AnimatePresence>
 
         <SheetHost />
-        {store.policyUpdate && !store.entry && <PolicyUpdate />}
-        {store.entry && <EntryFlow key={store.entry.mode + (store.entry.notice ?? '')} />}
+        {store.policyUpdate && !store.entry && (
+          <div className="overlay-layer" {...inertProps(modals > 0)}>
+            <PolicyUpdate />
+          </div>
+        )}
+        {store.entry && (
+          <div className="overlay-layer" {...inertProps(modals > 0)}>
+            <EntryFlow key={store.entry.mode + (store.entry.notice ?? '')} />
+          </div>
+        )}
+        {/* Sheets render here, above every screen, so the screens can be inert while one is open. */}
+        <div className={`modal-root ${overlay ? 'modal-root--top' : ''}`} ref={setModalRoot} />
         <ToastHost />
         <IdentityShift />
         <div className="home-indicator" />
       </div>
     </div>
+    </ModalContext.Provider>
     </LayoutGroup>
     </MotionConfig>
   );

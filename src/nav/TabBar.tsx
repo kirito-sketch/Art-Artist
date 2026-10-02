@@ -4,6 +4,7 @@ import { useStore, type Tab } from '../state/store';
 import { org, person } from '../state/selectors';
 import { Avatar } from '../ui/primitives';
 import { shared, spring } from '../ui/motion';
+import { focusables, inertProps } from '../ui/a11y';
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -35,6 +36,9 @@ export function TabBar() {
           setTab(it.id);
         }}
         aria-label={it.id === 'profile' && acting !== 'self' ? `Profile, acting as ${org(acting).name}` : it.label}
+        aria-describedby={it.id === 'inbox' && unread ? 'inbox-unread' : undefined}
+        // While Create is open, only the + (its close control) stays operable in the bar.
+        {...inertProps(createOpen)}
         aria-current={active ? 'page' : undefined}
       >
         {/* The well slides to the active tab; the icon lifts 2px into it. Spatial, not decorative. */}
@@ -51,7 +55,14 @@ export function TabBar() {
           )}
         </motion.span>
         <span className="tab-label">{it.label}</span>
-        {it.id === 'inbox' && unread && <span className="tab-dot" />}
+        {it.id === 'inbox' && unread && (
+          <>
+            <span className="tab-dot" aria-hidden />
+            <span id="inbox-unread" className="sr-only">
+              New messages
+            </span>
+          </>
+        )}
       </motion.button>
     );
   };
@@ -62,12 +73,20 @@ export function TabBar() {
         {ITEMS.slice(0, 2).map(item)}
         <motion.button
           className="tab-create"
-          aria-label={createOpen ? 'Close' : 'Create'}
+          aria-label={createOpen ? 'Close Create' : 'Create'}
           aria-expanded={createOpen}
           aria-haspopup="dialog"
           whileTap={{ scale: 0.86 }}
           transition={spring.press}
           onClick={() => (createOpen ? closeSheet() : openSheet({ name: 'create' }))}
+          // While Create is open the + is its close control: Tab from it wraps back into the surface.
+          onKeyDown={(e) => {
+            if (!createOpen || e.key !== 'Tab') return;
+            const list = focusables(document.querySelector('.phone .create-layer') ?? document.body);
+            if (!list.length) return;
+            e.preventDefault();
+            (e.shiftKey ? list[list.length - 1] : list[0]).focus();
+          }}
         >
           {/* The red disc is the origin of the Create surface: it grows into it and returns to it. */}
           {!createOpen && <motion.span layoutId={shared.create} className="tab-create-disc" style={{ borderRadius: 26 }} transition={spring.sheet} />}

@@ -142,6 +142,17 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const allHouses = searchableHouses(blocked).filter((o) => (q ? `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q) : true));
   const houses = q ? allHouses : [];
   const grouped = !!q && !narrowed;
+  const [announce, setAnnounce] = useState('');
+  useEffect(() => {
+    if (!q) return setAnnounce('');
+    if (searchState === 'loading') return setAnnounce('Searching');
+    if (searchState === 'error') return setAnnounce("Search didn't load. Try again.");
+    const t = window.setTimeout(() => {
+      const n = document.querySelectorAll('.phone .tab-layer:not([inert]) .search-results .press-card, .phone .tab-layer:not([inert]) .search-results .rrow').length;
+      setAnnounce(n ? `${n} ${n === 1 ? 'result' : 'results'} for ${query.trim()}` : `No results for ${query.trim()}`);
+    }, 700);
+    return () => window.clearTimeout(t);
+  }, [q, searchState, narrowed]); // eslint-disable-line react-hooks/exhaustive-deps
   const runSearch = () => {
     if (!q || !(scenario.loading || scenario.actionsFail)) return setSearchState('ready');
     setSearchState('loading');
@@ -188,6 +199,10 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
         />}
       </div>
       <OfflineBanner />
+      {/* Search results change as you type: say so once it settles, without moving focus (WCAG 4.1.3). */}
+      <p className="sr-only" role="status">
+        {announce}
+      </p>
 
       {grouped && searchState === 'loading' ? (
         <div className="search-results" aria-busy="true">

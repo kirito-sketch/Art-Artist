@@ -4,7 +4,7 @@ import { useState } from 'react';
 export function Logo() {
   const [failed, setFailed] = useState(false);
   return (
-    <span className="logo" aria-label="Art and Artist">
+    <span className="logo" role="img" aria-label="Art and Artist">
       {failed ? <span className="wordmark">Art and Artist</span> : <img src="images/brand/logo.png" alt="" onError={() => setFailed(true)} />}
     </span>
   );

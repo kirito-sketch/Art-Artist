@@ -33,6 +33,7 @@ function HouseTop() {
   const unread = notifications.some((n) => n.unread && n.forId === acting);
   return (
     <header className="topbar">
+      <h1 className="sr-only">{house.name} home</h1>
       <button className="ph-house" onClick={() => openSheet({ name: 'identity' })} aria-label={`Acting as ${house.name}. Switch`}>
         <Avatar party={house} size={32} />
         <span>
@@ -43,9 +44,16 @@ function HouseTop() {
         </span>
       </button>
       <span className="flex" />
-      <IconButton label="Notifications" onClick={() => openSheet({ name: 'notifications' })}>
-        <Bell size={21} />
-        {unread && <span className="tab-dot ph-bell-dot" />}
+      <IconButton label="Notifications" aria-describedby={unread ? 'house-unread' : undefined} onClick={() => openSheet({ name: 'notifications' })}>
+        <Bell size={21} aria-hidden />
+        {unread && (
+          <>
+            <span className="tab-dot ph-bell-dot" aria-hidden />
+            <span className="sr-only" id="house-unread">
+              New notifications
+            </span>
+          </>
+        )}
       </IconButton>
       <IconButton label="New project" onClick={() => openSheet({ name: 'newProject' })}>
         <Plus size={22} />
@@ -166,7 +174,7 @@ function AroundWork() {
               <span className="item-title">{n.text}</span>
               <span className="meta">{n.time}</span>
             </span>
-            {n.kind === 'credit' && /correct|amend|isn't right/.test(n.text) && <span className="around-flag-dot" aria-label="Needs a decision" />}
+            {n.kind === 'credit' && /correct|amend|isn't right/.test(n.text) && <span className="around-flag-dot" role="img" aria-label="Needs a decision" />}
           </PressCard>
         ))}
       </div>

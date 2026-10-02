@@ -1073,3 +1073,10 @@
 .money-field.field:focus-within { box-shadow: inset 0 0 0 1.5px var(--text); }
 .pay-amount { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
 .pay-amount .row-select { flex: none; }
+
+/* ------------------------------------------------------------ accessibility layers */
+/* Sheets render in one layer above the screens (src/ui/a11y.ts). It adds no stacking of its own, so a
+   sheet sits where it always did; above the sign-up flow it is lifted over it. */
+.modal-root { position: absolute; inset: 0; pointer-events: none; }
+.modal-root > * { pointer-events: auto; }
+.modal-root--top { z-index: 96; }

@@ -4,7 +4,7 @@
  * language ("9 Nov", "₹60,000").
  */
 import { CalendarDays } from 'lucide-react';
-import type { KeyboardEvent, MouseEvent } from 'react';
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -91,7 +91,7 @@ export function DateField({ value, onChange, label, placeholder = 'Choose a date
 export const fmtMoney = (digits: string) => (digits ? Number(digits).toLocaleString('en-IN') : '');
 
 /** Money: digits only (paste and letters are stripped), shown grouped, with a ₹ in front. Value is the digits. */
-export function MoneyField({ value, onChange, label, placeholder, className = '', prefix = true }: { value: string; onChange: (digits: string) => void; label: string; placeholder?: string; className?: string; prefix?: boolean }) {
+export function MoneyField({ id, value, onChange, label, placeholder, className = '', prefix = true }: { id?: string; value: string; onChange: (digits: string) => void; label: string; placeholder?: string; className?: string; prefix?: boolean }) {
   return (
     <span className={`money-field ${className}`}>
       {prefix && <span className="money-field-prefix" aria-hidden>₹</span>}
@@ -101,7 +101,9 @@ export function MoneyField({ value, onChange, label, placeholder, className = ''
         inputMode="numeric"
         pattern="[0-9]*"
         autoComplete="off"
-        aria-label={label}
+        id={id}
+        // With an id, a visible <label for> names it; otherwise the label is programmatic.
+        aria-label={id ? undefined : label}
         placeholder={placeholder}
         value={fmtMoney(value)}
         onChange={(e) => onChange(e.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 9))}
@@ -126,4 +128,28 @@ export function fmtPay(min: string, max: string, unit: PayUnit): string {
   const hi = min && max && Number(max) > Number(min) ? max : '';
   const suffix = PAY_UNITS.find(([k]) => k === unit)?.[1] ?? '';
   return `₹${fmtMoney(lo)}${hi ? `–${fmtMoney(hi)}` : ''} ${suffix}`.trim();
+}
+
+/** A compact label that stays above a field inside a grouped row (never a vanishing placeholder). */
+export function RowField({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+  return (
+    <span className="row-field">
+      <label className="row-field-label" htmlFor={id}>
+        {label}
+      </label>
+      {children}
+    </span>
+  );
+}
+
+/** While an action is disabled, says what is still needed, so nobody has to guess (WCAG 3.3.2). */
+export function MissingHint({ id, items, verb = 'continue' }: { id: string; items: (string | false)[]; verb?: string }) {
+  const need = items.filter(Boolean) as string[];
+  if (!need.length) return <span id={id} hidden />;
+  const list = need.length === 1 ? need[0] : `${need.slice(0, -1).join(', ')} and ${need[need.length - 1]}`;
+  return (
+    <p className="meta missing-hint" id={id}>
+      To {verb}, add {list}.
+    </p>
+  );
 }

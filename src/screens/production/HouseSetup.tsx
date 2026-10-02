@@ -62,7 +62,7 @@ export function HouseSetup() {
           </label>
           <div className="chips chips--tight">
             {CITIES.map((c) => (
-              <button key={c} className={`chip ${city === c ? 'is-on' : ''}`} onClick={() => setCity(c)}>
+              <button key={c} className={`chip ${city === c ? 'is-on' : ''}`} aria-pressed={city === c} onClick={() => setCity(c)}>
                 {c}
               </button>
             ))}
@@ -70,7 +70,7 @@ export function HouseSetup() {
           <span className="field-label">What you make</span>
           <div className="chips">
             {WORK.map((w) => (
-              <button key={w} className={`chip ${work.includes(w) ? 'is-on' : ''}`} onClick={() => setWork((x) => (x.includes(w) ? x.filter((y) => y !== w) : [...x, w]))}>
+              <button key={w} className={`chip ${work.includes(w) ? 'is-on' : ''}`} aria-pressed={work.includes(w)} onClick={() => setWork((x) => (x.includes(w) ? x.filter((y) => y !== w) : [...x, w]))}>
                 {w}
               </button>
             ))}

@@ -1,8 +1,9 @@
 import { AnimatePresence, motion, type HTMLMotionProps } from 'framer-motion';
-import { forwardRef, useState, type ReactNode } from 'react';
+import { forwardRef, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { BadgeCheck, Check, ChevronRight, ImageOff, Play } from 'lucide-react';
 import type { Media, Party } from '../data/types';
 import { spring } from './motion';
+import { rovingKeys } from './a11y';
 
 /* ------------------------------------------------------------ Pressable */
 
@@ -22,25 +23,47 @@ export const Pressable = forwardRef<HTMLButtonElement, PressableProps>(function 
 
 type PressCardProps = HTMLMotionProps<'div'> & { scale?: number; onPress: () => void };
 
-/** A tappable block that can contain its own buttons (save, follow) without nesting <button>s. */
-export function PressCard({ scale = 0.98, className = '', onPress, children, ...rest }: PressCardProps) {
+/** The card's own words, for the name of its open control (skipping its buttons and decoration). */
+function cardText(root: HTMLElement) {
+  const groups: { block: Element; text: string }[] = [];
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement?.closest('button, a, input, select, textarea, [aria-hidden="true"], .pc-hit, .sr-only') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+    const t = n.textContent?.replace(/\s+/g, ' ').trim();
+    if (!t) continue;
+    // Words in the same line of text read together; separate lines (blocks, flex items) get a comma.
+    let block: Element = n.parentElement!;
+    while (block !== root && getComputedStyle(block).display === 'inline') block = block.parentElement!;
+    const last = groups[groups.length - 1];
+    if (last && last.block === block) last.text += ' ' + t;
+    else groups.push({ block, text: t });
+  }
+  const parts = groups.map((g) => g.text.replace(/\s*[·•|]\s*/g, ', ').replace(/^, |, $/g, '').trim()).filter((t, i, all) => t && t !== all[i - 1]);
+  const s = parts.join(', ');
+  return s.length > 160 ? s.slice(0, 157) + '…' : s;
+}
+
+/**
+ * A tappable card that can hold its own actions (Save, Follow, Review). The card itself is not a
+ * button, so its actions are never nested inside one (WCAG 4.1.2): the whole card opens on tap, and
+ * a real button, first in the card, opens it from the keyboard and names it for screen readers.
+ * Pass `aria-label` for a short name; otherwise the card's own text is used.
+ */
+export function PressCard({ scale = 0.98, className = '', onPress, children, 'aria-label': label, ...rest }: PressCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [derived, setDerived] = useState('');
+  useLayoutEffect(() => {
+    if (label || !ref.current) return;
+    const t = cardText(ref.current);
+    if (t !== derived) setDerived(t);
+  });
   return (
-    <motion.div
-      role="button"
-      tabIndex={0}
-      whileTap={{ scale }}
-      transition={spring.press}
-      className={`pressable ${className}`}
-      onClick={onPress}
-      onKeyDown={(e) => {
-        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          onPress();
-        }
-      }}
-      {...rest}
-    >
-      {children}
+    // tabIndex -1: Framer Motion makes tap-animated elements tabbable; the card must not be a stop.
+    <motion.div ref={ref} whileTap={{ scale }} transition={spring.press} className={`pressable press-card ${className}`} onClick={onPress} tabIndex={-1} {...rest}>
+      {/* Activating it fires a click that reaches the card (onPress). */}
+      <button type="button" className="pc-hit" aria-label={label || derived || 'Open'} />
+      {children as ReactNode}
     </motion.div>
   );
 }
@@ -59,7 +82,13 @@ type ButtonProps = HTMLMotionProps<'button'> & {
 export function Button({ variant = 'primary', size = 'm', icon, block, loading, className = '', children, disabled, ...rest }: ButtonProps) {
   return (
     <Pressable scale={0.96} className={`btn btn--${variant} btn--${size} ${block ? 'btn--block' : ''} ${className}`} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
-      {loading ? <span className="spinner" aria-label="Loading" /> : icon}
+      {loading ? (
+        <span className="spinner" role="status">
+          <span className="sr-only">Working</span>
+        </span>
+      ) : (
+        icon
+      )}
       {children as ReactNode}
     </Pressable>
   );
@@ -209,18 +238,22 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
 }
 
 /** iOS inset-grouped row: icon, label, value, and optional chevron. */
-export function Row({ icon, label, value, onPress, chevron = !!onPress, children }: { icon?: ReactNode; label: ReactNode; value?: ReactNode; onPress?: () => void; chevron?: boolean; children?: ReactNode }) {
+export function Row({ icon, label, value, onPress, chevron = !!onPress, pressed, children }: { icon?: ReactNode; label: ReactNode; value?: ReactNode; onPress?: () => void; chevron?: boolean; pressed?: boolean; children?: ReactNode }) {
   const inner = (
     <>
-      {icon && <span className="row-icon">{icon}</span>}
+      {icon && (
+        <span className="row-icon" aria-hidden>
+          {icon}
+        </span>
+      )}
       <span className="row-label">{label}</span>
       {value !== undefined && <span className="row-value">{value}</span>}
       {children}
-      {chevron && <ChevronRight size={18} className="row-chevron" />}
+      {chevron && <ChevronRight size={18} className="row-chevron" aria-hidden />}
     </>
   );
   return onPress ? (
-    <Pressable className="row" onClick={onPress} scale={0.99}>
+    <Pressable className="row" onClick={onPress} scale={0.99} aria-pressed={pressed}>
       {inner}
     </Pressable>
   ) : (
@@ -262,9 +295,9 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boo
 
 export function Tabs<T extends string>({ value, options, onChange, id }: { value: T; options: { value: T; label: string; icon?: ReactNode }[]; onChange: (v: T) => void; id: string }) {
   return (
-    <div className="tabs" role="tablist">
+    <div className="tabs" role="tablist" onKeyDown={(e) => rovingKeys(e, '[role="tab"]')}>
       {options.map((o) => (
-        <button key={o.value} role="tab" aria-selected={value === o.value} className={`tab ${value === o.value ? 'is-on' : ''}`} onClick={() => onChange(o.value)}>
+        <button key={o.value} role="tab" aria-selected={value === o.value} tabIndex={value === o.value ? 0 : -1} className={`tab ${value === o.value ? 'is-on' : ''}`} onClick={() => onChange(o.value)}>
           {o.icon}
           <span>{o.label}</span>
           {value === o.value && <motion.span layoutId={`tabs-${id}`} className="tab-underline" transition={spring.snappy} />}

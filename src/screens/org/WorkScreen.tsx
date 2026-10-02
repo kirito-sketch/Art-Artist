@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion';
+import { scriptLang } from '../../ui/compose';
+import { mediaName } from '../../ui/a11y';
 import { ChevronLeft, MoreHorizontal, Share } from 'lucide-react';
 import { shared, spring } from '../../ui/motion';
 import { useEffect, useState } from 'react';
@@ -69,20 +71,20 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
           <p className="whero-kicker">
             {w.format} · {released ? w.year : w.stage}
           </p>
-          <h1 className="whero-title">{w.title}</h1>
+          <h1 className="whero-title" lang={scriptLang(w.title)}>{w.title}</h1>
         </div>
         <div className="phero-bar">
           <IconButton label="Back" className="icon-btn--float" onClick={pop}>
             <ChevronLeft size={24} />
           </IconButton>
           <span className="flex" />
-          <IconButton label="Share project" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: w.title })}>
+          <IconButton label={`Share ${w.title}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: w.title })}>
             <Share size={18} />
           </IconButton>
           <span className="save-float">
-            <SaveButton id={w.id} kind="project" floating />
+            <SaveButton id={w.id} kind="project" floating name={w.title} />
           </span>
-          <IconButton label="More" className="icon-btn--float" onClick={() => openSheet({ name: 'report', subject: w.title })}>
+          <IconButton label={`More options for ${w.title}`} className="icon-btn--float" onClick={() => openSheet({ name: 'report', subject: w.title })}>
             <MoreHorizontal size={20} />
           </IconButton>
         </div>
@@ -182,7 +184,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             <SectionHeader title="Stills" />
             <div className="grid-3">
               {w.stills.map((m, i) => (
-                <Pressable key={m.id} className="grid-item" onClick={() => push({ name: 'media', items: w.stills, index: i })} scale={0.97}>
+                <Pressable key={m.id} className="grid-item" onClick={() => push({ name: 'media', items: w.stills, index: i, what: 'Still', from: `from ${w.title}` })} scale={0.97} aria-label={mediaName(m, i, w.stills.length, 'Still', `from ${w.title}`)}>
                   <Photo media={m} showPlay={false} />
                 </Pressable>
               ))}

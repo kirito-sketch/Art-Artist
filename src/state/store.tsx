@@ -41,7 +41,7 @@ export type Route =
   | { name: 'org'; id: string }
   | { name: 'composePost' }
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
-  | { name: 'media'; items: Media[]; index: number }
+  | { name: 'media'; items: Media[]; index: number; what?: string; from?: string }
   | { name: 'posts'; ids: string[]; index: number }
   | { name: 'saved' };
 
@@ -218,9 +218,15 @@ function useStoreValue() {
   const showToast = useCallback((t: Omit<Toast, 'id'>) => {
     window.clearTimeout(toastTimer.current);
     setToast({ ...t, id: Date.now() });
-    toastTimer.current = window.setTimeout(() => setToast(null), t.action ? 4200 : 2600);
+    // A toast with an action (Undo) stays long enough to reach by keyboard, and pauses while hovered
+    // or focused (holdToast): WCAG 2.2.1. Information-only toasts are also in a live region.
+    toastTimer.current = window.setTimeout(() => setToast(null), t.action ? 10000 : 3500);
   }, []);
   const dismissToast = useCallback(() => setToast(null), []);
+  const holdToast = useCallback((hold: boolean) => {
+    window.clearTimeout(toastTimer.current);
+    if (!hold) toastTimer.current = window.setTimeout(() => setToast(null), 4000);
+  }, []);
 
   /* Switching persona resets per-account state, like signing into another account. */
   const switchViewer = useCallback((id: string) => {
@@ -665,6 +671,7 @@ function useStoreValue() {
     toast,
     showToast,
     dismissToast,
+    holdToast,
     saved,
     isSaved,
     toggleSave,

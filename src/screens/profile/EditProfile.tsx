@@ -74,7 +74,7 @@ export function EditProfile() {
       </header>
 
       <div className="composer-body stack stack--loose">
-        {saveFailed && <p className="inline-error">Couldn't save. Your changes are still here. Tap Save to try again.</p>}
+        {saveFailed && <p className="inline-error" role="alert">Couldn't save. Your changes are still here. Tap Save to try again.</p>}
         <div className="edit-photo">
           <Avatar party={preview} size={96} />
           <button className="link" onClick={() => setPicker(true)}>
@@ -85,13 +85,13 @@ export function EditProfile() {
 
         <div>
           <label className="field-label" htmlFor="ep-name">Name</label>
-          <input id="ep-name" className="field" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setTouched(true)} />
-          {nameError && <p className="field-error">{nameError}</p>}
+          <input id="ep-name" className="field" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setTouched(true)} autoComplete="name" aria-invalid={nameError ? true : undefined} aria-describedby={nameError ? 'ep-name-err' : undefined} />
+          {nameError && <p className="field-error" role="alert" id="ep-name-err">{nameError}: it's how productions credit you.</p>}
         </div>
         <div>
           <label className="field-label" htmlFor="ep-role">What you do</label>
-          <input id="ep-role" className="field" value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Director of Photography, Painter" />
-          {roleError && <p className="field-error">{roleError}</p>}
+          <input id="ep-role" className="field" value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Director of Photography, Painter" aria-invalid={roleError ? true : undefined} aria-describedby={roleError ? 'ep-role-err' : undefined} />
+          {roleError && <p className="field-error" role="alert" id="ep-role-err">{roleError}, for example "Director of Photography".</p>}
         </div>
         <div>
           <label className="field-label" htmlFor="ep-city">Based in</label>
@@ -117,7 +117,7 @@ export function EditProfile() {
           <span className="field-label">Languages</span>
           <div className="chips">
             {LANGS.map((l) => (
-              <button key={l} className={`chip ${langs.includes(l) ? 'is-on' : ''}`} onClick={() => setLangs((x) => (x.includes(l) ? x.filter((y) => y !== l) : [...x, l]))}>
+              <button key={l} className={`chip ${langs.includes(l) ? 'is-on' : ''}`} aria-pressed={langs.includes(l)} onClick={() => setLangs((x) => (x.includes(l) ? x.filter((y) => y !== l) : [...x, l]))}>
                 {l}
               </button>
             ))}
@@ -163,7 +163,7 @@ export function EditProfile() {
           }}
         />
       </Sheet>
-      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard changes?">
+      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard changes?" close={false}>
         <div className="stack">
           <Button block size="l" variant="danger" onClick={pop}>
             Discard

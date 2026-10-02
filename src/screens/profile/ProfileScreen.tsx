@@ -1,4 +1,5 @@
 import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import * as seed from '../../data/seed';
@@ -159,14 +160,14 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <span className="flex" />
           {/* V30: people can be saved, privately, like anything else worth coming back to (a shortlist). */}
           {!own && (
-            <IconButton label={isSaved('person', id) ? `Remove ${p.name} from Saved` : `Save ${p.name}`} className={`icon-btn--float ${isSaved('person', id) ? 'is-saved' : ''}`} onClick={() => toggleSave(id, 'person')}>
+            <IconButton label={`Save ${p.name}`} aria-pressed={isSaved('person', id)} className={`icon-btn--float ${isSaved('person', id) ? 'is-saved' : ''}`} onClick={() => toggleSave(id, 'person')}>
               <Bookmark size={18} fill={isSaved('person', id) ? 'currentColor' : 'none'} />
             </IconButton>
           )}
-          <IconButton label="Share profile" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
+          <IconButton label={own ? 'Share your profile' : `Share ${p.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
             <Share size={18} />
           </IconButton>
-          <IconButton label={own ? 'Settings' : 'More'} className="icon-btn--float" onClick={() => (own ? push({ name: 'settings' }) : openSheet({ name: 'more', id }))}>
+          <IconButton label={own ? 'Settings' : `More options for ${p.name}`} className="icon-btn--float" onClick={() => (own ? push({ name: 'settings' }) : openSheet({ name: 'more', id }))}>
             {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
           </IconButton>
         </div>
@@ -362,7 +363,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             <SectionHeader title="Selected work" />
             <div className="stills-mosaic">
               {stills.map((m, i) => (
-                <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i })} scale={0.97}>
+                <Pressable key={m.id + i} className="grid-item" onClick={() => push({ name: 'media', items: stills, index: i, what: 'Work sample', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Work sample', `by ${p.name}`)}>
                   <Photo media={m} />
                 </Pressable>
               ))}

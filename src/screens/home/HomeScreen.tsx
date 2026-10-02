@@ -48,13 +48,21 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string) => voi
   // Cards layout: the header is part of the page, on the same paper, and scrolls away with it.
   const header = (className: string) => (
     <header className={`home-header ${className}`}>
+      <h1 className="sr-only">Home</h1>
       <span className="home-logo">
         <Logo />
       </span>
       <span className="flex" />
-      <IconButton label="Notifications" className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
-        <Bell size={19} />
-        {unread && <span className="dot" />}
+      <IconButton label="Notifications" className="icon-btn--float" aria-describedby={unread ? 'home-unread' : undefined} onClick={() => openSheet({ name: 'notifications' })}>
+        <Bell size={19} aria-hidden />
+        {unread && (
+          <>
+            <span className="dot" aria-hidden />
+            <span className="sr-only" id="home-unread">
+              New notifications
+            </span>
+          </>
+        )}
       </IconButton>
     </header>
   );
@@ -486,7 +494,7 @@ function HeroSlide({ o, onOpen }: { o: Opportunity; onOpen: () => void }) {
             View role
           </Button>
           <span className="hero-save">
-            <SaveButton id={o.id} floating />
+            <SaveButton id={o.id} floating name={`${o.role} role`} />
           </span>
         </div>
       </motion.div>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { mediaName } from '../../ui/a11y';
 import { ChevronLeft } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
@@ -72,7 +73,7 @@ function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
         <motion.div className="stream-media" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
           <div className="stream-media-track" onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
             {post.media.map((m, i) => (
-              <Pressable key={m.id + i} className="stream-media-item" onClick={() => push({ name: 'media', items: post.media, index: i })} scale={0.99}>
+              <Pressable key={m.id + i} className="stream-media-item" onClick={() => push({ name: 'media', items: post.media, index: i, what: 'Photo', from: `in ${author.name}'s post` })} scale={0.99} aria-label={mediaName(m, i, post.media.length, 'Photo', `in ${author.name}'s post`)}>
                 <Photo media={m} />
               </Pressable>
             ))}

@@ -320,11 +320,11 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
           <ChevronLeft size={24} />
         </IconButton>
         <span className="flex" />
-        <IconButton label="Share" className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: `${o.role} · ${o.project}` })}>
+        <IconButton label={`Share ${o.role} role`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: `${o.role} · ${o.project}` })}>
           <Share size={18} />
         </IconButton>
         <span className="save-float">
-          <SaveButton id={o.id} floating />
+          <SaveButton id={o.id} floating name={`${o.role} role`} />
         </span>
       </div>
 

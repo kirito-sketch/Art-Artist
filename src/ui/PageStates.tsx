@@ -7,6 +7,9 @@ export function PageSkeleton() {
   const { pop } = useStore();
   return (
     <div className="screen" aria-busy="true">
+      <p className="sr-only" role="status">
+        Loading
+      </p>
       <div className="skel-hero">
         <IconButton label="Back" className="icon-btn--float skel-back" onClick={pop}>
           <ChevronLeft size={24} />
@@ -32,7 +35,9 @@ export function PageError({ what, retry }: { what: string; retry: () => void }) 
           <ChevronLeft size={26} />
         </IconButton>
       </header>
-      <EmptyState icon={<WifiOff />} title={`Couldn't load this ${what}`} body="Check your connection and try again." />
+      <div role="alert">
+        <EmptyState icon={<WifiOff aria-hidden />} title={`Couldn't load this ${what}`} body="Check your connection and try again." />
+      </div>
       <Button variant="secondary" className="center-btn" onClick={retry}>
         Try again
       </Button>

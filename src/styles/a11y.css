@@ -1,0 +1,275 @@
+/*
+ * Accessibility layer for the Art and Artist app (docs/ACCESSIBILITY_AUDIT.md, WCAG 2.2 AA).
+ * Scoped to the product (.phone) so the research surfaces outside it are unchanged.
+ */
+
+/* ---------------------------------------------------------------- tokens
+ * Text tokens that meet 4.5:1 on every product ground (white, paper, grouped, tint, sand, fill).
+ * Same hues as before, a step darker. Status colours keep their bright mark for dots and fills and
+ * gain a text value. Numbers: docs/ACCESSIBILITY_AUDIT.md, token matrix.
+ */
+.phone {
+  --text-2: #5f5f64; /* was #6e6e73: 4.27:1 on tint, 3.84:1 on sand → 5.3 / 4.8 */
+  --text-3: #68686d; /* was #aeaeb2 (2:1): placeholders, hints, meta → 4.7 to 5.5 on light grounds */
+  --available-text: #126b40; /* "Available from…" as text; the bright --available stays for dots */
+  --danger: #b83127; /* was #d83a2e (4.19:1 on paper) → 5.45 on paper, 6.0 white on it */
+  --focus-color: var(--accent);
+}
+
+.phone .prow-available,
+.phone .meta--done,
+.phone .pill--done {
+  color: var(--available-text);
+}
+
+/* ---------------------------------------------------------------- focus
+ * One treatment everywhere: the 2px action-colour ring. White on dark surfaces, where the green
+ * ring falls under 3:1. Inline fields that removed their outline get the ring on their container.
+ */
+.phone :focus-visible {
+  outline-color: var(--focus-color);
+}
+
+.phone :is(.viewer, .route-layer--media, .intro, .splash, .identity-shift, .now-card, .slate-hero, .whero) :focus-visible,
+.phone .icon-btn--on-dark:focus-visible,
+.phone .icon-btn--float:focus-visible {
+  outline-color: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.55);
+}
+
+/* A focused heading that received focus programmatically (screen change) needs no ring. */
+.phone :is(h1, h2)[tabindex='-1']:focus {
+  outline: none;
+}
+
+.phone .search:focus-within,
+.phone .convo-field:focus,
+.phone .composer-text:focus,
+.phone .title-input:focus,
+.phone .money-field:focus-within,
+.phone .row:focus-within:has(.row-input, .row-select, .date-field) {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.phone .row-select:focus-visible {
+  outline: none; /* its row shows the ring */
+}
+
+/* ---------------------------------------------------------------- cards
+ * Cards are not buttons (src/ui/primitives.tsx PressCard). Their open control is a real button with
+ * no visual of its own; when it has keyboard focus the whole card shows the ring.
+ */
+.pc-hit {
+  position: absolute; /* at its static position: no layout, no scroll jump */
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  background: none;
+}
+
+.pc-hit:focus-visible {
+  outline: none;
+}
+
+.press-card:has(> .pc-hit:focus-visible) {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- screen-reader text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- sheets */
+.sheet-head {
+  position: relative;
+}
+
+.sheet-close {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  min-width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 22px;
+}
+
+.sheet-close::before {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--fill);
+  z-index: -1;
+}
+
+.sheet-close svg {
+  position: relative;
+}
+
+.sheet-close-text {
+  font-size: var(--t-4);
+  font-weight: 600;
+  color: var(--accent);
+  padding: 0 6px;
+}
+
+.sheet-close:has(.sheet-close-text)::before {
+  display: none;
+}
+
+/* Keep the centred title clear of the close control. */
+.sheet-title {
+  padding: 0 40px;
+}
+
+/* ---------------------------------------------------------------- touch targets
+ * At least 44x44 CSS px to touch, without making the visuals bigger: an invisible extension.
+ */
+.phone :is(.icon-btn, .save, .search-clear, .convo-send, .pw-toggle, .viewer-dot, .intro-dots button, .post-more)::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  translate: -50% -50%;
+}
+
+.phone :is(.btn--s, .chip, .section-link, .link, .toggle, .ob-skip, .intro-skip, .row-select)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: max(100%, 44px);
+  translate: 0 -50%;
+}
+
+:where(.phone) :where(.btn--s, .chip, .section-link, .link, .toggle, .row-select, .convo-send, .search-clear, .post-more) {
+  position: relative; /* anchor for the hit area; any rule that positions them otherwise still wins */
+}
+
+.phone .pw-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.phone .viewer-dot,
+.phone .intro-dots button {
+  position: relative;
+}
+
+/* ---------------------------------------------------------------- text that wraps
+ * Card meta wraps to two lines instead of cutting names, places and pay at one.
+ */
+.phone :is(.portrait-card-context, .portrait-card .meta, .portrait-card-text p, .poster-tile-title, .poster-tile-meta, .rail-item p, .rrow-text p, .ocard-line, .role-compact-text p, .booking-left .item-title, .booking-left .meta) {
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------- floating tab bar
+ * Keyboard focus scrolled into view never lands under the floating tab bar.
+ */
+.phone :is(.tab-layer, .route-layer) * {
+  scroll-padding-bottom: var(--tabbar-clearance);
+}
+
+.phone :is(.tab-layer, .route-layer) {
+  scroll-padding-bottom: var(--tabbar-clearance);
+}
+
+/* ---------------------------------------------------------------- persistent labels */
+.row-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.row-field-label {
+  font-size: var(--t-5);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.missing-hint {
+  margin: 0;
+  text-align: center;
+}
+
+.composer-label {
+  display: block;
+  margin: 4px 0 6px;
+}
+
+/* ---------------------------------------------------------------- confirming a removal */
+.confirm-remove {
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.confirm-remove-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.confirm-remove-actions .btn {
+  flex: 1;
+}
+
+.post-more-text {
+  display: inline-block;
+  margin: -4px 0 8px;
+}
+
+/* Action rows wrap instead of pushing a button off-screen at narrow widths or larger text. */
+.phone .pending-credit-text {
+  flex: 1;
+}
+
+.phone .pending-credit-actions {
+  flex-wrap: wrap;
+}
+
+.phone .pending-credit-actions .btn {
+  max-width: 100%;
+  white-space: normal;
+  height: auto;
+  min-height: 34px;
+}

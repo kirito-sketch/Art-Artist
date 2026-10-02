@@ -1,6 +1,7 @@
 import { Ban, Bookmark, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { currentScreen, focusInto, restoreFocus, trapTab } from '../../ui/a11y';
 import { dur, shared, spring } from '../../ui/motion';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
@@ -50,13 +51,13 @@ export function SheetHost() {
       <Sheet open={is('share')} onClose={closeSheet} title="Share">
         {sheet?.name === 'share' && <ShareSheet label={sheet.label} />}
       </Sheet>
-      <Sheet open={is('more')} onClose={closeSheet} title="">
+      <Sheet open={is('more')} onClose={closeSheet} title="" label="More options">
         {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
       </Sheet>
       <Sheet open={is('report')} onClose={closeSheet} title="Report">
         {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} target={sheet.target} />}
       </Sheet>
-      <Sheet open={is('postMore')} onClose={closeSheet} title="">
+      <Sheet open={is('postMore')} onClose={closeSheet} title="" label="Post options">
         {sheet?.name === 'postMore' && <PostMenu id={sheet.id} />}
       </Sheet>
       <Sheet open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
@@ -71,7 +72,7 @@ export function SheetHost() {
       <Sheet open={is('closeRole')} onClose={closeSheet} title="Close role">
         {sheet?.name === 'closeRole' && <CloseRole id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('block')} onClose={closeSheet} title="">
+      <Sheet open={is('block')} onClose={closeSheet} title="" label="Block">
         {sheet?.name === 'block' && <BlockSheet id={sheet.id} />}
       </Sheet>
     </>
@@ -86,11 +87,32 @@ export function SheetHost() {
  * It sits under the tab bar so the same control that opened it closes it.
  */
 function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const layer = useRef<HTMLDivElement>(null);
+  // A dialog that grows out of the + button: focus moves to its first action, Tab cycles between its
+  // actions and the + (now the close control), and focus returns to the + when it closes.
+  useEffect(() => {
+    if (!open) return;
+    const opener = document.querySelector<HTMLElement>('.phone .tab-create');
+    const f = requestAnimationFrame(() => requestAnimationFrame(() => focusInto(layer.current)));
+    return () => {
+      cancelAnimationFrame(f);
+      restoreFocus(opener, currentScreen);
+    };
+  }, [open]);
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      onClose();
+      return;
+    }
+    const plus = document.querySelector<HTMLElement>('.phone .tab-create');
+    if (layer.current) trapTab(e, layer.current, plus ? [plus] : []);
+  };
   return (
     <AnimatePresence>
       {open && (
-        <div className="create-layer" role="dialog" aria-modal="true" aria-label="Create">
-          <motion.div className="create-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: dur.ui }} onClick={onClose} />
+        <div className="create-layer" role="dialog" aria-modal="true" aria-labelledby="create-title" ref={layer} onKeyDown={onKeyDown}>
+          <motion.div className="create-backdrop" aria-hidden initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: dur.ui }} onClick={onClose} />
           <motion.div
             layoutId={shared.create}
             className="create-surface"
@@ -101,7 +123,9 @@ function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }
             transition={spring.sheet}
           >
             <motion.div className="create-content" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1, duration: dur.micro } }} exit={{ opacity: 0, transition: { duration: 0.08 } }}>
-              <p className="create-title">Create</p>
+              <h2 className="create-title" id="create-title" data-autofocus tabIndex={-1}>
+                Create
+              </h2>
               <CreateMenu />
             </motion.div>
           </motion.div>
@@ -167,7 +191,12 @@ function Notifications() {
         {n.text}
         <span className="meta">{n.time}</span>
       </span>
-      {n.unread && <span className="dot dot--inline" />}
+      {n.unread && (
+        <>
+          <span className="dot dot--inline" aria-hidden />
+          <span className="sr-only">New</span>
+        </>
+      )}
     </Pressable>
   );
   return (
@@ -175,7 +204,7 @@ function Notifications() {
       {identities.length > 1 && (
         <div className="chips chips--scroll">
           {[...identities, 'all'].map((id) => (
-            <button key={id} className={`chip ${filter === id ? 'is-on' : ''}`} onClick={() => setFilter(id)}>
+            <button key={id} className={`chip ${filter === id ? 'is-on' : ''}`} aria-pressed={filter === id} onClick={() => setFilter(id)}>
               {id === 'all' ? 'All' : id === 'self' ? 'You' : org(id).name}
               {unreadFor(id) > 0 && id !== filter ? ` · ${unreadFor(id)}` : ''}
             </button>
@@ -253,15 +282,18 @@ function AvailabilityForm() {
       {open && (
         <>
           <div className="chips">
-            <button className={`chip ${!later ? 'is-on' : ''}`} onClick={() => setLater(false)}>
+            <button className={`chip ${!later ? 'is-on' : ''}`} aria-pressed={!later} onClick={() => setLater(false)}>
               From now
             </button>
-            <button className={`chip ${later ? 'is-on' : ''}`} onClick={() => setLater(true)}>
+            <button className={`chip ${later ? 'is-on' : ''}`} aria-pressed={later} onClick={() => setLater(true)}>
               From a date
             </button>
           </div>
           {later && <DateField className="field" value={fromDay} onChange={setFromDay} label="Available from" placeholder="Choose a start date" />}
-          <input id="avail-scope" className="field" value={scope} onChange={(e) => setScope(e.target.value)} placeholder="City, and whether you travel" aria-label="Where" />
+          <label className="field-label" htmlFor="avail-scope">
+            Where
+          </label>
+          <input id="avail-scope" className="field" value={scope} onChange={(e) => setScope(e.target.value)} placeholder="City, and whether you travel" />
         </>
       )}
       <Button
@@ -324,7 +356,7 @@ function RespondForm({ id }: { id: string }) {
       ))}
 
       <div className="sheet-sticky">
-        {failed && <p className="field-error">Couldn't send. Your answers are kept, try again.</p>}
+        {failed && <p className="field-error" role="alert">Couldn't send. Your answers are kept, try again.</p>}
         <Button
           block
           size="l"
@@ -385,8 +417,15 @@ function InterestForm({ id }: { id: string }) {
           <input id={`iq${i}`} className="field" value={answers[i]} maxLength={120} placeholder="Paste a link or write a short answer" onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
         </div>
       ))}
-      <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note (optional)" aria-label="Note (optional)" />
-      {state === 'failed' && <p className="field-error">Couldn't send your interest. Nothing was shared.</p>}
+      <label className="field-label" htmlFor="note">
+        Note <span className="meta">(optional)</span>
+      </label>
+      <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line about why you're a fit" />
+      {state === 'failed' && (
+        <p className="field-error" role="alert">
+          Couldn't send your interest. Nothing was shared. Try again.
+        </p>
+      )}
       <Button
         block
         size="l"
@@ -527,10 +566,10 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
       </p>
       <div className="group">
         {reasons.map((r) => (
-          <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} value={reason === r ? <Check size={18} className="accent" /> : undefined} />
+          <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} pressed={reason === r} value={reason === r ? <Check size={18} className="accent" aria-hidden /> : undefined} />
         ))}
       </div>
-      {state === 'failed' && <p className="field-error">Couldn't send. Try again.</p>}
+      {state === 'failed' && <p className="field-error" role="alert">Couldn't send. Try again.</p>}
       <Button
         block
         size="l"
@@ -752,10 +791,17 @@ function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: 
       {acting !== 'self' && <p className="meta">This is a personal action: the report comes from you, {person(viewer.id).name.split(' ')[0]}, not {org(acting).name}.</p>}
       <div className="group">
         {REPORT_REASONS.map((r) => (
-          <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} value={reason === r ? <Check size={18} className="accent" /> : undefined} />
+          <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} pressed={reason === r} value={reason === r ? <Check size={18} className="accent" aria-hidden /> : undefined} />
         ))}
       </div>
-      {reason && <textarea className="field field--area" rows={3} value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Anything that helps us check (optional)" />}
+      {reason && (
+        <>
+          <label className="field-label" htmlFor="report-detail">
+            Details <span className="meta">(optional)</span>
+          </label>
+          <textarea id="report-detail" className="field field--area" rows={3} value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Anything that helps us check" />
+        </>
+      )}
       <Button
         block
         size="l"
@@ -880,7 +926,7 @@ function EditRole({ id }: { id: string }) {
           {told} {told === 1 ? 'person' : 'people'} who showed interest will see that the {material.join(' and ')} changed.
         </p>
       )}
-      {state === 'failed' && <p className="field-error">Couldn't save. Your edits are kept.</p>}
+      {state === 'failed' && <p className="field-error" role="alert">Couldn't save. Your edits are kept.</p>}
       <Button
         block
         size="l"
@@ -947,7 +993,7 @@ function CloseRole({ id }: { id: string }) {
     <div className="stack">
       <div className="group">
         {CLOSE_REASONS.map((r, i) => (
-          <Row key={r.label} label={r.label} onPress={() => setPick(i)} chevron={false} value={pick === i ? <Check size={18} className="accent" /> : undefined} />
+          <Row key={r.label} label={r.label} onPress={() => setPick(i)} chevron={false} pressed={pick === i} value={pick === i ? <Check size={18} className="accent" /> : undefined} />
         ))}
       </div>
       <p className="meta">{waiting.length ? `${waiting.length} ${waiting.length === 1 ? 'person' : 'people'} who showed interest will be told the role is ${pick !== null ? CLOSE_REASONS[pick].tells.toLowerCase() : 'closed'}. ` : ''}The role stops appearing on Art and Artist.</p>
