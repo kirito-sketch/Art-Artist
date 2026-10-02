@@ -282,21 +282,7 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   margin: -4px 0 8px;
 }
 
-/* Action rows wrap instead of pushing a button off-screen at narrow widths or larger text. */
-.phone .pending-credit-text {
-  flex: 1;
-}
-
-.phone .pending-credit-actions {
-  flex-wrap: wrap;
-}
-
-.phone .pending-credit-actions .btn {
-  max-width: 100%;
-  white-space: normal;
-  height: auto;
-  min-height: 34px;
-}
+/* The credit confirmation card's layout lives in src/styles/refine.css (it wraps at larger text). */
 
 /* ---------------------------------------------------------------- text size
  * The type tokens follow the iOS text size setting (--type-scale, set from -apple-system-body in

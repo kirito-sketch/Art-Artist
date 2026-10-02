@@ -289,7 +289,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
         <motion.div key={scope} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.16 }}>
           {scope === 'roles' && (
             <>
-              <div className="chips chips--scroll chips--pad">
+              <div className="chips chips--scroll chips--pad filter-chips">
                 <Chip
                   active={activeFilters > 0}
                   icon={<SlidersHorizontal size={15} />}
@@ -320,7 +320,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
 
           {scope === 'people' && (
             <>
-              <div className="chips chips--scroll chips--pad" role="group" aria-label="People filters">
+              <div className="chips chips--scroll chips--pad filter-chips" role="group" aria-label="People filters">
                 <Chip
                   active={activePeopleFilters > 0}
                   icon={<SlidersHorizontal size={15} />}
@@ -340,7 +340,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
               </div>
               {who === 'people' ? (
                 <>
-                  <div className="chips chips--scroll chips--pad craft-chips" role="group" aria-label="Craft">
+                  <div className="chips chips--scroll chips--pad filter-chips craft-chips" role="group" aria-label="Craft">
                     <Chip active={!craft} onClick={() => setCraft(null)}>
                       All crafts
                     </Chip>
@@ -380,7 +380,7 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
 
           {scope === 'projects' && (
             <>
-              <div className="chips chips--scroll chips--pad" role="group" aria-label="Project stage">
+              <div className="chips chips--scroll chips--pad filter-chips" role="group" aria-label="Project stage">
                 {(
                   [
                     ['all', 'All'],

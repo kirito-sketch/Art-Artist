@@ -1,0 +1,184 @@
+/*
+ * Mobile refinements: Discover filters, the credit confirmation card and Verified credits.
+ * Compact, native-feeling proportions on a 12 to 16px rhythm. Layout only: no logic lives here.
+ */
+
+/* ---------------------------------------------------------------- Discover filters
+ * Compact filter controls, not capsules: 36px tall, 12px radius, 12px sides, 14px medium text.
+ * Row 1 is the utility filters; row 2 (crafts) scrolls sideways and never wraps. Selected is a
+ * green tint with green text and a fine green edge: clear, the same size as the rest, not a slab.
+ */
+.phone .filter-chips {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.phone .filter-chips .chip {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 6px;
+}
+
+.phone .filter-chips .chip svg {
+  width: 15px;
+  height: 15px;
+}
+
+.phone .filter-chips .chip.is-on {
+  background: var(--action-tint-strong);
+  color: var(--action);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--action) 45%, transparent);
+}
+
+.phone .filter-chips.craft-chips {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+/* The result count sits apart from the filters, close to the results it counts. */
+.phone .list-count {
+  margin: 8px 0 2px;
+  font-size: var(--t-5);
+}
+
+/* ---------------------------------------------------------------- Waiting for your confirmation
+ * A credit to review, not a feature card: a small poster beside the credit, actions across the foot.
+ */
+.phone .pending-credit {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 12px;
+  align-items: start;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.phone .pending-credit-poster {
+  width: 76px;
+  height: 96px;
+  aspect-ratio: auto;
+  border-radius: 10px;
+}
+
+.phone .pending-credit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.phone .pending-credit-from {
+  font-size: var(--t-5);
+  line-height: 1.3;
+}
+
+.phone .pending-credit-title {
+  font-size: var(--t-3);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.phone .pending-credit-role {
+  font-size: 14px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.phone .pending-credit-foot {
+  grid-column: 1 / -1;
+}
+
+.phone .pending-credit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.phone .pending-credit-actions .btn--primary {
+  min-width: 96px;
+}
+
+.phone .pending-credit-actions .btn--plain {
+  padding-inline: 4px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.phone .pending-credit-note {
+  margin: 0;
+  font-size: var(--t-5);
+}
+
+/* ---------------------------------------------------------------- Verified credits
+ * Credentials, not posters: 148px cards with a 148 x 124 image, then title, role and the issuing
+ * house with one small tick. About two cards and the edge of a third on a standard iPhone.
+ */
+.phone .credit-rail {
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.phone .credit-rail .rail-item {
+  width: 148px;
+}
+
+.phone .credit-rail .rail-poster {
+  width: 148px;
+  height: 124px;
+  aspect-ratio: auto;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  box-shadow: none;
+}
+
+.phone .credit-rail .rail-poster img {
+  object-fit: cover;
+}
+
+.phone .credit-rail .item-title {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.phone .credit-rail .rail-item p.meta {
+  font-size: var(--t-5);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+/* The house line keeps its tick beside the name, never on a line of its own. */
+.phone .credit-rail .rail-issuer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.phone .credit-rail .rail-issuer-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone .credit-rail .rail-issuer .verified {
+  flex: none;
+}
+
+/* The accept stamp sits inside the smaller image. */
+.phone .credit-rail .rail-poster-wrap > .credit-seal {
+  right: 6px;
+  bottom: 14px;
+}

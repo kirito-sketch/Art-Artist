@@ -283,13 +283,16 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               <div key={c.id} className="pending-credit">
                 <Photo media={c.media} className="pending-credit-poster" showPlay={false} />
                 <div className="pending-credit-text">
-                  <p className="meta">
+                  <p className="meta pending-credit-from">
                     {org(c.orgId).name} <Verified size={12} /> {c.revision ? 'proposes a revised credit' : 'credited you'}
                   </p>
                   <button className="item-title pending-credit-title" onClick={() => push({ name: 'association', id: c.associationId })}>
                     {c.title}
                   </button>
-                  <p className="meta meta--dark">{c.role}</p>
+                  <p className="meta meta--dark pending-credit-role">{c.role}</p>
+                </div>
+                {/* Actions span the card's foot: Accept leads, the question stays quieter. */}
+                <div className="pending-credit-foot">
                   {acting !== 'self' ? (
                     <button className="link link--small" onClick={() => setActing('self', true, true)}>
                       Switch to you to respond
@@ -298,10 +301,10 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                     <p className="meta">You asked: {c.note ?? 'a correction'}. {org(c.orgId).name} will send a corrected credit.</p>
                   ) : (
                     <div className="pending-credit-actions">
-                      <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)}>
+                      <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)} aria-label={`Accept credit on ${c.title}`}>
                         Accept
                       </Button>
-                      <Button size="s" variant="secondary" onClick={() => (c.revision ? push({ name: 'association', id: c.associationId }) : openSheet({ name: 'reportCredit', title: c.title, creditId: c.id }))}>
+                      <Button size="s" variant="plain" onClick={() => (c.revision ? push({ name: 'association', id: c.associationId }) : openSheet({ name: 'reportCredit', title: c.title, creditId: c.id }))}>
                         {c.revision ? 'Compare' : 'Something wrong?'}
                       </Button>
                     </div>
@@ -309,7 +312,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </div>
               </div>
             ))}
-            <p className="meta">Only credits you accept appear on your profile.</p>
+            <p className="meta pending-credit-note">Only credits you accept appear on your profile.</p>
           </section>
         )}
 
@@ -320,9 +323,9 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             <Verified size={12} /> Issued by the production and confirmed by {own ? 'you' : p.name.split(' ')[0]}. No one can add their own credits.
           </p>
           {credits.length ? (
-            <div className="rail">
+            <div className="rail credit-rail">
               {credits.map((c) => (
-                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={c.title}>
+                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={`${c.title}, ${c.role}, ${org(c.orgId).name}`}>
                   <span className="rail-poster-wrap">
                     <Photo media={c.media} className="rail-poster" showPlay={false} />
                     {justAccepted === c.id && <CreditSeal />}
@@ -330,7 +333,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                   <p className="item-title">{c.title}</p>
                   <p className="meta">{c.role}</p>
                   <p className="meta rail-issuer">
-                    {org(c.orgId).name} <Verified size={12} />
+                    <span className="rail-issuer-name">{org(c.orgId).name}</span> <Verified size={12} />
                   </p>
                 </Pressable>
               ))}

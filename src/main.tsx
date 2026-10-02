@@ -13,6 +13,7 @@ import './styles/expression.css';
 import './styles/test-mode.css';
 import './styles/a11y.css';
 import './styles/view-modes.css';
+import './styles/refine.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';
