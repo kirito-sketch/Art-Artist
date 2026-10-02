@@ -327,3 +327,24 @@ export function Tabs<T extends string>({ value, options, onChange, id }: { value
     </div>
   );
 }
+
+/* ------------------------------------------------------------ HowItWorks */
+
+/**
+ * A one-line explanation stays on screen; the full one opens on request ("How credits work"). Used where
+ * the same paragraph would otherwise repeat on every visit (docs/UX_HEURISTIC_AUDIT.md F4).
+ */
+export function HowItWorks({ label, children }: { label: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <>
+      <button type="button" className="link link--small how-link" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>
+        {label}
+      </button>
+      <div id={id} className="how-body" hidden={!open}>
+        {children}
+      </div>
+    </>
+  );
+}

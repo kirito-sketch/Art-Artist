@@ -766,7 +766,7 @@ function useStoreValue() {
     userPosts,
     userCollabs,
     userPortfolio,
-    /** Adds work straight to the signed-in person's portfolio (Edit profile → Showreel and work). */
+    /** Adds work straight to the signed-in person's portfolio (Edit profile → Showreel and portfolio). */
     addToPortfolio: (ms: Media[]) => setUserPortfolio((pf) => [...ms.filter((m) => !pf.some((x) => x.id === m.id)), ...pf]),
     publishing,
     publishPost,

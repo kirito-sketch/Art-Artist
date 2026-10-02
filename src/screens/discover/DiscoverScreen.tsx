@@ -6,9 +6,9 @@ import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
 import { isLive } from '../../data/works';
 import { discoverableProjects, discoverableRoles, publicCreditsFor, searchableHouses, searchablePeople } from '../../domain/discovery';
-import type { Opportunity, Person } from '../../data/types';
+import type { Opportunity, Person, Post } from '../../data/types';
 import { useStore } from '../../state/store';
-import { discoverPosts, org, person } from '../../state/selectors';
+import { discoverPosts, org, party, person } from '../../state/selectors';
 import { OfflineBanner } from '../../ui/chrome';
 import { Avatar, Button, Chip, FollowButton, EmptyState, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
@@ -81,7 +81,7 @@ const EXPERIENCE: { id: PeopleFilters['experience']; label: string; test: (y?: n
 const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
 type ProjectStage = 'all' | 'live' | 'released' | 'hiring';
 
-export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s: Scope) => void }) {
+export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number } }) {
   const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion } = useStore();
   const [searchState, setSearchState] = useState<'ready' | 'loading' | 'error'>('ready');
   const [query, setQuery] = useState('');
@@ -89,6 +89,11 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
   const [narrowed, setNarrowed] = useState(false);
   const [kind, setKind] = useState<'all' | Opportunity['kind']>('all');
   const [craft, setCraft] = useState<string | null>(null);
+  // Posts by craft: Home's "Posts in <craft>" opens here already narrowed to that craft.
+  const [postCraft, setPostCraft] = useState<string | null>(postFocus?.craft ?? null);
+  useEffect(() => {
+    if (postFocus?.n) setPostCraft(postFocus.craft);
+  }, [postFocus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const [filters, setFilters] = useState<Filters>({ paid: false, verified: false, travel: false, near: false });
   const [mineOnly, setMineOnly] = useState(false);
   const [who, setWho] = useState<'people' | 'houses'>('people');
@@ -164,14 +169,16 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
     setScope(sc);
     setNarrowed(true);
   };
-  const posts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : true));
+  const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : true));
+  const postCraftOf = (p: Post) => (party(p.authorId)?.kind === 'person' ? (party(p.authorId) as Person).craft : undefined);
+  const postCrafts = CRAFTS.filter((c) => c.id === postCraft || allPosts.some((p) => postCraftOf(p) === c.id));
+  const posts = postCraft ? allPosts.filter((p) => postCraftOf(p) === postCraft) : allPosts;
   const activeFilters = Object.values(filters).filter(Boolean).length;
 
   return (
     <motion.div className="screen canvas v-discover" data-scroll="discover" layoutScroll>
       <div className="title-block title-block--top">
         <h1 className="large-title">Discover</h1>
-        <p className="title-sub">Search and explore people, opportunities, projects and work.</p>
       </div>
 
       <div className="search-wrap">
@@ -416,7 +423,21 @@ export function DiscoverScreen({ scope, setScope }: { scope: Scope; setScope: (s
             </>
           )}
 
-          {scope === 'posts' && (posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title="No posts yet" />)}
+          {scope === 'posts' && (
+            <>
+              <div className="chips chips--scroll chips--pad filter-chips craft-chips" role="group" aria-label="Craft">
+                <Chip active={!postCraft} onClick={() => setPostCraft(null)}>
+                  All crafts
+                </Chip>
+                {postCrafts.map((c) => (
+                  <Chip key={c.id} active={postCraft === c.id} onClick={() => setPostCraft(postCraft === c.id ? null : c.id)}>
+                    {c.label}
+                  </Chip>
+                ))}
+              </div>
+              {posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
       )}

@@ -906,7 +906,7 @@ function AppleMark() {
 const INTRO = [
   { art: 'search', title: 'Find the people behind the work', body: 'Discover crew, cast and productions by craft, city and language.', chip: 'Real people, real work' },
   { art: 'star', title: 'Credits you can trust', body: "Credits come from productions, and you accept them. No one can claim a film they didn't work on.", chip: 'Verified credits from real productions' },
-  { art: 'valley', title: 'Get to the work', body: 'Roles that fit your craft and dates come to you. Show interest, and the production decides whether to talk.', chip: 'No fees to apply, ever' },
+  { art: 'valley', title: 'Find your next role', body: 'Roles that fit your craft and dates come to you. Show interest, and the production decides whether to talk.', chip: 'No fees to apply, ever' },
 ];
 
 function Intro({ onDone }: { onDone: () => void }) {

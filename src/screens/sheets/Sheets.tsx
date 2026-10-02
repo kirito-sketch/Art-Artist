@@ -5,8 +5,9 @@ import { currentScreen, focusInto, restoreFocus, trapTab } from '../../ui/a11y';
 import { dur, shared, spring } from '../../ui/motion';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
-import { findOpportunity, firstName, org, party, person } from '../../state/selectors';
-import { Avatar, Button, EmptyState, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';
+import { findOpportunity, firstName, networkFor, org, party, person } from '../../state/selectors';
+import { NetworkRow } from '../home/NetworkActivity';
+import { Avatar, Button, EmptyState, HowItWorks, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
@@ -165,9 +166,12 @@ function CreateMenu() {
  * it belongs to and asks for an explicit switch before any action. (Hypothesis: validate.)
  */
 function Notifications() {
-  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships } = useStore();
+  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario } = useStore();
   const [filter, setFilter] = useState<string>(acting);
-  if (!notifications.length) return <EmptyState title="No notifications yet" body="Replies, interest and credits will show up here." />;
+  // News from your network (credits, new projects, availability) lives here, not on Home, which only
+  // shows what needs you (docs/UX_HEURISTIC_AUDIT.md F2, F13). It belongs to the person, not a house.
+  const network = filter === 'self' || filter === 'all' ? networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel') : [];
+  if (!notifications.length && !network.length) return <EmptyState title="No notifications yet" body="Replies, interest and credits will show up here." />;
   const owner = (n: (typeof notifications)[number]) => n.forId ?? 'self';
   const shown = filter === 'all' ? notifications : notifications.filter((n) => owner(n) === filter);
   const fresh = shown.filter((n) => n.unread);
@@ -226,7 +230,24 @@ function Notifications() {
           <div className="list list--flush notif-earlier">{earlier.map(row)}</div>
         </>
       )}
-      {!shown.length && <p className="meta">Nothing here yet.</p>}
+      {!shown.length && !network.length && <p className="meta">Nothing here yet.</p>}
+      {network.length > 0 && (
+        <>
+          <div className="notif-head">
+            <p className="meta">From your network</p>
+            {network.length > 5 && (
+              <button className="link" onClick={() => push({ name: 'network' })}>
+                See all
+              </button>
+            )}
+          </div>
+          <div className="list list--flush">
+            {network.slice(0, 5).map((e, i) => (
+              <NetworkRow key={e.id} e={e} index={i} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -386,7 +407,7 @@ function RespondForm({ id }: { id: string }) {
 /* ---------------------------------------------------------------- Interest */
 
 function InterestForm({ id }: { id: string }) {
-  const { sendInterest, userCollabs, attempt } = useStore();
+  const { sendInterest, userCollabs, attempt, interestsSent } = useStore();
   const o = findOpportunity(id, userCollabs)!;
   const author = o.authorId ? person(o.authorId) : org(o.orgId!);
   const [note, setNote] = useState('');
@@ -394,21 +415,35 @@ function InterestForm({ id }: { id: string }) {
   // Model A: a role may ask up to three short questions. Answers are optional; this is not an application.
   const qs = (o.questions ?? []).slice(0, 3);
   const [answers, setAnswers] = useState<string[]>(() => qs.map(() => ''));
+  const seenModel = Object.keys(interestsSent).some((k) => k !== id);
+  const steps = (
+    <ol className="next-steps" aria-label="What happens next">
+      <li>
+        <b>{firstName(author)} sees your profile</b>, your verified credits and your work.
+      </li>
+      <li>
+        <b>If it's a fit, they message you.</b> You can't message them from here.
+      </li>
+      <li>
+        <b>You can withdraw</b> any time before they message you.
+      </li>
+    </ol>
+  );
   return (
     <div className="stack">
-      {/* V30: the model in plain steps. Interest shares your profile; it does not open a chat. */}
-      <ol className="next-steps" aria-label="What happens next">
-        <li>
-          <b>{firstName(author)} sees your profile</b>, your verified credits and your work.
-        </li>
-        <li>
-          <b>If it's a fit, they message you.</b> You can't message them from here.
-        </li>
-        <li>
-          <b>You can withdraw</b> any time before they message you.
-        </li>
-      </ol>
-      {qs.length > 0 && <p className="meta">Everything below is optional. Nothing needs uploading: paste a link if you have one.</p>}
+      {/* V30: the model in plain steps. Interest shares your profile; it does not open a chat. In full the
+          first time; once someone has shown interest before, one line with the steps on request (F4). */}
+      {seenModel ? (
+        <div className="next-steps next-steps--short">
+          <p>
+            <b>{firstName(author)} sees your profile</b> and decides whether to message you.
+          </p>
+          <HowItWorks label="How interest works">{steps}</HowItWorks>
+        </div>
+      ) : (
+        steps
+      )}
+      {qs.length > 0 && <p className="meta">All optional. Paste a link if you have one.</p>}
       {qs.map((q, i) => (
         <div key={q}>
           <label className="field-label" htmlFor={`iq${i}`}>

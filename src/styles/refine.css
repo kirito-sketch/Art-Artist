@@ -481,3 +481,71 @@
     transition-duration: 100ms;
   }
 }
+
+/* ==========================================================================================
+   UX audit pass (docs/UX_HEURISTIC_AUDIT.md F1–F4, F13): denser, calmer Home and explanations
+   ========================================================================================== */
+
+/* Waiting on you: one line per thing you owe; the row and chevron carry the action. */
+.phone .nrow--compact {
+  padding: 10px 0;
+  min-height: 56px;
+}
+.phone .nrow--compact .nrow-icon {
+  width: 36px;
+  height: 36px;
+}
+.phone .nrow--compact .nrow-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Compact opportunities on Homes that are not about finding work: the Discover row, flush to the
+   section's gutter, the section starting straight under its title. */
+.phone .v-home [data-world='roles'] .list--flush .rrow:first-child {
+  padding-top: 4px;
+}
+
+/* "How credits work", "How interest works": a quiet text button; the full explanation opens below. */
+.phone .how-link {
+  min-height: 24px;
+  padding: 2px 0;
+  color: var(--action);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.phone .how-body {
+  flex-basis: 100%;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.phone .evidence-note {
+  flex-wrap: wrap;
+  gap: 2px 8px;
+}
+.phone .evidence-note > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Show interest, second time on: one line, the three steps on request. */
+.phone .next-steps--short {
+  padding: 12px 14px;
+  gap: 4px;
+}
+.phone .next-steps--short p {
+  margin: 0;
+}
+.phone .next-steps--short .how-body {
+  color: var(--text);
+}
+.phone .next-steps--short .next-steps {
+  background: none;
+  padding: 6px 0 0 18px;
+  border-radius: 0;
+}
+.phone .next-steps--short .how-link {
+  align-self: flex-start;
+}

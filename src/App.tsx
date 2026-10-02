@@ -182,8 +182,11 @@ function Phone({ app = false }: { app?: boolean }) {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
   const [discoverScope, setDiscoverScope] = useState<Scope>('people');
-  const goDiscover = (scope?: string) => {
+  // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
+  const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
+  const goDiscover = (scope?: string, craft?: string) => {
     setDiscoverScope((scope as Scope) ?? 'people');
+    if (scope === 'posts') setPostFocus((f) => ({ craft: craft ?? null, n: f.n + 1 }));
     setTab('discover');
   };
 
@@ -317,7 +320,7 @@ function Phone({ app = false }: { app?: boolean }) {
                 {store.acting !== 'self' ? <ProductionHome /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} />}
+            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab />)}
           </motion.section>

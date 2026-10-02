@@ -2045,7 +2045,7 @@
 .intent-option-label { font-size: 15px; font-weight: 650; }
 .ob-later { margin-top: 2px; text-align: center; }
 
-/* Activity that matters: actions you owe come first, set apart by an icon instead of a face. */
+/* Waiting on you: actions you owe come first, set apart by an icon instead of a face. */
 .nrow-icon {
   flex: none;
   width: 44px;

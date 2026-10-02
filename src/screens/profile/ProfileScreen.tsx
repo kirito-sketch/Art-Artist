@@ -7,7 +7,7 @@ import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
-import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, EmptyState, HowItWorks, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
@@ -320,10 +320,16 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         <section className="section section--flush">
           <SectionHeader title="Verified credits" />
-          {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them. */}
-          <p className="meta evidence-note">
-            <Verified size={12} /> Issued by the production and confirmed by {own ? 'you' : p.name.split(' ')[0]}. No one can add their own credits.
-          </p>
+          {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them.
+              One line on every profile; the full explanation opens on request (docs/UX_HEURISTIC_AUDIT.md F4). */}
+          <div className="meta evidence-note">
+            <span>
+              <Verified size={12} /> Issued by productions, confirmed by {own ? 'you' : p.name.split(' ')[0]}.
+            </span>
+            <HowItWorks label="How credits work">
+              Only a production can issue a credit. {own ? 'You accept' : `${p.name.split(' ')[0]} accepts`} or {own ? 'correct' : 'corrects'} it before it appears here, so no one can add their own credits.
+            </HowItWorks>
+          </div>
           {credits.length ? (
             <div className="rail credit-rail">
               {credits.map((c) => (
@@ -365,10 +371,10 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title="Selected work" />
+            <SectionHeader title="Portfolio" />
             <div className="bento">
               {stills.map((m, i) => (
-                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Work sample', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Work sample', `by ${p.name}`)}>
+                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
                   <Photo media={m} />
                 </Pressable>
               ))}

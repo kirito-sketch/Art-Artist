@@ -654,3 +654,32 @@ notifications; real-device messaging (iOS).
 - **Project-shaped discovery.** "Who worked on Monsoon Letters" is how the industry actually finds people.
 - **Availability plus credibility together** on every person card: the two things a director checks first.
 - **A professional record that travels.** The verified credits list as the reason to keep a profile current.
+
+---
+
+## Implementation record: high-confidence pass (F1, F2, F3, F4, F13; F12 verification)
+
+Only the DO NOW findings were implemented. F5 to F11, F14 and F15 are unchanged and still need
+validation. The production house Home is unchanged (slate, Around your work, Open roles, Our slate;
+Follow only, no Message on public house profiles).
+
+| Finding | Change | Where |
+|---|---|---|
+| F4 copy | One helper line per Home, only on the first section (`Context` shows `why` for the lead section only). Removed: "Being made now, hiring first.", "Your craft, and the people who hire.", "From people in your craft, then the community.", "Other crafts, available and nearby first.", "Your craft and city, then credible professionals.", "Credits issued, projects starting, people becoming available." Card metadata and tier notes kept. | `src/screens/home/HomeScreen.tsx` |
+| F2 / F13 activity | "Activity that matters" is now "Waiting on you": credits to confirm, interest to review, replies waiting. One line per row, max 3 rows, no instruction lines; "See all" (to Notifications) appears if more than 3 exist. Blocked people never appear. Network news (credited on, added a project, available) moved to Notifications › "From your network" (5 rows + See all to the existing network screen). New people who owe nothing still see "Happening on Art and Artist" (3 rows). | `HomeScreen.tsx`, `src/screens/sheets/Sheets.tsx` |
+| F3 weight | Large opportunity cards only for Find work and Collaborate. Find people for a project, Grow my network and Just exploring use the existing compact `RoleRow` (Discover, house pages), max 3, See all to Discover › Opportunities. Same data, same order. | `HomeScreen.tsx` |
+| F1 naming | Home tray "Recent work in …" is now "Posts in …" / "Posts from the community". Profile "Selected work" is now "Portfolio" ("Showreel and portfolio" in Edit profile, "Add to your portfolio"). Intro card "Get to the work" (jobs) is now "Find your next role". Model: Posts (social), Portfolio (stills/reel), Projects (productions), Opportunities (roles). | `HomeScreen.tsx`, `ProfileScreen.tsx`, `EditProfile.tsx`, `FirstHome.tsx`, `Entry.tsx` |
+| F1 entry | The Home posts tray title is a See all link (same pattern as every Home section) into Discover › Posts, narrowed to the viewer's craft. Discover › Posts gained the same craft chip row as People (only crafts that have posts; "All crafts" clears it). Posts' structure is unchanged, so an event-shaped post can still be tested later. | `src/App.tsx`, `src/screens/discover/DiscoverScreen.tsx` |
+| F4 Discover | Removed "Search and explore people, opportunities, projects and work." First result moves up 39px (352 → 313 at 390 × 844). | `DiscoverScreen.tsx` |
+| F4 credits | "Issued by productions, confirmed by {name}." plus "How credits work", which opens the full explanation in place (`HowItWorks`, aria-expanded). Credit logic unchanged. | `ProfileScreen.tsx`, `src/ui/primitives.tsx` |
+| F4 interest | Full three steps the first time. Once the person has shown interest in another role: "{House} sees your profile and decides whether to message you." plus "How interest works". Optional-fields line shortened to "All optional. Paste a link if you have one." Interaction model unchanged. | `Sheets.tsx` |
+| F12 | Not reproduced in Chromium (mobile emulation) at 375 × 667, 390 × 844, 393 × 852, 430 × 932: message shown, no page jump, no errors. No WebKit or physical iPhone was available, so iOS Safari and the installed app remain unverified. No fix was made. | |
+
+Measured (Chromium, App mode, 390 × 844; same at other sizes):
+
+| Screen | Words before → after | Helper words before → after | Large opportunity cards |
+|---|---|---|---|
+| Kiran, Find work | 321 → 262 | 41 → 7 | 6 → 6 |
+| Kiran, Find people | 373 → 263 | 40 → 0 | 6 → 0 |
+| Tara, Find work | 289 → 228 | 27 → 7 | 4 → 4 |
+| House (Konark) | 122 → 122 | 0 → 0 | n/a |

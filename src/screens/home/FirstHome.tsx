@@ -48,7 +48,7 @@ export function FirstStep() {
   const [dismissed, setDismissed] = useState(false);
   const hasWork = (seed.portfolio[viewer.id]?.length ?? 0) + userPortfolio.length > 0;
   const step = !hasWork
-    ? { t: 'Add your work', b: 'Stills or a reel let productions see what you do before they message you.', a: 'Add work', go: () => push({ name: 'editProfile' }) }
+    ? { t: 'Add to your portfolio', b: 'Stills or a reel let productions see what you do before they message you.', a: 'Add stills', go: () => push({ name: 'editProfile' }) }
     : !availability.open
       ? { t: 'Set your availability', b: 'Productions filter by dates. Say when you can take work.', a: 'Set dates', go: () => openSheet({ name: 'availability' }) }
       : !seed.about[viewer.id]

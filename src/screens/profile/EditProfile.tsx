@@ -137,7 +137,7 @@ export function EditProfile() {
 
         <div className="group">
           <Row label="Availability" value={availability.open ? availableLabel(availability.from) : 'Not taking work'} onPress={() => openSheet({ name: 'availability' })} />
-          <Row label="Showreel and work" value={`${(seed.portfolio[viewer.id] ?? []).length + userPortfolio.length} items · Add`} onPress={() => setWorkPicker(true)} />
+          <Row label="Showreel and portfolio" value={`${(seed.portfolio[viewer.id] ?? []).length + userPortfolio.length} items · Add`} onPress={() => setWorkPicker(true)} />
           <Row label="Credits" value="Issued by productions" onPress={() => showToast({ text: 'To correct a credit, open it on your profile and tap report' })} />
         </div>
       </div>
@@ -152,14 +152,14 @@ export function EditProfile() {
           }}
         />
       </Sheet>
-      <Sheet open={workPicker} onClose={() => setWorkPicker(false)} title="Add your work" size="tall">
+      <Sheet open={workPicker} onClose={() => setWorkPicker(false)} title="Add to your portfolio" size="tall">
         <MediaPicker
           selected={[]}
           onDone={(ms: Media[]) => {
             setWorkPicker(false);
             if (!ms.length) return;
             addToPortfolio(ms);
-            showToast({ text: `Added ${ms.length} to your work (up to ${MEDIA_LIMIT} at a time)` });
+            showToast({ text: `Added ${ms.length} to your portfolio (up to ${MEDIA_LIMIT} at a time)` });
           }}
         />
       </Sheet>
