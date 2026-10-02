@@ -2,7 +2,7 @@
 
 > Generated from `src/qa/scenarios` by `npm run test:edge`. Do not edit by hand: change the manifest and regenerate.
 
-Last automated run: 2026-10-01.
+Last automated run: 2026-10-02.
 
 **What should Art and Artist do?** is answered first for every scenario (the Expected behaviour column). Whether it then needs UI, an interaction test, a business rule, an automated test, a legal decision or user validation follows from that answer. Scenario IDs are permanent: numbers are only ever appended, never reused.
 
