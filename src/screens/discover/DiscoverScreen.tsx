@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { PostGrid } from './PostGrid';
-import { BadgeCheck, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { BadgeCheck, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
@@ -22,6 +22,81 @@ const KINDS: { id: 'all' | Opportunity['kind']; label: string }[] = [
   { id: 'casting', label: 'Casting' },
   { id: 'collab', label: 'Collaborations' },
 ];
+
+/* Crafts by department, so the craft picker reads as six short groups instead of fifteen chips in a row. */
+const DEPARTMENTS: { label: string; crafts: string[] }[] = [
+  { label: 'Direction and writing', crafts: ['director', 'writing'] },
+  { label: 'Acting', crafts: ['actor'] },
+  { label: 'Camera and lighting', crafts: ['cinematographer', 'camera', 'lighting'] },
+  { label: 'Post and sound', crafts: ['editor', 'colourist', 'vfx', 'sound', 'music'] },
+  { label: 'Art, costume and make-up', crafts: ['production-design', 'costume', 'makeup'] },
+  { label: 'Production', crafts: ['production'] },
+];
+const craftLabel = (id: string | null) => (id ? CRAFTS.find((c) => c.id === id)?.label ?? id : null);
+
+/**
+ * Discover's one filter row (docs/DISCOVER_FILTERS.md): a dropdown for the main facet, at most one
+ * one-tap toggle, and Filters for the rest. Every tab uses the same anatomy.
+ */
+function FilterBar({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="fbar" role="group" aria-label={label}>
+      {children}
+    </div>
+  );
+}
+
+/** A dropdown button: shows the current value (or the "any" label) and opens a picker. */
+function Facet({ value, any, onOpen, label }: { value: string | null; any: string; onOpen: () => void; label: string }) {
+  return (
+    <button className={`chip fbar-facet ${value ? 'is-on' : ''}`} onClick={onOpen} aria-haspopup="dialog" aria-label={`${label}: ${value ?? any}`}>
+      {value ?? any}
+      <ChevronDown size={15} strokeWidth={2.4} aria-hidden />
+    </button>
+  );
+}
+
+/** Everything else, at the end of the row: an icon button with the number of filters on. */
+function FiltersButton({ count, onOpen }: { count: number; onOpen: () => void }) {
+  return (
+    <button className={`chip fbar-filters ${count ? 'is-on' : ''}`} onClick={onOpen} aria-haspopup="dialog" aria-label={count ? `Filters, ${count} on` : 'Filters'}>
+      <SlidersHorizontal size={17} aria-hidden />
+      {count > 0 && <span className="fbar-badge">{count}</span>}
+    </button>
+  );
+}
+
+/** One choice from a short list, as radios in a sheet; optional groups. Choosing closes the sheet. */
+function Picker<T extends string>({ open, onClose, title, value, options, groups, onPick }: { open: boolean; onClose: () => void; title: string; value: T; options?: { id: T; label: string }[]; groups?: { label: string; options: { id: T; label: string }[] }[]; onPick: (v: T) => void }) {
+  const opt = (o: { id: T; label: string }) => (
+    <button
+      key={o.id}
+      role="radio"
+      aria-checked={value === o.id}
+      className={`picker-row ${value === o.id ? 'is-on' : ''}`}
+      onClick={() => {
+        onPick(o.id);
+        onClose();
+      }}
+    >
+      <span>{o.label}</span>
+      {value === o.id && <Check size={18} strokeWidth={2.4} aria-hidden />}
+    </button>
+  );
+  return (
+    <Sheet open={open} onClose={onClose} title={title}>
+      <div className="picker" role="radiogroup" aria-label={title}>
+        {options?.map(opt)}
+        {groups?.map((g) => (
+          <div key={g.label} className="picker-group">
+            <p className="picker-label">{g.label}</p>
+            {g.options.map(opt)}
+          </div>
+        ))}
+      </div>
+    </Sheet>
+  );
+}
 
 /* Only adult, public profiles are searchable. Guardian-managed profiles never enter this index. */
 
@@ -80,6 +155,12 @@ const EXPERIENCE: { id: PeopleFilters['experience']; label: string; test: (y?: n
 ];
 const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
 type ProjectStage = 'all' | 'live' | 'released' | 'hiring';
+const STAGES: { id: ProjectStage; label: string }[] = [
+  { id: 'all', label: 'All stages' },
+  { id: 'live', label: 'Being made now' },
+  { id: 'hiring', label: 'Hiring' },
+  { id: 'released', label: 'Released' },
+];
 
 export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number } }) {
   const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion } = useStore();
@@ -101,6 +182,7 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
   const [pfDraft, setPfDraft] = useState<PeopleFilters>(NO_PEOPLE_FILTERS);
   const [pfOpen, setPfOpen] = useState(false);
   const [stage, setStage] = useState<ProjectStage>('all');
+  const [picker, setPicker] = useState<'craft' | 'postCraft' | 'kind' | 'stage' | null>(null);
   // Research observation only (no-op outside a research session): which section and craft were chosen.
   const seen = useRef({ scope, craft });
   useEffect(() => {
@@ -140,12 +222,13 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
     .filter((p) => (craft ? p.craft === craft || (p.crafts ?? []).includes(craft as Person['craft']) : true))
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
   const people = applyPeopleFilters(craftPeople, pf);
-  const activePeopleFilters = Object.entries(pf).filter(([k, v]) => (k === 'experience' ? v !== 'any' : !!v)).length;
+  const activePeopleFilters = Object.entries(pf).filter(([k, v]) => k !== 'available' && (k === 'experience' ? v !== 'any' : !!v)).length;
   const allProjects = discoverableProjects(blocked).filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const hiringFor = (title: string) => roles.filter((r) => !roleStatus[r.id] && r.project.toLowerCase().startsWith(title.toLowerCase())).length;
   const projects = allProjects.filter((w) => (stage === 'live' ? isLive(w) : stage === 'released' ? !isLive(w) : stage === 'hiring' ? hiringFor(w.title) > 0 : true));
   const allHouses = searchableHouses(blocked).filter((o) => (q ? `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q) : true));
   const houses = q ? allHouses : [];
+  const shownHouses = allHouses.filter((o) => (pf.near ? o.city === me.city : true));
   const grouped = !!q && !narrowed;
   const [announce, setAnnounce] = useState('');
   useEffect(() => {
@@ -296,26 +379,17 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
         <motion.div key={scope} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.16 }}>
           {scope === 'roles' && (
             <>
-              <div className="chips chips--scroll chips--pad filter-chips">
-                <Chip
-                  active={activeFilters > 0}
-                  icon={<SlidersHorizontal size={15} />}
-                  onClick={() => {
-                    setDraft(filters);
-                    setFilterOpen(true);
-                  }}
-                >
-                  {activeFilters ? `Filters · ${activeFilters}` : 'Filters'}
-                </Chip>
+              <FilterBar label="Opportunity filters">
+                <Facet label="Type" any="All types" value={kind === 'all' ? null : KINDS.find((k) => k.id === kind)!.label} onOpen={() => setPicker('kind')} />
                 <Chip active={mineOnly} onClick={() => setMineOnly((v) => !v)}>
                   My crafts
                 </Chip>
-                {KINDS.map((k) => (
-                  <Chip key={k.id} active={kind === k.id} onClick={() => setKind(k.id)}>
-                    {k.label}
-                  </Chip>
-                ))}
-              </div>
+                <span className="fbar-gap" aria-hidden />
+                <FiltersButton count={activeFilters} onOpen={() => {
+                    setDraft(filters);
+                    setFilterOpen(true);
+                  }} />
+              </FilterBar>
               <div className="list">
                 {shownRoles.map((o) => (
                   <RoleRow key={o.id} o={o} />
@@ -327,49 +401,41 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
 
           {scope === 'people' && (
             <>
-              <div className="chips chips--scroll chips--pad filter-chips" role="group" aria-label="People filters">
-                <Chip
-                  active={activePeopleFilters > 0}
-                  icon={<SlidersHorizontal size={15} />}
-                  onClick={() => {
-                    setPfDraft(pf);
-                    setPfOpen(true);
-                  }}
-                >
-                  {activePeopleFilters ? `Filters · ${activePeopleFilters}` : 'Filters'}
-                </Chip>
-                <Chip active={pf.available} onClick={() => setPf((f) => ({ ...f, available: !f.available }))}>
-                  Available
-                </Chip>
-                <Chip active={who === 'houses'} onClick={() => setWho((w) => (w === 'houses' ? 'people' : 'houses'))}>
-                  Production houses
-                </Chip>
+              {who === 'people' && (
+                <FilterBar label="People filters">
+                  <Facet label="Craft" any="Any craft" value={craftLabel(craft)} onOpen={() => setPicker('craft')} />
+                  <Chip active={pf.available} onClick={() => setPf((f) => ({ ...f, available: !f.available }))}>
+                    Available now
+                  </Chip>
+                  <span className="fbar-gap" aria-hidden />
+                  <FiltersButton count={activePeopleFilters} onOpen={() => {
+                      setPfDraft(pf);
+                      setPfOpen(true);
+                    }} />
+                </FilterBar>
+              )}
+              {/* Production houses are another kind of result, not a filter: a quiet switch on the count line. */}
+              <div className="fbar-count">
+                <p className="meta list-count">
+                  {who === 'people' ? `${people.length} ${people.length === 1 ? 'person' : 'people'}` : `${shownHouses.length} production ${shownHouses.length === 1 ? 'house' : 'houses'}`}
+                </p>
+                <button className="link link--small fbar-switch" onClick={() => setWho((w) => (w === 'houses' ? 'people' : 'houses'))}>
+                  {who === 'people' ? 'Production houses' : 'People'}
+                  <ChevronRight size={15} aria-hidden />
+                </button>
               </div>
               {who === 'people' ? (
                 <>
-                  <div className="chips chips--scroll chips--pad filter-chips craft-chips" role="group" aria-label="Craft">
-                    <Chip active={!craft} onClick={() => setCraft(null)}>
-                      All crafts
-                    </Chip>
-                    {CRAFTS.map((c) => (
-                      <Chip key={c.id} active={craft === c.id} onClick={() => setCraft(craft === c.id ? null : c.id)}>
-                        {c.label}
-                      </Chip>
-                    ))}
-                  </div>
-                  <p className="meta list-count">
-                    {people.length} {people.length === 1 ? 'person' : 'people'}
-                  </p>
                   <div className="list">
                     {people.map((p) => (
                       <PersonRow key={p.id} p={p} />
                     ))}
                   </div>
-                  {!people.length && <EmptyState title="No one matches" body={activePeopleFilters || craft ? 'Try removing a filter.' : undefined} />}
+                  {!people.length && <EmptyState title="No one matches" body={activePeopleFilters || craft || pf.available ? 'Try removing a filter.' : undefined} />}
                 </>
               ) : (
                 <div className="list">
-                  {allHouses.filter((o) => (pf.near ? o.city === me.city : true)).map((o) => (
+                  {shownHouses.map((o) => (
                     <PressCard key={o.id} className="prow" onPress={() => push({ name: 'org', id: o.id })} scale={0.985}>
                       <Avatar party={o} size={48} />
                       <div className="prow-text">
@@ -387,20 +453,9 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
 
           {scope === 'projects' && (
             <>
-              <div className="chips chips--scroll chips--pad filter-chips" role="group" aria-label="Project stage">
-                {(
-                  [
-                    ['all', 'All'],
-                    ['live', 'Being made now'],
-                    ['hiring', 'Hiring'],
-                    ['released', 'Released'],
-                  ] as const
-                ).map(([id, label]) => (
-                  <Chip key={id} active={stage === id} onClick={() => setStage(id)}>
-                    {label}
-                  </Chip>
-                ))}
-              </div>
+              <FilterBar label="Project filters">
+                <Facet label="Stage" any="All stages" value={stage === 'all' ? null : STAGES.find((x) => x.id === stage)!.label} onOpen={() => setPicker('stage')} />
+              </FilterBar>
               <div className="posters">
                 {projects.map((w) => {
                   const hiring = hiringFor(w.title);
@@ -425,16 +480,9 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
 
           {scope === 'posts' && (
             <>
-              <div className="chips chips--scroll chips--pad filter-chips craft-chips" role="group" aria-label="Craft">
-                <Chip active={!postCraft} onClick={() => setPostCraft(null)}>
-                  All crafts
-                </Chip>
-                {postCrafts.map((c) => (
-                  <Chip key={c.id} active={postCraft === c.id} onClick={() => setPostCraft(postCraft === c.id ? null : c.id)}>
-                    {c.label}
-                  </Chip>
-                ))}
-              </div>
+              <FilterBar label="Post filters">
+                <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
+              </FilterBar>
               {posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
             </>
           )}
@@ -442,12 +490,16 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
       </AnimatePresence>
       )}
 
+      <Picker open={picker === 'craft'} onClose={() => setPicker(null)} title="Craft" value={craft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={DEPARTMENTS.map((d) => ({ label: d.label, options: d.crafts.map((c) => ({ id: c, label: craftLabel(c)! })) }))} onPick={(v) => setCraft(v === 'any' ? null : v)} />
+      <Picker open={picker === 'postCraft'} onClose={() => setPicker(null)} title="Craft" value={postCraft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={DEPARTMENTS.map((d) => ({ label: d.label, options: d.crafts.filter((c) => postCrafts.some((x) => x.id === c)).map((c) => ({ id: c, label: craftLabel(c)! })) })).filter((g) => g.options.length)} onPick={(v) => setPostCraft(v === 'any' ? null : v)} />
+      <Picker open={picker === 'kind'} onClose={() => setPicker(null)} title="Type" value={kind} options={KINDS.map((k) => ({ id: k.id, label: k.id === 'all' ? 'All types' : k.label }))} onPick={setKind} />
+      <Picker open={picker === 'stage'} onClose={() => setPicker(null)} title="Stage" value={stage} options={STAGES} onPick={setStage} />
+
       <Sheet open={pfOpen} onClose={() => setPfOpen(false)} title="Filter people">
         <div className="stack">
           <div className="filter-tiles">
             {(
               [
-                ['available', 'Available', <Sparkles key="i" size={24} />],
                 ['near', `In ${me.city || 'my city'}`, <MapPin key="i" size={24} />],
                 ['credited', 'Verified credits', <BadgeCheck key="i" size={24} />],
                 ['travel', 'Open to travel', <Plane key="i" size={24} />],

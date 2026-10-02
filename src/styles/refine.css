@@ -647,3 +647,138 @@
   background: none;
   border-radius: 0;
 }
+
+/* ==========================================================================================
+   Discover filters (docs/DISCOVER_FILTERS.md): one row, the same anatomy on every tab
+   [ Main facet ▾ ] [ one-tap toggle ] ............ [ Filters ]
+   ========================================================================================== */
+.phone .fbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--gutter) 0;
+  margin: -6px 0 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.phone .fbar::-webkit-scrollbar {
+  display: none;
+}
+.phone .fbar .chip {
+  flex: none;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 6px;
+}
+.phone .fbar .chip svg {
+  width: 15px;
+  height: 15px;
+}
+.phone .fbar .chip.is-on {
+  background: var(--action-tint-strong);
+  color: var(--action);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--action) 45%, transparent);
+}
+/* Filters always sits at the end of the row. */
+.phone .fbar-gap {
+  flex: 1 0 0;
+}
+.phone .fbar-facet:not(:only-child) {
+  /* Leaves room for the toggle and Filters, so the row never scrolls (a long craft truncates). */
+  max-width: calc(100% - 190px);
+}
+.phone .fbar .fbar-filters {
+  width: 44px;
+  padding: 0;
+  justify-content: center;
+  position: relative;
+}
+.phone .fbar .fbar-filters svg {
+  width: 17px;
+  height: 17px;
+}
+.phone .fbar-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--action);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.phone .fbar-facet {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.phone .fbar-facet svg {
+  flex: none;
+}
+/* The posts grid normally tucks under the tabs; under a filter row it must not overlap it. */
+.phone .fbar + .post-grid {
+  margin-top: 0;
+}
+
+/* Count line: the count, and the switch to production houses (a different result, not a filter). */
+.phone .fbar-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--gutter);
+  margin: -2px 0 0;
+}
+.phone .fbar-count .list-count {
+  margin: 0;
+  padding: 0;
+}
+.phone .fbar-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 32px;
+  color: var(--action);
+  font-weight: 600;
+}
+
+/* Picker sheet: radio rows, grouped by department where it helps. */
+.phone .picker {
+  display: flex;
+  flex-direction: column;
+}
+.phone .picker-group {
+  margin-top: 14px;
+}
+.phone .picker-label {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.phone .picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-3);
+  text-align: left;
+  color: var(--text);
+}
+.phone .picker-row.is-on {
+  color: var(--action);
+  font-weight: 600;
+}
