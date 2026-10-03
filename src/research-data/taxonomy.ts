@@ -72,6 +72,19 @@ export const RESEARCH_EVENTS = {
   person_unsaved: 'A person was removed from Saved',
   availability_changed: 'Availability changed (metadata.open)',
 
+  // Home (fixed frame + composed middle, docs/HOME.md)
+  home_unit_opened: 'Something on Home was opened (metadata.unit, metadata.position, metadata.reason: whether a reason line was shown)',
+  home_end_reached: 'The participant reached the end of Home ("That\'s a wrap")',
+  home_search_opened: 'Search opened from the Home header',
+  home_refreshed: 'Home was refreshed and recomposed (Take 2)',
+
+  // Events (docs/EVENTS.md)
+  event_opened: 'An event opened',
+  event_saved: 'Marked interested in an event (private)',
+  event_unsaved: 'No longer interested in an event',
+  event_created: 'An event was created (metadata.type, metadata.review: live or under_review)',
+  event_cancelled: 'A host cancelled an event',
+
   // Production House flows (reserved for the house study)
   interest_reviewed: 'Interested people reviewed for a role',
   project_member_added: 'Someone added to a project',
@@ -82,7 +95,7 @@ export const RESEARCH_EVENTS = {
 export type ResearchEventName = keyof typeof RESEARCH_EVENTS;
 export const isResearchEventName = (n: string): n is ResearchEventName => Object.prototype.hasOwnProperty.call(RESEARCH_EVENTS, n);
 
-export const RESEARCH_OBJECT_TYPES = ['role', 'project', 'person', 'house', 'post', 'conversation', 'credit', 'task'] as const;
+export const RESEARCH_OBJECT_TYPES = ['role', 'project', 'person', 'house', 'post', 'conversation', 'credit', 'task', 'event'] as const;
 export type ResearchObjectType = (typeof RESEARCH_OBJECT_TYPES)[number];
 
 export const FEEDBACK_CATEGORIES = ['confusing', 'couldnt_find', 'visual_issue', 'didnt_work', 'suggestion', 'other'] as const;

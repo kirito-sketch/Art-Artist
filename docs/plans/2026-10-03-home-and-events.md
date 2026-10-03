@@ -67,6 +67,38 @@
 - `/test` assigns each new session to `current` or `next` Home, 50/50, recorded on the session.
 - The composer itself is not user-tested.
 
+
+## 0b. Added decisions (3 October 2026, after the stakeholder responses)
+
+**Switches:**
+- `?home=next` turns on the new Home and `?events=on` turns on Events. Both are off in the default app. `?next` turns on both, for review.
+- `/test` sets only the Home switch (50/50). Events stay off for both arms, so the comparison isn't mixed with a second change.
+- Why Events are switched off by default: the stakeholder direction says to prioritise the core professional workflow (casting, jobs, profiles, credits, discovery) before secondary social features. Events are built and reviewable, but off until the founder turns them on.
+
+**Who can create events:**
+- Verified production houses and verified adult individuals. Unverified accounts see "Verify your identity to host events".
+- Entry points: an Event option in the Create sheet, and "Add a screening" on a house's project page (which links the project).
+- Free events from verified hosts go live at once. Paid events from verified houses go live at once. Paid events from individuals are "Under review", visible only to the host; in the prototype the review is simulated.
+- Hosts can edit and cancel. People marked Interested are notified of changes and cancellations.
+
+**Stakeholder rules applied to events:**
+- **No paid access to opportunities.** An event can never sell access to a role, audition or registration. Audition or casting wording is redirected to "Open a role instead". Paid events may not promise roles.
+- **Child safety.** No event may target under-18 participants or name a child as host or speaker. Child profiles are never linked to events.
+- **Credits stay authoritative.** Linking an event to a project never creates or implies a credit.
+- **Data minimisation.** Interest is private, and attendance is never collected beyond the Interested toggle.
+- **Reports** use the existing escalation levels. An event report goes to Trust and Safety (level 2), or Child Safety (level 3) when it involves a minor.
+
+**Whimsy, in the app's craft language and never at the cost of clarity:**
+1. **"That's a wrap."** The end of Home is a small clapperboard that claps once, with today's golden hour for your city ("Golden hour in Hyderabad today: 5:41 to 6:08 pm"), computed on the device. It is useful and surprising for a film person, and it changes every day.
+2. **Event cards as ticket stubs:** a perforated date stub. Marking Interested punches the stub.
+3. **"Take 2."** Refreshing Home shows a one-line slate ("Take 2") while it recomposes.
+
+All motion is transform or opacity only. Reduce Motion gives a still version with identical information. Nothing loops, there's no confetti, and there's no gamification.
+
+**Heuristics and accessibility gates for every task:**
+- Clear status, the user's language, user control (undo or cancel), consistency with existing components, error prevention (form rules), recognition over recall.
+- Targets of at least 44 px, labels on everything, focus order, screen-reader text for visual-only elements (the clapper and the ticket stub), contrast AA in light and dark.
+
 ## Execution order and milestones
 
 | Milestone | Tasks | Ships |
