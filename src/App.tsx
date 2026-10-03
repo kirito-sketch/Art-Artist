@@ -36,6 +36,7 @@ import { RESEARCH_DASHBOARD, TEST_MODE } from './research-data/surface';
 import { TestMode } from './research-data/TestMode';
 import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
 import { LaunchSplash, type LaunchPhase } from './ui/LaunchSplash';
+import { launchSplashPending } from './ui/launchSession';
 
 // The researcher dashboard loads only on /research, so its code (and the Supabase browser client)
 // never ship to the prototype or to participants.
@@ -443,7 +444,7 @@ function NormalApp() {
   const standalone = isStandalone();
   // Installed Home Screen app: the launch splash covers the app (inert, and unpainted while the mark
   // draws) until it finishes.
-  const [launch, setLaunch] = useState<LaunchPhase>(standalone ? 'covered' : 'off');
+  const [launch, setLaunch] = useState<LaunchPhase>(launchSplashPending(standalone) ? 'covered' : 'off');
   useEffect(() => {
     installAppHead();
     applySystemTextSize();

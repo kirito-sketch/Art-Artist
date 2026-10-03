@@ -4,7 +4,7 @@ import { playSplashMark, splashSvg } from './splashCore';
 let clipIds = 0;
 
 /**
- * The splash mark inside the app (the entry flow and a Home Screen resume). The markup is built once per
+ * The splash mark inside the app (the entry flow, and the launch splash of a page served without the one in index.html). The markup is built once per
  * mount and handed to the DOM as static SVG, so React re-renders never touch it and never restart the
  * animation; playback and completion come from playSplashMark (src/ui/splashCore.ts).
  */

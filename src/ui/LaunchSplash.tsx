@@ -1,33 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
+import { bootSplash, hasPlayedLaunchSplash, markLaunchSplashPlayed } from './launchSession';
 import { SplashMark } from './SplashMark';
 
 /*
  * The launch splash for the installed Home Screen app (standalone only; Safari is unchanged).
  *
- * iOS often resumes a standalone web app from memory instead of reloading it, so page load and React
- * mount alone miss most launches. Launch is therefore:
- *   - a cold start: index.html already shows and plays the splash from the first paint (see
- *     src/ui/splashCore.ts, bootScript); this component adopts it, or
- *   - a return to the foreground after at least LAUNCH_RESUME_MS in the background, tracked with
- *     visibilitychange, pagehide and pageshow. A short interruption returns straight to the app.
+ * It plays once per execution context: a new page load of the installed app is a launch, and nothing else
+ * is. Whether it is still owed is an in-memory flag (src/ui/launchSession.ts), so it is never replayed by
+ * visibility, focus, pageshow, a route change, a remount, or time spent in the background, and never
+ * persisted, so the next genuine launch has it again. This component has no lifecycle listeners at all.
  *
- * The mark and the app are two separate states, joined at the end: the app renders underneath (inert)
- * while the mark plays; the splash leaves only when the mark has finished AND the screen underneath has
- * painted its fonts and on-screen images; it is removed only after its fade has finished. The splash is
- * a layer, never a reset: navigation, sheets, persona and saved content are kept. One launch plays it once.
+ *   - index.html already shows and plays the splash from the first paint (src/ui/splashCore.ts,
+ *     bootScript); this component adopts it, or, if the page was served without it, draws it here, once;
+ *   - the app renders underneath (inert, and unpainted) whichever state it opens in (Home, the entry flow);
+ *   - it leaves only when the mark has finished AND the screen underneath has painted its fonts and
+ *     on-screen images, and is removed only after its fade.
+ * The splash is a layer, never a reset: navigation, sheets, persona and saved content are not touched.
  */
 
-/** How long the app must be in the background before coming back counts as a new launch. */
-export const LAUNCH_RESUME_MS = 45_000;
 /** Longest the splash waits for the screen underneath after it starts (slow network: reveal anyway). */
 const READY_CAP_MS = 4000;
 /** Safety net if transitionend never arrives (a hidden page, Reduce Motion): longer than the 300ms fade. */
 const FADE_SAFETY_MS = 700;
-
-/** When the app went to the background (module level: survives re-renders, reset by a reload). */
-const lifecycle: { hiddenAt: number | null } = { hiddenAt: null };
-/** The splash index.html painted on a cold start, if the boot script showed it. */
-const bootEl = typeof document !== 'undefined' ? document.getElementById('aa-boot') : null;
 
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -103,13 +97,13 @@ function revealApp(el: HTMLElement, markDone: Promise<void>, onReveal: () => voi
 export type LaunchPhase = 'covered' | 'revealing' | 'off';
 
 export function LaunchSplash({ enabled, onPhase }: { enabled: boolean; onPhase?: (phase: LaunchPhase) => void }) {
-  // The index.html splash being handed over (cold start), and the run id of an in-app splash (resume):
-  // each resume gets a new id so its mark plays from the first frame.
-  const [boot, setBoot] = useState<HTMLElement | null>(() => (enabled ? bootEl : null));
-  const [run, setRun] = useState(() => (enabled && !bootEl ? 1 : 0));
-  const showing = !!boot || run > 0;
-  const active = useRef(showing);
-  active.current = showing;
+  // What this execution context still owes, decided when this mounts: the splash index.html is already
+  // playing (handed over), or, for a page served without it, one drawn here. After the splash has played
+  // nothing is owed, so a remount of the app can never bring it back.
+  const owed = enabled && !hasPlayedLaunchSplash();
+  const [boot, setBoot] = useState<HTMLElement | null>(() => (owed ? bootSplash() : null));
+  const [drawn, setDrawn] = useState(() => owed && !bootSplash());
+  const showing = !!boot || drawn;
   const el = useRef<HTMLDivElement>(null);
   const markDone = useRef<() => void>(() => undefined);
 
@@ -121,10 +115,10 @@ export function LaunchSplash({ enabled, onPhase }: { enabled: boolean; onPhase?:
 
   // Not the installed app (or a page the boot script should have skipped): the boot splash never stays.
   useEffect(() => {
-    if (!enabled) bootEl?.remove();
+    if (!enabled) bootSplash()?.remove();
   }, [enabled]);
 
-  // Cold start: hand over the splash index.html is already playing.
+  // The splash index.html is already playing: start its mark now, then hand over.
   useEffect(() => {
     if (!boot) return;
     const done = new Promise<void>((r) => (boot.dataset.done ? r() : boot.addEventListener('aa-boot-done', () => r(), { once: true })));
@@ -132,50 +126,26 @@ export function LaunchSplash({ enabled, onPhase }: { enabled: boolean; onPhase?:
     (window as unknown as { __aaBootPlay?: () => void }).__aaBootPlay?.();
     return revealApp(boot, done, () => setRevealing(true), () => {
       boot.remove();
+      markLaunchSplashPlayed();
       setBoot(null);
       setRevealing(false);
     });
   }, [boot]);
 
-  // Resume: the in-app splash.
+  // No splash in the page's HTML: draw it here, once.
   useEffect(() => {
-    if (!run || !el.current) return;
+    if (!drawn || !el.current) return;
     const done = new Promise<void>((r) => (markDone.current = r));
     return revealApp(el.current, done, () => setRevealing(true), () => {
-      setRun(0);
+      markLaunchSplashPlayed();
+      setDrawn(false);
       setRevealing(false);
     });
-  }, [run]);
+  }, [drawn]);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const wentAway = () => {
-      if (lifecycle.hiddenAt === null) lifecycle.hiddenAt = Date.now();
-    };
-    const cameBack = () => {
-      if (document.visibilityState !== 'visible') return;
-      const at = lifecycle.hiddenAt;
-      lifecycle.hiddenAt = null;
-      // Not a return from the background, or a launch is already showing: nothing to do.
-      if (at === null || active.current) return;
-      if (Date.now() - at < LAUNCH_RESUME_MS) return;
-      active.current = true;
-      setRun((r) => r + 1);
-    };
-    const onVisibility = () => (document.visibilityState === 'hidden' ? wentAway() : cameBack());
-    document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('pagehide', wentAway);
-    window.addEventListener('pageshow', cameBack);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('pagehide', wentAway);
-      window.removeEventListener('pageshow', cameBack);
-    };
-  }, [enabled]);
-
-  if (!run) return null;
+  if (!drawn) return null;
   return (
-    <div key={run} ref={el} className="launch-splash">
+    <div ref={el} className="launch-splash">
       <SplashMark onDone={() => markDone.current()} />
       <span className="sr-only" role="status">
         Opening Art and Artist

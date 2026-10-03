@@ -11,6 +11,8 @@ import { org } from '../state/selectors';
 import { Avatar, Button, Photo, Toggle, Verified } from '../ui/primitives';
 import { Logo } from '../ui/Logo';
 import { SplashMark } from '../ui/SplashMark';
+import { launchSplashPending } from '../ui/launchSession';
+import { isStandalone } from '../dev/viewMode';
 import { StatusBar } from '../ui/chrome';
 import { Sheet } from '../ui/Sheet';
 import { DateField, fmtDay } from '../ui/fields';
@@ -36,7 +38,10 @@ export function EntryFlow() {
   const store = useStore();
   const { entry, endEntry, recordConsent, createPerson, switchViewer, setActing, addMembership, showToast } = store;
   const invite = entry?.mode === 'invite';
-  const [step, setStep] = useState<Step>(entry?.mode === 'signin' ? 'entry' : 'splash');
+  // The installed app's launch splash is the splash: while it is still owed, onboarding starts under it, at
+  // its first screen, instead of drawing a second mark. (Later entries, such as a house invite, keep theirs.)
+  const launchOwed = launchSplashPending(isStandalone());
+  const [step, setStep] = useState<Step>(entry?.mode === 'signin' ? 'entry' : launchOwed ? (entry?.mode === 'new' ? 'intro' : 'entry') : 'splash');
   const [history, setHistory] = useState<Step[]>([]);
   const [via, setVia] = useState<'apple' | 'google' | 'email'>('email');
   const [provider, setProvider] = useState<null | 'apple' | 'google'>(null);
