@@ -270,6 +270,7 @@ const AMBIENT: { id: AmbientVariant; label: string; sub: string }[] = [
   { id: 'a', label: 'A · Ambient light', sub: 'Soft light moving slowly behind Home.' },
   { id: 'b', label: 'B · Cinematic atmosphere', sub: 'Light, a fine texture and a gentle vignette.' },
   { id: 'c', label: 'C · Depth field', sub: 'Quiet layers that move at different depths as you scroll.' },
+  { id: 'd', label: 'D · Silk light', sub: 'A wash of colour at the top, with slow folds of light.' },
 ];
 
 /** System, Light or Dark. Applies at once, no Save; stored on this device. */

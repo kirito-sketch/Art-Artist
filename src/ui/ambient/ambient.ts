@@ -3,22 +3,23 @@ import { isThemedSurface } from '../themeCore';
 
 /*
  * The living background experiment (docs/LIVING_BACKGROUND.md). Three directions, compared on Home only:
- *   a: Ambient light       b: Cinematic atmosphere       c: Depth field
- * Off by default. Chosen in Settings › Appearance › Background (experiment), or with ?ambient=a|b|c|off,
+ *   a: Ambient light   b: Cinematic atmosphere   c: Depth field   d: Silk light
+ * Off by default. Chosen in Settings › Appearance › Background (experiment), or with ?ambient=a|b|c|d|off,
  * and stored on this device. Never on /test, /research or the internal pages.
  */
-export type AmbientVariant = 'off' | 'a' | 'b' | 'c';
+export type AmbientVariant = 'off' | 'a' | 'b' | 'c' | 'd';
+const VARIANTS: AmbientVariant[] = ['off', 'a', 'b', 'c', 'd'];
 const KEY = 'aa-ambient';
 
 const read = (): AmbientVariant => {
   try {
     const q = new URLSearchParams(location.search).get('ambient');
-    if (q === 'a' || q === 'b' || q === 'c' || q === 'off') {
+    if (q && VARIANTS.includes(q as AmbientVariant)) {
       localStorage.setItem(KEY, q);
-      return q;
+      return q as AmbientVariant;
     }
     const v = localStorage.getItem(KEY);
-    return v === 'a' || v === 'b' || v === 'c' ? v : 'off';
+    return VARIANTS.includes(v as AmbientVariant) ? (v as AmbientVariant) : 'off';
   } catch {
     return 'off';
   }

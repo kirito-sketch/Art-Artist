@@ -168,6 +168,73 @@
   animation-duration: 151s;
 }
 
+/* ============================================================ D: Silk light
+ * A wash of the brand colour anchored to the top of the screen, crossed by slow folds of light like silk,
+ * falling away into the ground by mid-screen. Bolder than A to C: colour you see at once, not only feel.
+ * The folds are wide rotated bands of soft linear gradient (ridge, sheen, trough), moved on transform only. */
+.phone .ambient--d {
+  --d-wash: rgba(39, 92, 80, 0.2);
+  --d-wash-mid: rgba(39, 92, 80, 0.07);
+  --d-ridge: rgba(255, 255, 255, 0.7);
+  --d-sheen: rgba(255, 255, 255, 0.95);
+  --d-trough: rgba(39, 92, 80, 0.13);
+}
+/* The wash stays at full strength over imagery: it lives above the content, not behind photographs. */
+.phone .ambient--d > * {
+  opacity: 1;
+}
+.phone .ambient--d .ambient-depth--silk {
+  inset: 0 0 auto 0;
+  height: 72%;
+}
+.phone .ambient--d .ambient-silk {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(to bottom, var(--d-wash) 0%, var(--d-wash-mid) 50%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 100%);
+}
+.phone .ambient--d .ambient-fold {
+  position: absolute;
+  left: -60%;
+  width: 220%;
+  height: 44%;
+  display: block;
+  background: linear-gradient(180deg, transparent 0%, var(--d-trough) 22%, transparent 38%, var(--d-ridge) 50%, var(--d-sheen) 53.5%, var(--d-ridge) 57%, transparent 72%);
+  will-change: transform;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+.phone .ambient--d .ambient-fold--1 {
+  top: -10%;
+  transform: translate3d(0, 0, 0) rotate(-24deg);
+  animation-name: ambient-fold-1;
+  animation-duration: 19s;
+}
+.phone .ambient--d .ambient-fold--2 {
+  top: 8%;
+  opacity: 0.75;
+  transform: translate3d(0, 0, 0) rotate(-13deg);
+  animation-name: ambient-fold-2;
+  animation-duration: 26s;
+}
+.phone .ambient--d .ambient-fold--3 {
+  top: 22%;
+  opacity: 0.55;
+  transform: translate3d(0, 0, 0) rotate(-31deg);
+  animation-name: ambient-fold-3;
+  animation-duration: 33s;
+}
+.phone .ambient--d .ambient-fold--4 {
+  top: -4%;
+  opacity: 0.4;
+  transform: translate3d(0, 0, 0) rotate(14deg);
+  animation-name: ambient-fold-4;
+  animation-duration: 41s;
+}
+
 /* ============================================================ Dark */
 html[data-theme='dark'] .phone[data-look='minimal'] .ambient--a {
   --a1: rgba(255, 196, 140, 0.17);
@@ -184,6 +251,14 @@ html[data-theme='dark'] .phone[data-look='minimal'] .ambient--c {
   --c-far: rgba(255, 236, 214, 0.12);
   --c-mid: rgba(47, 117, 101, 0.26);
   --c-near: rgba(150, 170, 205, 0.12);
+}
+
+html[data-theme='dark'] .phone[data-look='minimal'] .ambient--d {
+  --d-wash: rgba(47, 125, 105, 0.72);
+  --d-wash-mid: rgba(39, 92, 80, 0.3);
+  --d-ridge: rgba(120, 200, 175, 0.34);
+  --d-sheen: rgba(215, 250, 235, 0.28);
+  --d-trough: rgba(6, 18, 15, 0.38);
 }
 
 /* ============================================================ Paths
@@ -222,6 +297,26 @@ html[data-theme='dark'] .phone[data-look='minimal'] .ambient--c {
   50% { transform: translate3d(4%, -8%, 0) rotate(-2deg); }
   100% { transform: translate3d(-6%, 4%, 0) rotate(-5deg); }
 }
+@keyframes ambient-fold-1 {
+  0% { transform: translate3d(0, 0, 0) rotate(-24deg); }
+  50% { transform: translate3d(9%, 12%, 0) rotate(-19deg) scale(1.08); }
+  100% { transform: translate3d(-6%, 5%, 0) rotate(-27deg) scale(1.02); }
+}
+@keyframes ambient-fold-2 {
+  0% { transform: translate3d(0, 0, 0) rotate(-13deg); }
+  50% { transform: translate3d(-10%, -8%, 0) rotate(-17deg) scale(1.1); }
+  100% { transform: translate3d(7%, 10%, 0) rotate(-9deg); }
+}
+@keyframes ambient-fold-3 {
+  0% { transform: translate3d(0, 0, 0) rotate(-31deg); }
+  50% { transform: translate3d(8%, -12%, 0) rotate(-26deg) scale(1.06); }
+  100% { transform: translate3d(-8%, 6%, 0) rotate(-34deg) scale(1.12); }
+}
+@keyframes ambient-fold-4 {
+  0% { transform: translate3d(0, 0, 0) rotate(14deg); }
+  50% { transform: translate3d(-7%, 10%, 0) rotate(10deg) scale(1.08); }
+  100% { transform: translate3d(9%, -4%, 0) rotate(18deg); }
+}
 @keyframes ambient-grain {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-18px, 12px, 0); }
@@ -235,7 +330,8 @@ html[data-theme='dark'] .phone[data-look='minimal'] .ambient--c {
 }
 .phone .ambient.is-still .ambient-light,
 .phone .ambient.is-still .ambient-plane,
-.phone .ambient.is-still .ambient-grain {
+.phone .ambient.is-still .ambient-grain,
+.phone .ambient.is-still .ambient-fold {
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {

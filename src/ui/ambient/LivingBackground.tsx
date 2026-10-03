@@ -102,6 +102,16 @@ export function LivingBackground({ variant, scrollRef, tint }: { variant: Exclud
           </div>
         </>
       )}
+      {variant === 'd' && (
+        <div className="ambient-depth ambient-depth--silk" data-depth="0.35">
+          <div className="ambient-silk">
+            <span className="ambient-fold ambient-fold--1" />
+            <span className="ambient-fold ambient-fold--2" />
+            <span className="ambient-fold ambient-fold--3" />
+            <span className="ambient-fold ambient-fold--4" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

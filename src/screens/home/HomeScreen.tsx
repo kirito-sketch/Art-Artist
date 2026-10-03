@@ -94,7 +94,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
 
   return (
     <>
-      {ambientOn && <LivingBackground variant={ambient as 'a' | 'b' | 'c'} scrollRef={scrollRef} />}
+      {ambientOn && <LivingBackground variant={ambient as Exclude<typeof ambient, 'off'>} scrollRef={scrollRef} />}
       <div className={`screen screen--hero ${cards ? 'canvas v-home' : ''}${ambientOn ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         {cards ? (
           header('home-header--inline')

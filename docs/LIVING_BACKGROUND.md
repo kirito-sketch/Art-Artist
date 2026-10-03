@@ -1,6 +1,6 @@
 # Living Background (experiment)
 
-Three directions for a quiet, living atmosphere behind Art and Artist. They are built as one reusable component and shown **on Home only**, **off by default**, so the direction can be chosen before anything spreads app-wide. This document does not rank them.
+Four directions for a living atmosphere behind Art and Artist. They are built as one reusable component and shown **on Home only**, **off by default**, so the direction can be chosen before anything spreads app-wide. This document does not rank them.
 
 - Component: `src/ui/ambient/LivingBackground.tsx`
 - State and device checks: `src/ui/ambient/ambient.ts`
@@ -10,8 +10,8 @@ Three directions for a quiet, living atmosphere behind Art and Artist. They are 
 
 | Where | How |
 |---|---|
-| In the app | Settings › Appearance › **Background (experiment)**: Off, A · Ambient light, B · Cinematic atmosphere, C · Depth field |
-| By link | add `?ambient=a`, `?ambient=b`, `?ambient=c` or `?ambient=off` to any app URL (it is remembered on the device) |
+| In the app | Settings › Appearance › **Background (experiment)**: Off, A · Ambient light, B · Cinematic atmosphere, C · Depth field, D · Silk light |
+| By link | add `?ambient=a`, `?ambient=b`, `?ambient=c`, `?ambient=d` or `?ambient=off` to any app URL (it is remembered on the device) |
 | Theme | Settings › Appearance › System / Light / Dark. Every variant has its own Light and Dark values |
 
 The choice is stored in `localStorage['aa-ambient']`. It never applies on `/test`, `/research` or the internal pages: `useAmbientVariant()` returns `off` wherever `isThemedSurface()` is false.
@@ -73,6 +73,30 @@ Rules the component already follows because of this audit:
 
 **Reduce Motion.** Planes still, no parallax between layers. At rest it looks almost the same as when moving.
 
+### D · Silk light
+
+**What it is.** Added after a reference recording: a wash of colour anchored to the top of the screen, crossed by slow folds of light like silk, falling away into the ground by mid-screen. A to C are atmospheres you feel; D is colour you see at once. In Art and Artist it uses the brand green instead of the reference's indigo.
+
+**Implementation.**
+- One depth wrapper (72% of the screen tall, moving at 35% of scroll, so the wash lingers behind the header and then leaves).
+- Inside it, a top-down colour wash with a static mask that fades it to nothing by the bottom of the wrapper.
+- Four folds: bands 220% wide, rotated between -31° and 14°, each a soft linear gradient of trough, ridge, sheen and ridge. Where they cross they read as folded fabric.
+- Folds move on transform only (translate, rotate a few degrees, scale up to 1.12) over 19 s, 26 s, 33 s and 41 s. That is faster than A to C so the movement is noticeable, as in the reference, while still never looping visibly.
+- Unlike A to C, D does not step back over imagery: the wash sits behind the header, above the photographs, so it stays at full strength.
+
+**Light / Dark.**
+- Light: a sage tint (brand green at 20%) with white ridges and sheen, so the top of Home looks like pale green silk in daylight.
+- Dark: deep brand green (72%) fading into charcoal, with pale green ridges (34%), a soft mint sheen (28%) and dark troughs. Closest in feel to the reference.
+
+**Reduce Motion.** The wash and folds stay, still. No parallax.
+
+**Verified.**
+- axe clean in Light and Dark.
+- Reduce Motion and low power hold it still.
+- Paused when Home is not the active tab.
+- Never on `/test` or `/research`.
+- 0 page errors.
+
 ## 3. Performance
 
 | Measure | Result |
@@ -80,7 +104,7 @@ Rules the component already follows because of this audit:
 | Scroll, unthrottled, DPR 2, all 8 combinations (Off, A, B, C × Light, Dark), 3 runs of 3 s each | 59.3–60 fps; p95 frame 16.7–16.8 ms; at most 2 frames over 25 ms in one run (B light, first run only), the same as Off within noise |
 | Layout and style recalculation during scroll | 0 layouts, 0–2 style recalcs in every case (the scroll handler writes only `transform`) |
 | Scroll, 4× CPU throttle, DPR 3 | 14–20 fps in **every** case, Off included. The container renders in software with no GPU, so this run cannot separate the variants; it does show the variants add nothing measurable on the main thread |
-| DOM cost | A 4 nodes, B 5, C 6 |
+| DOM cost | A 4 nodes, B 5, C 6, D 6 |
 | Idle | All idle motion is CSS on transform, so the compositor runs it without JavaScript or repaint |
 | Page errors | 0 in all combinations |
 
@@ -131,6 +155,7 @@ axe (WCAG 2.0/2.1 A and AA) on Home at three scroll positions for all 8 combinat
 |---|---|---|
 | A · Ambient light | Home, scroll slowly from "People in your world" to "Posts in cinematography"; stay still for 30 s on "Waiting on you" | Do the gaps between sections feel lit? Is the drift noticeable only when you look for it? |
 | B · Cinematic atmosphere | Home in **Dark**, at the "Waiting on you" section; then the same in Light | Grain: felt or seen? Does the vignette help focus or feel heavy around the tab bar? |
+| D · Silk light | Home in **Dark**, at the top; watch for 20 s, then scroll down | Does the colour at the top feel like the reference? Does it leave gracefully as you scroll? Header text stays readable over the sheen? |
 | C · Depth field | Home, flick-scroll the whole page, then stop | Do the layers separate during scroll and settle afterwards? Is it too quiet at rest? |
 | All | Launch the app fresh (close the PWA, reopen) | Does the atmosphere arriving after the splash feel like one motion? |
 | All | Turn on Reduce Motion (iOS Settings › Accessibility › Motion) | The still version should still look intentional |
