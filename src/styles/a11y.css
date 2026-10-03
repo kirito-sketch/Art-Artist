@@ -144,7 +144,7 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
 .sheet-close-text {
   font-size: var(--t-4);
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-ink);
   padding: 0 6px;
 }
 

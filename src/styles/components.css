@@ -46,7 +46,7 @@
 }
 
 .accent {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* Attention (your decision is needed): ink text led by a small red mark. Red never fills the line. */
@@ -83,7 +83,7 @@
 }
 
 .link--accent {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .link--muted {
@@ -159,7 +159,7 @@
 /* Selected / completed: Following, Sent, Added. Tonal, never a new colour. */
 .btn--selected {
   background: var(--action-tint);
-  color: var(--action);
+  color: var(--action-ink);
 }
 .btn--light {
   background: var(--float-bg);
@@ -471,7 +471,7 @@
 }
 
 .pill--urgent {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .pill--done {
@@ -488,7 +488,7 @@
 }
 
 .save.is-on {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .save--floating {
@@ -979,7 +979,7 @@
 }
 
 .publish--failed .publish-label {
-  color: var(--danger);
+  color: var(--danger-ink);
 }
 
 .publish-track {

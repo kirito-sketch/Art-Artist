@@ -29,6 +29,9 @@
   --action-disabled: rgba(39, 92, 80, 0.35);
   --on-action: #ffffff;
   --focus-ring: rgba(39, 92, 80, 0.55);
+  /* Ink: the action colour when it is text or an icon (fills keep --action). Same green in light; lifted in
+     dark so links and selected states stay readable (src/styles/theme-dark.css). */
+  --action-ink: var(--action);
 
   /* State. Accent is the Art and Artist action colour used as a mark (dots, rules, active tab). Red is not a
      brand colour: it is --danger, for destructive actions and genuine errors only. */
@@ -37,6 +40,9 @@
   --verified: #1f5af6;
   --available: #1e9e5a;
   --danger: #d83a2e;
+  --accent-ink: var(--accent);
+  --danger-ink: var(--danger);
+  --surface-2: #ececec; /* quiet placeholder ground (initials, empty posters) */
   --primary: #111111;
   --on-primary: #ffffff;
 

@@ -5,6 +5,10 @@ import { currentScreen, focusInto, restoreFocus, trapTab } from '../../ui/a11y';
 import { dur, shared, spring } from '../../ui/motion';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
+import { useTheme } from '../../ui/theme';
+
+/** Create surface colours (framer-motion interpolates hex, not tokens): the action green and the raised surface. */
+const CREATE_COLOURS = { light: { from: '#275c50', to: '#ffffff' }, dark: { from: '#2f7565', to: '#1e1c1a' } } as const;
 import { findOpportunity, firstName, networkFor, org, party, person } from '../../state/selectors';
 import { NetworkRow } from '../home/NetworkActivity';
 import { Avatar, Button, EmptyState, HowItWorks, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';
@@ -88,6 +92,8 @@ export function SheetHost() {
  * It sits under the tab bar so the same control that opened it closes it.
  */
 function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }) {
+  // The + disc grows into the surface: brand green to the surface colour of the current appearance.
+  const theme = useTheme();
   const layer = useRef<HTMLDivElement>(null);
   // A dialog that grows out of the + button: focus moves to its first action, Tab cycles between its
   // actions and the + (now the close control), and focus returns to the + when it closes.
@@ -118,9 +124,9 @@ function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }
             layoutId={shared.create}
             className="create-surface"
             style={{ borderRadius: 26 }}
-            initial={{ backgroundColor: '#275c50' }}
-            animate={{ backgroundColor: '#ffffff' }}
-            exit={{ backgroundColor: '#275c50' }}
+            initial={{ backgroundColor: CREATE_COLOURS[theme].from }}
+            animate={{ backgroundColor: CREATE_COLOURS[theme].to }}
+            exit={{ backgroundColor: CREATE_COLOURS[theme].from }}
             transition={spring.sheet}
           >
             <motion.div className="create-content" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1, duration: dur.micro } }} exit={{ opacity: 0, transition: { duration: 0.08 } }}>

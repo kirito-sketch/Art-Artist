@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { accessGate } from './server/access';
 import { bootScript, bootSplashHtml } from './src/ui/splashCore';
+import { themeBootScript } from './src/ui/themeCore';
 
 /**
  * Research API during `npm run dev` and `npm run preview`: mounts /api/research/* on the local server.
@@ -85,7 +86,7 @@ function launchSplashHtml(): Plugin {
     name: 'art-and-artist-launch-splash',
     transformIndexHtml(html) {
       const css = readFileSync(resolve(process.cwd(), 'src/styles/splash.css'), 'utf8');
-      return html.replace('</head>', `<style data-splash>${css}</style>\n  </head>`).replace('<body>', `<body>\n    ${bootSplashHtml()}<script>${bootScript()}</script>`);
+      return html.replace('</head>', `<script>${themeBootScript()}</script>\n  <style data-splash>${css}</style>\n  </head>`).replace('<body>', `<body>\n    ${bootSplashHtml()}<script>${bootScript()}</script>`);
     },
   };
 }

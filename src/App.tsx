@@ -37,6 +37,7 @@ import { TestMode } from './research-data/TestMode';
 import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
 import { LaunchSplash, type LaunchPhase } from './ui/LaunchSplash';
 import { launchSplashPending } from './ui/launchSession';
+import { enableTheme } from './ui/theme';
 
 // The researcher dashboard loads only on /research, so its code (and the Supabase browser client)
 // never ship to the prototype or to participants.
@@ -95,7 +96,7 @@ function RouteView({ r }: { r: Route }) {
     case 'org':
       return <OrgScreen id={r.id} />;
     case 'settings':
-      return <SettingsScreen />;
+      return <SettingsScreen page={r.page} />;
     case 'hproject':
       return <HouseProjectScreen id={r.id} />;
     case 'association':
@@ -448,6 +449,9 @@ function NormalApp() {
   useEffect(() => {
     installAppHead();
     applySystemTextSize();
+    // Appearance (System / Light / Dark) follows the whole normal app; after installAppHead so the
+    // theme-colour meta matches the resolved theme.
+    enableTheme();
   }, []);
   useEffect(() => {
     document.documentElement.classList.toggle('view-app', mode === 'app');

@@ -32,7 +32,7 @@ export type Route =
   | { name: 'editProfile' }
   | { name: 'project'; id: string }
   | { name: 'work'; id: string; from?: 'card' }
-  | { name: 'settings' }
+  | { name: 'settings'; page?: import('../screens/settings/Settings').SettingsPage }
   | { name: 'houseSetup' }
   | { name: 'legal'; doc: 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority' }
   | { name: 'yourData'; step?: 'delete' }
