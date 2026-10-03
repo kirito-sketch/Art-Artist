@@ -4,7 +4,7 @@ Screenings, premieres, workshops, industry meetups, festivals and markets. Event
 
 ## Switch
 
-Off by default. Turn on with `?events=on`, or `?next` (Events and the new Home). Events are always off on `/test`, so the Home comparison changes one thing only. The stakeholder direction puts the core professional workflow (casting, jobs, profiles, credits, discovery) before secondary social features, so Events stay off until the founder turns them on.
+**On by default** in the app: Discover has an Events tab, Create has Event, project, house and profile pages show their events, Saved and Notifications include them, and Home shows at most one event (today's Home places it after the core professional modules; the new Home composes it like any other unit, cap 1). `?events=off` hides them on this device; `?events=on` brings them back. On `/test` Events stay off so the Home comparison changes one thing only.
 
 ## Rules (`src/domain/events.ts`, unit-tested)
 

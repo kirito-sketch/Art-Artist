@@ -19,6 +19,9 @@ import { NetworkRow } from './NetworkActivity';
 import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
 import { FirstStep, Resolve, useWorldForming } from './FirstHome';
 import { RoleRow } from '../discover/RoleRow';
+import { EventRow } from '../event/eventUnits';
+import { eventHomeCandidates } from '../../state/events';
+import { useFeatures } from '../../ui/features';
 
 const HERO_HEIGHT = 600;
 
@@ -147,6 +150,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
                 )}
                 {/* One reason to come back, after real content, never above it. */}
                 {stage !== 'established' && i === 2 && <FirstStep />}
+                {/* One event at most, after the core professional modules (docs/EVENTS.md). */}
+                {i === Math.min(3, order.length - 2) && <ComingUp me={me} />}
               </Fragment>
             ))
           )}
@@ -163,6 +168,18 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
       {!cards && header(solid ? 'is-solid' : '')}
     </>
   );
+}
+
+/** Today's Home: the single most relevant upcoming event, if any is relevant enough (never a low one). */
+function ComingUp({ me }: { me: Person }) {
+  const { events, following } = useStore();
+  const on = useFeatures().events;
+  if (!on) return null;
+  const rank = { high: 2, medium: 1, low: 0 } as const;
+  const best = eventHomeCandidates(events, me, following, Date.now())
+    .filter((c) => c.significance !== 'low')
+    .sort((a, b) => rank[b.significance] - rank[a.significance] || b.relationship - a.relationship || b.place - a.place)[0];
+  return best ? <EventRow c={best} position={4} /> : null;
 }
 
 /**

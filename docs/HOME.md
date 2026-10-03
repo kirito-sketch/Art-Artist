@@ -11,7 +11,7 @@ The new Home is built but is **not the default**. Today's Home (`src/screens/hom
 | --- | --- |
 | `?home=next` | New Home on this device (stored in `localStorage['aa-features']`) |
 | `?home=current` | Back to today's Home |
-| `?next` | New Home and Events together |
+| `?next` | New Home (Events are on by default anyway) |
 | `/test` | Assigned per session, 50/50, for the comparison study only (see `RESEARCH_TEST_MODE.md`) |
 
 Code: `src/ui/features.ts` (`useFeatures`, `setFeatures`, `assignHomeArm`).

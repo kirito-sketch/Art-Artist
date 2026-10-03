@@ -399,3 +399,12 @@
 .v-discover {
   overflow-x: clip;
 }
+
+/* With Events on, Discover has five tabs: tighten the row so all five fit on a phone. */
+.v-discover .tabs:has(> .tab:nth-child(5)) {
+  gap: 14px;
+}
+
+.v-discover .tabs:has(> .tab:nth-child(5)) .tab {
+  font-size: var(--t-4);
+}
