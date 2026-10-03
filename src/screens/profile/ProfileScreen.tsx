@@ -13,6 +13,7 @@ import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
 import { CreditSeal } from '../../ui/CreditSeal';
 import { bentoLayout } from '../../ui/bento';
+import { useHeroParallax } from '../../ui/useHeroParallax';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -78,8 +79,9 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
-  const [scrollY, setScrollY] = useState(0);
-  const overHero = scrollY < 360;
+  // Scroll depth is written straight to the hero's layers (src/ui/useHeroParallax.ts): no re-render per scroll event.
+  const [overHero, setOverHero] = useState(true);
+  const heroScroll = useHeroParallax(setOverHero);
   const nameRef = useNameFit(p?.name ?? '');
 
   // While the photo sits under the status bar, the bar turns light.
@@ -147,11 +149,12 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };
 
   return (
-    <div className="screen screen--hero canvas v-profile" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
-      <div className="phero">
-        <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
+    <div ref={heroScroll} className="screen screen--hero canvas v-profile" data-scroll={isTab ? 'profile' : undefined}>
+      <div className="phero" data-hero>
+        <div className="ohero-parallax" data-hero-photo>
           <Photo media={hero} className="phero-photo" alt={p.name} />
         </div>
+        <div className="phero-dim" data-hero-dim aria-hidden />
         <div className="phero-bar">
           {/* Your own profile: no Back unless it was opened as a page; never Save, Follow or Message. */}
           {!isTab && (
@@ -179,7 +182,7 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
         {/* Identity first: Person, Craft, Location, Credibility, then Availability, then Actions, then Work. */}
         <header className="pid">
           <span className="pid-avatar">
-            <Avatar party={p} size={80} />
+            <Avatar party={p} size={96} />
           </span>
           <p className="pid-craft" lang={scriptLang(CRAFT_LABEL[p.craft] ?? p.role)}>
             {CRAFT_LABEL[p.craft] ?? p.role}

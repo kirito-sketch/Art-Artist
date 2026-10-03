@@ -782,3 +782,64 @@
   color: var(--action);
   font-weight: 600;
 }
+
+/* ==========================================================================================
+   Individual profile hero: composition and scroll depth
+   Hero ~45% of the phone's height (300 to 400px) instead of a fixed 470px; the 96px portrait
+   straddles the hero and the sheet; identity starts straight under it. The photo trails the
+   content a little on scroll (src/ui/useHeroParallax.ts); reduced motion turns that off.
+   ========================================================================================== */
+.phone {
+  --phone-h: 852px;
+}
+.phone.phone--app {
+  --phone-h: 100vh;
+  --phone-h: 100dvh;
+}
+@media (max-width: 520px) {
+  .phone {
+    --phone-h: 100vh;
+    --phone-h: 100dvh;
+  }
+}
+
+.phone .v-profile .phero {
+  height: clamp(300px, calc(var(--phone-h) * 0.45), 400px);
+}
+
+/* The sheet slides over the photo; the portrait is pulled up so half of it sits on the photo. */
+.phone .v-profile .psheet {
+  display: flow-root;
+  margin-top: -28px;
+  padding-top: 0;
+}
+.phone .v-profile .pid-avatar {
+  margin-top: -44px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.phone .v-profile .pid-avatar .avatar {
+  box-shadow: 0 0 0 4px var(--base), 0 2px 10px rgba(0, 0, 0, 0.16);
+}
+
+/* Photo layers move by transform and opacity only. */
+.phone .v-profile .ohero-parallax {
+  transform-origin: 50% 40%;
+  backface-visibility: hidden;
+}
+.phone .phero-dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone .v-profile .ohero-parallax {
+    transform: none !important;
+  }
+  .phone .phero-dim {
+    display: none;
+  }
+}
