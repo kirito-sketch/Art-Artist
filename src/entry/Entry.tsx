@@ -31,6 +31,9 @@ type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'forgot' | 'cons
 /** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
 const KNOWN: Record<string, string> = { kiran: 'kiran', tara: 'tara', aditi: 'aditi' };
+/** A provider account that belongs to an existing person who acts for a production house: signs in as the house. */
+type ProviderAccount = { name: string; email: string; house?: { viewer: string; acting: string; label: string } };
+const HOUSE_ACCOUNT = (email: string): ProviderAccount => ({ name: 'Aditi Ghosh', email, house: { viewer: 'aditi', acting: 'konark', label: 'Konark Pictures' } });
 const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata'];
 const art = (n: string): Media => ({ id: `entry-${n}`, kind: 'image', src: `images/brand/entry/${n}.jpg` });
 
@@ -126,10 +129,10 @@ export function EntryFlow() {
     if (prev) setStep(prev);
   };
 
-  const signInAs = (id: string) => {
+  const signInAs = (id: string, acting = 'self') => {
     endEntry();
-    setActing('self');
     switchViewer(id);
+    setActing(acting);
     showToast({ text: `Welcome back, ${id[0].toUpperCase()}${id.slice(1)}` });
   };
 
@@ -394,6 +397,8 @@ export function EntryFlow() {
             invite={invite}
             onPick={(acct) => {
               setProvider(null);
+              // An existing account that acts for a production house: straight into the house, whichever screen this came from.
+              if (acct.house) return signInAs(acct.house.viewer, acct.house.acting);
               setEmail(acct.email);
               setName(acct.name);
               if (history.includes('signin') || step === 'signin') {
@@ -563,8 +568,8 @@ function PhotoPicker({ onPick, has }: { onPick: (src: string) => void; has: bool
 }
 
 /** Apple / Google account chooser (simulated system sheet). */
-function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; invite: boolean; onPick: (a: { name: string; email: string }) => void }) {
-  const accounts =
+function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; invite: boolean; onPick: (a: ProviderAccount) => void }) {
+  const accounts: ProviderAccount[] =
     kind === 'google'
       ? invite
         ? [
@@ -574,8 +579,11 @@ function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; inv
         : [
             { name: 'Nila Varghese', email: 'nila.varghese@gmail.com' },
             { name: 'Kiran Varma', email: 'kiran.varma@gmail.com' },
+            HOUSE_ACCOUNT('aditi@konarkpictures.in'),
           ]
-      : [{ name: invite ? INVITE.name : 'Nila Varghese', email: 'x7p2k@privaterelay.appleid.com' }];
+      : invite
+        ? [{ name: INVITE.name, email: 'x7p2k@privaterelay.appleid.com' }]
+        : [{ name: 'Nila Varghese', email: 'x7p2k@privaterelay.appleid.com' }, HOUSE_ACCOUNT('m4q9d@privaterelay.appleid.com')];
   return (
     <div className="stack">
       <p className="title-2">{kind === 'google' ? 'Choose an account' : 'Sign in with Apple'}</p>
@@ -587,6 +595,7 @@ function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; inv
             <span className="prow-text">
               <span className="item-title">{a.name}</span>
               <span className="meta">{kind === 'apple' ? 'Hide my email' : a.email}</span>
+              {a.house && <span className="meta provider-house">Production house · {a.house.label}</span>}
             </span>
           </button>
         ))}

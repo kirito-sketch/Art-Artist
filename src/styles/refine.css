@@ -843,3 +843,9 @@
     display: none;
   }
 }
+
+/* Sign in with Apple / Google: the account that acts for a production house says so. */
+.phone .provider-house {
+  color: var(--action);
+  font-weight: 600;
+}
