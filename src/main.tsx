@@ -10,6 +10,7 @@ import './styles/components.css';
 import './styles/screens.css';
 import './styles/looks.css';
 import './styles/expression.css';
+import './styles/home-next.css';
 import './styles/test-mode.css';
 import './styles/a11y.css';
 import './styles/view-modes.css';

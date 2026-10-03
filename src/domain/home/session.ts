@@ -66,7 +66,30 @@ export function getComposition(build: () => HomeInput, ctx: { now: number; sessi
     const ids = new Set(all.map((x) => x.id));
     comp = compose([...rank(all), ...eligible(input.coldStart, now).filter((x) => !ids.has(x.id))], input.personal, now);
   }
+  comp = withGroups(comp, rank([...all, ...eligible(input.coldStart, now)]));
   kv.set(COMP, JSON.stringify({ sessionKey, comp }));
   kv.set(SEEN, JSON.stringify(seen));
   return comp;
+}
+
+/**
+ * Group units show more than one item (In production: up to three updates). The composer places the best
+ * one; the next best of the same type ride along in `data.more`, never the lead's own project.
+ */
+function withGroups(comp: Composition, ranked: Candidate[]): Composition {
+  const used = new Set([comp.lead?.id, ...comp.middle.map((x) => x.id)]);
+  const leadProject = comp.lead?.data?.projectId;
+  const middle = comp.middle.map((u) => {
+    if (u.type !== 'projectUpdates') return u;
+    const seenProjects = new Set([leadProject, u.data?.projectId]);
+    const more: Candidate[] = [];
+    for (const x of ranked) {
+      if (more.length >= 2) break;
+      if (x.type !== 'projectUpdates' || used.has(x.id) || seenProjects.has(x.data?.projectId)) continue;
+      seenProjects.add(x.data?.projectId);
+      more.push(x);
+    }
+    return { ...u, data: { ...u.data, more } };
+  });
+  return { ...comp, middle };
 }

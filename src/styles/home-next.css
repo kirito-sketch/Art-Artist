@@ -1,0 +1,356 @@
+/* =============================================================== The new Home (docs/HOME.md)
+ * Fixed frame (header, lead, personal news, end) + a composed middle. Uses the app's tokens and existing
+ * components; only the frame pieces are new. Motion is transform/opacity only; Reduce Motion is still. */
+
+.hn .hn-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hn-search {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--text-2);
+  font-size: 15px;
+  text-align: left;
+}
+
+.hn-search span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hn-sheet {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 120px;
+}
+
+/* ---------------------------------------------------------------------------------------- lead */
+.hn-lead-wrap {
+  padding: 8px var(--gutter) 0;
+}
+
+.hn-lead {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  aspect-ratio: 4 / 5;
+  max-height: 520px;
+  width: 100%;
+  background: var(--sand, #ece7df);
+  color: #fff;
+}
+
+.hn-lead .hn-lead-photo,
+.hn-lead .hn-lead-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hn-lead::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.8) 100%);
+  pointer-events: none;
+}
+
+.hn-lead-text {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1;
+  display: grid;
+  gap: 6px;
+}
+
+.hn-tag {
+  justify-self: start;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--action);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hn-lead-title {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.hn-lead-meta {
+  font-size: 14px;
+  opacity: 0.94;
+}
+
+.hn-lead-meta .verified {
+  color: #fff;
+}
+
+.hn-lead-why {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 550;
+}
+
+.hn-faces {
+  display: inline-flex;
+  flex: none;
+}
+
+.hn-faces > * {
+  margin-left: -7px;
+  box-shadow: 0 0 0 2px #fff;
+  border-radius: 50%;
+}
+
+.hn-faces > *:first-child {
+  margin-left: 0;
+}
+
+.hn-faces--lg > * {
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* -------------------------------------------------------------------------------- units */
+.hn-unit {
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+
+.hn-unit:not(.v-section) {
+  padding-top: 20px;
+}
+
+/* Rails keep their own edge-to-edge scroll inside the gutter. */
+.hn-unit .portrait-rail {
+  margin-left: calc(-1 * var(--gutter));
+  margin-right: calc(-1 * var(--gutter));
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+
+.hn-news {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.hn-news-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.hn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.hn-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hn-row-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.hn-row-text b {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.hn-row-text span {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.35;
+}
+
+.hn-row-text em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--action);
+  line-height: 1.35;
+}
+
+.hn-rows {
+  display: grid;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  overflow: hidden;
+}
+
+.hn-update {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 72px;
+}
+
+.hn-update + .hn-update {
+  border-top: 1px solid var(--hairline);
+}
+
+.hn-update-art {
+  width: 44px;
+  height: 58px;
+  flex: none;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--sand, #ece7df);
+}
+
+.hn-update-art img,
+.hn-update-art .photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hn-post .post {
+  border-radius: var(--r-m);
+}
+
+/* ------------------------------------------------------------------------- the end ("That's a wrap") */
+.hn-end {
+  margin: 36px var(--gutter) 0;
+  padding: 26px 18px 14px;
+  border-top: 1px solid var(--hairline);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.hn-end-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hn-end-sub {
+  font-size: 14px;
+  color: var(--text-2);
+  max-width: 30ch;
+}
+
+.hn-golden {
+  margin-top: 2px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, rgba(232, 160, 74, 0.16), rgba(232, 160, 74, 0.06));
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.hn-find {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.hn-find .chip {
+  min-height: 44px;
+}
+
+.hn-refresh {
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+/* The clapper claps once when the end comes into view. */
+.hn-clapper-arm {
+  transform-origin: 8px 17px;
+  transform: rotate(-16deg);
+}
+
+.hn-clapper.is-clapping .hn-clapper-arm {
+  animation: hn-clap 520ms cubic-bezier(0.3, 0.7, 0.2, 1) 120ms forwards;
+}
+
+@keyframes hn-clap {
+  0% { transform: rotate(-16deg); }
+  55% { transform: rotate(1.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* "Take 2": a one-line slate while Home recomposes. */
+.hn-slate {
+  align-self: center;
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--text);
+  color: var(--surface, #fff);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.hn-slate-board {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(-45deg, var(--surface, #fff) 0 3px, var(--text) 3px 6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hn-clapper .hn-clapper-arm,
+  .hn-clapper.is-clapping .hn-clapper-arm {
+    animation: none;
+    transform: none;
+  }
+}

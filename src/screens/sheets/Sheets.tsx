@@ -1,4 +1,5 @@
 import { Ban, Bookmark, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
+import { useFeatures } from '../../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { currentScreen, focusInto, restoreFocus, trapTab } from '../../ui/a11y';
@@ -197,6 +198,7 @@ const asksForDecision = (n: { kind: string; text: string; unread: boolean }) =>
 function Notifications() {
   const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario } = useStore();
   const [filter, setFilter] = useState<string>(acting);
+  const homeNext = useFeatures().home === 'next';
   // News from your network (credits, new projects, availability) lives here, not on Home, which only
   // shows what needs you (docs/UX_HEURISTIC_AUDIT.md F2, F13). It belongs to the person, not a house.
   const network = filter === 'self' || filter === 'all' ? networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel') : [];
@@ -204,8 +206,11 @@ function Notifications() {
   if (!notifications.length && !network.length) return caughtUp;
   const owner = (n: (typeof notifications)[number]) => n.forId ?? 'self';
   const shown = filter === 'all' ? notifications : notifications.filter((n) => owner(n) === filter);
-  const fresh = shown.filter((n) => n.unread);
-  const earlier = shown.filter((n) => !n.unread);
+  // New Home (docs/HOME.md): Home no longer carries a "Waiting on you" queue, so anything that asks for a
+  // decision is grouped first here, under "Needs you".
+  const needs = homeNext ? shown.filter((n) => asksForDecision(n)) : [];
+  const fresh = shown.filter((n) => n.unread && !needs.includes(n));
+  const earlier = shown.filter((n) => !n.unread && !needs.includes(n));
   const identities = ['self', ...memberships.filter((m) => notifications.some((n) => n.forId === m))];
   const unreadFor = (id: string) => notifications.filter((n) => n.unread && (id === 'all' || owner(n) === id)).length;
   const label = (id: string) => (id === 'all' ? 'All' : id === 'self' ? 'You' : org(id).name);
@@ -262,6 +267,12 @@ function Notifications() {
             </button>
           ))}
         </div>
+      )}
+      {needs.length > 0 && (
+        <section className="notif-group">
+          <h3 className="notif-label">Needs you</h3>
+          <div className="list list--flush">{needs.map(row)}</div>
+        </section>
       )}
       {fresh.length > 0 && (
         <section className="notif-group">

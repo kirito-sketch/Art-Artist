@@ -205,3 +205,21 @@ export interface Viewer {
   craft: Craft;
   firstName: string;
 }
+
+/**
+ * A dated, material change to a project: the supply that keeps Home alive without anyone having to post
+ * (docs/HOME.md). Significance is decided by the Home candidate adapter, never stored.
+ */
+export interface ProjectUpdate {
+  id: string;
+  /** A Work id (src/domain/discovery.ts discoverableProjects). */
+  projectId: string;
+  kind: 'stage' | 'crew' | 'dates';
+  /** Stage changes: the new stage. Crew: the line ("Editor"). Dates: what was confirmed. */
+  to: string;
+  from?: string;
+  /** People the change is about (a crew member who joined). */
+  actorIds?: string[];
+  /** Hours before the prototype loads, so the data is always "this week". */
+  hoursAgo: number;
+}

@@ -7,6 +7,8 @@ import { CollabComposer } from './screens/create/CollabComposer';
 import { PostComposer } from './screens/create/PostComposer';
 import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
 import { HomeScreen } from './screens/home/HomeScreen';
+import { HomeNext } from './screens/home/HomeNext';
+import { useFeatures } from './ui/features';
 import { NetworkRow } from './screens/home/NetworkActivity';
 import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
 import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
@@ -186,8 +188,12 @@ function Phone({ app = false }: { app?: boolean }) {
   const [discoverScope, setDiscoverScope] = useState<Scope>('people');
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
   const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
-  const goDiscover = (scope?: string, craft?: string) => {
+  const features = useFeatures();
+  // Home's search pill opens Discover with the search field focused (a counter, so it re-applies).
+  const [searchFocus, setSearchFocus] = useState(0);
+  const goDiscover = (scope?: string, craft?: string, opts?: { focusSearch?: boolean }) => {
     setDiscoverScope((scope as Scope) ?? 'people');
+    if (opts?.focusSearch) setSearchFocus((n) => n + 1);
     if (scope === 'posts') setPostFocus((f) => ({ craft: craft ?? null, n: f.n + 1 }));
     setTab('discover');
   };
@@ -319,10 +325,10 @@ function Phone({ app = false }: { app?: boolean }) {
               // Identity switch: the home world fades up anew so the change of context is felt, not just read.
               // (Keyed remount, no exit layer: an exiting copy of the old home must never linger under the new one.)
               <motion.div key={store.acting} className="identity-layer" initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: dur.ui, ease: ease.out }}>
-                {store.acting !== 'self' ? <ProductionHome /> : <HomeScreen goDiscover={goDiscover} />}
+                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />}
+            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} focusSearch={searchFocus} />}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab />)}
           </motion.section>

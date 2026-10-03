@@ -1,4 +1,4 @@
-import type {
+import type { ProjectUpdate,
   Conversation,
   Credit,
   Interest,
@@ -560,6 +560,20 @@ export const opportunities: Opportunity[] = [
     media: m('saltwater'),
     postedAgo: '1d',
   },
+];
+
+/* ---------------------------------------------------------- project updates (docs/HOME.md) */
+
+/** Material changes this week. Home turns them into its "In production" unit and, when significant, its lead. */
+export const projectUpdates: ProjectUpdate[] = [
+  { id: 'pu1', projectId: 'backwaters', kind: 'crew', to: 'Editor', actorIds: ['meera'], hoursAgo: 20 },
+  { id: 'pu2', projectId: 'neela', kind: 'stage', from: 'Pre-production', to: 'Shooting', hoursAgo: 30 },
+  { id: 'pu3', projectId: 'kaaval', kind: 'crew', to: 'Colourist', actorIds: ['rhea'], hoursAgo: 46 },
+  { id: 'pu4', projectId: 'backwaters', kind: 'stage', from: 'Development', to: 'Pre-production', hoursAgo: 70 },
+  { id: 'pu5', projectId: 'kaaval', kind: 'dates', to: 'Festival premiere confirmed', hoursAgo: 52 },
+  { id: 'pu6', projectId: 'neela', kind: 'crew', to: 'Gaffer', actorIds: ['sameer'], hoursAgo: 90 },
+  { id: 'pu7', projectId: 'monsoon', kind: 'stage', from: 'Post-production', to: 'Released', hoursAgo: 120 },
+  { id: 'pu8', projectId: 'neeliraat', kind: 'crew', to: 'Poster artist', hoursAgo: 60 },
 ];
 
 /* ---------------------------------------------------------- network events */
