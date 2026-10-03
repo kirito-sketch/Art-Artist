@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import './dashboard.css';
 import { DashboardError, FIRST_RUN_TASK, isFirstRunAnswer, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, loadStudyEvents, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
-import { computeHealth, type HealthEvent } from './health';
+import { compareHome, computeHealth, homeArms, HOME_ARM_LABEL, type HealthEvent, type HomeArm } from './health';
 import { CATEGORY_LABEL, STUCK_LABEL, FIRST_RUN_LABEL, FIRST_RUN_ORDER, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
 
 type Route = { view: 'overview' | 'health' | 'sessions' | 'tasks' | 'feedback'; id?: string };
@@ -761,6 +761,7 @@ function FeedbackCard({ f, v, open, onChanged }: { f: Feedback; v: View; open: b
 function Health({ v, study }: { v: View; study?: Study }) {
   const [events, setEvents] = useState<HealthEvent[] | null>(null);
   const [err, setErr] = useState('');
+  const [arm, setArm] = useState<'all' | HomeArm>('all');
   useEffect(() => {
     if (!study) return;
     setEvents(null);
@@ -768,8 +769,14 @@ function Health({ v, study }: { v: View; study?: Study }) {
   }, [study?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (err) return <p className="dash-error">{err}</p>;
   if (!events) return <p className="dash-loading">Loading events…</p>;
-  const ids = new Set(v.sessions.map((s) => s.id));
-  const h = computeHealth({ tasks: v.tasks, sessions: v.sessions, attempts: v.attempts, feedback: v.feedback }, events.filter((e) => ids.has(e.session_id)));
+  const allIds = new Set(v.sessions.map((s) => s.id));
+  const studyEvents = events.filter((e) => allIds.has(e.session_id));
+  const arms = homeArms(studyEvents);
+  const compared = compareHome({ tasks: v.tasks, sessions: v.sessions, attempts: v.attempts, feedback: v.feedback }, studyEvents);
+  const split = compared.some((c) => c.arm !== 'unassigned');
+  // The Home filter narrows everything below it to the sessions that saw that Home.
+  const ids = new Set(v.sessions.filter((s) => arm === 'all' || (arms.get(s.id) ?? 'unassigned') === arm).map((s) => s.id));
+  const h = computeHealth({ tasks: v.tasks, sessions: v.sessions.filter((s) => ids.has(s.id)), attempts: v.attempts.filter((a) => ids.has(a.session_id)), feedback: v.feedback.filter((f) => ids.has(f.session_id)) }, studyEvents.filter((e) => ids.has(e.session_id)));
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), study, tasks: v.tasks, sessions: v.sessions, attempts: v.attempts, feedback: v.feedback, events: events.filter((e) => ids.has(e.session_id)) }, null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
@@ -786,6 +793,68 @@ function Health({ v, study }: { v: View; study?: Study }) {
           Export this study (JSON)
         </button>
       </p>
+      {split && (
+        <>
+          <div className="dash-filters">
+          <label>
+            Home
+            <select value={arm} onChange={(e) => setArm(e.target.value as typeof arm)}>
+              <option value="all">Both</option>
+              {compared.map((c) => (
+                <option key={c.arm} value={c.arm}>
+                  {HOME_ARM_LABEL[c.arm]}
+                </option>
+              ))}
+            </select>
+          </label>
+          </div>
+          <h2>Home comparison</h2>
+          <p className="dash-note">Each new session is assigned one Home at random (50/50). Events are off in both. Small numbers: read as direction, not proof.</p>
+          <div className="dash-scroll">
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Home</th>
+                  <th>Sessions</th>
+                  <th>Completed</th>
+                  <th>Median finished</th>
+                  <th>Reached the end of Home</th>
+                  <th>Opened something from Home</th>
+                  <th>Searched from Home</th>
+                  {v.tasks
+                    .slice()
+                    .sort((a, b) => a.sequence - b.sequence)
+                    .map((t) => (
+                      <th key={t.id}>
+                        {t.sequence}. finished · time · ease
+                      </th>
+                    ))}
+                </tr>
+              </thead>
+              <tbody>
+                {compared.map((c) => (
+                  <tr key={c.arm}>
+                    <td>{HOME_ARM_LABEL[c.arm]}</td>
+                    <td>{c.sessions}</td>
+                    <td>
+                      {c.completed} ({pct(c.completed, c.sessions)})
+                    </td>
+                    <td>{c.medianScenariosDone ?? '-'}</td>
+                    <td>{c.arm === 'next' ? `${c.reachedEnd} (${pct(c.reachedEnd, c.sessions)})` : '-'}</td>
+                    <td>{c.openedFromHome}</td>
+                    <td>{c.searchedFromHome}</td>
+                    {c.tasks.map((t) => (
+                      <td key={t.taskId}>
+                        {t.finished}/{t.reached} · {fmtDuration(t.medianMs)} · {t.medianEase ?? '-'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
       <div className="dash-stats">
         <Stat label="Sessions" value={h.total} />
         <Stat label="Completed" value={`${h.completed} (${pct(h.completed, h.total)})`} />

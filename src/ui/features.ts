@@ -46,3 +46,16 @@ export function setFeatures(f: Partial<Features>, persist = !TEST_MODE) {
 }
 export const getFeatures = () => features;
 export const useFeatures = () => useSyncExternalStore((s) => (subs.add(s), () => subs.delete(s)), () => features, () => features);
+
+/** Studies that compare the two Homes. Sessions of any other (older) study always see today's Home. */
+export const HOME_AB_STUDIES = ['aa-individual-short-v1'];
+
+/**
+ * The Home a new /test session sees: 50/50 for a comparison study, today's Home otherwise. A researcher can
+ * pin the arm for a pilot with /test?arm=next or ?arm=current. Events stay off on /test either way.
+ */
+export function assignHomeArm(studySlug: string, arm: string | null, rand: () => number = Math.random): HomeVariant {
+  if (!HOME_AB_STUDIES.includes(studySlug)) return 'current';
+  if (arm === 'next' || arm === 'current') return arm;
+  return rand() < 0.5 ? 'next' : 'current';
+}

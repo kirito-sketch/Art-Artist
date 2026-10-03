@@ -200,7 +200,7 @@ function creditRelationCandidate(ctx: HomeContext): Candidate[] {
   ];
 }
 
-/** Cold start, in sourcing order: craft and place, active projects, people, work, houses. */
+/** Cold start, in sourcing order: craft and place (projects near you, one role in your craft), active projects, people, work, houses. */
 function coldStart(ctx: HomeContext, people: Candidate[], posts: Candidate[], houses: Candidate[]): Candidate[] {
   const live = discoverableProjects(blockedBy(ctx.me.id)).filter((w) => isLive(w) && usable(w) && w.ownerId !== ctx.me.id);
   const local = live.filter((w) => houseOf(w)?.city === ctx.me.city);
@@ -219,7 +219,9 @@ function coldStart(ctx: HomeContext, people: Candidate[], posts: Candidate[], ho
     leadable: true,
     data: { projectId: w.id, text: w.stage === 'Shooting' ? 'Shooting now' : `In ${w.stage.toLowerCase()}`, tag: w.stage },
   });
-  return [...local.map((w) => projectCard(w, true)), ...live.filter((w) => !local.includes(w)).map((w) => projectCard(w, false)), ...people, ...posts, ...houses.filter((h) => h.place === 1)];
+  // Craft first: one role that fits their craft, if there is one (the composer still keeps it below the third unit).
+  const role = opportunityCandidates(ctx).filter((c) => c.significance === 'high').slice(0, 1);
+  return [...local.map((w) => projectCard(w, true)), ...role, ...live.filter((w) => !local.includes(w)).map((w) => projectCard(w, false)), ...people, ...posts, ...houses.filter((h) => h.place === 1)];
 }
 
 export function homeInput(ctx: HomeContext): HomeInput {

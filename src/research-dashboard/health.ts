@@ -151,3 +151,53 @@ export function computeHealth(d: StudyData, events: HealthEvent[], now = Date.no
     stopPoints: [...stopPoints].map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n),
   };
 }
+
+// ------------------------------------------------------------------------------- Home comparison
+export type HomeArm = 'current' | 'next' | 'unassigned';
+export const HOME_ARM_LABEL: Record<HomeArm, string> = { current: "Today's Home", next: 'New Home', unassigned: 'Not assigned (older build)' };
+
+/** Which Home each session saw, from session_started (docs/HOME.md). Sessions from before the split are unassigned. */
+export function homeArms(events: HealthEvent[]): Map<string, HomeArm> {
+  const out = new Map<string, HomeArm>();
+  for (const e of events) {
+    if (e.event_name !== 'session_started') continue;
+    const v = e.metadata?.homeVariant;
+    out.set(e.session_id, v === 'next' || v === 'current' ? v : 'unassigned');
+  }
+  return out;
+}
+
+export type ArmRow = {
+  arm: HomeArm;
+  sessions: number;
+  completed: number;
+  medianScenariosDone: number | null;
+  reachedEnd: number;
+  openedFromHome: number;
+  searchedFromHome: number;
+  tasks: { taskId: string; reached: number; finished: number; medianMs: number | null; medianEase: number | null }[];
+};
+
+/** Side by side: completion, scenario success, time and ease per arm, plus how Home itself was used. */
+export function compareHome(d: StudyData, events: HealthEvent[], now = Date.now()): ArmRow[] {
+  const arms = homeArms(events);
+  const armOf = (sid: string): HomeArm => arms.get(sid) ?? 'unassigned';
+  const present = (['current', 'next', 'unassigned'] as HomeArm[]).filter((a) => d.sessions.some((s) => armOf(s.id) === a));
+  return present.map((arm) => {
+    const ids = new Set(d.sessions.filter((s) => armOf(s.id) === arm).map((s) => s.id));
+    const sub: StudyData = { tasks: d.tasks, sessions: d.sessions.filter((s) => ids.has(s.id)), attempts: d.attempts.filter((a) => ids.has(a.session_id)), feedback: d.feedback.filter((f) => ids.has(f.session_id)) };
+    const ev = events.filter((e) => ids.has(e.session_id));
+    const h = computeHealth(sub, ev, now);
+    const sessionsWith = (name: string) => new Set(ev.filter((e) => e.event_name === name).map((e) => e.session_id)).size;
+    return {
+      arm,
+      sessions: h.total,
+      completed: h.completed,
+      medianScenariosDone: h.medianScenariosDone,
+      reachedEnd: sessionsWith('home_end_reached'),
+      openedFromHome: sessionsWith('home_unit_opened'),
+      searchedFromHome: sessionsWith('home_search_opened'),
+      tasks: h.tasks.map((t) => ({ taskId: t.task.id, reached: t.reached, finished: t.finished, medianMs: t.medianMs, medianEase: t.medianEase })),
+    };
+  });
+}

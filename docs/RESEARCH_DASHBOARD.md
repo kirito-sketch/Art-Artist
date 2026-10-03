@@ -182,6 +182,24 @@ The question this section answers: *is the test itself working?* It is computed 
 - **Phone and desktop:** sessions, completion and median finished.
 - **Export this study (JSON):** tasks, sessions, attempts, feedback and events, for analysis elsewhere.
 
+### Home comparison
+
+When a study has sessions with an assigned Home (`session_started.metadata.homeVariant`), Study health shows two extra things.
+
+**A Home filter.** Choose Both, Today's Home or New Home. Everything below the filter narrows to the sessions that saw that Home.
+
+**A Home comparison table.** One row per arm:
+
+- sessions;
+- completed;
+- median scenarios finished;
+- for the new Home, how many reached the end of Home;
+- how many opened something from Home;
+- how many searched from Home;
+- for each scenario: finished out of reached, median time, and median ease.
+
+Sessions from before the split appear as "Not assigned (older build)". The numbers are small, so read them as direction, not proof. Code: `compareHome` and `homeArms` in `src/research-dashboard/health.ts`, which are unit-tested.
+
 ## Later (not built)
 
 CSV export (simple once wanted: the views already hold the rows), AI synthesis, heatmaps, replay and

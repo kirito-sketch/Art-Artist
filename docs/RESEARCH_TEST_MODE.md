@@ -227,6 +227,23 @@ No schema change was needed. Each answer is a `research_feedback` row with categ
 "Final survey" and keeps them out of the feedback inbox. A dedicated survey table is a possible later
 refinement.
 
+## Home comparison (new Home vs today's Home)
+
+The comparison study (`aa-individual-short-v1`) gives each new session one Home at random, 50/50 (`assignHomeArm` in `src/ui/features.ts`):
+
+- `current`: today's Home;
+- `next`: the new Home (fixed frame, composed middle; see `docs/HOME.md`).
+
+The arm:
+
+- is chosen when the participant presses Start;
+- is kept in the saved test state, so a reload or resume keeps the same Home;
+- is recorded on `session_started` as `metadata.homeVariant`.
+
+Sessions of any other study always see today's Home. Events are off in both arms, so the comparison changes one thing only.
+
+For a pilot, a researcher can pin the arm with `/test?arm=next` or `/test?arm=current`. Don't use it with real participants.
+
 ## Session resume
 
 The research client keeps the session token in `sessionStorage` (per tab). Test Mode keeps its stage

@@ -247,7 +247,7 @@ export const research = {
    * Start a session for a study. Safe to call twice (returns the same in-flight promise) and safe to
    * call when the backend is unreachable (resolves to null; the prototype carries on unrecorded).
    */
-  startSession(opts: { studySlug: string; persona?: string; participantCode?: string; participant?: { displayName?: string; participantType?: string; primaryCraft?: string; experienceLevel?: string }; consent: true }): Promise<SessionInfo | null> {
+  startSession(opts: { studySlug: string; persona?: string; metadata?: Record<string, string | number | boolean>; participantCode?: string; participant?: { displayName?: string; participantType?: string; primaryCraft?: string; experienceLevel?: string }; consent: true }): Promise<SessionInfo | null> {
     if (!ENABLED) return Promise.resolve(null);
     if (token) return (attached = true), Promise.resolve(store.json<SessionInfo | null>(K.info, null));
     if (starting) return starting;
@@ -270,7 +270,7 @@ export const research = {
         const info: SessionInfo = { participantCode: data.participantCode, study: { ...data.study, title: brand(data.study.title) }, tasks: data.tasks.map((t) => ({ ...t, title: brand(t.title), instruction: brand(t.instruction) })) };
         store.set(K.info, JSON.stringify(info));
         persist();
-        research.track('session_started', { metadata: { persona: opts.persona ?? context.persona ?? null } });
+        research.track('session_started', { metadata: { persona: opts.persona ?? context.persona ?? null, ...opts.metadata } });
         return info;
       } catch {
         warn('session start failed (backend unreachable)');

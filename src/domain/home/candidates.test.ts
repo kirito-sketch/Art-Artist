@@ -47,3 +47,10 @@ test('a new cinematographer in Hyderabad: at least three genuine units, led by a
   assert.match((comp.lead!.reason ?? '') + (comp.lead!.data?.text ?? ''), /Hyderabad|In |Shooting/);
   assert.ok((comp.lead ? 1 : 0) + comp.middle.length >= 3);
 });
+test('a new cinematographer also sees one role in their craft, never in the first two middle units', () => {
+  const me: Person = { id: 'you-new', kind: 'person', name: 'Sam Rao', role: 'Cinematographer', craft: 'cinematographer', city: 'Hyderabad', tone: 2 };
+  const comp = getComposition(() => homeInput(ctx({ me, following: [], isNew: true })), { now: NOW, sessionKey: 'n2', kv: memoryKV() });
+  const types = comp.middle.map((x) => x.type);
+  assert.equal(types.filter((t) => t === 'opportunity').length, 1, types.join(','));
+  assert.ok(types.indexOf('opportunity') >= 2, types.join(','));
+});

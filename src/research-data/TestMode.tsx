@@ -19,6 +19,7 @@
  * with the same light shell (generic rules for task keys this file doesn't know).
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { assignHomeArm, setFeatures, type HomeVariant } from '../ui/features';
 import { ChevronUp, LifeBuoy } from 'lucide-react';
 import { useStore, type Route } from '../state/store';
 import * as seed from '../data/seed';
@@ -70,13 +71,14 @@ const EXPERIENCE = ['Student or just starting', 'Less than 3 years', '3 to 10 ye
 type Stage = 'loading' | 'unavailable' | 'welcome' | 'starting' | 'scenario' | 'question' | 'survey' | 'thanks' | 'ended';
 type SavedPerson = { id: string; name: string; role: string; craft: string; crafts: string[]; city: string; photo?: string; availability: unknown; intent?: string };
 type Product = { tab: string; stack: Route[]; person?: SavedPerson };
-type Persisted = { v: 2; at: number; stage: Stage; index: number; stuck: string[]; startedAt?: number; briefed?: number; product?: Product; lastPerson?: string };
+type Persisted = { v: 2; at: number; stage: Stage; index: number; stuck: string[]; startedAt?: number; briefed?: number; product?: Product; lastPerson?: string; home?: HomeVariant };
 
 const KEY = 'aa-test-state';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const params = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const PARTICIPANT_TYPE = params.get('type') === 'house' ? 'production_house' : 'individual_creative';
 const PARTICIPANT_CODE = params.get('p') ?? undefined; // optional researcher-assigned code, e.g. /test?p=P014
+const ARM = params.get('arm'); // pilot only: /test?arm=next or ?arm=current pins the Home
 
 /** Reads this test's saved position; also maps a session started by the older build (sessionStorage). */
 function loadState(): Persisted | null {
@@ -158,6 +160,8 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   /** The scenario whose brief the participant has dismissed on a phone (the sheet starts open). */
   const [briefed, setBriefed] = useState<number>(restored.current?.briefed ?? -1);
   const lastPerson = useRef<string | undefined>(restored.current?.lastPerson);
+  /** The Home this session compares (docs/HOME.md). Assigned once at start, kept across reloads. */
+  const home = useRef<HomeVariant>(restored.current?.home ?? 'current');
   const [study, setStudy] = useState<{ slug: string } | null>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [view, setView] = useState<View>(null);
@@ -193,7 +197,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
       stack = [];
     }
     const product = withPhone && !store.entry ? { tab: store.tab, stack: stack.filter((r) => r.name !== 'media'), person: personSnapshot() } : restored.current?.product;
-    saveState({ stage, index, stuck, startedAt, briefed, product, lastPerson: lastPerson.current });
+    saveState({ stage, index, stuck, startedAt, briefed, product, lastPerson: lastPerson.current, home: home.current });
   }); // every render: cheap, and always current
 
   // Boot: carry on with this browser's open session, or load the active study.
@@ -204,6 +208,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     if (held && prev && prev.stage !== 'welcome') {
       const info = research.resume();
       if (info) {
+        setFeatures({ home: home.current, events: false }, false);
         setSession(info);
         restoreProduct(prev);
         setStage(prev.stage === 'starting' ? 'scenario' : prev.stage);
@@ -298,7 +303,9 @@ export function TestMode({ phone }: { phone: ReactNode }) {
 
   const begin = async () => {
     setStage('starting');
-    const s = await research.startSession({ studySlug: study!.slug, consent: true, participantCode: PARTICIPANT_CODE, participant: { participantType: PARTICIPANT_TYPE }, persona: 'kiran' });
+    home.current = assignHomeArm(study!.slug, ARM);
+    setFeatures({ home: home.current, events: false }, false);
+    const s = await research.startSession({ studySlug: study!.slug, consent: true, participantCode: PARTICIPANT_CODE, participant: { participantType: PARTICIPANT_TYPE }, persona: 'kiran', metadata: { homeVariant: home.current } });
     if (!s) return setStartError(true), setStage('welcome');
     setStartError(false);
     setSession(s);
