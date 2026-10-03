@@ -75,7 +75,7 @@ Rules the component already follows because of this audit:
 
 ### D · Silk light
 
-**What it is.** Added after a reference recording: a wash of colour anchored to the top of the screen, crossed by slow folds of light like silk, falling away into the ground by mid-screen. A to C are atmospheres you feel; D is colour you see at once. In Art and Artist it uses the brand green instead of the reference's indigo.
+**What it is.** Added after a reference recording: a wash of colour anchored to the top of the screen, crossed by slow folds of light like silk, falling away into the ground by mid-screen. A to C are atmospheres you feel; D is colour you see at once. It uses a blue-hour indigo, the same family as the reference. The brand green was tried first and dropped: the green controls (Find work, the + button, Follow, unread dots) sank into a green wash, and a large green field reads as finance or health rather than film. Blue keeps the controls distinct and sets the warm, golden-hour photography against a cool ground (the familiar cinema grade). Tungsten, oxblood and graphite were also compared: tungsten merged with the warm photos, oxblood sits near error colours and turns pink in light, graphite lost the visible colour.
 
 **Implementation.**
 - One depth wrapper (72% of the screen tall, moving at 35% of scroll, so the wash lingers behind the header and then leaves).
@@ -85,8 +85,8 @@ Rules the component already follows because of this audit:
 - Unlike A to C, D does not step back over imagery: the wash sits behind the header, above the photographs, so it stays at full strength.
 
 **Light / Dark.**
-- Light: a sage tint (brand green at 20%) with white ridges and sheen, so the top of Home looks like pale green silk in daylight.
-- Dark: deep brand green (72%) fading into charcoal, with pale green ridges (34%), a soft mint sheen (28%) and dark troughs. Closest in feel to the reference.
+- Light: a cool blue mist (17%) with white ridges and sheen, like pale silk at dawn.
+- Dark: deep indigo (74%) fading into charcoal, with periwinkle ridges (32%), a soft pale-blue sheen (26%) and dark troughs. Closest in feel to the reference.
 
 **Reduce Motion.** The wash and folds stay, still. No parallax.
 

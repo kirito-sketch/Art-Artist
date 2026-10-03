@@ -169,15 +169,15 @@
 }
 
 /* ============================================================ D: Silk light
- * A wash of the brand colour anchored to the top of the screen, crossed by slow folds of light like silk,
+ * A blue-hour wash anchored to the top of the screen, crossed by slow folds of light like silk,
  * falling away into the ground by mid-screen. Bolder than A to C: colour you see at once, not only feel.
  * The folds are wide rotated bands of soft linear gradient (ridge, sheen, trough), moved on transform only. */
 .phone .ambient--d {
-  --d-wash: rgba(39, 92, 80, 0.2);
-  --d-wash-mid: rgba(39, 92, 80, 0.07);
-  --d-ridge: rgba(255, 255, 255, 0.7);
+  --d-wash: rgba(70, 92, 170, 0.17); /* blue hour: a cool mist on paper */
+  --d-wash-mid: rgba(70, 92, 170, 0.06);
+  --d-ridge: rgba(255, 255, 255, 0.75);
   --d-sheen: rgba(255, 255, 255, 0.95);
-  --d-trough: rgba(39, 92, 80, 0.13);
+  --d-trough: rgba(60, 80, 150, 0.12);
 }
 /* The wash stays at full strength over imagery: it lives above the content, not behind photographs. */
 .phone .ambient--d > * {
@@ -254,11 +254,11 @@ html[data-theme='dark'] .phone[data-look='minimal'] .ambient--c {
 }
 
 html[data-theme='dark'] .phone[data-look='minimal'] .ambient--d {
-  --d-wash: rgba(47, 125, 105, 0.72);
-  --d-wash-mid: rgba(39, 92, 80, 0.3);
-  --d-ridge: rgba(120, 200, 175, 0.34);
-  --d-sheen: rgba(215, 250, 235, 0.28);
-  --d-trough: rgba(6, 18, 15, 0.38);
+  --d-wash: rgba(58, 72, 150, 0.74); /* blue hour: deep indigo into charcoal */
+  --d-wash-mid: rgba(40, 50, 105, 0.32);
+  --d-ridge: rgba(140, 160, 235, 0.32);
+  --d-sheen: rgba(225, 232, 255, 0.26);
+  --d-trough: rgba(8, 10, 28, 0.4);
 }
 
 /* ============================================================ Paths
