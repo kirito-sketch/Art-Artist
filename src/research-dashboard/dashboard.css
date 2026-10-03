@@ -100,3 +100,4 @@ body:has(.dash) { background: var(--base, #f6f4f0); overflow: auto; }
 /* Study health */
 .dash-scroll { overflow-x: auto; }
 .dash-list { display: flex; flex-direction: column; gap: 6px; padding-left: 18px; list-style: disc; }
+.dash-scroll--gap { margin-bottom: 24px; }

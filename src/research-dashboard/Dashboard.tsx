@@ -809,8 +809,8 @@ function Health({ v, study }: { v: View; study?: Study }) {
           </label>
           </div>
           <h2>Home comparison</h2>
-          <p className="dash-note">Each new session is assigned one Home at random (50/50). Events are off in both. Small numbers: read as direction, not proof.</p>
-          <div className="dash-scroll">
+          <p className="dash-note">Each new session is assigned one Home at random (50/50). Events are off in both. The Home columns are measured on the new Home only. Small numbers: read as direction, not proof.</p>
+          <div className="dash-scroll dash-scroll--gap">
             <table className="dash-table">
               <thead>
                 <tr>
@@ -841,8 +841,9 @@ function Health({ v, study }: { v: View; study?: Study }) {
                     </td>
                     <td>{c.medianScenariosDone ?? '-'}</td>
                     <td>{c.arm === 'next' ? `${c.reachedEnd} (${pct(c.reachedEnd, c.sessions)})` : '-'}</td>
-                    <td>{c.openedFromHome}</td>
-                    <td>{c.searchedFromHome}</td>
+                    {/* Only the new Home sends these events; for the others a 0 would be misleading. */}
+                    <td>{c.arm === 'next' ? c.openedFromHome : '-'}</td>
+                    <td>{c.arm === 'next' ? c.searchedFromHome : '-'}</td>
                     {c.tasks.map((t) => (
                       <td key={t.taskId}>
                         {t.finished}/{t.reached} · {fmtDuration(t.medianMs)} · {t.medianEase ?? '-'}
