@@ -156,6 +156,32 @@ Each card shows:
 - the **review status** selector: New · Reviewed · Actionable · Fixed · Won't fix. It saves
   immediately through RLS, and participants never see it.
 
+## Study health
+
+The question this section answers: *is the test itself working?* It is computed in the browser from the study's data plus all of its events (`dashboard/study-events`, paged, password-protected). The logic is in `src/research-dashboard/health.ts`, and it works for every study, old or new.
+
+- **Funnel:**
+  - sessions;
+  - completed;
+  - ended early (chose Stop);
+  - **left without finishing** (still open with 30 minutes of no activity; closing the tab never ended a session, so older data needs this);
+  - in progress;
+  - completion rate, median session time, median finished per session;
+  - sessions that came back after an interruption (`session_resumed`);
+  - drop-off during getting started.
+- **By scenario:**
+  - reached, finished and skipped;
+  - stopped **in the app** versus **at the questions**. The new studies record `task_questions_shown`; older ones only show it for automatic successes;
+  - people who used I'm stuck;
+  - Back presses (median and total);
+  - median time;
+  - finished by the app versus by the participant (plus "without the app event" for tasks that have one);
+  - median ease, on a 1 to 5 scale where 5 is very easy, read from the stored difficulty.
+- **Where unfinished sessions stopped:** the last scenario reached, and whether it was in the app or at its questions.
+- **Why people were stuck:** the short study's fixed reasons.
+- **Phone and desktop:** sessions, completion and median finished.
+- **Export this study (JSON):** tasks, sessions, attempts, feedback and events, for analysis elsewhere.
+
 ## Later (not built)
 
 CSV export (simple once wanted: the views already hold the rows), AI synthesis, heatmaps, replay and

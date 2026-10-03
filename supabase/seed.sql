@@ -82,3 +82,27 @@ from s, (values
 on conflict (study_id, key) do update set
   sequence = excluded.sequence, title = excluded.title, instruction = excluded.instruction,
   success_events = excluded.success_events, success_object_type = excluded.success_object_type;
+
+-- Short five-scenario study (redesigned /test, docs/TEST_REDESIGN.md) ---------------------------------------
+-- A separate study: ana-individual-creative-v29 and its sessions are never touched. The API creates the same
+-- rows on its own (server/research/studies.ts, ensureShortStudy), so this is only needed for a fresh database.
+insert into public.research_studies (slug, title, description, status, participant_type, prototype_version, notes, started_at)
+values ('aa-individual-short-v1',
+        'Individual Creative: short session (5 scenarios)',
+        'Five realistic situations in about 8 to 10 minutes: getting started, finding a professional, remembering them for later, finding an opportunity, and your own profile.',
+        'active', 'individual_creative', 'V30',
+        'Redesigned /test (docs/TEST_REDESIGN.md). Separate from ana-individual-creative-v29, whose sessions are untouched.',
+        now())
+on conflict (slug) do nothing;
+
+with s as (select id from public.research_studies where slug = 'aa-individual-short-v1')
+insert into public.research_tasks (study_id, key, sequence, title, instruction, participant_type, success_events, success_object_type)
+select s.id, t.key, t.sequence, t.title, t.instruction, 'individual_creative', t.success_events, null
+from s, (values
+  ('first-look', 1, 'Getting started', 'You’ve just heard about Art and Artist and want to see whether it could be useful to you. Get started and enter the app.', array['first_home_reached']),
+  ('find-cinematographer', 2, 'Find someone for your project', 'You’re putting together a project in Hyderabad and need a cinematographer. Find someone you might consider working with.', array[]::text[]),
+  ('not-ready-yet', 3, 'Not ready to get in touch', 'You’re interested in this person, but you’re not ready to contact them yet. What would you naturally do?', array[]::text[]),
+  ('find-opportunity', 4, 'Find your next project', 'Imagine you’re looking for your next project. Find an opportunity that feels relevant to you and show that you’re interested.', array['interest_sent']),
+  ('your-profile', 5, 'Your profile', 'Look at your profile. If this were your real professional profile, what would you add or improve?', array[]::text[])
+) as t(key, sequence, title, instruction, success_events)
+on conflict (study_id, key) do nothing;

@@ -44,11 +44,13 @@ export function eventLabel(e: EventRow): string {
   switch (e.event_name) {
     case 'session_started': return 'Started the test';
     case 'session_completed': return m.status === 'abandoned' ? 'Ended the test early' : 'Finished the test';
-    case 'task_started': return `Started task: ${e.object_id}`;
+    case 'task_started': return `Started task: ${e.object_id}${m.variant ? ` (${String(m.variant).replace(/_/g, ' ')})` : ''}`;
+    case 'task_questions_shown': return m.finishedBy === 'app' ? 'Finished in the app; question shown' : 'Said they were done; question shown';
+    case 'session_resumed': return 'Came back to the session (reload, new tab or restored page)';
     case 'task_completed': return `Finished task (${String(m.outcome ?? '').replace(/_/g, ' ')})`;
     case 'task_skipped': return 'Skipped the task';
     case 'task_instruction_opened': return 'Reopened the task instruction';
-    case 'stuck_reported': return "Tapped I'm stuck";
+    case 'stuck_reported': return `Tapped I'm stuck${typeof m.elapsedMs === 'number' ? ` after ${Math.round(m.elapsedMs / 1000)}s` : ''}`;
     case 'feedback_opened': return 'Opened feedback';
     case 'feedback_submitted': return `Sent feedback (${String(m.category ?? '').replace(/_/g, ' ')})`;
     case 'survey_submitted': return 'Submitted the final survey';
@@ -98,7 +100,7 @@ export function eventLabel(e: EventRow): string {
 }
 
 /** Events that read as steps of a path (navigation and actions), not research bookkeeping. */
-const PATH_SKIP = new Set(['session_started', 'session_completed', 'task_started', 'task_completed', 'task_skipped', 'feedback_opened', 'survey_submitted', 'task_instruction_opened']);
+const PATH_SKIP = new Set(['session_started', 'session_completed', 'task_started', 'task_completed', 'task_skipped', 'feedback_opened', 'survey_submitted', 'task_instruction_opened', 'task_questions_shown', 'session_resumed']);
 
 /** A short path: "Home → Discover → People → Profile: Vikram Sen". Consecutive repeats collapse. */
 export function pathOf(events: EventRow[]): string[] {
@@ -130,8 +132,10 @@ export function pathOf(events: EventRow[]): string[] {
 export const OUTCOME_LABEL: Record<string, string> = { in_progress: 'In progress', completed: 'Completed', completed_with_difficulty: 'Completed with difficulty', abandoned: 'Abandoned', skipped: 'Skipped' };
 export const CATEGORY_LABEL: Record<string, string> = { confusing: 'Confusing', couldnt_find: "Couldn't find", visual_issue: 'Visual issue', didnt_work: "Didn't work", suggestion: 'Suggestion', other: 'Other' };
 export const STATUS_LABEL: Record<string, string> = { new: 'New', reviewed: 'Reviewed', actionable: 'Actionable', fixed: 'Fixed', wont_fix: "Won't fix" };
-export const SURVEY_ORDER = ['overall_ease', 'what_is_ana_for', 'most_confusing', 'would_make_you_use'];
-export const SURVEY_LABEL: Record<string, string> = { overall_ease: 'Overall, how easy was Art and Artist to understand? (1 very difficult, 5 very easy)', what_is_ana_for: 'What do you think Art and Artist is for?', most_confusing: 'What was the most confusing part?', would_make_you_use: 'What, if anything, would make you want to use Art and Artist?' };
+export const SURVEY_ORDER = ['main_use', 'expected_missing', 'confusing_unnecessary', 'come_back', 'overall_ease', 'what_is_ana_for', 'most_confusing', 'would_make_you_use'];
+export const SURVEY_LABEL: Record<string, string> = { overall_ease: 'Overall, how easy was Art and Artist to understand? (1 very difficult, 5 very easy)', what_is_ana_for: 'What do you think Art and Artist is for?', most_confusing: 'What was the most confusing part?', would_make_you_use: 'What, if anything, would make you want to use Art and Artist?', main_use: 'What do you think Art and Artist is mainly useful for?', expected_missing: 'Was there anything you expected to find but couldn’t?', confusing_unnecessary: 'What felt confusing or unnecessary?', come_back: 'If this were a real app, what would make you come back?' };
+/** I'm stuck reasons (short study). */
+export const STUCK_LABEL: Record<string, string> = { couldnt_find: 'Couldn’t find what they were looking for', unsure_what_to_do: 'Wasn’t sure what they were supposed to do', didnt_work: 'Something didn’t work', lost_track: 'Lost track of where they were', other: 'Other', confusing: 'Confusing (older study)' };
 
 export const FIRST_RUN_LABEL: Record<string, string> = { understand_product: 'How easy was it to understand what Art and Artist is for? (1 very difficult, 5 very easy)', get_started: 'How easy was it to get started? (1 very difficult, 5 very easy)', setup_unclear: 'Was anything unclear during the introduction or setup?', what_it_helps_you_do: 'Before continuing, what do you think Art and Artist helps you do?' };
 export const FIRST_RUN_ORDER = Object.keys(FIRST_RUN_LABEL);

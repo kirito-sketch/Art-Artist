@@ -52,3 +52,63 @@ export async function syncStudyTasks(sb: SupabaseClient, study: { id: string; sl
   if (e) throw new Error(`task sync insert: ${e.message}`);
   synced.add(study.id);
 }
+
+/**
+ * The short five-scenario study (docs/TEST_REDESIGN.md). A separate study row with its own tasks, so
+ * old sessions keep their own study, task list and numbering: nothing here reads or changes them.
+ *
+ * Created once, idempotently, the first time the API is asked for the active study: the study (active,
+ * started now, so it becomes the newest active Individual Creative study and new participants get it)
+ * and its five tasks. An existing study is never edited (a researcher may pause it, which falls back to
+ * the previous active study), and existing tasks are never overwritten: copy changes need a new key.
+ * supabase/seed.sql holds the same definition.
+ *
+ * success_events: only where the outcome is objective (entered the app; interest sent). The others are
+ * finished by the participant ("I found someone", "Done") because they need the participant's judgement.
+ */
+export const SHORT_STUDY = {
+  slug: 'aa-individual-short-v1',
+  title: 'Individual Creative: short session (5 scenarios)',
+  description: 'Five realistic situations in about 8 to 10 minutes: getting started, finding a professional, remembering them for later, finding an opportunity, and your own profile.',
+  participant_type: 'individual_creative',
+  prototype_version: 'V30',
+  notes: 'Redesigned /test (docs/TEST_REDESIGN.md). Separate from ana-individual-creative-v29, whose sessions are untouched.',
+};
+
+export const SHORT_TASKS: { key: string; sequence: number; title: string; instruction: string; success_events: string[] }[] = [
+  { key: 'first-look', sequence: 1, title: 'Getting started', instruction: 'You’ve just heard about Art and Artist and want to see whether it could be useful to you. Get started and enter the app.', success_events: ['first_home_reached'] },
+  { key: 'find-cinematographer', sequence: 2, title: 'Find someone for your project', instruction: 'You’re putting together a project in Hyderabad and need a cinematographer. Find someone you might consider working with.', success_events: [] },
+  { key: 'not-ready-yet', sequence: 3, title: 'Not ready to get in touch', instruction: 'You’re interested in this person, but you’re not ready to contact them yet. What would you naturally do?', success_events: [] },
+  { key: 'find-opportunity', sequence: 4, title: 'Find your next project', instruction: 'Imagine you’re looking for your next project. Find an opportunity that feels relevant to you and show that you’re interested.', success_events: ['interest_sent'] },
+  { key: 'your-profile', sequence: 5, title: 'Your profile', instruction: 'Look at your profile. If this were your real professional profile, what would you add or improve?', success_events: [] },
+];
+
+let shortReady = false;
+
+export async function ensureShortStudy(sb: SupabaseClient): Promise<void> {
+  if (shortReady) return;
+  const { data: found, error } = await sb.from('research_studies').select('id').eq('slug', SHORT_STUDY.slug).maybeSingle();
+  if (error) throw new Error(`short study read: ${error.message}`);
+  let id = found?.id as string | undefined;
+  if (!id) {
+    const { data, error: e } = await sb
+      .from('research_studies')
+      .upsert({ ...SHORT_STUDY, status: 'active', started_at: new Date().toISOString() }, { onConflict: 'slug', ignoreDuplicates: true })
+      .select('id')
+      .maybeSingle();
+    if (e) throw new Error(`short study insert: ${e.message}`);
+    id = data?.id as string | undefined;
+    if (!id) {
+      const again = await sb.from('research_studies').select('id').eq('slug', SHORT_STUDY.slug).single();
+      id = again.data?.id as string;
+    }
+  }
+  const { error: e } = await sb
+    .from('research_tasks')
+    .upsert(
+      SHORT_TASKS.map((t) => ({ study_id: id, ...t, participant_type: 'individual_creative', success_object_type: null })),
+      { onConflict: 'study_id,key', ignoreDuplicates: true },
+    );
+  if (e) throw new Error(`short study tasks: ${e.message}`);
+  shortReady = true;
+}

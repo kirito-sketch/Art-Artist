@@ -14,7 +14,7 @@
  */
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { syncStudyTasks } from './studies.js';
+import { ensureShortStudy, syncStudyTasks } from './studies.js';
 import { hasAccess } from '../access.js';
 import { ATTEMPT_OUTCOMES, FEEDBACK_CATEGORIES, isResearchEventName, sanitizeMetadata, sanitizeToken, RESEARCH_OBJECT_TYPES } from '../../src/research-data/taxonomy.js';
 
@@ -46,12 +46,12 @@ function db(env: ResearchEnv): SupabaseClient | null {
   return cached.db;
 }
 
-type SessionRow = { id: string; study_id: string; status: string; prototype_version: string; selected_persona: string | null };
+type SessionRow = { id: string; study_id: string; participant_id: string; status: string; prototype_version: string; selected_persona: string | null };
 async function sessionFromToken(sb: SupabaseClient, headers: ResearchRequest['headers']): Promise<SessionRow | null> {
   const auth = headers['authorization'] ?? '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
   if (!/^[A-Za-z0-9_-]{40,64}$/.test(token)) return null;
-  const { data, error } = await sb.from('research_sessions').select('id, study_id, status, prototype_version, selected_persona').eq('token_hash', hashToken(token)).maybeSingle();
+  const { data, error } = await sb.from('research_sessions').select('id, study_id, participant_id, status, prototype_version, selected_persona').eq('token_hash', hashToken(token)).maybeSingle();
   // Database unreachable is a server error (the client retries), not an invalid token (the client drops).
   if (error) throw new Error(`session lookup: ${error.message}`);
   return (data as SessionRow | null) ?? null;
@@ -92,6 +92,8 @@ export async function handleResearch(req: ResearchRequest, env: ResearchEnv): Pr
         return await withSession(sb, req, (s) => submitFeedback(sb, s, body));
       case 'session/complete':
         return await withSession(sb, req, (s) => completeSession(sb, s, body));
+      case 'participant':
+        return await withSession(sb, req, (s) => updateParticipant(sb, s, body));
       default:
         return fail(404, 'unknown_action');
     }
@@ -125,6 +127,8 @@ async function activeStudy(env: ResearchEnv, type?: string): Promise<ResearchRes
   const sb = db(env);
   if (!sb) return fail(503, 'research_backend_not_configured');
   const participantType = ['individual_creative', 'production_house'].includes(type ?? '') ? type! : 'individual_creative';
+  // The short five-scenario study exists before anyone asks for it (idempotent; never blocks a participant).
+  if (participantType === 'individual_creative') await ensureShortStudy(sb).catch((e) => log('short study', (e as Error).message));
   const { data, error } = await sb
     .from('research_studies')
     .select('id, slug, title, description, participant_type')
@@ -224,6 +228,22 @@ async function startSession(sb: SupabaseClient, b: Record<string, unknown>): Pro
     study: { slug: study.slug, title: study.title },
     tasks: (tasks ?? []).map((t) => ({ key: t.key, sequence: t.sequence, title: t.title, instruction: t.instruction, successEvents: t.success_events, successObjectType: t.success_object_type })),
   });
+}
+
+/**
+ * Optional details the short study asks for at the end instead of before the product: craft and
+ * experience. Only this session's own participant row, only these two columns, only to fill them in.
+ */
+async function updateParticipant(sb: SupabaseClient, s: SessionRow, b: Record<string, unknown>) {
+  const patch: Record<string, string> = {};
+  const craft = shortText(b.primaryCraft, 60);
+  const exp = shortText(b.experienceLevel, 40);
+  if (craft) patch.primary_craft = craft;
+  if (exp) patch.experience_level = exp;
+  if (!Object.keys(patch).length) return ok();
+  const { error } = await sb.from('research_participants').update(patch).eq('id', s.participant_id);
+  if (error) return log('participant', error.message), fail(500, 'server_error');
+  return ok();
 }
 
 async function completeSession(sb: SupabaseClient, s: SessionRow, b: Record<string, unknown>) {
@@ -360,8 +380,9 @@ async function submitFeedback(sb: SupabaseClient, s: SessionRow, b: Record<strin
       persona: sanitizeToken(ctx.persona, 80) ?? s.selected_persona,
       trail_until_sequence: int(ctx.lastSequence, 0, 10_000_000),
       // source: 'button' (Feedback control), 'stuck' (I'm stuck), 'survey' (final survey, with question / rating),
-      // 'first_run' (the questions after Task 1, Getting started, with question / rating).
-      interaction_context: sanitizeMetadata({ taskKey: ctx.taskKey, route: ctx.route, sheet: ctx.sheet, acting: ctx.acting, tab: ctx.tab, source: ctx.source, question: ctx.question, rating: typeof ctx.rating === 'number' ? ctx.rating : undefined }),
+      // 'first_run' (the questions after Task 1, Getting started, with question / rating),
+      // 'stuck' also carries reason (a fixed choice) and elapsedMs (time in the scenario before it).
+      interaction_context: sanitizeMetadata({ taskKey: ctx.taskKey, route: ctx.route, sheet: ctx.sheet, acting: ctx.acting, tab: ctx.tab, source: ctx.source, question: ctx.question, rating: typeof ctx.rating === 'number' ? ctx.rating : undefined, reason: ctx.reason, elapsedMs: typeof ctx.elapsedMs === 'number' ? ctx.elapsedMs : undefined }),
     },
     { onConflict: 'session_id,client_feedback_id', ignoreDuplicates: true },
   );
@@ -379,6 +400,7 @@ async function submitFeedback(sb: SupabaseClient, s: SessionRow, b: Record<strin
  *   GET  dashboard/study?id=<studyId>              tasks, sessions (+participant), attempts, feedback
  *   GET  dashboard/events?session=<id>[&until=<n>] one session's events (optionally up to a sequence)
  *   GET  dashboard/events?attempts=<id,id,...>     events for a set of task attempts
+ *   GET  dashboard/study-events?id=<studyId>       every event of a study, lean columns, paged (Study health)
  *   POST dashboard/feedback-status {id, status}    researcher review status
  *
  * Private: every call needs the shared access cookie (APP_ACCESS_PASSWORD, server/access.ts), the
@@ -430,6 +452,27 @@ async function dashboard(req: ResearchRequest, env: ResearchEnv): Promise<Resear
       : [{ data: [], error: null }, { data: [], error: null }];
     if (attempts.error || feedback.error) throw new Error((attempts.error ?? feedback.error)!.message);
     return ok({ tasks: tasks.data, sessions: sessions.data, attempts: attempts.data, feedback: feedback.data });
+  }
+  if (action === 'study-events') {
+    if (!isUuid(q.id)) return fail(400, 'invalid_request');
+    const out: unknown[] = [];
+    // The API returns at most 1000 rows per request: page until a short page (capped at 100k events).
+    for (let from = 0; from < 100_000; from += 1000) {
+      const { data, error } = await sb
+        .from('research_events')
+        .select('session_id, task_attempt_id, sequence, event_name, screen, object_type, object_id, metadata, created_at, research_sessions!inner(study_id)')
+        .eq('research_sessions.study_id', q.id)
+        .order('session_id')
+        .order('sequence')
+        .range(from, from + 999);
+      if (error) throw new Error(error.message);
+      for (const r of data ?? []) {
+        const { research_sessions: _s, ...rest } = r as Record<string, unknown>;
+        out.push(rest);
+      }
+      if (!data || data.length < 1000) break;
+    }
+    return ok({ events: out });
   }
   if (action === 'events') {
     let query = sb.from('research_events').select(EVENT_COLS).order('sequence');

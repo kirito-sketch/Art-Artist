@@ -10,7 +10,7 @@
  *   npm run research:e2e
  * Reads SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and (optional) VITE_SUPABASE_ANON_KEY from the
  * environment or .env.local / .env. Never prints key values.
- * Options: RESEARCH_API=http://localhost:5173/api/research  RESEARCH_STUDY=ana-individual-creative-v29
+ * Options: RESEARCH_API=http://localhost:5173/api/research  RESEARCH_STUDY=ana-individual-creative-v29 (or aa-individual-short-v1)
  * Hosted: RESEARCH_API=https://<deployment>/api/research, plus VERCEL_AUTOMATION_BYPASS_SECRET when the
  * deployment has Vercel Authentication on (Project Settings > Deployment Protection > Protection Bypass
  * for Automation). It is sent as the x-vercel-protection-bypass header and never printed.
@@ -28,6 +28,8 @@ for (const f of ['.env.local', '.env']) {
 }
 const API = (process.env.RESEARCH_API || 'http://localhost:5173/api/research').replace(/\/$/, '');
 const STUDY = process.env.RESEARCH_STUDY || 'ana-individual-creative-v29';
+/** The interest task of the chosen study (success event interest_sent). */
+const TASK = STUDY === 'aa-individual-short-v1' ? 'find-opportunity' : 'show-interest-role';
 const VERSION = 'V29 (2026-10-01)';
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
 const ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -72,8 +74,8 @@ check('   Session refused without consent', noConsent.status === 400);
 
 // 5. Task starts (and a duplicate start reuses the open attempt).
 const attemptId = randomUUID();
-const t1 = await post('task/start', { taskKey: 'show-interest-role', attemptId }, token);
-const t1b = await post('task/start', { taskKey: 'show-interest-role', attemptId: randomUUID() }, token);
+const t1 = await post('task/start', { taskKey: TASK, attemptId }, token);
+const t1b = await post('task/start', { taskKey: TASK, attemptId: randomUUID() }, token);
 check('5. Task started', t1.status === 200 && t1.json.attemptId === attemptId);
 check('   Duplicate start reuses the open attempt', t1b.json?.attemptId === attemptId && t1b.json?.reused);
 
@@ -81,7 +83,7 @@ check('   Duplicate start reuses the open attempt', t1b.json?.attemptId === atte
 let seq = 0;
 const ev = (name, extra = {}) => ({ id: randomUUID(), seq: ++seq, name, ts: new Date().toISOString(), attemptId, ...extra });
 const events = [
-  ev('task_started', { objectType: 'task', objectId: 'show-interest-role', screen: 'home' }),
+  ev('task_started', { objectType: 'task', objectId: TASK, screen: 'home' }),
   ev('home_viewed', { screen: 'home' }),
   ev('discover_opened', { screen: 'discover' }),
   ev('discover_tab_selected', { screen: 'discover', metadata: { tab: 'roles', note: 'should be dropped' } }),
@@ -105,7 +107,7 @@ check('   Second completion ignored', c2.json?.alreadyCompleted === true);
 
 // 9. Feedback (submitted twice: stored once).
 const fid = randomUUID();
-const fb = { id: fid, category: 'confusing', comment: 'Not sure which button shows interest.', screen: 'role', attemptId, eventId: events[4].id, context: { persona: 'kiran', route: 'role', taskKey: 'show-interest-role', lastSequence: seq, tab: 'discover' } };
+const fb = { id: fid, category: 'confusing', comment: 'Not sure which button shows interest.', screen: 'role', attemptId, eventId: events[4].id, context: { persona: 'kiran', route: 'role', taskKey: TASK, lastSequence: seq, tab: 'discover' } };
 const f1 = await post('feedback', fb, token);
 const f2 = await post('feedback', fb, token);
 check('9. Feedback submitted', f1.status === 200 && f2.status === 200);
@@ -145,7 +147,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   const { data: attempts } = await sb.from('research_task_attempts').select('id, outcome, success_detected, difficulty_rating, expectation_match, duration_ms, feedback_text, research_tasks(key)').eq('session_id', session.id);
   const a = attempts?.[0];
   check('DB: exactly one attempt (no duplicates)', attempts?.length === 1);
-  check('DB: attempt linked to task', a?.research_tasks?.key === 'show-interest-role');
+  check('DB: attempt linked to task', a?.research_tasks?.key === TASK);
   check('DB: outcome and ratings saved', a?.outcome === 'completed_with_difficulty' && a?.difficulty_rating === 4 && a?.expectation_match === 3);
   check('DB: success detected from interest_sent', a?.success_detected === true);
   check('DB: duration computed', typeof a?.duration_ms === 'number' && a.duration_ms >= 0, `${a?.duration_ms} ms`);

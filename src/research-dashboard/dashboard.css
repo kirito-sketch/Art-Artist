@@ -96,3 +96,7 @@ body:has(.dash) { background: var(--base, #f6f4f0); overflow: auto; }
 .dash-btn { font: inherit; font-weight: 600; padding: 11px 16px; border-radius: 999px; border: 0; cursor: pointer; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); color: var(--text); }
 .dash-btn--primary { background: var(--action); color: #fff; box-shadow: none; }
 .dash-btn:disabled { opacity: 0.6; }
+
+/* Study health */
+.dash-scroll { overflow-x: auto; }
+.dash-list { display: flex; flex-direction: column; gap: 6px; padding-left: 18px; list-style: disc; }

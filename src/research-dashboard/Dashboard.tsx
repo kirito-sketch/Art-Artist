@@ -7,13 +7,14 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import './dashboard.css';
-import { DashboardError, FIRST_RUN_TASK, isFirstRunAnswer, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
-import { CATEGORY_LABEL, FIRST_RUN_LABEL, FIRST_RUN_ORDER, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
+import { DashboardError, FIRST_RUN_TASK, isFirstRunAnswer, isSurvey, loadEvents, loadEventsForAttempts, loadStudies, loadStudy, loadStudyEvents, setFeedbackStatus, type Attempt, type Feedback, type Session, type Study, type StudyData, type Task } from './data';
+import { computeHealth, type HealthEvent } from './health';
+import { CATEGORY_LABEL, STUCK_LABEL, FIRST_RUN_LABEL, FIRST_RUN_ORDER, OUTCOME_LABEL, STATUS_LABEL, SURVEY_LABEL, SURVEY_ORDER, eventLabel, fmtDate, fmtDuration, mean, median, pathOf, pct, screenLabel, type EventRow } from './labels';
 
-type Route = { view: 'overview' | 'sessions' | 'tasks' | 'feedback'; id?: string };
+type Route = { view: 'overview' | 'health' | 'sessions' | 'tasks' | 'feedback'; id?: string };
 const parseHash = (): Route => {
   const [, view, id] = (location.hash.replace(/^#\/?/, '/') || '/').split('/');
-  return { view: (['overview', 'sessions', 'tasks', 'feedback'].includes(view) ? view : 'overview') as Route['view'], id: id || undefined };
+  return { view: (['overview', 'health', 'sessions', 'tasks', 'feedback'].includes(view) ? view : 'overview') as Route['view'], id: id || undefined };
 };
 const go = (r: Route) => (location.hash = `/${r.view}${r.id ? `/${r.id}` : ''}`);
 const done = (a: Attempt) => a.outcome === 'completed' || a.outcome === 'completed_with_difficulty';
@@ -54,7 +55,7 @@ function Workspace() {
     loadStudies()
       .then((s) => {
         setStudies(s);
-        setStudyId((cur) => cur ?? (s.find((x) => x.status === 'active') ?? s[0])?.id ?? null);
+        setStudyId((cur) => cur ?? ([...s].reverse().find((x) => x.status === 'active') ?? s[0])?.id ?? null);
       })
       .catch((e) => setError(loadError(e, 'studies')));
   }, []);
@@ -88,9 +89,9 @@ function Workspace() {
           </select>
         </div>
         <nav className="dash-nav" aria-label="Sections">
-          {(['overview', 'sessions', 'tasks', 'feedback'] as const).map((v) => (
+          {(['overview', 'health', 'sessions', 'tasks', 'feedback'] as const).map((v) => (
             <a key={v} href={`#/${v}`} className={route.view === v ? 'is-on' : ''} aria-current={route.view === v ? 'page' : undefined}>
-              {v[0].toUpperCase() + v.slice(1)}
+              {v === 'health' ? 'Study health' : v[0].toUpperCase() + v.slice(1)}
             </a>
           ))}
         </nav>
@@ -119,6 +120,8 @@ function Workspace() {
         <p className="dash-loading">Loading…</p>
       ) : route.view === 'overview' ? (
         <Overview v={view} />
+      ) : route.view === 'health' ? (
+        <Health v={view} study={studies.find((x) => x.id === studyId)} />
       ) : route.view === 'sessions' ? (
         route.id ? <SessionDetail v={view} id={route.id} /> : <Sessions v={view} />
       ) : route.view === 'tasks' ? (
@@ -748,5 +751,145 @@ function FeedbackCard({ f, v, open, onChanged }: { f: Feedback; v: View; open: b
         </select>
       </label>
     </article>
+  );
+}
+
+/**
+ * Study health: is the test itself working? Funnel, where people stop (in the app or at the questions),
+ * I'm stuck, skips, Back presses, timing and devices, for any study. Plus the raw export.
+ */
+function Health({ v, study }: { v: View; study?: Study }) {
+  const [events, setEvents] = useState<HealthEvent[] | null>(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    if (!study) return;
+    setEvents(null);
+    loadStudyEvents(study.id).then(setEvents).catch((e) => setErr(loadError(e, 'events')));
+  }, [study?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (err) return <p className="dash-error">{err}</p>;
+  if (!events) return <p className="dash-loading">Loading events…</p>;
+  const ids = new Set(v.sessions.map((s) => s.id));
+  const h = computeHealth({ tasks: v.tasks, sessions: v.sessions, attempts: v.attempts, feedback: v.feedback }, events.filter((e) => ids.has(e.session_id)));
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), study, tasks: v.tasks, sessions: v.sessions, attempts: v.attempts, feedback: v.feedback, events: events.filter((e) => ids.has(e.session_id)) }, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${study?.slug ?? 'study'}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  return (
+    <section className="dash-section">
+      <p className="dash-note">
+        {study?.title}. Left without finishing = still open with no activity for 30 minutes (closing the tab never ended a session).{' '}
+        <button className="dash-link" onClick={exportJson}>
+          Export this study (JSON)
+        </button>
+      </p>
+      <div className="dash-stats">
+        <Stat label="Sessions" value={h.total} />
+        <Stat label="Completed" value={`${h.completed} (${pct(h.completed, h.total)})`} />
+        <Stat label="Ended early" value={h.endedEarly} hint="Chose to stop" />
+        <Stat label="Left without finishing" value={h.left} hint="No activity for 30 minutes" />
+        <Stat label="In progress" value={h.inProgress} />
+        <Stat label="Median session" value={fmtDuration(h.medianSessionMs)} hint="Completed sessions" />
+        <Stat label="Median finished per session" value={h.medianScenariosDone ?? '-'} hint={`of ${v.tasks.length}`} />
+        <Stat label="Came back after an interruption" value={h.resumedSessions} hint="Reload, new tab or restored page" />
+        {h.firstRun && <Stat label="Stopped during getting started" value={`${h.firstRun.stopped} of ${h.firstRun.reached}`} />}
+      </div>
+      <h2>By scenario</h2>
+      <div className="dash-scroll">
+        <table className="dash-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Scenario</th>
+              <th>Reached</th>
+              <th>Finished</th>
+              <th>Skipped</th>
+              <th>Stopped in the app</th>
+              <th>Stopped at the questions</th>
+              <th>I'm stuck (people)</th>
+              <th>Back presses (median / total)</th>
+              <th>Median time</th>
+              <th>Finished by app / by participant</th>
+              <th>Median ease (1 to 5)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {h.tasks.map((t) => (
+              <tr key={t.task.id}>
+                <td>{t.task.sequence}</td>
+                <td>
+                  <a href={`#/tasks/${t.task.id}`}>{t.task.title}</a>
+                </td>
+                <td>{t.reached}</td>
+                <td>{t.finished}</td>
+                <td>{t.skipped}</td>
+                <td>{t.stoppedInApp}</td>
+                <td>{t.stoppedAtQuestions}</td>
+                <td>{t.stuckSessions}</td>
+                <td>
+                  {t.backMedian ?? '-'} / {t.backTotal}
+                </td>
+                <td>{fmtDuration(t.medianMs)}</td>
+                <td>
+                  {t.finishedByApp} / {t.finishedByParticipant}
+                  {t.finishedWithoutAppEvent > 0 && <span className="dash-sub"> ({t.finishedWithoutAppEvent} without the app event)</span>}
+                </td>
+                <td>{t.medianEase ?? '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <h2>Where unfinished sessions stopped</h2>
+      {h.stopPoints.length ? (
+        <ul className="dash-list">
+          {h.stopPoints.map((x) => (
+            <li key={x.label}>
+              {x.label}: <b>{x.n}</b>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="dash-empty">No unfinished sessions.</p>
+      )}
+      <h2>Why people were stuck</h2>
+      {h.stuckReasons.length ? (
+        <ul className="dash-list">
+          {h.stuckReasons.map((x) => (
+            <li key={x.reason}>
+              {STUCK_LABEL[x.reason] ?? CATEGORY_LABEL[x.reason] ?? x.reason}: <b>{x.n}</b>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="dash-empty">Nobody has used I'm stuck yet.</p>
+      )}
+      <h2>Phone and desktop</h2>
+      <table className="dash-table">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>Sessions</th>
+            <th>Completed</th>
+            <th>Median finished per session</th>
+          </tr>
+        </thead>
+        <tbody>
+          {h.devices.map((x) => (
+            <tr key={x.device}>
+              <td>{x.device}</td>
+              <td>{x.n}</td>
+              <td>
+                {x.completed} ({pct(x.completed, x.n)})
+              </td>
+              <td>{x.medianScenariosDone ?? '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }

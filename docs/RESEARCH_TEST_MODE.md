@@ -4,6 +4,10 @@
 > technical identifiers (for example storage keys, the `ana_research` local database name, the
 > `ANA_PROTOTYPE_VERSION` constant and some file names). It never appears in visible UI.
 
+> **Current version: the short five-scenario session, documented in `docs/TEST_REDESIGN.md`.** It covers the participant flow, copy, questions, continuity, I'm stuck, recovery and old-session handling, and it supersedes the flow described below.
+>
+> The rest of this page describes the **older seven-task study** (`ana-individual-creative-v29`). Its sessions are kept unchanged, and participants already in it carry on with their own tasks. The layout rule, privacy and isolation sections still apply.
+
 An unmoderated, task-based usability test of the real Art and Artist prototype. Participants use Art and Artist itself; a
 quiet test layer gives them one task at a time, notices when they succeed, and collects short feedback.
 Everything is stored through the research data system (docs/RESEARCH_DATA_SYSTEM.md).

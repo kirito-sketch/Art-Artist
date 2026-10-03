@@ -4,6 +4,7 @@
  * no Supabase key. docs/RESEARCH_DASHBOARD.md.
  */
 import type { EventRow } from './labels';
+import type { HealthEvent } from './health';
 import { brand } from '../research-data/brand';
 
 const API = ((import.meta.env.VITE_RESEARCH_API_BASE as string | undefined) || '/api/research').replace(/\/$/, '') + '/dashboard';
@@ -55,6 +56,11 @@ export async function loadEventsForAttempts(attemptIds: string[]): Promise<Event
   return (await get<{ events: EventRow[] }>(`events?attempts=${attemptIds.map(encodeURIComponent).join(',')}`)).events;
 }
 
+/** Every event of a study, lean columns (Study health). */
+export async function loadStudyEvents(studyId: string): Promise<HealthEvent[]> {
+  return (await get<{ events: HealthEvent[] }>(`study-events?id=${encodeURIComponent(studyId)}`)).events;
+}
+
 /** Researcher review status. */
 export async function setFeedbackStatus(id: string, status: string) {
   const r = await fetch(`${API}/feedback-status`, {
@@ -70,6 +76,8 @@ export async function setFeedbackStatus(id: string, status: string) {
  * Task 1); everything else is participant feedback.
  */
 export const isSurvey = (f: Feedback) => f.interaction_context?.source === 'survey' || f.interaction_context?.source === 'first_run';
+/** Answers in the I'm stuck flow (short study: a fixed reason, optional comment). */
+export const isStuck = (f: Feedback) => f.interaction_context?.source === 'stuck';
 export const isFirstRunAnswer = (f: Feedback) => f.interaction_context?.source === 'first_run';
 /** Task 1 of the Individual Creative study: the first-run experience. */
 export const FIRST_RUN_TASK = 'getting-started';

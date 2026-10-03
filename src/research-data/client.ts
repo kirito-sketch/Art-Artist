@@ -14,17 +14,24 @@
  *  - One ordered queue: task starts reach the server before the events inside them. Events are batched.
  *  - Every write has a client-generated id; the server ignores repeats. Double taps, React Strict Mode
  *    and remounts are also de-duplicated here (same event within 400 ms, one open attempt per task).
- *  - If the backend is down, writes wait in a small sessionStorage queue and retry with backoff
+ *  - If the backend is down, writes wait in a small stored queue and retry with backoff
  *    (2 s, 5 s, 15 s, 30 s, 60 s), then are dropped. The participant never notices.
+ *  - Storage: on /test the session lives in localStorage, so a reload, a new tab with the same link or
+ *    the browser restoring a discarded page carries on in the same session (for up to 24 hours).
+ *    Everywhere else it stays in sessionStorage, as before. Older tabs that kept their session in
+ *    sessionStorage are still read.
  */
 import { ANA_PROTOTYPE_VERSION_LABEL } from '../version';
 import { brand } from './brand';
+import { TEST_MODE } from './surface';
 import { isResearchEventName, sanitizeMetadata, sanitizeToken, type AttemptOutcome, type FeedbackCategory, type Metadata, type ResearchEventName, type ResearchObjectType } from './taxonomy';
 
 const API = ((import.meta.env.VITE_RESEARCH_API_BASE as string | undefined) || '/api/research').replace(/\/$/, '');
 const ENABLED = import.meta.env.VITE_RESEARCH_ENABLED !== 'false';
 const DEV = import.meta.env.DEV;
-const K = { token: 'ana-rs-token', seq: 'ana-rs-seq', queue: 'ana-rs-queue', attempts: 'ana-rs-attempts', done: 'ana-rs-done', info: 'ana-rs-info' };
+const K = { token: 'ana-rs-token', seq: 'ana-rs-seq', queue: 'ana-rs-queue', attempts: 'ana-rs-attempts', done: 'ana-rs-done', info: 'ana-rs-info', at: 'ana-rs-at' };
+/** A /test session older than this is not resumed (it stays open on the server and reads as left). */
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const RETRY_MS = [2000, 5000, 15000, 30000, 60000];
 const MAX_QUEUE = 300;
 
@@ -35,24 +42,35 @@ export type StudyTask = { key: string; sequence: number; title: string; instruct
 export type SessionInfo = { participantCode: string; study: { slug: string; title: string }; tasks: StudyTask[] };
 export type TrackedEvent = { name: ResearchEventName; objectType?: ResearchObjectType; objectId?: string; metadata: Metadata };
 
+const area = (kind: 'local' | 'session'): Storage | null => {
+  try {
+    return kind === 'local' ? localStorage : sessionStorage;
+  } catch {
+    return null;
+  }
+};
+/** Where this surface keeps its session: localStorage on /test (survives tabs and reloads), sessionStorage elsewhere. */
+const primary = () => area(TEST_MODE ? 'local' : 'session');
 const store = {
   get(k: string) {
     try {
-      return sessionStorage.getItem(k);
+      // On /test, a session started by an older build may still sit in this tab's sessionStorage.
+      return primary()?.getItem(k) ?? (TEST_MODE ? area('session')?.getItem(k) ?? null : null);
     } catch {
       return null;
     }
   },
   set(k: string, v: string) {
     try {
-      sessionStorage.setItem(k, v);
+      primary()?.setItem(k, v);
     } catch {
       /* storage blocked: keep working in memory */
     }
   },
   del(k: string) {
     try {
-      sessionStorage.removeItem(k);
+      primary()?.removeItem(k);
+      if (TEST_MODE) area('session')?.removeItem(k);
     } catch {
       /* ignore */
     }
@@ -65,6 +83,12 @@ const store = {
     }
   },
 };
+
+// A /test session left for more than a day is not picked up again: the next visit starts fresh.
+if (TEST_MODE) {
+  const at = Number(store.get(K.at) ?? 0);
+  if (store.get(K.token) && at && Date.now() - at > MAX_AGE_MS) for (const k of Object.values(K)) store.del(k);
+}
 
 const uuid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -96,6 +120,7 @@ const listeners = new Set<(e: TrackedEvent) => void>();
 const recent = new Map<string, number>();
 
 const persist = () => {
+  store.set(K.at, String(Date.now()));
   store.set(K.seq, String(seq));
   store.set(K.queue, JSON.stringify(queue.slice(-MAX_QUEUE)));
   store.set(K.attempts, JSON.stringify(attempts));
@@ -258,7 +283,7 @@ export const research = {
   },
 
   /** Begin (or resume) the attempt for a task. Returns the attempt id, or null when not recording. */
-  startTask(taskKey: string): string | null {
+  startTask(taskKey: string, metadata?: Record<string, unknown>): string | null {
     if (!research.isActive() || !sanitizeToken(taskKey, 60)) return null;
     if (attempts[taskKey]) return (currentTask = taskKey), attempts[taskKey];
     flushEvents();
@@ -266,7 +291,7 @@ export const research = {
     attempts[taskKey] = attemptId;
     currentTask = taskKey;
     enqueue('task/start', { taskKey, attemptId, startedAt: new Date().toISOString() });
-    research.track('task_started', { objectType: 'task', objectId: taskKey });
+    research.track('task_started', { objectType: 'task', objectId: taskKey, metadata });
     return attemptId;
   },
 
@@ -299,11 +324,11 @@ export const research = {
   },
 
   /** End the current attempt for a task. Repeats are ignored. */
-  completeTask(taskKey: string, result: { outcome: AttemptOutcome; difficulty?: number; expectationMatch?: number; feedbackText?: string }) {
+  completeTask(taskKey: string, result: { outcome: AttemptOutcome; difficulty?: number; expectationMatch?: number; feedbackText?: string; metadata?: Record<string, unknown> }) {
     if (!research.isActive()) return;
     const attemptId = attempts[taskKey];
     if (!attemptId || done.includes(attemptId)) return;
-    research.track(result.outcome === 'skipped' ? 'task_skipped' : 'task_completed', { objectType: 'task', objectId: taskKey, metadata: { outcome: result.outcome } });
+    research.track(result.outcome === 'skipped' ? 'task_skipped' : 'task_completed', { objectType: 'task', objectId: taskKey, metadata: { ...result.metadata, outcome: result.outcome } });
     flushEvents();
     done.push(attemptId);
     delete attempts[taskKey];
@@ -315,7 +340,7 @@ export const research = {
    * Submit feedback. Screen, task, persona, build and the point in the event trail are attached
    * automatically; the participant only chooses a category and may add a comment.
    */
-  submitFeedback(f: { category: FeedbackCategory; comment?: string; id?: string; source?: 'button' | 'stuck' | 'survey' | 'first_run'; question?: string; rating?: number }): string | null {
+  submitFeedback(f: { category: FeedbackCategory; comment?: string; id?: string; source?: 'button' | 'stuck' | 'survey' | 'first_run'; question?: string; rating?: number; reason?: string; elapsedMs?: number }): string | null {
     if (!research.isActive()) return null;
     const id = f.id ?? uuid();
     if (done.includes(id)) return id;
@@ -328,9 +353,16 @@ export const research = {
       comment: f.comment,
       screen: context.screen,
       attemptId: currentTask ? attempts[currentTask] : undefined,
-      context: { persona: context.persona, acting: context.acting, tab: context.tab, sheet: context.sheet, route: context.screen, taskKey: currentTask, lastSequence: seq, source: f.source ?? 'button', question: f.question, rating: f.rating },
+      context: { persona: context.persona, acting: context.acting, tab: context.tab, sheet: context.sheet, route: context.screen, taskKey: currentTask, lastSequence: seq, source: f.source ?? 'button', question: f.question, rating: f.rating, reason: f.reason, elapsedMs: f.elapsedMs },
     });
     return id;
+  },
+
+  /** Optional details asked at the end of the short study (craft, experience). */
+  updateParticipant(d: { primaryCraft?: string; experienceLevel?: string }) {
+    if (!research.isActive() || (!d.primaryCraft && !d.experienceLevel)) return;
+    flushEvents();
+    enqueue('participant', { primaryCraft: d.primaryCraft, experienceLevel: d.experienceLevel });
   },
 
   /** Finish the session. Open attempts are closed as abandoned by the server. */

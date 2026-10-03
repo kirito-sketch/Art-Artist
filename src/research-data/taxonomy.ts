@@ -18,6 +18,8 @@ export const RESEARCH_EVENTS = {
   stuck_reported: "The participant tapped I'm stuck",
   task_instruction_opened: 'The participant reopened the task instruction',
   survey_submitted: 'The final survey was submitted',
+  task_questions_shown: 'The short question after a scenario appeared (metadata.finishedBy: app or participant), so drop-off at the questions can be told apart from drop-off in the app',
+  session_resumed: 'The participant came back to an open session after a reload, a new tab or the browser restoring the page (metadata.stage, metadata.index)',
 
   // First run (splash, introduction, account entry and onboarding: the real product flow)
   onboarding_step_viewed: 'A first-run screen shown (metadata.step: splash, intro_1..3, entry, email, consent, you, craft ...)',

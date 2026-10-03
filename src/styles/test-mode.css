@@ -1,15 +1,10 @@
 /* =============================================================== Participant Test Mode (/test)
- * Rule: nothing belonging to the study is drawn inside the simulated phone. The phone keeps its normal
- * size and its normal status bar. Research UI sits outside the device:
- *   - wide screens: a compact floating panel beside the phone (rp--side);
- *   - small screens: a bar attached to the browser viewport below the device (rp-bar), opening into a
- *     viewport sheet (rp--sheet). Never a modal inside Art and Artist.
- * Art and Artist's visual language: warm paper, hairline, soft shadow, restrained radius, Art and Artist green for the one
- * primary research action. docs/RESEARCH_TEST_MODE.md. */
+ * A short, natural session using Art and Artist. The phone is the focus; the test guide is small and
+ * quiet beside it (wide screens) or a bar and sheet attached to the browser viewport below it (phones).
+ * Nothing belonging to the test is ever drawn inside the simulated phone. docs/TEST_REDESIGN.md. */
 
 .test-stage {
   --rp-bar: 64px;
-  /* The whole composition lives inside the viewport: no page scrolling. */
   width: 100vw;
   height: 100vh;
   height: 100dvh;
@@ -17,131 +12,113 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(20px, 3vw, 40px);
+  gap: clamp(24px, 4vw, 56px);
   padding: 24px;
   box-sizing: border-box;
   background: var(--base, #f6f4f0);
+  color: var(--text);
 }
 
 .test-device {
   position: relative;
   flex: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease;
 }
 
-/* The phone keeps its natural size and design; only this wrapper is scaled (see useDeviceScale). */
 .test-device-scale {
   transform-origin: top left;
 }
 
-/* Between tasks and while answering, Art and Artist is visible but not operable. */
+/* While a question is answered the app rests, still visible, so the session feels continuous. */
 .test-device[inert] {
-  opacity: 0.55;
+  opacity: 0.72;
 }
 
-/* ------------------------------------------------------------------------------------ the panel */
+/* ------------------------------------------------------------------------------------ the guide */
 .rp {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  color: var(--text);
   font-size: var(--t-4);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .rp--side {
   flex: none;
-  width: clamp(260px, 22vw, 320px);
-  /* The shell never leaves the viewport; only its content scrolls if a step is long. */
+  width: clamp(280px, 24vw, 340px);
   max-height: calc(100dvh - 48px);
   overflow-y: auto;
   overscroll-behavior: contain;
   box-sizing: border-box;
-  padding: 22px 20px;
-  background: var(--base, #f6f4f0);
-  border: 1px solid var(--hairline);
-  border-radius: 20px;
-  box-shadow: 0 1px 2px rgba(40, 30, 20, 0.04), 0 12px 32px -18px rgba(40, 30, 20, 0.22);
+  padding: 4px 4px 4px 0;
 }
 
-.rp--solo {
-  width: 100%;
-  max-width: 440px;
-  padding: 28px 26px;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  border-radius: 22px;
-  box-shadow: 0 12px 40px -24px rgba(40, 30, 20, 0.3);
-}
-
-.test-stage--solo {
-  /* Research pages (intro, consent, survey...) may scroll inside the stage on very short screens. */
-  overflow-y: auto;
-}
-
-.test-stage--solo .rp--solo {
-  margin: auto;
-}
-
-.rp-brand {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-2);
-}
-
-.rp-head {
+.rp-step {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 14px;
 }
 
-.rp-eyebrow {
+.rp-progress {
   font-size: 13px;
   font-weight: 600;
-  color: var(--action);
+  letter-spacing: 0.01em;
+  color: var(--text-2);
 }
 
-.rp-status {
-  color: var(--text-2);
+.rp-halfway {
   font-weight: 500;
 }
 
 .rp-title {
-  font-size: 21px;
+  font-family: var(--display);
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.15;
+  outline: none;
 }
 
-.rp-instruction {
+.rp-title--q {
+  font-size: 21px;
+}
+
+.rp-scenario {
   font-size: var(--t-3);
-  line-height: 1.45;
-  padding: 12px 14px;
-  background: var(--surface);
-  border-radius: 14px;
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  line-height: 1.5;
+  color: var(--text);
 }
 
 .rp-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
+}
+
+.rp-quiet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-top: -2px;
 }
 
 .rp-link {
   align-self: center;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 4px;
   font-size: var(--t-4);
   font-weight: 550;
   color: var(--text-2);
 }
 
+.rp-quiet-actions .rp-link {
+  padding: 0;
+}
+
 .rp-noted {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--action);
 }
 
@@ -150,22 +127,39 @@
   color: var(--text-2);
 }
 
-.rp-q {
-  font-size: var(--t-3);
-  font-weight: 600;
-  margin-top: 4px;
+/* ------------------------------------------------------------------- pages (welcome, survey, end) */
+.rp--solo {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 28px;
+  box-sizing: border-box;
 }
 
-/* Research pages (intro, consent, details, survey, thanks) */
+.test-stage--solo {
+  overflow-y: auto;
+}
+
+.test-stage--solo .rp--solo {
+  margin: auto;
+}
+
 .rp-page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+}
+
+.rp-brand {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
 }
 
 .rp-page-title {
   font-family: var(--display);
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1.1;
   letter-spacing: -0.03em;
   outline: none;
@@ -176,44 +170,50 @@
   flex-direction: column;
   gap: 12px;
   font-size: var(--t-3);
+  line-height: 1.5;
 }
 
-.rp-list {
+.rp-time {
+  font-size: var(--t-4);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.rp-consent {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-2);
+  text-align: center;
+  margin-top: 4px;
+}
+
+.rp-details {
+  font-size: 13px;
+  color: var(--text-2);
+  text-align: center;
+}
+
+.rp-details summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rp-details ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-left: 18px;
-  font-size: var(--t-4);
+  gap: 6px;
   list-style: disc;
 }
 
-.rp-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-height: 44px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--base, #f6f4f0);
-  font-size: var(--t-4);
-  cursor: pointer;
-}
-
-.rp-check input {
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  accent-color: var(--action);
-  flex: none;
-}
-
-/* Forms */
-.rp-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+/* ------------------------------------------------------------------------------------------ forms */
 .rp-field {
   display: flex;
   flex-direction: column;
@@ -225,6 +225,11 @@
   color: var(--text-2);
 }
 
+.rp-field--q > span {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .rp-field .field {
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -234,10 +239,29 @@
   padding: 12px 14px;
   resize: none;
   line-height: 1.4;
+  font-size: 16px; /* 16 px: iOS does not zoom the page when the field is focused */
 }
 
 .rp-field select.field {
   appearance: auto;
+  font-size: 16px;
+}
+
+.rp-about {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 6px 0 0;
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.rp-about legend {
+  padding: 0;
+  font-size: var(--t-4);
+  font-weight: 600;
+  color: var(--text-2);
 }
 
 .rp-scale-row {
@@ -247,7 +271,7 @@
 }
 
 .rp-scale-btn {
-  height: 44px;
+  min-height: 48px;
   border-radius: 12px;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -266,67 +290,70 @@
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-2);
 }
 
-.rp-choice {
+.rp-options {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.rp-choice .chip {
-  min-width: 72px;
-  min-height: 40px;
-  justify-content: center;
-}
-
-.rp-cats {
-  gap: 8px;
-}
-
-.rp-cat {
+.rp-option {
   min-height: 46px;
-  padding: 0 14px;
+  padding: 10px 14px;
   border-radius: 12px;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--hairline);
   text-align: left;
   font-size: var(--t-4);
+  line-height: 1.35;
   color: var(--text);
 }
 
+.rp-option.is-on {
+  box-shadow: inset 0 0 0 2px var(--action);
+  font-weight: 600;
+}
+
 .rp button:focus-visible,
+.rp summary:focus-visible,
 .rp-bar button:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-/* ------------------------------------------------------------------- small screens (no room) */
+/* ------------------------------------------------------------------- phones and narrow windows */
 .test-stage--compact {
   flex-direction: column;
   gap: 0;
-}
-
-.test-stage--compact:not(.test-stage--solo) {
   padding-bottom: calc(var(--rp-bar) + 24px);
 }
 
-/* The bar: attached to the browser viewport, below the device, never over Art and Artist. */
+.test-stage--compact.test-stage--solo {
+  padding-bottom: 24px;
+}
+
+/* The bar: attached to the browser viewport, below the device, never over the app. */
 .rp-bar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 200;
-  height: var(--rp-bar);
+  min-height: var(--rp-bar);
+  box-sizing: border-box;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 8px;
   background: var(--base, #f6f4f0);
   border-top: 1px solid var(--hairline);
-  box-shadow: 0 -8px 24px -18px rgba(40, 30, 20, 0.35);
+}
+
+.rp-bar[hidden] {
+  display: none;
 }
 
 .rp-bar-task {
@@ -359,8 +386,9 @@
 }
 
 .rp-bar-text b {
-  color: var(--action);
   font-weight: 650;
+  color: var(--text-2);
+  margin-right: 4px;
 }
 
 .rp-bar-done {
@@ -372,6 +400,7 @@
   color: var(--on-action, #fff);
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .rp-bar-btn {
@@ -386,7 +415,7 @@
   color: var(--text);
 }
 
-/* The sheet: attached to the browser viewport (not the simulated phone). */
+/* The sheet: attached to the browser viewport (never to the simulated phone). */
 .rp-sheet-layer {
   position: fixed;
   inset: 0;
@@ -394,35 +423,43 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  pointer-events: none;
 }
 
 .rp-sheet-scrim {
   flex: 1;
-  background: rgba(20, 18, 14, 0.28);
+  background: rgba(20, 18, 14, 0.18);
+  pointer-events: auto;
 }
 
 .rp--sheet {
-  max-height: 78vh;
+  max-height: 72vh;
+  max-height: 72dvh;
   overflow-y: auto;
-  padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
+  overscroll-behavior: contain;
+  padding: 20px 20px calc(16px + env(safe-area-inset-bottom));
   background: var(--base, #f6f4f0);
   border-top: 1px solid var(--hairline);
   border-radius: 20px 20px 0 0;
-  box-shadow: 0 -12px 32px -16px rgba(40, 30, 20, 0.35);
+  box-shadow: 0 -12px 32px -18px rgba(40, 30, 20, 0.35);
+  pointer-events: auto;
 }
 
-/* Phone-width screens: the device is full screen, so the bar takes its own strip of the viewport. */
+.rp--sheet .rp-title {
+  font-size: 21px;
+}
+
 @media (max-width: 520px) {
   .test-stage {
     padding: 0;
     display: block;
   }
-  /* One constant height for the whole session (bar or sheet), so Art and Artist never shifts. */
+  /* One constant height for the whole session (bar or sheet), so the app never shifts. */
   .test-stage--compact:not(.test-stage--solo) {
     padding-bottom: var(--rp-bar);
   }
-  .test-stage--compact .phone {
-    height: calc(100dvh - var(--rp-bar));
+  .test-stage--compact:not(.test-stage--solo) .phone {
+    height: calc(100dvh - var(--rp-bar) - env(safe-area-inset-bottom));
   }
   .test-stage--solo {
     padding: 0;
@@ -430,10 +467,10 @@
   .rp--solo {
     max-width: none;
     min-height: 100dvh;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 32px 22px;
+    padding: 36px 22px calc(28px + env(safe-area-inset-bottom));
+  }
+  .rp-page-title {
+    font-size: 28px;
   }
 }
 
@@ -443,12 +480,3 @@
   }
 }
 
-/* Product introduction: the testing note sits apart from the product description. */
-.rp-intro-note {
-  margin-top: 4px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--base, #f6f4f0);
-  font-size: var(--t-4);
-  color: var(--text-2);
-}
