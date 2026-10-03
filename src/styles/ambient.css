@@ -1,0 +1,248 @@
+/*
+ * Living background experiment (src/ui/ambient/LivingBackground.tsx, docs/LIVING_BACKGROUND.md).
+ * Home only, off by default. Every moving property is transform or opacity.
+ *
+ * Each variant defines its colours as custom properties per theme. Light: illumination on a paper surface
+ * (a little brighter, a little cooler, barely any colour). Dark: a neutral charcoal with soft warm
+ * illumination and a restrained trace of the brand green.
+ */
+
+/* The screen and Home's sheet let the atmosphere through; cards and images keep their own grounds. */
+.phone .v-home.has-ambient,
+.phone .v-home.has-ambient .home-sheet {
+  background: transparent;
+}
+
+.phone .ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--base);
+  contain: strict;
+  --ambient-presence: 1;
+}
+
+/* Arrives after the launch splash rather than with it: the atmosphere becomes visible, then content. */
+.phone .ambient > * {
+  opacity: var(--ambient-presence);
+  transition: opacity 900ms ease;
+  animation: ambient-in 1600ms ease-out backwards;
+}
+@keyframes ambient-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.phone .ambient-depth {
+  position: absolute;
+  inset: 0 0 -70% 0; /* taller than the screen: scrolling reveals more atmosphere, never a bare edge */
+  will-change: transform;
+}
+
+/* A light: a soft radial gradient drawn at a modest size and scaled up (soft gradients lose nothing),
+   so its GPU texture stays small. Its resting transform is also the Reduce Motion pose. */
+.phone .ambient-light,
+.phone .ambient-plane {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  will-change: transform;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+/* ============================================================ A: Ambient light */
+.phone .ambient--a {
+  --a1: rgba(255, 253, 248, 1); /* daylight on paper */
+  --a2: rgba(192, 205, 219, 0.62); /* cool skylight shade */
+  --a3: rgba(39, 92, 80, 0.09); /* a trace of the brand green */
+}
+.phone .ambient--a .ambient-light {
+  width: 46%;
+  aspect-ratio: 1;
+}
+.phone .ambient--a .ambient-light--1 {
+  left: 2%;
+  top: 4%;
+  background: radial-gradient(closest-side, var(--a1), transparent);
+  transform: translate3d(-12%, -8%, 0) scale(2.5);
+  animation-name: ambient-drift-1;
+  animation-duration: 53s;
+}
+.phone .ambient--a .ambient-light--2 {
+  right: 0;
+  top: 34%;
+  background: radial-gradient(closest-side, var(--a2), transparent);
+  transform: translate3d(8%, 4%, 0) scale(2.3);
+  animation-name: ambient-drift-2;
+  animation-duration: 79s;
+}
+.phone .ambient--a .ambient-light--3 {
+  left: 20%;
+  top: 70%;
+  background: radial-gradient(closest-side, var(--a3), transparent);
+  transform: translate3d(-4%, 12%, 0) scale(2.6);
+  animation-name: ambient-drift-3;
+  animation-duration: 107s;
+}
+
+/* ============================================================ B: Cinematic atmosphere */
+.phone .ambient--b {
+  --b-key: rgba(255, 249, 236, 1); /* a warm key light from above left */
+  --b-bounce: rgba(194, 211, 204, 0.62); /* a cool bounce, low right */
+  --b-grain: 0.04;
+  --b-vignette: rgba(70, 55, 35, 0.11);
+}
+.phone .ambient--b .ambient-light {
+  width: 52%;
+  aspect-ratio: 1;
+}
+.phone .ambient--b .ambient-light--key {
+  left: -6%;
+  top: -2%;
+  background: radial-gradient(closest-side, var(--b-key), transparent);
+  transform: translate3d(-4%, -6%, 0) scale(2.6);
+  animation-name: ambient-drift-1;
+  animation-duration: 61s;
+}
+.phone .ambient--b .ambient-light--bounce {
+  right: -8%;
+  top: 46%;
+  background: radial-gradient(closest-side, var(--b-bounce), transparent);
+  transform: translate3d(4%, 4%, 0) scale(2.4);
+  animation-name: ambient-drift-2;
+  animation-duration: 83s;
+}
+/* Texture you feel more than see: a fixed tile, drifting by a few pixels over minutes. Never flickers. */
+.phone .ambient--b .ambient-grain {
+  position: absolute;
+  inset: -24px;
+  background-size: 96px 96px;
+  opacity: var(--b-grain);
+  will-change: transform;
+  animation: ambient-grain 173s linear infinite alternate;
+}
+.phone .ambient--b .ambient-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 75% at 50% 38%, transparent 55%, var(--b-vignette) 100%);
+}
+
+/* ============================================================ C: Depth field */
+.phone .ambient--c {
+  --c-far: rgba(255, 255, 255, 0.9);
+  --c-mid: rgba(214, 199, 176, 0.7);
+  --c-near: rgba(188, 209, 202, 0.66);
+}
+.phone .ambient--c .ambient-plane--far {
+  left: -30%;
+  top: 6%;
+  width: 160%;
+  height: 34%;
+  background: radial-gradient(closest-side, var(--c-far), transparent);
+  transform: translate3d(0, 0, 0) rotate(-8deg);
+  animation-name: ambient-plane-1;
+  animation-duration: 97s;
+}
+.phone .ambient--c .ambient-plane--mid {
+  left: -20%;
+  top: 38%;
+  width: 140%;
+  height: 30%;
+  background: radial-gradient(closest-side, var(--c-mid), transparent);
+  transform: translate3d(0, 0, 0) rotate(6deg);
+  animation-name: ambient-plane-2;
+  animation-duration: 127s;
+}
+.phone .ambient--c .ambient-plane--near {
+  left: -25%;
+  top: 74%;
+  width: 150%;
+  height: 32%;
+  background: radial-gradient(closest-side, var(--c-near), transparent);
+  transform: translate3d(0, 0, 0) rotate(-4deg);
+  animation-name: ambient-plane-3;
+  animation-duration: 151s;
+}
+
+/* ============================================================ Dark */
+html[data-theme='dark'] .phone[data-look='minimal'] .ambient--a {
+  --a1: rgba(255, 196, 140, 0.17);
+  --a2: rgba(47, 117, 101, 0.28);
+  --a3: rgba(120, 142, 176, 0.14);
+}
+html[data-theme='dark'] .phone[data-look='minimal'] .ambient--b {
+  --b-key: rgba(255, 204, 156, 0.18);
+  --b-bounce: rgba(47, 117, 101, 0.22);
+  --b-grain: 0.045;
+  --b-vignette: rgba(0, 0, 0, 0.6);
+}
+html[data-theme='dark'] .phone[data-look='minimal'] .ambient--c {
+  --c-far: rgba(255, 236, 214, 0.12);
+  --c-mid: rgba(47, 117, 101, 0.26);
+  --c-near: rgba(150, 170, 205, 0.12);
+}
+
+/* ============================================================ Paths
+ * Small displacements (a few percent of a light's size) and small scale changes. With different durations
+ * and alternate direction, the combination does not repeat on any timescale a person would notice. */
+@keyframes ambient-drift-1 {
+  0% { transform: translate3d(-12%, -8%, 0) scale(2.5); }
+  30% { transform: translate3d(10%, 6%, 0) scale(2.75); }
+  65% { transform: translate3d(-4%, 16%, 0) scale(2.55); }
+  100% { transform: translate3d(14%, -10%, 0) scale(2.8); }
+}
+@keyframes ambient-drift-2 {
+  0% { transform: translate3d(8%, 4%, 0) scale(2.3); }
+  40% { transform: translate3d(-12%, -10%, 0) scale(2.5); }
+  75% { transform: translate3d(6%, -16%, 0) scale(2.35); }
+  100% { transform: translate3d(-8%, 10%, 0) scale(2.6); }
+}
+@keyframes ambient-drift-3 {
+  0% { transform: translate3d(-4%, 12%, 0) scale(2.6); }
+  35% { transform: translate3d(16%, -4%, 0) scale(2.4); }
+  70% { transform: translate3d(-10%, -12%, 0) scale(2.75); }
+  100% { transform: translate3d(6%, 8%, 0) scale(2.5); }
+}
+@keyframes ambient-plane-1 {
+  0% { transform: translate3d(0, 0, 0) rotate(-8deg); }
+  50% { transform: translate3d(6%, 8%, 0) rotate(-6deg); }
+  100% { transform: translate3d(-4%, 4%, 0) rotate(-9deg); }
+}
+@keyframes ambient-plane-2 {
+  0% { transform: translate3d(0, 0, 0) rotate(6deg); }
+  50% { transform: translate3d(-6%, -6%, 0) rotate(8deg); }
+  100% { transform: translate3d(4%, 6%, 0) rotate(5deg); }
+}
+@keyframes ambient-plane-3 {
+  0% { transform: translate3d(0, 0, 0) rotate(-4deg); }
+  50% { transform: translate3d(4%, -8%, 0) rotate(-2deg); }
+  100% { transform: translate3d(-6%, 4%, 0) rotate(-5deg); }
+}
+@keyframes ambient-grain {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-18px, 12px, 0); }
+}
+
+/* ============================================================ Still: Reduce Motion, low power, inactive tab
+ * The same composition, held at its resting pose. */
+.phone .ambient.is-still *,
+.phone .tab-layer[inert] .ambient * {
+  animation-play-state: paused;
+}
+.phone .ambient.is-still .ambient-light,
+.phone .ambient.is-still .ambient-plane,
+.phone .ambient.is-still .ambient-grain {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone .ambient * {
+    animation: none !important;
+  }
+  .phone .ambient > * {
+    opacity: var(--ambient-presence);
+  }
+}

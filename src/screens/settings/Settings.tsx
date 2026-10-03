@@ -4,6 +4,7 @@ import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
 import { usePref } from '../../state/settingsPrefs';
 import { setAppearance, useAppearance, type Appearance } from '../../ui/theme';
+import { setAmbientVariant, useAmbientVariant, type AmbientVariant } from '../../ui/ambient/ambient';
 import { ANA_PROTOTYPE_VERSION } from '../../version';
 import { Avatar, Button, IconButton, Row, Toggle, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
@@ -264,9 +265,17 @@ function PersonalPage({ page }: { page: SettingsPage }) {
   );
 }
 
+const AMBIENT: { id: AmbientVariant; label: string; sub: string }[] = [
+  { id: 'off', label: 'Off', sub: 'The current background.' },
+  { id: 'a', label: 'A · Ambient light', sub: 'Soft light moving slowly behind Home.' },
+  { id: 'b', label: 'B · Cinematic atmosphere', sub: 'Light, a fine texture and a gentle vignette.' },
+  { id: 'c', label: 'C · Depth field', sub: 'Quiet layers that move at different depths as you scroll.' },
+];
+
 /** System, Light or Dark. Applies at once, no Save; stored on this device. */
 function AppearancePage() {
   const appearance = useAppearance();
+  const ambient = useAmbientVariant();
   return (
     <div className="settings">
       <section className="settings-group">
@@ -281,6 +290,22 @@ function AppearancePage() {
             </button>
           ))}
         </div>
+      </section>
+      {/* Temporary, for choosing a direction (docs/LIVING_BACKGROUND.md). Applies to Home only. */}
+      <section className="settings-group">
+        <h2 className="settings-h">Background (experiment)</h2>
+        <div className="group picker settings-radio" role="radiogroup" aria-label="Background (experiment)">
+          {AMBIENT.map((a) => (
+            <button key={a.id} role="radio" aria-checked={ambient === a.id} className={`picker-row ${ambient === a.id ? 'is-on' : ''}`} onClick={() => setAmbientVariant(a.id)}>
+              <span className="settings-label">
+                <span>{a.label}</span>
+                <span className="meta">{a.sub}</span>
+              </span>
+              {ambient === a.id && <Check size={18} strokeWidth={2.4} aria-hidden />}
+            </button>
+          ))}
+        </div>
+        <p className="meta settings-note">Shown on Home only while we compare the three directions.</p>
       </section>
     </div>
   );

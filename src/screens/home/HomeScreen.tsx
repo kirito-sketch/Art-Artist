@@ -13,6 +13,8 @@ import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { shared, spring, stagger } from '../../ui/motion';
 import { Button, FollowButton, IconButton, Photo, PressCard, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
+import { LivingBackground } from '../../ui/ambient/LivingBackground';
+import { useAmbientVariant } from '../../ui/ambient/ambient';
 import { NetworkRow } from './NetworkActivity';
 import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
 import { FirstStep, Resolve, useWorldForming } from './FirstHome';
@@ -34,6 +36,9 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
   // First session: a person just out of onboarding (or the "New user" test state). No network yet.
   const first = !loading && (store.isNewPerson || scenario.newUser);
   const forming = useWorldForming(first && cards);
+  // Living background experiment (Settings › Appearance › Background): Home only, off by default.
+  const ambient = useAmbientVariant();
+  const ambientOn = cards && ambient !== 'off';
   const hasHero = !cards && !loading && !scenario.forYouError && opps.length > 0;
   const solid = !hasHero || scrollY > 40;
 
@@ -89,7 +94,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
 
   return (
     <>
-      <div className={`screen screen--hero ${cards ? 'canvas v-home' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+      {ambientOn && <LivingBackground variant={ambient as 'a' | 'b' | 'c'} scrollRef={scrollRef} />}
+      <div className={`screen screen--hero ${cards ? 'canvas v-home' : ''}${ambientOn ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         {cards ? (
           header('home-header--inline')
         ) : loading ? (
