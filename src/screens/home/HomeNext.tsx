@@ -79,7 +79,7 @@ export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: 
             pendingCredits,
             loadedAt: LOADED_AT,
             isNew,
-            extra: eventCandidates(me, LOADED_AT),
+            extra: eventCandidates(me, LOADED_AT, store.events, following),
           }),
         { now: Date.now(), sessionKey: `${sessionKey}-${viewer.id}`, kv },
       ),

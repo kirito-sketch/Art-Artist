@@ -1,4 +1,4 @@
-import type { ProjectUpdate,
+import type { IndustryEvent, ProjectUpdate,
   Conversation,
   Credit,
   Interest,
@@ -575,6 +575,34 @@ export const projectUpdates: ProjectUpdate[] = [
   { id: 'pu7', projectId: 'monsoon', kind: 'stage', from: 'Post-production', to: 'Released', hoursAgo: 120 },
   { id: 'pu8', projectId: 'neeliraat', kind: 'crew', to: 'Poster artist', hoursAgo: 60 },
 ];
+
+/* ---------------------------------------------------------- industry events (docs/EVENTS.md) */
+
+/**
+ * Curated events, dated relative to when the prototype loads so they are always upcoming. Four are here
+ * only to prove the rules hide them: an unverified host, a cancelled meetup, a past screening and an
+ * "audition" (auditions are roles, never events).
+ */
+export function seedEvents(now: number): IndustryEvent[] {
+  const day = (d: number, h: number, m = 0) => {
+    const t = new Date(now + d * 864e5);
+    t.setUTCHours(h - 5, m - 30, 0, 0); // h:m in India (UTC+5:30)
+    return t.getTime();
+  };
+  return [
+    { id: 'ev-kaaval-premiere', type: 'screening', title: 'Kaaval · festival premiere', hostId: 'saffron', projectId: 'kaaval', speakerIds: ['kiran', 'rhea'], city: 'Mumbai', venue: 'PVR Juhu, Screen 2', start: day(6, 19, 30), price: { kind: 'free' }, summary: 'The premiere screening, followed by a conversation with the camera and colour team.', status: 'scheduled', reviewed: true },
+    { id: 'ev-konark-crew', type: 'meetup', title: 'Camera crew evening', hostId: 'konark', city: 'Hyderabad', venue: 'Konark Pictures, Jubilee Hills', start: day(1, 18, 30), price: { kind: 'free' }, summary: 'An informal evening with the Neela Akasham camera team before the shoot moves to Araku.', status: 'scheduled' },
+    { id: 'ev-tara-screen-acting', type: 'workshop', title: 'Screen acting for working actors', hostId: 'tara', city: 'Mumbai', venue: 'Prithvi House, Juhu', start: day(10, 10, 0), price: { kind: 'paid', amount: '₹1,500' }, summary: 'A day of scene work in front of the camera, for actors 18 and over with some screen experience.', status: 'scheduled', reviewed: true, link: 'https://example.com/tickets' },
+    { id: 'ev-backwaters-wip', type: 'screening', title: 'Backwaters · work-in-progress screening', hostId: 'tidewater', projectId: 'backwaters', speakerIds: ['meera'], city: 'Kochi', venue: 'Kavitha Theatre', start: day(12, 17, 0), price: { kind: 'free' }, summary: 'Forty minutes of the documentary in progress, with notes from the edit.', status: 'scheduled' },
+    { id: 'ev-kochi-market', type: 'festival', title: 'Kochi Film Market', hostId: 'tidewater', city: 'Kochi', venue: 'Bolgatty Palace', start: day(20, 9, 30), end: day(22, 19, 0), price: { kind: 'paid', amount: '₹500' }, summary: 'Three days of pitches, co-production meetings and screenings for Malayalam and Tamil projects.', status: 'scheduled', link: 'https://example.com/kfm' },
+    { id: 'ev-writers-read', type: 'meetup', title: "Writers' table read night", hostId: 'bluelotus', city: 'Mumbai', venue: 'Blue Lotus studio, Andheri', start: day(8, 19, 0), price: { kind: 'free' }, summary: 'Two short scripts read aloud by working actors, then a conversation about the drafts.', status: 'scheduled' },
+    // Hidden by the rules, on purpose:
+    { id: 'ev-rhea-colour', type: 'workshop', title: 'Colour for night exteriors', hostId: 'rhea', city: 'Hyderabad', venue: 'Online', start: day(5, 11), price: { kind: 'paid', amount: '₹2,000' }, summary: 'A hands-on grading session.', status: 'scheduled' },
+    { id: 'ev-sound-meetup', type: 'meetup', title: 'Sound recordists meetup', hostId: 'northstar', city: 'Mumbai', venue: 'Northstar, Lower Parel', start: day(4, 18), price: { kind: 'free' }, summary: 'Cancelled by the host.', status: 'cancelled' },
+    { id: 'ev-neeli-raat', type: 'screening', title: 'Neeli Raat anniversary screening', hostId: 'konark', projectId: 'neeliraat', city: 'Hyderabad', venue: 'Prasads', start: day(-3, 19), price: { kind: 'free' }, summary: 'Two years on.', status: 'scheduled' },
+    { id: 'ev-fake-audition', type: 'workshop', title: 'Open auditions: lead role in a feature', hostId: 'saffron', city: 'Mumbai', venue: 'Andheri', start: day(9, 11), price: { kind: 'paid', amount: '₹3,000' }, summary: 'Pay to audition.', status: 'scheduled' },
+  ];
+}
 
 /* ---------------------------------------------------------- network events */
 

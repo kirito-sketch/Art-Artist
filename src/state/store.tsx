@@ -16,7 +16,7 @@ BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { party } from './selectors';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
-import type { Conversation, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
+import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
 
 /* ------------------------------------------------------------ navigation */
 
@@ -43,10 +43,12 @@ export type Route =
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
   | { name: 'media'; items: Media[]; index: number; what?: string; from?: string }
   | { name: 'posts'; ids: string[]; index: number }
-  | { name: 'saved' };
+  | { name: 'saved' }
+  | { name: 'event'; id: string }
+  | { name: 'composeEvent'; projectId?: string; editId?: string };
 
 /** V30: one Saved model for the four things people come back to. People are saved privately (a shortlist), never shown to them. */
-export type SavedKind = 'person' | 'role' | 'project' | 'post';
+export type SavedKind = 'person' | 'role' | 'project' | 'post' | 'event';
 export interface SavedItem {
   kind: SavedKind;
   id: string;
@@ -66,7 +68,7 @@ export type Sheet =
   | { name: 'identity' }
   | { name: 'share'; label: string }
   | { name: 'more'; id: string }
-  | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post'; id: string } }
+  | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event'; id: string } }
   | { name: 'postMore'; id: string }
   | { name: 'block'; id: string }
   | { name: 'editRole'; id: string }
@@ -155,6 +157,8 @@ function useStoreValue() {
    * list it is.
    */
   const [saved, setSaved] = useState<SavedItem[]>([]);
+  /** Industry events (docs/EVENTS.md): the curated seed plus anything hosted in this session. */
+  const [events, setEvents] = useState<IndustryEvent[]>(() => seed.seedEvents(Date.now()));
   const [creditBusy, setCreditBusy] = useState<string | null>(null);
   /** UI only: the credit that was just accepted, so its record can be stamped once (motion). */
   const [justAccepted, setJustAccepted] = useState<string | null>(null);
@@ -273,6 +277,8 @@ function useStoreValue() {
     setStack((s) => [...s, r]);
   }, []);
   const pop = useCallback(() => setStack((s) => s.slice(0, -1)), []);
+  /** Swap the top screen for another (a composer becomes the thing it made). */
+  const replace = useCallback((r: Route) => setStack((s) => [...s.slice(0, -1), r]), []);
   const openSheet = useCallback((s: Sheet) => setSheet(s), []);
   const closeSheet = useCallback(() => setSheet(null), []);
 
@@ -284,6 +290,7 @@ function useStoreValue() {
       // The bookmark confirms itself. While acting for a house we say whose list it went to; the very
       // first save says once where Saved lives, with a way straight there.
       if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'View', run: () => push({ name: 'saved' }) } });
+      else if (on && kind === 'event' && !saved.some((x) => x.kind === 'event')) showToast({ text: "Interested. It's in Saved, and we'll remind you before it starts.", action: { label: 'View', run: () => push({ name: 'saved' }) } });
       else if (on && saved.length === 0) showToast({ text: 'Saved. Find it in Saved, on your profile.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
     },
     [saved, showToast, acting, push],
@@ -675,6 +682,18 @@ function useStoreValue() {
     saved,
     isSaved,
     toggleSave,
+    events,
+    /** Publish an event hosted by the signed-in person or the house they act for. Paid events from individuals wait for review. */
+    replace,
+    createEvent: (e: Omit<IndustryEvent, 'id' | 'status'>, review: 'live' | 'under_review') => {
+      const id = `ev-${Date.now().toString(36)}`;
+      setEvents((list) => [{ ...e, id, status: review === 'live' ? 'scheduled' : 'under_review' }, ...list]);
+      return id;
+    },
+    /** Edit an event. A change to when or where is flagged so people who are interested hear about it. */
+    updateEvent: (id: string, patch: Partial<IndustryEvent>) =>
+      setEvents((list) => list.map((e) => (e.id !== id ? e : { ...e, ...patch, changed: patch.start !== undefined && patch.start !== e.start ? 'Date or time changed' : patch.venue && patch.venue !== e.venue ? 'Venue changed' : e.changed }))),
+    cancelEvent: (id: string) => setEvents((list) => list.map((e) => (e.id === id ? { ...e, status: 'cancelled' as const } : e))),
     following,
     toggleFollow,
     responses,

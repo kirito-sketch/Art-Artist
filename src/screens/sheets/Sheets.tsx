@@ -1,4 +1,4 @@
-import { Ban, Bookmark, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
+import { Ban, Bookmark, CalendarDays, Check, CircleCheck, Flag, Link2, PenLine, Plus, Send, UserSearch } from 'lucide-react';
 import { useFeatures } from '../../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
@@ -18,7 +18,9 @@ import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
 import { world, project as wproject } from '../../state/world';
 import { INTENTS } from '../../domain/relevance';
-import { sentReports } from '../../state/reports';
+import { reportLevel, sentReports } from '../../state/reports';
+import type { IndustryEvent } from '../../data/types';
+import { stubLabel, whenLabel } from '../../domain/events';
 import { DateField, fmtDay, fmtRange, parseDays, todayIso } from '../../ui/fields';
 
 export function SheetHost() {
@@ -145,6 +147,8 @@ function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }
 
 function CreateMenu() {
   const { push, acting, openSheet } = useStore();
+  const events = useFeatures().events;
+  const eventRow = events && <Row icon={<CalendarDays size={22} />} label={acting !== 'self' ? `Event by ${org(acting).name}` : 'Event'} onPress={() => push({ name: 'composeEvent' })} />;
   // Acting for a house: it posts updates and opens roles. It is never "available for work".
   if (acting !== 'self')
     return (
@@ -152,6 +156,7 @@ function CreateMenu() {
         <Row icon={<Plus size={22} />} label="New project" onPress={() => openSheet({ name: 'newProject' })} />
         <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => openSheet({ name: 'pickProject' })} />
         <Row icon={<PenLine size={22} />} label={`Post as ${org(acting).name}`} onPress={() => push({ name: 'composePost' })} />
+        {eventRow}
       </div>
     );
   return (
@@ -160,6 +165,7 @@ function CreateMenu() {
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
       <Row icon={<CircleCheck size={22} />} label="Available for work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
       <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
+      {eventRow}
     </div>
   );
 }
@@ -186,6 +192,27 @@ function notifCopy(n: { text: string; actorId: string }) {
   return { who, what: cut > 0 ? rest.slice(0, cut) : rest, context: cut > 0 ? rest.slice(cut + 2) : undefined };
 }
 
+/** Today, Tomorrow, or Soon, by the calendar day in India. */
+function dayWord(at: number, now: number) {
+  const day = (ms: number) => Math.floor((ms + 5.5 * 36e5) / 864e5);
+  const d = day(at) - day(now);
+  return d <= 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'Soon';
+}
+
+/** Interested events that need a word: starting within 48 hours, changed, or cancelled. Past ones drop off. */
+function comingUp(saved: { kind: string; id: string }[], events: IndustryEvent[], now: number) {
+  const out: { e: IndustryEvent; line: string }[] = [];
+  for (const s of saved) {
+    if (s.kind !== 'event') continue;
+    const e = events.find((x) => x.id === s.id);
+    if (!e || (e.end ?? e.start) < now) continue;
+    if (e.status === 'cancelled') out.push({ e, line: 'Cancelled by the host.' });
+    else if (e.status === 'scheduled' && e.changed) out.push({ e, line: `${e.changed}: now ${whenLabel(e.start)}.` });
+    else if (e.status === 'scheduled' && e.start - now <= 48 * 36e5) out.push({ e, line: `${dayWord(e.start, now)}: ${whenLabel(e.start)}.` });
+  }
+  return out.sort((a, b) => a.e.start - b.e.start);
+}
+
 /** A new item that asks for a decision: a credit to accept, a correction to answer, interest to review (N4). */
 const asksForDecision = (n: { kind: string; text: string; unread: boolean }) =>
   n.unread && ((n.kind === 'interest' && !/ (filled|closed) /.test(n.text)) || (n.kind === 'credit' && /Accept it|proposed a revised|asked to correct|asked to amend|isn't right/.test(n.text)));
@@ -196,14 +223,18 @@ const asksForDecision = (n: { kind: string; text: string; unread: boolean }) =>
  * you); conversations live in Inbox.
  */
 function Notifications() {
-  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario } = useStore();
+  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario, saved, events } = useStore();
   const [filter, setFilter] = useState<string>(acting);
-  const homeNext = useFeatures().home === 'next';
+  const features = useFeatures();
+  const homeNext = features.home === 'next';
+  // Events you marked Interested (docs/EVENTS.md): a reminder from 48 hours before, and any change or
+  // cancellation, until the event is over. Derived, so it can never drift from the event itself.
+  const reminders = features.events && (filter === 'self' || filter === 'all') ? comingUp(saved, events, Date.now()) : [];
   // News from your network (credits, new projects, availability) lives here, not on Home, which only
   // shows what needs you (docs/UX_HEURISTIC_AUDIT.md F2, F13). It belongs to the person, not a house.
   const network = filter === 'self' || filter === 'all' ? networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel') : [];
   const caughtUp = <EmptyState title="You're all caught up" body="New activity around your work and network will appear here." />;
-  if (!notifications.length && !network.length) return caughtUp;
+  if (!notifications.length && !network.length && !reminders.length) return caughtUp;
   const owner = (n: (typeof notifications)[number]) => n.forId ?? 'self';
   const shown = filter === 'all' ? notifications : notifications.filter((n) => owner(n) === filter);
   // New Home (docs/HOME.md): Home no longer carries a "Waiting on you" queue, so anything that asks for a
@@ -272,6 +303,28 @@ function Notifications() {
         <section className="notif-group">
           <h3 className="notif-label">Needs you</h3>
           <div className="list list--flush">{needs.map(row)}</div>
+        </section>
+      )}
+      {reminders.length > 0 && (
+        <section className="notif-group">
+          <h3 className="notif-label">Coming up</h3>
+          <div className="list list--flush">
+            {reminders.map(({ e, line }) => (
+              <Pressable key={e.id} className="notif notif--event" scale={0.99} onClick={() => push({ name: 'event', id: e.id })}>
+                <span className="ev-stub ev-stub--small" aria-hidden>
+                  <span className="ev-stub-month">{stubLabel(e.start).month}</span>
+                  <span className="ev-stub-day">{stubLabel(e.start).day}</span>
+                </span>
+                <span className="notif-text">
+                  <span className="notif-line">
+                    <span className="notif-who">{e.title}</span>
+                  </span>
+                  <span className="notif-context">{line}</span>
+                  <span className="meta">{e.venue}, {e.city}</span>
+                </span>
+              </Pressable>
+            ))}
+          </div>
         </section>
       )}
       {fresh.length > 0 && (
@@ -851,6 +904,8 @@ function MoreSheet({ id }: { id: string }) {
   );
 }
 
+/** Events have their own reasons: money for a role, a fake or misleading event, and anything involving a child goes straight to Child Safety. */
+const EVENT_REPORT_REASONS = ['Asks for money for a role or audition', 'Not a real event', 'Misleading price or details', 'Involves a child', 'Something else'];
 const REPORT_REASONS = ['Fake profile or impersonation', 'Asking for money to apply or audition', 'Harassment or unsafe behaviour', 'Misleading role or project', 'Stolen or misused work', 'Something else'];
 
 /**
@@ -873,7 +928,7 @@ function PostMenu({ id }: { id: string }) {
 }
 
 /** Report: reason, optional detail, a clear promise, and the offer to block. */
-function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: string; target?: { kind: 'Post'; id: string } }) {
+function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: string; target?: { kind: 'Post' | 'Event'; id: string } }) {
   const { openSheet, closeSheet, acting, viewer } = useStore();
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
@@ -898,7 +953,7 @@ function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: 
       <p className="meta">What's wrong with {subject}?</p>
       {acting !== 'self' && <p className="meta">This is a personal action: the report comes from you, {person(viewer.id).name.split(' ')[0]}, not {org(acting).name}.</p>}
       <div className="group">
-        {REPORT_REASONS.map((r) => (
+        {(target?.kind === 'Event' ? EVENT_REPORT_REASONS : REPORT_REASONS).map((r) => (
           <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} pressed={reason === r} value={reason === r ? <Check size={18} className="accent" aria-hidden /> : undefined} />
         ))}
       </div>
@@ -919,7 +974,7 @@ function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: 
           setStep('sending');
           // The payload the trust queue receives: what was reported (type, id, author) and why. The
           // reporter travels with it for Art and Artist staff only; the author is never told who reported.
-          sentReports.push({ kind: target?.kind ?? 'Other', objectId: target?.id, authorId: partyId, subject, reason, note: detail || undefined, reporterId: viewer.id });
+          sentReports.push({ kind: target?.kind ?? 'Other', objectId: target?.id, authorId: partyId, subject, reason, note: detail || undefined, reporterId: viewer.id, level: reportLevel(reason) });
           window.setTimeout(() => setStep('done'), 700);
         }}
       >

@@ -223,3 +223,32 @@ export interface ProjectUpdate {
   /** Hours before the prototype loads, so the data is always "this week". */
   hoursAgo: number;
 }
+
+/**
+ * An industry event (docs/EVENTS.md): a screening or premiere, a workshop, a meetup or a festival. Always
+ * hosted by a verified production house or a verified adult; optionally linked to a project and speakers.
+ * Auditions are never events: they are roles. Interest is private (Saved, kind 'event').
+ */
+export type EventType = 'screening' | 'workshop' | 'meetup' | 'festival';
+export interface IndustryEvent {
+  id: string;
+  type: EventType;
+  title: string;
+  hostId: string;
+  projectId?: string;
+  speakerIds?: string[];
+  city: string;
+  venue: string;
+  /** Epoch ms. */
+  start: number;
+  end?: number;
+  price: { kind: 'free' } | { kind: 'paid'; amount: string };
+  /** Tickets or details, opened outside the app. */
+  link?: string;
+  summary: string;
+  status: 'scheduled' | 'cancelled' | 'under_review';
+  /** Checked by the curation team (lets a reviewed event mention, say, casting directors). */
+  reviewed?: boolean;
+  /** Set when the host changes the date, time or place after people marked interest. */
+  changed?: string;
+}

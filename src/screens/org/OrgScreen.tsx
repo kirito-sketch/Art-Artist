@@ -9,6 +9,8 @@ import { org, person } from '../../state/selectors';
 import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
 import { useLoad } from '../../ui/useLoad';
+import { EventsSection } from '../event/eventUnits';
+import { eventsOfHost } from '../../state/events';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
 
 /**
@@ -22,7 +24,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  *   hiring  Open roles first. The page as a front door for hiring.
  */
 export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked, roleStatus, memberships, setActing } = useStore();
+  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked, roleStatus, memberships, setActing, events, viewer } = useStore();
   const o = org(id);
   const own = acting === id;
   const [scrollY, setScrollY] = useState(0);
@@ -101,7 +103,8 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       </p>
     </section>
   );
-  const sections = houseProfile === 'hiring' ? [hiring, nowMaking, filmography, workedWith] : [nowMaking, filmography, workedWith, hiring];
+  const upcoming = <EventsSection key="events" title="Upcoming events" list={eventsOfHost(events, id, Date.now(), viewer.id, acting)} />;
+  const sections = houseProfile === 'hiring' ? [hiring, nowMaking, upcoming, filmography, workedWith] : [nowMaking, upcoming, filmography, workedWith, hiring];
 
   return (
     <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>

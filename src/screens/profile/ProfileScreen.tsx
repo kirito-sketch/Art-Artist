@@ -14,6 +14,8 @@ import { displayTitle, scriptLang } from '../../ui/compose';
 import { CreditSeal } from '../../ui/CreditSeal';
 import { bentoLayout } from '../../ui/bento';
 import { useHeroParallax } from '../../ui/useHeroParallax';
+import { EventsSection } from '../event/eventUnits';
+import { eventsOfHost, speakingAt } from '../../state/events';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -75,7 +77,7 @@ function useNameFit(name: string) {
 
 export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const { isSaved, toggleSave } = useStore();
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -396,6 +398,10 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             )}
           </section>
         )}
+
+        {/* Events: what they're hosting (their own under-review ones only to them) and where they're speaking. */}
+        <EventsSection title="Hosting" list={eventsOfHost(events, p.id, Date.now(), viewer.id, own ? 'self' : '')} />
+        <EventsSection title="Speaking at" list={speakingAt(events, p.id, Date.now())} />
 
         {d.projects.length > 0 && (
           <section className="section section--flush">

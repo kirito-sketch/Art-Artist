@@ -46,6 +46,8 @@ function openedEvent(r: Route, viewerId: string): { name: ResearchEventName; obj
       return { name: 'post_opened', objectType: 'post', objectId: r.ids[r.index] };
     case 'conversation':
       return { name: 'conversation_opened', objectType: 'conversation', objectId: r.id };
+    case 'event':
+      return { name: 'event_opened', objectType: 'event', objectId: r.id };
     case 'saved':
       return { name: 'saved_opened' };
     case 'settings':
@@ -56,7 +58,7 @@ function openedEvent(r: Route, viewerId: string): { name: ResearchEventName; obj
 }
 
 const TAB_EVENT: Record<string, ResearchEventName> = { home: 'home_viewed', discover: 'discover_opened', inbox: 'inbox_opened', profile: 'own_profile_viewed' };
-const SAVE_EVENT: Record<string, [ResearchEventName, ResearchEventName]> = { person: ['person_saved', 'person_unsaved'], post: ['post_saved', 'post_unsaved'], role: ['role_saved', 'role_unsaved'], project: ['project_saved', 'project_unsaved'] };
+const SAVE_EVENT: Record<string, [ResearchEventName, ResearchEventName]> = { person: ['person_saved', 'person_unsaved'], post: ['post_saved', 'post_unsaved'], role: ['role_saved', 'role_unsaved'], project: ['project_saved', 'project_unsaved'], event: ['event_saved', 'event_unsaved'] };
 
 function diff(prev: Set<string>, next: Set<string>) {
   return { added: [...next].filter((x) => !prev.has(x)), removed: [...prev].filter((x) => !next.has(x)) };

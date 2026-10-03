@@ -13,13 +13,15 @@ import { RoleRow } from '../discover/RoleRow';
 import { SaveButton } from '../home/OpportunityCard';
 import { useLoad } from '../../ui/useLoad';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
+import { EventsSection } from '../event/eventUnits';
+import { eventsOfProject } from '../../state/events';
 
 /**
  * Public project page. What anyone on Art and Artist sees: what it is, who made it, who is credited, whether it
  * is hiring. The house's private workspace is a different screen and a different context.
  */
 export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
-  const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked } = useStore();
+  const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked, events } = useStore();
   const wp = wproject(id);
   const w = work(id);
   const [scrollY, setScrollY] = useState(0);
@@ -145,6 +147,8 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             </div>
           </section>
         )}
+
+        <EventsSection title="Screenings" list={eventsOfProject(events, id, Date.now(), viewer.id, acting)} action={isLead ? 'Add a screening' : undefined} onAction={() => push({ name: 'composeEvent', projectId: id })} />
 
         {w.ownerId ? (
           <p className="meta work-foot">Credits for independent projects are not verified yet.</p>

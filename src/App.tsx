@@ -53,6 +53,8 @@ import { MotionReview } from './qa/MotionReview';
 import { Specimen } from './qa/Specimen';
 import { PostStream } from './screens/discover/PostStream';
 import { SavedScreen } from './screens/profile/SavedScreen';
+import { EventScreen } from './screens/event/EventScreen';
+import { EventComposer } from './screens/event/EventComposer';
 import { EdgeCaseLab } from './qa/Lab';
 import { ScenarioBar } from './qa/ScenarioBar';
 
@@ -63,7 +65,7 @@ import { ScenarioBar } from './qa/ScenarioBar';
  */
 function transitionFor(r: Route) {
   if (r.name === 'posts' || ((r.name === 'opportunity' || r.name === 'work') && r.from === 'card')) return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
-  if (r.name === 'composePost' || r.name === 'composeCollab') return { initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%' } };
+  if (r.name === 'composePost' || r.name === 'composeCollab' || r.name === 'composeEvent') return { initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%' } };
   if (r.name === 'media') return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 } };
   if (r.name === 'opportunity') return { initial: { opacity: 0, scale: 0.94, y: 24 }, animate: { opacity: 1, scale: 1, y: 0 }, exit: { opacity: 0, x: 60 } };
   return { initial: { x: '100%' }, animate: { x: 0 }, exit: { x: '100%' } };
@@ -109,6 +111,10 @@ function RouteView({ r }: { r: Route }) {
       return <LegalScreen id={r.doc} />;
     case 'yourData':
       return <YourData start={r.step} />;
+    case 'event':
+      return <EventScreen id={r.id} />;
+    case 'composeEvent':
+      return <EventComposer projectId={r.projectId} editId={r.editId} />;
   }
 }
 

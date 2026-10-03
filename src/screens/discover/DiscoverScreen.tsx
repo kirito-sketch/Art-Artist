@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { PostGrid } from './PostGrid';
-import { BadgeCheck, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { BadgeCheck, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
@@ -13,8 +13,21 @@ import { OfflineBanner } from '../../ui/chrome';
 import { Avatar, Button, Chip, FollowButton, EmptyState, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from './RoleRow';
+import { EventTicket } from '../event/eventUnits';
+import { EVENT_TYPES, typeLabel } from '../../domain/events';
+import type { EventType } from '../../data/types';
+import { visibleEvents } from '../../state/events';
+import { useFeatures } from '../../ui/features';
 
-export type Scope = 'roles' | 'people' | 'projects' | 'posts';
+export type Scope = 'roles' | 'people' | 'projects' | 'posts' | 'events';
+
+/** Events by when: this week means the next seven days, never a calendar promise. */
+const WHENS = [
+  { id: 'any', label: 'Any time' },
+  { id: 'week', label: 'Next 7 days' },
+  { id: 'month', label: 'Next 30 days' },
+] as const;
+type When = (typeof WHENS)[number]['id'];
 
 const KINDS: { id: 'all' | Opportunity['kind']; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -169,7 +182,15 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
     const f = requestAnimationFrame(() => document.getElementById('discover-search')?.focus());
     return () => cancelAnimationFrame(f);
   }, [focusSearch]);
-  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion } = useStore();
+  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
+  const features = useFeatures();
+  // Events are behind a switch: without it, a stored 'events' scope falls back to People.
+  useEffect(() => {
+    if (scope === 'events' && !features.events) setScope('people');
+  }, [scope, features.events]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [evCity, setEvCity] = useState<string>('any');
+  const [evWhen, setEvWhen] = useState<When>('any');
+  const [evType, setEvType] = useState<'any' | EventType>('any');
   const [searchState, setSearchState] = useState<'ready' | 'loading' | 'error'>('ready');
   const [query, setQuery] = useState('');
   /** Typing shows results across everything; "See all" narrows to one kind and brings the tabs back. */
@@ -188,7 +209,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
   const [pfDraft, setPfDraft] = useState<PeopleFilters>(NO_PEOPLE_FILTERS);
   const [pfOpen, setPfOpen] = useState(false);
   const [stage, setStage] = useState<ProjectStage>('all');
-  const [picker, setPicker] = useState<'craft' | 'postCraft' | 'kind' | 'stage' | null>(null);
+  const [picker, setPicker] = useState<'craft' | 'postCraft' | 'kind' | 'stage' | 'evCity' | 'evWhen' | 'evType' | null>(null);
   // Research observation only (no-op outside a research session): which section and craft were chosen.
   const seen = useRef({ scope, craft });
   useEffect(() => {
@@ -263,6 +284,13 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
   const postCrafts = CRAFTS.filter((c) => c.id === postCraft || allPosts.some((p) => postCraftOf(p) === c.id));
   const posts = postCraft ? allPosts.filter((p) => postCraftOf(p) === postCraft) : allPosts;
   const activeFilters = Object.values(filters).filter(Boolean).length;
+  const now = Date.now();
+  const allEvents = features.events ? visibleEvents(events, now, viewer.id, acting).filter((e) => (q ? `${e.title} ${e.venue} ${e.city} ${typeLabel(e.type)} ${party(e.hostId)?.name ?? ''}`.toLowerCase().includes(q) : true)) : [];
+  const eventCities = [...new Set(allEvents.map((e) => e.city))].sort();
+  const shownEvents = allEvents
+    .filter((e) => (evCity === 'any' ? true : e.city === evCity))
+    .filter((e) => (evWhen === 'week' ? e.start - now <= 7 * 864e5 : evWhen === 'month' ? e.start - now <= 30 * 864e5 : true))
+    .filter((e) => (evType === 'any' ? true : e.type === evType));
 
   return (
     <motion.div className="screen canvas v-discover" data-scroll="discover" layoutScroll>
@@ -273,7 +301,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
       <div className="search-wrap">
         <label className="search">
           <Search size={18} />
-          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : 'Search posts'} enterKeyHint="search" aria-label="Search" />
+          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search posts'} enterKeyHint="search" aria-label="Search" />
           <AnimatePresence>
             {query && (
               <motion.button className="search-clear" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} onClick={() => { setQuery(''); setNarrowed(false); }} aria-label="Clear search">
@@ -291,6 +319,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
             { value: 'roles', label: 'Opportunities', icon: <Clapperboard size={22} /> },
             { value: 'projects', label: 'Projects', icon: <Film size={22} /> },
             { value: 'posts', label: 'Posts', icon: <Newspaper size={22} /> },
+            ...(features.events ? [{ value: 'events' as const, label: 'Events', icon: <CalendarDays size={22} /> }] : []),
           ]}
         />}
       </div>
@@ -492,6 +521,22 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
               {posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
             </>
           )}
+          {scope === 'events' && (
+            <>
+              <FilterBar label="Event filters">
+                <Facet label="City" any="Any city" value={evCity === 'any' ? null : evCity} onOpen={() => setPicker('evCity')} />
+                <Facet label="When" any="Any time" value={evWhen === 'any' ? null : WHENS.find((w) => w.id === evWhen)!.label} onOpen={() => setPicker('evWhen')} />
+                <Facet label="Type" any="All types" value={evType === 'any' ? null : typeLabel(evType)} onOpen={() => setPicker('evType')} />
+              </FilterBar>
+              <div className="ev-list ev-list--discover">
+                {shownEvents.map((e) => (
+                  <EventTicket key={e.id} e={e} />
+                ))}
+              </div>
+              {!shownEvents.length && <EmptyState title="No events match" body="Try another city or date." />}
+              <p className="meta ev-trust">Events show their price up front. Art and Artist never charges to apply or audition.</p>
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
       )}
@@ -499,6 +544,9 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
       <Picker open={picker === 'craft'} onClose={() => setPicker(null)} title="Craft" value={craft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={DEPARTMENTS.map((d) => ({ label: d.label, options: d.crafts.map((c) => ({ id: c, label: craftLabel(c)! })) }))} onPick={(v) => setCraft(v === 'any' ? null : v)} />
       <Picker open={picker === 'postCraft'} onClose={() => setPicker(null)} title="Craft" value={postCraft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={DEPARTMENTS.map((d) => ({ label: d.label, options: d.crafts.filter((c) => postCrafts.some((x) => x.id === c)).map((c) => ({ id: c, label: craftLabel(c)! })) })).filter((g) => g.options.length)} onPick={(v) => setPostCraft(v === 'any' ? null : v)} />
       <Picker open={picker === 'kind'} onClose={() => setPicker(null)} title="Type" value={kind} options={KINDS.map((k) => ({ id: k.id, label: k.id === 'all' ? 'All types' : k.label }))} onPick={setKind} />
+      <Picker open={picker === 'evCity'} onClose={() => setPicker(null)} title="City" value={evCity} options={[{ id: 'any', label: 'Any city' }, ...eventCities.map((c) => ({ id: c, label: c }))]} onPick={setEvCity} />
+      <Picker open={picker === 'evWhen'} onClose={() => setPicker(null)} title="When" value={evWhen} options={WHENS.map((w) => ({ id: w.id, label: w.label }))} onPick={setEvWhen} />
+      <Picker open={picker === 'evType'} onClose={() => setPicker(null)} title="Type" value={evType} options={[{ id: 'any' as const, label: 'All types' }, ...EVENT_TYPES.map((t) => ({ id: t.id, label: t.label }))]} onPick={setEvType} />
       <Picker open={picker === 'stage'} onClose={() => setPicker(null)} title="Stage" value={stage} options={STAGES} onPick={setStage} />
 
       <Sheet open={pfOpen} onClose={() => setPfOpen(false)} title="Filter people">
