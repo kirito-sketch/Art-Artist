@@ -292,6 +292,11 @@ function useStoreValue() {
       if (on && acting !== 'self') showToast({ text: 'Saved to your account', action: { label: 'View', run: () => push({ name: 'saved' }) } });
       else if (on && kind === 'event' && !saved.some((x) => x.kind === 'event')) showToast({ text: "Interested. It's in Saved, and we'll remind you before it starts.", action: { label: 'View', run: () => push({ name: 'saved' }) } });
       else if (on && saved.length === 0) showToast({ text: 'Saved. Find it in Saved, on your profile.', action: { label: 'View', run: () => push({ name: 'saved' }) } });
+      // Removing is a loss (and from the Saved list the item disappears), so it always says so, with Undo.
+      else if (!on) {
+        const was = saved.find((x) => x.kind === kind && x.id === id);
+        showToast({ text: kind === 'event' ? 'No longer interested' : 'Removed from Saved', action: { label: 'Undo', run: () => was && setSaved((s) => (s.some((x) => x.kind === kind && x.id === id) ? s : [was, ...s])) } });
+      }
     },
     [saved, showToast, acting, push],
   );

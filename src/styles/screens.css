@@ -925,6 +925,24 @@
   padding: 0 var(--gutter);
 }
 
+.posters {
+  align-items: start;
+}
+
+/* A card is a button, which centres its content: pin it to the top so every poster in a row starts on one line. */
+.poster-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  text-align: left;
+}
+
+.poster-hiring {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
 .poster {
   aspect-ratio: 2 / 3;
   border-radius: var(--r-m);

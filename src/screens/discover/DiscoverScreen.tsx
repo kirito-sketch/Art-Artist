@@ -502,10 +502,9 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
                       <p className="meta">
                         {w.ownerId ? person(w.ownerId).name : <>{org(w.orgIds[0]).name} <Verified size={12} /></>}
                       </p>
-                      <p className="meta">
-                        {w.stage}
-                        {hiring ? ` · Hiring ${hiring}` : ''}
-                      </p>
+                      <p className="meta">{w.stage}</p>
+                      {/* Its own line, so "Hiring 2" never splits or leaves a dot hanging on a narrow card. */}
+                      {hiring > 0 && <p className="meta poster-hiring">Hiring {hiring}</p>}
                     </Pressable>
                   );
                 })}
