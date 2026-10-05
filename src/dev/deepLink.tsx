@@ -9,12 +9,15 @@ import { TEST_STATES, type Flow, type Persona } from './studioData';
  */
 const params = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export const FROM_STUDIO = params.get('from') === 'studio';
+/** Review only: Home as it would be six days on with nothing new since (the quiet-week Home). */
+export const QUIET_WEEK = (params.get('state') ?? '').split(',').includes('quietWeek');
+const STAND_IN = params.get('media') === 'standin';
 
 const PERSONAS: Persona[] = ['kiran', 'tara', 'konark', 'tidewater'];
 const FLOWS: Flow[] = ['new', 'signin', 'invite', 'policy'];
 
 export function DeepLink() {
-  const { setActing, switchViewer, setScenario, setCanIssue, verifyPendingHouses, startEntry, setPolicyUpdate } = useStore();
+  const { setActing, switchViewer, setScenario, setCanIssue, verifyPendingHouses, startEntry, setPolicyUpdate, push, updateProject } = useStore();
   useEffect(() => {
     const as = params.get('as') as Persona | null;
     const flow = params.get('flow') as Flow | null;
@@ -37,6 +40,11 @@ export function DeepLink() {
       switchViewer('kiran');
       setPolicyUpdate(true);
     } else if (flow && FLOWS.includes(flow)) startEntry(flow);
+    // ?announce=kaal: Konark shares Kaal before it has any pictures (the same action as "Share on Art and Artist").
+    if (params.get('announce') === 'kaal') updateProject('kaal', { shared: true, publicTitle: 'Kaal' });
+    // ?open=work:<id> opens a project page straight away (the project media states in Studio).
+    const [kind, id] = (params.get('open') ?? '').split(':');
+    if (kind === 'work' && id) window.setTimeout(() => push({ name: 'work', id }), 60);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Development only, no UI: walkthrough scripts switch persona mid-session (a house issues a credit, the
@@ -78,13 +86,21 @@ export function BackToStudio() {
 export function StageNotice() {
   const { scenario, setScenario } = useStore();
   const on = TEST_STATES.filter((t) => scenario[t.key]);
-  if (!on.length) return null;
+  const review = [QUIET_WEEK && 'Quiet week (Home six days on, nothing new)', STAND_IN && 'Stand-in clip on Kaaval, made from its own stills (no real footage yet)'].filter(Boolean);
+  if (!on.length && !review.length) return null;
   return (
     <div className="stage-notice" role="status">
-      <span className="stage-notice-item stage-notice-item--warn">
-        <AlertTriangle size={13} /> Test state: {on.map((t) => t.label).join(', ')}
-        <button onClick={() => setScenario(Object.fromEntries(TEST_STATES.map((t) => [t.key, false])))}>Clear</button>
-      </span>
+      {on.length > 0 && (
+        <span className="stage-notice-item stage-notice-item--warn">
+          <AlertTriangle size={13} /> Test state: {on.map((t) => t.label).join(', ')}
+          <button onClick={() => setScenario(Object.fromEntries(TEST_STATES.map((t) => [t.key, false])))}>Clear</button>
+        </span>
+      )}
+      {review.map((r) => (
+        <span key={String(r)} className="stage-notice-item stage-notice-item--warn">
+          <AlertTriangle size={13} /> Review: {r}
+        </span>
+      ))}
     </div>
   );
 }

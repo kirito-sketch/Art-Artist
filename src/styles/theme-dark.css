@@ -17,6 +17,8 @@
 
 html[data-theme='dark'] .phone[data-look='minimal'] {
   color-scheme: dark;
+  /* Inherited type follows the theme too: body sets the light value, so anything without its own colour stayed near-black. */
+  color: var(--text);
 
   /* Grounds, darkest to lightest: page, quiet section, raised object, sheet, fill, strong fill */
   --base: #121110;

@@ -3,7 +3,8 @@ import { TEST_MODE } from '../research-data/surface';
 
 /*
  * Product switches for work that is built but not yet the default (docs/plans/2026-10-03-home-and-events.md):
- *  - home: 'current' (today's Home, the default) or 'next' (fixed frame + composed middle, docs/HOME.md);
+ *  - home: 'next' (the composed Home, the default since October 2026, docs/HOME.md) or 'current' (the earlier
+ *    opportunity-led Home, kept only for /test comparison and QA; ?home=current);
  *  - events: on by default (docs/EVENTS.md). ?events=off hides them on this device.
  * Set with ?home=next, ?events=on|off, or ?next (both). Stored on this device. On /test the Home comes from the
  * participant's assigned arm and Events are always off, so the comparison changes one thing only.
@@ -11,17 +12,17 @@ import { TEST_MODE } from '../research-data/surface';
 export type HomeVariant = 'current' | 'next';
 export type Features = { home: HomeVariant; events: boolean };
 
-// v2: Events became the default; a new key so an old stored "off" (written before anyone chose it) is not kept.
-const KEY = 'aa-features-v2';
+// v3: the composed Home became the default; a new key so a "current" stored before anyone chose it is not kept.
+const KEY = 'aa-features-v3';
 export function parseFeatures(query: URLSearchParams, stored: Partial<Features> | null): Features {
-  const base: Features = { home: stored?.home === 'next' ? 'next' : 'current', events: stored?.events !== false };
+  const base: Features = { home: stored?.home === 'current' ? 'current' : 'next', events: stored?.events !== false };
   if (query.has('next')) return { home: 'next', events: true };
   const h = query.get('home');
   const e = query.get('events');
   return { home: h === 'next' || h === 'current' ? h : base.home, events: e === 'on' ? true : e === 'off' ? false : base.events };
 }
 
-let features: Features = { home: 'current', events: true };
+let features: Features = { home: 'next', events: true };
 if (typeof window !== 'undefined') {
   try {
     const stored = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Partial<Features> | null;

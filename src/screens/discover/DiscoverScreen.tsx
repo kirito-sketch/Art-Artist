@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { PostGrid } from './PostGrid';
 import { BadgeCheck, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
 import { isLive } from '../../data/works';
@@ -175,7 +175,7 @@ const STAGES: { id: ProjectStage; label: string }[] = [
   { id: 'released', label: 'Released' },
 ];
 
-export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number } }) {
+export function DiscoverScreen({ scope, setScope, postFocus, focus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number }; focus?: { search: boolean; who: 'people' | 'houses' | null; n: number } }) {
   const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
   const features = useFeatures();
   // Events are behind a switch: without it, a stored 'events' scope falls back to People.
@@ -199,6 +199,16 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
   const [filters, setFilters] = useState<Filters>({ paid: false, verified: false, travel: false, near: false });
   const [mineOnly, setMineOnly] = useState(false);
   const [who, setWho] = useState<'people' | 'houses'>('people');
+  // Opened from Home's search icon: the field is focused straight away so the keyboard comes up.
+  useLayoutEffect(() => {
+    if (!focus?.n) return;
+    if (focus.who) setWho(focus.who);
+    if (focus.search) {
+      const el = document.getElementById('discover-search') as HTMLInputElement | null;
+      el?.focus({ preventScroll: true });
+      requestAnimationFrame(() => el?.focus({ preventScroll: true }));
+    }
+  }, [focus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const [pf, setPf] = useState<PeopleFilters>(NO_PEOPLE_FILTERS);
   const [pfDraft, setPfDraft] = useState<PeopleFilters>(NO_PEOPLE_FILTERS);
   const [pfOpen, setPfOpen] = useState(false);

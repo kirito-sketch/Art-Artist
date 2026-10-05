@@ -39,65 +39,54 @@
   margin-bottom: 2px;
 }
 
-/* ---------------------------------------------------------------------------------------- lead */
+/* ---------------------------------------------------------------------------------------- lead
+ * The first story, the first world you enter: media edge to edge, carrying most of the first screen. Only the
+ * title, one line of context and an optional reason sit on it. No badge, no button. */
 .hn-lead-wrap {
-  padding: 8px var(--gutter) 0;
+  padding: 2px 0 0;
 }
 
 .hn-lead {
   position: relative;
   display: block;
   overflow: hidden;
-  border-radius: var(--r-xl);
-  aspect-ratio: 4 / 5;
-  max-height: 520px;
   width: 100%;
-  background: var(--sand, #ece7df);
+  aspect-ratio: 4 / 5;
+  max-height: min(64vh, 620px);
+  background: var(--dark, #1b1a17);
   color: #fff;
 }
 
-.hn-lead .hn-lead-photo,
-.hn-lead .hn-lead-photo img {
+.hn-lead-media,
+.hn-lead-media .pm,
+.hn-lead .hn-lead-photo {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
 }
 
 .hn-lead::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.8) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.72) 100%);
   pointer-events: none;
 }
 
 .hn-lead-text {
   position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: 20px;
   z-index: 1;
   display: grid;
-  gap: 6px;
-}
-
-.hn-tag {
-  justify-self: start;
-  padding: 5px 9px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--action);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 4px;
 }
 
 .hn-lead-title {
   font-family: var(--display);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 800;
   line-height: 1.02;
   letter-spacing: -0.03em;
@@ -106,17 +95,14 @@
 
 .hn-lead-meta {
   font-size: 14px;
-  opacity: 0.94;
-}
-
-.hn-lead-meta .verified {
-  color: #fff;
+  opacity: 0.9;
 }
 
 .hn-lead-why {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 4px;
   font-size: 14px;
   font-weight: 550;
 }
@@ -259,38 +245,147 @@
   border-radius: var(--r-m);
 }
 
-/* ------------------------------------------------------------------------- the end ("That's a wrap") */
+/* ----------------------------------------------------------------------------- objects on Home */
+/* Project: the most cinematic thing in the middle. Media first, then the title and one line. */
+.hn-project {
+  padding-top: 28px;
+}
+
+.hn-project-card {
+  display: block;
+}
+
+.hn-project-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--r-l, 18px);
+  overflow: hidden;
+  background: var(--dark, #1b1a17);
+}
+
+.hn-project-media .pm {
+  position: absolute;
+  inset: 0;
+}
+
+.hn-project-text {
+  display: grid;
+  gap: 2px;
+  padding-top: 10px;
+}
+
+.hn-project-text b {
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.hn-project-text span {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+/* A reason line, only when it answers "why is this relevant to me?". */
+.hn-why {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text);
+}
+
+/* House: its identity, and what it's making (picture, title, where it stands). */
+.hn-house {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.hn-house-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hn-house-making {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.hn-house-making .hn-row-text span:first-child {
+  font-size: var(--label, 11px);
+  font-weight: 700;
+  letter-spacing: var(--label-track, 0.08em);
+  text-transform: uppercase;
+}
+
+.hn-house-thumb {
+  position: relative;
+  flex: none;
+  width: 84px;
+  height: 56px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--dark, #1b1a17);
+}
+
+.hn-house-thumb .pm {
+  position: absolute;
+  inset: 0;
+}
+
+.hn-house-thumb .title-card {
+  padding: 8px;
+}
+
+.hn-house-thumb .title-card-title {
+  font-size: 12px;
+}
+
+.hn-house-thumb .pm-title-kicker {
+  display: none;
+}
+
+/* Role: compact and structured, on purpose the least dominant unit. */
+.hn-role {
+  padding-top: 24px;
+}
+
+.hn-eyebrow {
+  margin: 0 0 4px;
+  font-size: var(--label, 11px);
+  font-weight: 700;
+  letter-spacing: var(--label-track, 0.08em);
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* ------------------------------------------------------------------------- the end ("You're up to date.") */
 .hn-end {
-  margin: 36px var(--gutter) 0;
-  padding: 26px 18px 14px;
+  margin: 40px var(--gutter) 0;
+  padding: 28px 0 8px;
   border-top: 1px solid var(--hairline);
   display: grid;
   justify-items: center;
-  gap: 8px;
+  gap: 14px;
   text-align: center;
 }
 
 .hn-end-title {
   font-family: var(--display);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
-}
-
-.hn-end-sub {
-  font-size: 14px;
-  color: var(--text-2);
-  max-width: 30ch;
-}
-
-.hn-golden {
-  margin-top: 2px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  background: linear-gradient(90deg, rgba(232, 160, 74, 0.16), rgba(232, 160, 74, 0.06));
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 550;
 }
 
 .hn-find {
@@ -298,62 +393,71 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  margin-top: 6px;
 }
 
 .hn-find .chip {
   min-height: 44px;
 }
 
-.hn-refresh {
-  min-height: 44px;
-  font-size: 14px;
-  color: var(--text-2);
+/* ------------------------------------------------------------------------------ project media */
+/* The same object on Home and on the project page (src/ui/ProjectMedia.tsx). */
+.pm {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* The clapper claps once when the end comes into view. */
-.hn-clapper-arm {
-  transform-origin: 8px 17px;
-  transform: rotate(-16deg);
+.pm > .photo,
+.pm > .pm-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.hn-clapper.is-clapping .hn-clapper-arm {
-  animation: hn-clap 520ms cubic-bezier(0.3, 0.7, 0.2, 1) 120ms forwards;
+.pm img,
+.pm-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-@keyframes hn-clap {
-  0% { transform: rotate(-16deg); }
-  55% { transform: rotate(1.5deg); }
-  100% { transform: rotate(0deg); }
+.pm-title-card {
+  justify-content: flex-end;
+  padding: 18px var(--gutter);
 }
 
-/* "Take 2": a one-line slate while Home recomposes. */
-.hn-slate {
-  align-self: center;
-  margin: 6px 0 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  background: var(--text);
-  color: var(--surface, #fff);
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
+.pm-title-kicker {
+  font-size: var(--label, 11px);
+  font-weight: 700;
+  letter-spacing: var(--label-track, 0.08em);
+  text-transform: uppercase;
+  color: rgba(244, 239, 230, 0.62);
 }
 
-.hn-slate-board {
-  width: 14px;
-  height: 10px;
-  border-radius: 2px;
-  background: repeating-linear-gradient(-45deg, var(--surface, #fff) 0 3px, var(--text) 3px 6px);
+/* Kept for the Events module's own cards (docs/EVENTS.md); Home no longer uses a stage badge. */
+.hn-tag {
+  justify-self: start;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--action);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hn-clapper .hn-clapper-arm,
-  .hn-clapper.is-clapping .hn-clapper-arm {
-    animation: none;
-    transform: none;
-  }
+/* The role row on Home is smaller than in Discover: structured facts, a small picture. */
+.hn-role .rrow-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+}
+
+.hn-find .chip {
+  padding-left: 14px;
+  padding-right: 14px;
 }
