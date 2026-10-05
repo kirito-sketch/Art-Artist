@@ -45,9 +45,14 @@ What each person has learned is kept per account on this device, so it doesn't c
 4. **Two-line rows:** a title plus one line of facts. Role cards always read City · Pay · Closes. Discover's header and filters down to one band (today 42% of the first screen).
 5. **A word budget for the new Home:** about 120 words, enforced by a unit test; reason lines only for relationships.
 
-## Discover opening on Posts
+## Discover opens on Posts
 
-Not adopted as the default. It removes none of the repeated text, adds a tap to the most common Discover job (finding a person), shows text-only tiles, would look thin at launch, and the grid doesn't yet exclude minors' posts. It may be used for people who choose "Just exploring", once text-only tiles are dropped and minors' posts are filtered.
+Product decision (October 2026): Discover opens on the Posts grid, with People, Opportunities, Projects and Events beside it. The review advised against it as the default (it adds a tap to finding a person and removes none of the repeated text), so it ships with these conditions:
+
+- **The grid is pictures only.** Posts without a picture or clip stay out of the default grid; searching within Posts still finds them.
+- **Same visibility as People search.** The grid shows posts only from people Discover could show anyway: public profiles, nobody blocked either way (`discoverPosts`, checked in AC-12). Children cannot hold accounts at launch.
+- **`/test` stays on People**, so the Home comparison changes one thing only.
+- **Watch:** time to the first person or role opened from Discover. If it gets slower, People goes back to first.
 
 ## How we'll know
 

@@ -186,19 +186,23 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
   );
 }
 
+// Discover opens on Posts: a grid of work first, People, Opportunities, Projects and Events beside it.
+// On /test it stays on People, so the Home comparison changes one thing only (like Events).
+const DISCOVER_DEFAULT: Scope = TEST_MODE ? 'people' : 'posts';
+
 const TAB_TITLE: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Inbox', profile: 'Profile' };
 
 function Phone({ app = false }: { app?: boolean }) {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
-  const [discoverScope, setDiscoverScope] = useState<Scope>('people');
+  const [discoverScope, setDiscoverScope] = useState<Scope>(DISCOVER_DEFAULT);
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
   const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
   const features = useFeatures();
   // Home's search pill opens Discover with the search field focused (a counter, so it re-applies).
   const [searchFocus, setSearchFocus] = useState(0);
   const goDiscover = (scope?: string, craft?: string, opts?: { focusSearch?: boolean }) => {
-    setDiscoverScope((scope as Scope) ?? 'people');
+    setDiscoverScope((scope as Scope) ?? DISCOVER_DEFAULT);
     if (opts?.focusSearch) setSearchFocus((n) => n + 1);
     if (scope === 'posts') setPostFocus((f) => ({ craft: craft ?? null, n: f.n + 1 }));
     setTab('discover');

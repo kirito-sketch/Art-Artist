@@ -279,7 +279,8 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
     setScope(sc);
     setNarrowed(true);
   };
-  const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : true));
+  // The grid is a wall of work: posts with a picture or a clip. Searching within Posts still finds text-only ones.
+  const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : p.media.length > 0));
   const postCraftOf = (p: Post) => (party(p.authorId)?.kind === 'person' ? (party(p.authorId) as Person).craft : undefined);
   const postCrafts = CRAFTS.filter((c) => c.id === postCraft || allPosts.some((p) => postCraftOf(p) === c.id));
   const posts = postCraft ? allPosts.filter((p) => postCraftOf(p) === postCraft) : allPosts;
@@ -301,7 +302,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
       <div className="search-wrap">
         <label className="search">
           <Search size={18} />
-          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search posts'} enterKeyHint="search" aria-label="Search" />
+          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search people, projects and roles'} enterKeyHint="search" aria-label="Search" />
           <AnimatePresence>
             {query && (
               <motion.button className="search-clear" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} onClick={() => { setQuery(''); setNarrowed(false); }} aria-label="Clear search">
@@ -315,10 +316,10 @@ export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: 
           value={scope}
           onChange={setScope}
           options={[
+            { value: 'posts', label: 'Posts', icon: <Newspaper size={22} /> },
             { value: 'people', label: 'People', icon: <Users size={22} /> },
             { value: 'roles', label: 'Opportunities', icon: <Clapperboard size={22} /> },
             { value: 'projects', label: 'Projects', icon: <Film size={22} /> },
-            { value: 'posts', label: 'Posts', icon: <Newspaper size={22} /> },
             ...(features.events ? [{ value: 'events' as const, label: 'Events', icon: <CalendarDays size={22} /> }] : []),
           ]}
         />}

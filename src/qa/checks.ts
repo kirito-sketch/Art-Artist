@@ -1,6 +1,8 @@
 import * as act from '../domain/actions';
 import { blockedBy, discoverableProjects, discoverableRoles, notificationsFor, publicCreditsFor, publicProjects, recommendedRoles, searchableHouses, searchablePeople } from '../domain/discovery';
 import { toPublicWork, world, project as wproject } from '../state/world';
+import { discoverPosts } from '../state/selectors';
+import type { Viewer } from '../data/types';
 import { applyOps } from './fixtures';
 import { restoreCanonical } from './snapshot';
 
@@ -196,6 +198,10 @@ export const CHECKS: Check[] = [
       const recs = recommendedRoles('kiran', 'cinematographer').filter((r) => blocked.includes(r.orgId ?? r.authorId ?? ''));
       if (recs.length) return fail(`Blocked parties still recommended on Home: ${recs.map((r) => r.role).join(', ')}.`);
       if (discoverableProjects(blocked).some((w) => w.orgIds[0] === 'tidewater')) return fail('Projects led by a blocked house are still suggested.');
+      // Discover opens on the Posts grid: it may only show people Discover could show anyway (public, not blocked).
+      const shown = new Set(searchablePeople('kiran').map((p) => p.id));
+      const leaked = discoverPosts({ id: 'kiran' } as Viewer, ['vikram'], []).filter((p) => !shown.has(p.authorId));
+      if (leaked.length) return fail(`Posts grid shows people Discover hides: ${leaked.map((p) => p.authorId).join(', ')}.`);
       return pass('Excluded everywhere.');
     },
   },
