@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { PostGrid } from './PostGrid';
-import { BadgeCheck, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { BadgeCheck, Bookmark, CalendarDays, ChevronLeft, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
 import { isLive } from '../../data/works';
@@ -10,7 +10,7 @@ import type { Opportunity, Person, Post } from '../../data/types';
 import { useStore } from '../../state/store';
 import { discoverPosts, org, party, person } from '../../state/selectors';
 import { OfflineBanner } from '../../ui/chrome';
-import { Avatar, Button, Chip, FollowButton, EmptyState, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
+import { Avatar, Button, Chip, FollowButton, EmptyState, IconButton, PressCard, Pressable, Photo, SectionHeader, Skeleton, Tabs, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from './RoleRow';
 import { EventTicket } from '../event/eventUnits';
@@ -20,6 +20,8 @@ import { visibleEvents } from '../../state/events';
 import { useFeatures } from '../../ui/features';
 
 export type Scope = 'roles' | 'people' | 'projects' | 'posts' | 'events';
+export type BrowseScope = Exclude<Scope, 'posts'>;
+const SCOPE_TITLE: Record<Scope, string> = { roles: 'Opportunities', people: 'People', projects: 'Projects', posts: 'Discover', events: 'Events' };
 
 /** Events by when: this week means the next seven days, never a calendar promise. */
 const WHENS = [
@@ -175,8 +177,12 @@ const STAGES: { id: ProjectStage; label: string }[] = [
   { id: 'released', label: 'Released' },
 ];
 
-export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number } }) {
-  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
+/**
+ * variant 'district' (?home=district): Discover is a search bar, Saved beside it, and the grid of work.
+ * variant 'browse': one category on its own page (opened from a Home tile), with a back button and no tabs.
+ */
+export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number }; variant?: 'district' | 'browse'; focus?: number }) {
+  const { viewer, following, userPosts, userCollabs, blocked, push, pop, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
   const features = useFeatures();
   // Events are behind a switch: without it, a stored 'events' scope falls back to People.
   useEffect(() => {
@@ -270,9 +276,14 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(runSearch, [q]);
   const seeAll = (sc: Scope) => {
+    if (variant === 'district') return push({ name: 'browse', scope: sc as BrowseScope });
     setScope(sc);
     setNarrowed(true);
   };
+  // Home's search icon opens Discover with the field focused, keyboard up.
+  useLayoutEffect(() => {
+    if (focus) (document.getElementById('discover-search') as HTMLInputElement | null)?.focus({ preventScroll: true });
+  }, [focus]);
   // The grid is a wall of work: posts with a picture or a clip. Searching within Posts still finds text-only ones.
   const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : p.media.length > 0));
   const postCraftOf = (p: Post) => (party(p.authorId)?.kind === 'person' ? (party(p.authorId) as Person).craft : undefined);
@@ -289,14 +300,25 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
 
   return (
     <motion.div className="screen canvas v-discover" data-scroll="discover" layoutScroll>
-      <div className="title-block title-block--top">
-        <h1 className="large-title">Discover</h1>
-      </div>
+      {variant === 'browse' ? (
+        <header className="topbar topbar--nav browse-top">
+          <IconButton label="Back" onClick={pop}>
+            <ChevronLeft size={26} />
+          </IconButton>
+          <h1 className="topbar-title">{SCOPE_TITLE[scope]}</h1>
+          <span className="icon-btn-spacer" aria-hidden />
+        </header>
+      ) : (
+        <div className="title-block title-block--top">
+          <h1 className="large-title">Discover</h1>
+        </div>
+      )}
 
-      <div className="search-wrap">
+      <div className={`search-wrap ${variant === 'district' ? 'search-wrap--saved' : ''}`}>
+        <div className="search-row">
         <label className="search">
           <Search size={18} />
-          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search people, projects and roles'} enterKeyHint="search" aria-label="Search" />
+          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={variant === 'district' ? 'Search people, projects, events' : scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search people, projects and roles'} enterKeyHint="search" aria-label="Search" />
           <AnimatePresence>
             {query && (
               <motion.button className="search-clear" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} onClick={() => { setQuery(''); setNarrowed(false); }} aria-label="Clear search">
@@ -305,7 +327,13 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
             )}
           </AnimatePresence>
         </label>
-        {!grouped && <Tabs
+        {variant === 'district' && (
+          <IconButton label="Saved" className="search-saved" onClick={() => push({ name: 'saved' })}>
+            <Bookmark size={22} aria-hidden />
+          </IconButton>
+        )}
+        </div>
+        {!grouped && !variant && <Tabs
           id="discover"
           value={scope}
           onChange={setScope}
@@ -509,9 +537,11 @@ export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; s
 
           {scope === 'posts' && (
             <>
-              <FilterBar label="Post filters">
-                <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
-              </FilterBar>
+              {variant !== 'district' && (
+                <FilterBar label="Post filters">
+                  <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
+                </FilterBar>
+              )}
               {posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
             </>
           )}

@@ -170,7 +170,8 @@ function Context({ lead, why, children }: { lead?: boolean; why?: string; childr
     <div className="home-context">
       {lead && <IntentChip />}
       {children}
-      {lead && why && <span className="world-why">{why}</span>}
+      {/* No explanation line under the title: stakeholders read it as app copy (October 2026). */}
+      {void why}
     </div>
   );
 }

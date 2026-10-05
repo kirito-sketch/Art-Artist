@@ -8,6 +8,8 @@ import { PostComposer } from './screens/create/PostComposer';
 import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { HomeNext } from './screens/home/HomeNext';
+import { DistrictHome } from './screens/home/DistrictHome';
+import { ReviewsScreen } from './screens/reviews/ReviewsScreen';
 import { useFeatures } from './ui/features';
 import { NetworkRow } from './screens/home/NetworkActivity';
 import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
@@ -30,12 +32,13 @@ import { dur, ease, spring } from './ui/motion';
 import { IdentityShift } from './ui/IdentityShift';
 import { IconButton, Photo } from './ui/primitives';
 import { ModalContext, activation, applySystemTextSize, currentScreen, focusEl, focusInto, inertProps, mediaName, trackInputModality, type ModalLayer } from './ui/a11y';
-import { BackToStudio, DeepLink, StageNotice } from './dev/deepLink';
+import { BackToStudio, DeepLink, EMBED, StageNotice } from './dev/deepLink';
 import { Studio } from './studio/Studio';
 import { RESEARCH, exitResearch } from './research';
 import { ResearchObserver } from './research-data/ResearchObserver';
 import { research } from './research-data/client';
-import { RESEARCH_DASHBOARD, STUDIO, TEST_MODE } from './research-data/surface';
+import { RESEARCH_DASHBOARD, STUDIO, STUDIO_COMPARE, TEST_MODE } from './research-data/surface';
+import { Compare } from './studio/Compare';
 import { TestMode } from './research-data/TestMode';
 import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
 import { LaunchSplash, type LaunchPhase } from './ui/LaunchSplash';
@@ -90,6 +93,10 @@ function RouteView({ r }: { r: Route }) {
       return <PostStream ids={r.ids} index={r.index} />;
     case 'saved':
       return <SavedScreen />;
+    case 'browse':
+      return <BrowseScreen scope={r.scope} />;
+    case 'reviews':
+      return <ReviewsScreen />;
     case 'network':
       return <NetworkScreen />;
     case 'editProfile':
@@ -191,6 +198,12 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
 // On /test it stays on People, so the Home comparison changes one thing only (like Events).
 const DISCOVER_DEFAULT: Scope = TEST_MODE ? 'people' : 'posts';
 
+/** One Discover category on its own page (District Home's tiles): today's list, with a back button and no tabs. */
+function BrowseScreen({ scope }: { scope: Exclude<Scope, 'posts'> }) {
+  const [s, setS] = useState<Scope>(scope);
+  return <DiscoverScreen scope={s} setScope={setS} variant="browse" />;
+}
+
 const TAB_TITLE: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Inbox', profile: 'Profile' };
 
 function Phone({ app = false }: { app?: boolean }) {
@@ -200,6 +213,8 @@ function Phone({ app = false }: { app?: boolean }) {
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
   const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
   const features = useFeatures();
+  // District direction: Home's search icon opens Discover with the field focused.
+  const [searchFocus, setSearchFocus] = useState(0);
   const goDiscover = (scope?: string, craft?: string) => {
     setDiscoverScope((scope as Scope) ?? DISCOVER_DEFAULT);
     if (scope === 'posts') setPostFocus((f) => ({ craft: craft ?? null, n: f.n + 1 }));
@@ -333,10 +348,10 @@ function Phone({ app = false }: { app?: boolean }) {
               // Identity switch: the home world fades up anew so the change of context is felt, not just read.
               // (Keyed remount, no exit layer: an exiting copy of the old home must never linger under the new one.)
               <motion.div key={store.acting} className="identity-layer" initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: dur.ui, ease: ease.out }}>
-                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
+                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ search: () => (setTab('discover'), setSearchFocus((n) => n + 1)), discover: () => setTab('discover') }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />}
+            {t === 'discover' && (features.home === 'district' && store.acting === 'self' ? <DiscoverScreen scope="posts" setScope={() => undefined} variant="district" focus={searchFocus} /> : <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />)}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>
@@ -413,6 +428,7 @@ export default function App() {
         <TestMode phone={<Phone />} />
       </StoreProvider>
     );
+  if (STUDIO_COMPARE) return <Compare />;
   if (STUDIO) return <Studio />;
   if (RESEARCH_DASHBOARD)
     return (
@@ -495,7 +511,7 @@ function NormalApp() {
       <BackToStudio />
       <LaunchSplash enabled={standalone} onPhase={setLaunch} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}
-      {!standalone && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
+      {!standalone && !EMBED && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
     </StoreProvider>
   );
 }

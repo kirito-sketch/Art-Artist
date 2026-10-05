@@ -3,22 +3,23 @@ import { TEST_MODE } from '../research-data/surface';
 
 /*
  * Product switches for work that is built but not yet the default (docs/plans/2026-10-03-home-and-events.md):
- *  - home: 'current' (today's Home, the default) or 'next' (fixed frame + composed middle, docs/HOME.md);
+ *  - home: 'current' (today's Home, the default), 'next' (fixed frame + composed middle, docs/HOME.md) or
+ *    'district' (tiles and shelves, with Discover as search and a grid; docs/DISTRICT.md);
  *  - events: on by default (docs/EVENTS.md). ?events=off hides them on this device.
  * Set with ?home=next, ?events=on|off, or ?next (both). Stored on this device. On /test the Home comes from the
  * participant's assigned arm and Events are always off, so the comparison changes one thing only.
  */
-export type HomeVariant = 'current' | 'next';
+export type HomeVariant = 'current' | 'next' | 'district';
 export type Features = { home: HomeVariant; events: boolean };
 
 // v2: Events became the default; a new key so an old stored "off" (written before anyone chose it) is not kept.
 const KEY = 'aa-features-v2';
 export function parseFeatures(query: URLSearchParams, stored: Partial<Features> | null): Features {
-  const base: Features = { home: stored?.home === 'next' ? 'next' : 'current', events: stored?.events !== false };
+  const base: Features = { home: stored?.home === 'next' || stored?.home === 'district' ? stored.home : 'current', events: stored?.events !== false };
   if (query.has('next')) return { home: 'next', events: true };
   const h = query.get('home');
   const e = query.get('events');
-  return { home: h === 'next' || h === 'current' ? h : base.home, events: e === 'on' ? true : e === 'off' ? false : base.events };
+  return { home: h === 'next' || h === 'current' || h === 'district' ? h : base.home, events: e === 'on' ? true : e === 'off' ? false : base.events };
 }
 
 let features: Features = { home: 'current', events: true };

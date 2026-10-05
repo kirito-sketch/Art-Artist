@@ -259,3 +259,145 @@ body:has(.st) {
   background: rgba(255, 255, 255, 0.9);
   cursor: pointer;
 }
+
+/* ------------------------------------------------------------ Compare (/studio/compare) */
+.st.st--wide {
+  max-width: 1200px;
+  gap: 18px;
+  padding-block: 20px 40px;
+}
+.cmp-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cmp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--st-ink-2);
+  text-decoration: none;
+  font-size: 14px;
+  min-height: 44px;
+}
+.cmp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.cmp-seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--st-paper);
+  box-shadow: inset 0 0 0 1px var(--st-line);
+}
+.cmp-seg button {
+  min-height: 38px;
+  min-width: 76px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--st-ink-2);
+  cursor: pointer;
+}
+.cmp-seg button.on {
+  background: var(--st-accent);
+  color: #fff;
+}
+.cmp-seg button:focus-visible,
+.cmp-who select:focus-visible,
+.cmp-restart:focus-visible {
+  outline: 2px solid var(--st-accent);
+  outline-offset: 2px;
+}
+.cmp-who select {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--st-line);
+  background: var(--st-paper);
+  font: inherit;
+  color: var(--st-ink);
+}
+.cmp-stage {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.cmp-phone {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.cmp-cap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cmp-tag {
+  font-weight: 700;
+  font-size: 15px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--st-paper);
+  box-shadow: inset 0 0 0 1px var(--st-line);
+}
+.cmp-tag--district {
+  background: var(--st-accent);
+  color: #fff;
+  box-shadow: none;
+}
+.cmp-restart {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  border: 0;
+  background: none;
+  color: var(--st-ink-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.cmp-frame {
+  width: 390px;
+  height: min(844px, calc(100vh - 150px));
+  min-height: 600px;
+  border-radius: 46px;
+  border: 10px solid #151413;
+  overflow: hidden;
+  background: #f6f4f0;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+.cmp-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.cmp-foot {
+  text-align: center;
+  font-size: 13px;
+  color: var(--st-ink-2);
+  margin: 0;
+}
+@media (max-width: 520px) {
+  .cmp-frame {
+    width: 100%;
+    max-width: 390px;
+    border-width: 6px;
+    border-radius: 34px;
+  }
+  .cmp-phone {
+    width: 100%;
+  }
+}

@@ -61,6 +61,12 @@ export function Studio() {
         </a>
       </header>
 
+      <Section id="compare" title="Compare">
+        <div className="st-list">
+          <Item href="/studio/compare" title="Current and New, side by side" hint="Today's app and the District direction (new Home and Discover). Show one or both." />
+        </div>
+      </Section>
+
       <Section id="as" title="Explore as">
         <div className="st-grid st-grid--4">
           {PERSONAS.map((p) => (

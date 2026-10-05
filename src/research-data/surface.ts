@@ -10,4 +10,6 @@ const params = new URLSearchParams(loc?.search ?? '');
 export const TEST_MODE = /\/test$/.test(path) || params.has('test');
 export const RESEARCH_DASHBOARD = !TEST_MODE && (/\/research$/.test(path) || params.has('dashboard'));
 /** Studio (/studio): links into the app in any state, flows, test states, tools and the archive (docs/STUDIO.md). */
-export const STUDIO = !TEST_MODE && !RESEARCH_DASHBOARD && /\/studio$/.test(path);
+export const STUDIO = !TEST_MODE && !RESEARCH_DASHBOARD && /\/studio(\/compare)?$/.test(path);
+/** Studio › Compare (/studio/compare): today's app and the District direction side by side, for stakeholders. */
+export const STUDIO_COMPARE = STUDIO && /\/studio\/compare$/.test(path);

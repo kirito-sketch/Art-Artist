@@ -9,6 +9,8 @@ import { TEST_STATES, type Flow, type Persona } from './studioData';
  */
 const params = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export const FROM_STUDIO = params.get('from') === 'studio';
+/** Inside Studio › Compare: the phone only, no development controls around it. */
+export const EMBED = params.get('embed') === '1';
 
 const PERSONAS: Persona[] = ['kiran', 'tara', 'konark', 'tidewater'];
 const FLOWS: Flow[] = ['new', 'signin', 'invite', 'policy'];
@@ -66,7 +68,7 @@ export function DeepLink() {
 
 /** Outside the phone: the way back to Studio, only when Studio opened this page. */
 export function BackToStudio() {
-  if (!FROM_STUDIO) return null;
+  if (!FROM_STUDIO || EMBED) return null;
   return (
     <a className="studio-back" href="/studio">
       <ArrowLeft size={14} aria-hidden /> Studio
