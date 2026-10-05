@@ -336,7 +336,7 @@ function Phone({ app = false }: { app?: boolean }) {
             )}
             {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} focusSearch={searchFocus} />}
             {t === 'inbox' && <InboxScreen />}
-            {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab />)}
+            {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>
         ))}
 

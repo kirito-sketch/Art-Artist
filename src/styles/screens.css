@@ -516,6 +516,12 @@
   text-overflow: ellipsis;
 }
 
+/* Closing soon: said once, here, where the decision is made. */
+.booking-left .meta--urgent {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
 /* ============================================================= create */
 
 .composer {

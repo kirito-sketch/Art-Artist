@@ -11,6 +11,7 @@ import { Avatar, Button, FollowButton, EmptyState, HowItWorks, IconButton, Photo
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
+import { hasLearned, markLearned } from '../../ui/learned';
 import { CreditSeal } from '../../ui/CreditSeal';
 import { bentoLayout } from '../../ui/bento';
 import { useHeroParallax } from '../../ui/useHeroParallax';
@@ -44,7 +45,6 @@ export function associationStage(credit?: string) {
   return 'Added · not a credit';
 }
 
-const CRAFT_LABEL: Record<string, string> = { cinematographer: 'Cinematography', camera: 'Camera', editor: 'Editing', director: 'Direction', actor: 'Acting', colourist: 'Colour', 'production-design': 'Production design', sound: 'Sound', production: 'Production' };
 
 function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
@@ -75,7 +75,7 @@ function useNameFit(name: string) {
   return ref;
 }
 
-export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
+export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?: boolean; active?: boolean }) {
   const { isSaved, toggleSave } = useStore();
   const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events } = useStore();
   const p = person(id);
@@ -85,6 +85,13 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const [overHero, setOverHero] = useState(true);
   const heroScroll = useHeroParallax(setOverHero);
   const nameRef = useNameFit(p?.name ?? '');
+  // Explain once: read when this page opens (so the line stays for this visit), then remember it once it was shown.
+  // The Profile tab stays mounted behind the others, so it counts only while it is the tab in view.
+  const [creditsKnown] = useState(() => hasLearned(viewer.id, 'credits'));
+  const showsCredits = active && !!p && (own || (p.visibility === 'public' && !cannotReach(id) && !blocked.includes(id)));
+  useEffect(() => {
+    if (showsCredits) markLearned(viewer.id, 'credits');
+  }, [showsCredits, viewer.id]);
 
   // While the photo sits under the status bar, the bar turns light.
   useEffect(() => {
@@ -181,14 +188,12 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       </div>
 
       <div className="psheet">
-        {/* Identity first: Person, Craft, Location, Credibility, then Availability, then Actions, then Work. */}
+        {/* Identity first: Person, Role, Location, Credibility, then Availability, then Actions, then Work.
+            The role is said once, under the name (no craft eyebrow above it saying the same thing). */}
         <header className="pid">
           <span className="pid-avatar">
             <Avatar party={p} size={96} />
           </span>
-          <p className="pid-craft" lang={scriptLang(CRAFT_LABEL[p.craft] ?? p.role)}>
-            {CRAFT_LABEL[p.craft] ?? p.role}
-          </p>
           {own && isTab && memberships.length > 0 ? (
             <button ref={nameRef as RefObject<HTMLButtonElement>} className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
               {p.name}
@@ -326,11 +331,14 @@ export function ProfileScreen({ id, isTab }: { id: string; isTab?: boolean }) {
         <section className="section section--flush">
           <SectionHeader title="Verified credits" />
           {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them.
-              One line on every profile; the full explanation opens on request (docs/UX_HEURISTIC_AUDIT.md F4). */}
+              Explain once (docs/TEXT_LOAD.md): the line shows on the first profile a person opens; after that only
+              "How credits work" stays, with the full explanation on request. */}
           <div className="meta evidence-note">
-            <span>
-              <Verified size={12} /> Issued by productions, confirmed by {own ? 'you' : p.name.split(' ')[0]}.
-            </span>
+            {!creditsKnown && (
+              <span>
+                <Verified size={12} /> Issued by productions, confirmed by {own ? 'you' : p.name.split(' ')[0]}.
+              </span>
+            )}
             <HowItWorks label="How credits work">
               Only a production can issue a credit. {own ? 'You accept' : `${p.name.split(' ')[0]} accepts`} or {own ? 'correct' : 'corrects'} it before it appears here, so no one can add their own credits.
             </HowItWorks>

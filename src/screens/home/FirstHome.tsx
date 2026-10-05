@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { useStore } from '../../state/store';
 import { spring } from '../../ui/motion';
 import { Button } from '../../ui/primitives';
+import { useLearned } from '../../ui/learned';
 
 /*
  * First-run Home: the first screen after onboarding. It is built only from what onboarding captured
@@ -45,15 +46,16 @@ export function Resolve({ forming, i, children }: { forming: boolean; i: number;
 /** One quiet next step, only while something useful is missing. Never a checklist. */
 export function FirstStep() {
   const { viewer, push, userPortfolio, availability, openSheet } = useStore();
-  const [dismissed, setDismissed] = useState(false);
   const hasWork = (seed.portfolio[viewer.id]?.length ?? 0) + userPortfolio.length > 0;
   const step = !hasWork
-    ? { t: 'Add to your portfolio', b: 'Stills or a reel let productions see what you do before they message you.', a: 'Add stills', go: () => push({ name: 'editProfile' }) }
+    ? { k: 'portfolio', t: 'Add to your portfolio', b: 'Stills or a reel let productions see what you do before they message you.', a: 'Add stills', go: () => push({ name: 'editProfile' }) }
     : !availability.open
-      ? { t: 'Set your availability', b: 'Productions filter by dates. Say when you can take work.', a: 'Set dates', go: () => openSheet({ name: 'availability' }) }
+      ? { k: 'availability', t: 'Set your availability', b: 'Productions filter by dates. Say when you can take work.', a: 'Set dates', go: () => openSheet({ name: 'availability' }) }
       : !seed.about[viewer.id]
-        ? { t: 'Add a short bio', b: 'Two lines on the work you do and the work you want.', a: 'Add bio', go: () => push({ name: 'editProfile' }) }
+        ? { k: 'bio', t: 'Add a short bio', b: 'Two lines on the work you do and the work you want.', a: 'Add bio', go: () => push({ name: 'editProfile' }) }
         : null;
+  // "Later" is kept for this account, so the same step does not come back after a relaunch.
+  const [dismissed, dismiss] = useLearned(viewer.id, `later:${step?.k ?? 'none'}`);
   if (!step || dismissed) return null;
   return (
     <aside className="first-step" aria-label="Next step">
@@ -65,7 +67,7 @@ export function FirstStep() {
         <Button size="s" variant="secondary" onClick={step.go}>
           {step.a}
         </Button>
-        <button className="link link--small" onClick={() => setDismissed(true)}>
+        <button className="link link--small" onClick={dismiss}>
           Later
         </button>
       </div>

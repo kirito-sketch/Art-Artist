@@ -62,13 +62,19 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
   const poster = author ? firstName(author) : org(o.orgId!).name;
   const respondModel = o.kind !== 'collab' && roleModel === 'respond';
 
-  /* Footer: what it pays and when it closes on the left, the one action on the right. */
-  let left: ReactNode = (
+  /* Footer: what it pays and when it closes on the left, the one action on the right. Each fact is said once on
+     this page (docs/TEXT_LOAD.md): while the bar shows pay, the facts above leave it out, and the closing date
+     lives only here, as "Closes in N days" when it is close. */
+  const closingSoon = o.closesInDays !== undefined && o.closesInDays <= 5;
+  const openLeft: ReactNode = (
     <>
       <p className="item-title">{o.paid ? o.compensation : 'Unpaid'}</p>
-      <p className="meta">{o.closesInDays !== undefined ? `Closes ${closesOn(o.closesInDays)}` : o.dates}</p>
+      <p className={`meta ${closingSoon ? 'meta--urgent' : ''}`}>
+        {o.closesInDays === undefined ? o.dates : closingSoon ? `Closes in ${o.closesInDays} ${o.closesInDays === 1 ? 'day' : 'days'}` : `Closes ${closesOn(o.closesInDays)}`}
+      </p>
     </>
   );
+  let left: ReactNode = openLeft;
   let action: ReactNode;
   const talking = conversations.find((c) => c.context.refId === o.id);
   if (status) {
@@ -200,6 +206,11 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
       </Button>
     );
   }
+  const payInBar = left === openLeft;
+  // The kicker often names the language already ("Feature film · Telugu"); then the facts don't repeat it.
+  const languageSaid = !!o.language && o.projectType.toLowerCase().includes(o.language.toLowerCase());
+  // Under Show interest the questions are asked in the sheet itself, so the page doesn't list them first.
+  const questionsInSheet = !respondModel && !o.allowDM && !mine;
   const barKey = status ? 'status' : interested ? 'sent' : response ? 'response' : withdrew ? 'withdrawn' : 'open';
 
   return (
@@ -214,7 +225,6 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
           </div>
           <span className="ohero-labels">
             <FrameLabel>{kindLabel[o.kind]}</FrameLabel>
-            {!status && o.closesInDays !== undefined && o.closesInDays <= 5 && <FrameLabel tone="urgent">Closes in {o.closesInDays} days</FrameLabel>}
           </span>
         </div>
 
@@ -264,8 +274,8 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
             items={[
               { label: 'Location', value: o.city },
               { label: 'Dates', value: o.dates },
-              ...(o.language ? [{ label: 'Language', value: o.language }] : []),
-              { label: 'Pay', value: o.paid ? o.compensation : 'Unpaid' },
+              ...(o.language && !languageSaid ? [{ label: 'Language', value: o.language }] : []),
+              ...(payInBar ? [] : [{ label: 'Pay', value: o.paid ? o.compensation : 'Unpaid' }]),
             ]}
           />
           {!respondModel && !o.allowDM && !mine && (
@@ -295,9 +305,9 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
             </section>
           )}
 
-          {o.questions && !response && (
+          {o.questions && !response && !questionsInSheet && (
             <section className="detail-section">
-              <h2 className="section-title">{respondModel ? "You'll be asked" : 'They may ask (optional)'}</h2>
+              <h2 className="section-title">{respondModel ? "You'll be asked" : 'Questions'}</h2>
               <ol className="numbered">
                 {o.questions.map((q) => (
                   <li key={q}>{q}</li>

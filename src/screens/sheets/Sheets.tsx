@@ -13,6 +13,7 @@ const CREATE_COLOURS = { light: { from: '#275c50', to: '#ffffff' }, dark: { from
 import { findOpportunity, firstName, networkFor, org, party, person } from '../../state/selectors';
 import { NetworkRow } from '../home/NetworkActivity';
 import { Avatar, Button, EmptyState, HowItWorks, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';
+import { useLearned } from '../../ui/learned';
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
@@ -533,7 +534,7 @@ function RespondForm({ id }: { id: string }) {
 /* ---------------------------------------------------------------- Interest */
 
 function InterestForm({ id }: { id: string }) {
-  const { sendInterest, userCollabs, attempt, interestsSent } = useStore();
+  const { sendInterest, userCollabs, attempt, interestsSent, viewer } = useStore();
   const o = findOpportunity(id, userCollabs)!;
   const author = o.authorId ? person(o.authorId) : org(o.orgId!);
   const [note, setNote] = useState('');
@@ -541,7 +542,9 @@ function InterestForm({ id }: { id: string }) {
   // Model A: a role may ask up to three short questions. Answers are optional; this is not an application.
   const qs = (o.questions ?? []).slice(0, 3);
   const [answers, setAnswers] = useState<string[]>(() => qs.map(() => ''));
-  const seenModel = Object.keys(interestsSent).some((k) => k !== id);
+  // Learned once per account (kept across relaunches), or by having shown interest before in this session.
+  const [learnedModel, markModelLearned] = useLearned(viewer.id, 'interest');
+  const seenModel = learnedModel || Object.keys(interestsSent).some((k) => k !== id);
   const steps = (
     <ol className="next-steps" aria-label="What happens next">
       <li>
@@ -569,17 +572,18 @@ function InterestForm({ id }: { id: string }) {
       ) : (
         steps
       )}
-      {qs.length > 0 && <p className="meta">All optional. Paste a link if you have one.</p>}
+      {/* Said once: everything below is optional (not once per field). */}
+      <p className="meta">{qs.length > 0 ? 'Everything below is optional. Paste a link if you have one.' : 'Optional.'}</p>
       {qs.map((q, i) => (
         <div key={q}>
           <label className="field-label" htmlFor={`iq${i}`}>
-            {q} <span className="meta">(optional)</span>
+            {q}
           </label>
-          <input id={`iq${i}`} className="field" value={answers[i]} maxLength={120} placeholder="Paste a link or write a short answer" onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
+          <input id={`iq${i}`} className="field" value={answers[i]} maxLength={120} onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))} />
         </div>
       ))}
       <label className="field-label" htmlFor="note">
-        Note <span className="meta">(optional)</span>
+        Note
       </label>
       <textarea id="note" className="field field--area" rows={3} maxLength={160} value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line about why you're a fit" />
       {state === 'failed' && (
@@ -593,7 +597,14 @@ function InterestForm({ id }: { id: string }) {
         loading={state === 'sending'}
         onClick={() => {
           setState('sending');
-          attempt(`interest-${id}`, () => sendInterest(id, note), () => setState('failed'));
+          attempt(
+            `interest-${id}`,
+            () => {
+              sendInterest(id, note);
+              markModelLearned();
+            },
+            () => setState('failed'),
+          );
         }}
       >
         {state === 'sending' ? 'Sending…' : state === 'failed' ? 'Try again' : 'Send interest'}

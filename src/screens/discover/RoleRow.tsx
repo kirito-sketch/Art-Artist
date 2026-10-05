@@ -15,7 +15,7 @@ export function RoleRow({ o, note }: { o: Opportunity; note?: string }) {
         <p className="meta meta--dark">
           <Byline o={o} />
         </p>
-        <p className={`meta ${sent || note ? 'meta--done' : ''}`}>{note ?? sent ?? `${o.kind === 'collab' ? 'Collaboration · ' : ''}${o.city.split(' ')[0]} · ${o.paid ? o.compensation : 'Unpaid'}`}</p>
+        <p className={`meta ${sent || note ? 'meta--done' : ''}`}>{note ?? sent ?? `${o.kind === 'collab' ? 'Collaboration · ' : ''}${o.city} · ${o.paid ? o.compensation : 'Unpaid'}`}</p>
       </div>
     </PressCard>
   );
