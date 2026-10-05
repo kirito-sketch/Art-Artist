@@ -1,4 +1,4 @@
-import { Bell, ChevronRight, MapPin, Play, Plus, Search, Check } from 'lucide-react';
+import { Bell, ChevronRight, MapPin, Play, Plus, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
@@ -7,7 +7,6 @@ import { isLive, type Work } from '../../data/works';
 import { REVIEWS, averageScore, reviewsFor } from '../../data/reviews';
 import { blockedBy, discoverableProjects } from '../../domain/discovery';
 import { creditedOn } from '../../domain/home/graph';
-import { research } from '../../research-data/client';
 import { discoverPosts, findOpportunity, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
@@ -25,7 +24,7 @@ import { SaveButton } from './OpportunityCard';
  * real data and hide when there is too little to show. Everything else in the app is unchanged.
  */
 
-type Go = { search: () => void; discover: () => void };
+type Go = { discover: () => void };
 
 /** Crafts that work side by side: a cinematographer's crew is camera and lighting too. */
 const DEPT: Partial<Record<Craft, { crafts: Craft[]; label: string }>> = {
@@ -134,6 +133,12 @@ export function DistrictHome({ go }: { go: Go }) {
   return (
     <div className="screen canvas v-home dh" data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
       <div className="dh-wash">
+        {/* A slow-moving wash of colour behind the header and tiles, like District's. Decorative. */}
+        <span className="dh-glow" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
         <header className="dh-head">
           <h1 className="sr-only">Home</h1>
           <MapPin size={20} className="dh-pin" aria-hidden />
@@ -142,9 +147,6 @@ export function DistrictHome({ go }: { go: Go }) {
             {craftLabel && <span>{[craftLabel, (me.languages ?? []).slice(0, 2).join(', ')].filter(Boolean).join(' · ')}</span>}
           </div>
           <span className="flex" />
-          <IconButton label="Search" onClick={() => (research.track('home_search_opened'), go.search())}>
-            <Search size={21} aria-hidden />
-          </IconButton>
           <IconButton label={unread ? `Notifications, ${unread} new` : 'Notifications'} onClick={() => openSheet({ name: 'notifications' })}>
             <Bell size={21} aria-hidden />
             {unread > 0 && <span className="dot" aria-hidden />}

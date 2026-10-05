@@ -10,7 +10,7 @@ A second version of Home and Discover, built for comparison. Everything else in 
 
 ## Home (`src/screens/home/DistrictHome.tsx`)
 
-1. Where you are: city, craft and languages, search, notifications.
+1. Where you are: city, craft and languages, notifications, over a slow-moving wash of colour (still with Reduce Motion).
 2. Tiles: Events, Projects, People, Opportunities, Reviews. Each opens a full page (`browse` route: today's Discover list for that category, with a back button).
 3. In the spotlight: projects being made near you first, a centred carousel that moves every few seconds and stops when touched. The centre card plays a muted clip (never with Reduce Motion, Save-Data or low power); faces are accepted credits; "Looking for" lists open roles.
 4. New work in your craft: a mosaic of three posts, then "See more in Discover".

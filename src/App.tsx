@@ -213,8 +213,6 @@ function Phone({ app = false }: { app?: boolean }) {
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
   const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
   const features = useFeatures();
-  // District direction: Home's search icon opens Discover with the field focused.
-  const [searchFocus, setSearchFocus] = useState(0);
   const goDiscover = (scope?: string, craft?: string) => {
     setDiscoverScope((scope as Scope) ?? DISCOVER_DEFAULT);
     if (scope === 'posts') setPostFocus((f) => ({ craft: craft ?? null, n: f.n + 1 }));
@@ -348,10 +346,10 @@ function Phone({ app = false }: { app?: boolean }) {
               // Identity switch: the home world fades up anew so the change of context is felt, not just read.
               // (Keyed remount, no exit layer: an exiting copy of the old home must never linger under the new one.)
               <motion.div key={store.acting} className="identity-layer" initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: dur.ui, ease: ease.out }}>
-                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ search: () => (setTab('discover'), setSearchFocus((n) => n + 1)), discover: () => setTab('discover') }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
+                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ discover: () => setTab('discover') }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && (features.home === 'district' && store.acting === 'self' ? <DiscoverScreen scope="posts" setScope={() => undefined} variant="district" focus={searchFocus} /> : <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />)}
+            {t === 'discover' && (features.home === 'district' && store.acting === 'self' ? <DiscoverScreen scope="posts" setScope={() => undefined} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />)}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>
