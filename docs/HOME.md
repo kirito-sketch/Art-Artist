@@ -51,6 +51,14 @@ Pure functions, unit-tested (`npm run test:unit`).
 
 It always produces at least three units.
 
+**First Home** (just signed up):
+
+- at most five middle units (a newcomer has no network yet: fewer, better units);
+- someone who chose "Find work" sees the role that fits them first in the middle, right after the lead;
+- a welcome by name and the one next step (add stills, set availability or add a bio) sit under the lead, in place of a toast over the page. "Later" is kept for that account (`src/ui/learned.ts`).
+
+**Each fact once** (docs/TEXT_LOAD.md): the lead doesn't repeat its stage tag, people cards show a reason only when it's about people you know (otherwise the city), the role row keeps City · Pay, and the end has no "You're up to date" line.
+
 ## Words Home never uses
 
 No "This week", no "updated Monday", no edition language, no counts ("3 things need you"). A unit test checks this (`candidates.test.ts`).

@@ -43,8 +43,9 @@ export function Resolve({ forming, i, children }: { forming: boolean; i: number;
   );
 }
 
-/** One quiet next step, only while something useful is missing. Never a checklist. */
-export function FirstStep() {
+/** One quiet next step, only while something useful is missing. Never a checklist. On a first Home it also
+ *  says hello by name (welcome), in place of a toast over the page. */
+export function FirstStep({ welcome }: { welcome?: string } = {}) {
   const { viewer, push, userPortfolio, availability, openSheet } = useStore();
   const hasWork = (seed.portfolio[viewer.id]?.length ?? 0) + userPortfolio.length > 0;
   const step = !hasWork
@@ -60,6 +61,7 @@ export function FirstStep() {
   return (
     <aside className="first-step" aria-label="Next step">
       <div>
+        {welcome && <p className="first-step-welcome">Welcome, {welcome}</p>}
         <p className="item-title">{step.t}</p>
         <p className="meta">{step.b}</p>
       </div>

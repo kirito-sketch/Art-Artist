@@ -1,3 +1,4 @@
+import { getFeatures } from '../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Lock, Mail, Users } from 'lucide-react';
 import { cloneElement, isValidElement, useEffect, useId, useState, type ReactElement, type ReactNode } from 'react';
@@ -145,7 +146,8 @@ export function EntryFlow() {
     endEntry();
     setActing('self');
     switchViewer(id);
-    showToast({ text: `Welcome to Art and Artist, ${name.split(' ')[0]}` });
+    // The new Home says hello on the page itself (its first step card); a toast there would cover the first cards.
+    if (getFeatures().home !== 'next') showToast({ text: `Welcome to Art and Artist, ${name.split(' ')[0]}` });
   };
 
   const steps: Step[] = ['you', 'now'];

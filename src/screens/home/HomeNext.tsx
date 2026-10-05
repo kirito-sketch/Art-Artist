@@ -7,7 +7,7 @@ import { getComposition, type KV } from '../../domain/home/session';
 import type { Candidate, Composition } from '../../domain/home/types';
 import { stageOf, type Signals } from '../../domain/relevance';
 import { research } from '../../research-data/client';
-import { findOpportunity, org, party, person } from '../../state/selectors';
+import { findOpportunity, firstName, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { work } from '../../state/world';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
@@ -17,6 +17,7 @@ import { Logo } from '../../ui/Logo';
 import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
 import { PostCard } from './PostCard';
+import { FirstStep } from './FirstHome';
 import { eventCandidates, EventRow } from '../event/eventUnits';
 
 /*
@@ -128,6 +129,12 @@ export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: 
 
         {comp.lead && <Lead c={comp.lead} />}
         {comp.personal && <PersonalNews news={comp.personal} />}
+        {/* Just signed up: welcome them by name, with the one thing that makes the profile useful (in place of a toast). */}
+        {isNew && !comp.personal && (
+          <section className="hn-unit hn-first" aria-label="Your next step">
+            <FirstStep welcome={firstName(me)} />
+          </section>
+        )}
         {comp.middle.map((c, i) => (
           <Unit key={c.id} c={c} position={i} lead={comp.lead} goDiscover={goDiscover} />
         ))}
@@ -138,6 +145,12 @@ export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: 
 }
 
 // ---------------------------------------------------------------------------------------------- frame
+const restatesTag = (c: Candidate) => {
+  const text = String(c.data?.text ?? '').toLowerCase();
+  const tag = String(c.data?.tag ?? '').toLowerCase();
+  return !text || (!!tag && text.includes(tag));
+};
+
 function Lead({ c }: { c: Candidate }) {
   const { push } = useStore();
   if (c.type === 'event') return <EventRow c={c} position={-1} lead />;
@@ -160,8 +173,13 @@ function Lead({ c }: { c: Candidate }) {
             ) : (
               w.format
             )}
-            {' · '}
-            {String(c.data?.text ?? '')}
+            {/* The tag already says the stage ("Pre-production"): the line doesn't repeat it. */}
+            {!restatesTag(c) && (
+              <>
+                {' · '}
+                {String(c.data?.text ?? '')}
+              </>
+            )}
           </p>
           {c.reason && (
             <p className="hn-lead-why">
@@ -237,7 +255,8 @@ function Unit({ c, position, lead, goDiscover }: { c: Candidate; position: numbe
         <section className="hn-unit v-section" aria-label="A role that fits you" onClickCapture={opened}>
           <SectionHeader title="A role that fits you" />
           <div className="list list--flush">
-            <RoleRow o={o} note={c.reason} />
+            {/* The title already says why it's here; the row keeps its decision facts (City · Pay). */}
+            <RoleRow o={o} />
           </div>
         </section>
       );
@@ -346,7 +365,6 @@ function TheEnd({ city, goDiscover, onRefresh }: { city: string; goDiscover: (sc
       <h2 id="hn-end-title" className="hn-end-title">
         That's a wrap
       </h2>
-      <p className="hn-end-sub">You're up to date. New things arrive as projects move and people share work.</p>
       {light && <p className="hn-golden">{light}</p>}
       <div className="hn-find" role="group" aria-label="Find more">
         {find.map(([s, l]) => (

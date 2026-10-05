@@ -1,6 +1,12 @@
 import { canLead } from './significance';
 import { CAP, MAX_MIDDLE, OPPORTUNITY_MIN_POSITION, SIZE, type Candidate, type Composition, type PersonalNews } from './types';
 
+export interface ComposeOptions {
+  /** A first Home for someone who came to find work: the role that fits them comes straight after the lead. */
+  opportunityFirst?: boolean;
+  maxMiddle?: number;
+}
+
 /**
  * Composition answers "what makes the whole page feel good?". It walks the ranked list and places each unit
  * in the first position the rules allow:
@@ -9,18 +15,27 @@ import { CAP, MAX_MIDDLE, OPPORTUNITY_MIN_POSITION, SIZE, type Candidate, type C
  *  - caps per type;
  *  - large and compact units alternate where the pool allows;
  *  - no padding: what isn't in the list is never invented;
- *  - at most eight middle units.
+ *  - at most eight middle units (five on a first Home);
+ *  - on a first Home for someone who came to find work, the role that fits them comes first in the middle.
  * The lead (fixed frame) is the best-ranked leadable, high-significance project or work.
  */
-export function compose(ranked: Candidate[], personal: PersonalNews | null, now: number): Composition {
+export function compose(ranked: Candidate[], personal: PersonalNews | null, now: number, opts: ComposeOptions = {}): Composition {
+  const max = opts.maxMiddle ?? MAX_MIDDLE;
   const leadIdx = ranked.findIndex(canLead);
   const lead = leadIdx >= 0 ? ranked[leadIdx] : null;
   const left = ranked.filter((_, i) => i !== leadIdx);
   const middle: Candidate[] = [];
   const used: Partial<Record<Candidate['type'], number>> = {};
   const fits = (x: Candidate, at: number) => (used[x.type] ?? 0) < CAP[x.type] && !(x.type === 'opportunity' && at < OPPORTUNITY_MIN_POSITION) && middle[at - 1]?.type !== x.type;
+  if (opts.opportunityFirst) {
+    const i = left.findIndex((x) => x.type === 'opportunity');
+    if (i >= 0) {
+      middle.push(...left.splice(i, 1));
+      used.opportunity = 1;
+    }
+  }
   const want = () => (middle.length && SIZE[middle[middle.length - 1].type] === 'large' ? 'compact' : 'large');
-  while (left.length && middle.length < MAX_MIDDLE) {
+  while (left.length && middle.length < max) {
     const at = middle.length;
     let i = left.findIndex((x) => fits(x, at) && SIZE[x.type] === want());
     if (i < 0) i = left.findIndex((x) => fits(x, at));

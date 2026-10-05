@@ -63,3 +63,5 @@ export const MIN_UNITS = 3;
 /** Zero-based: an opportunity never sits above the third middle unit. */
 export const OPPORTUNITY_MIN_POSITION = 2;
 export const MAX_MIDDLE = 8;
+/** A first Home (just signed up) is shorter: there is no network yet, so fewer, better units. */
+export const MAX_MIDDLE_FIRST_RUN = 5;

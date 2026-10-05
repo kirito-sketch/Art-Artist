@@ -1,4 +1,4 @@
-import { compose } from './compose';
+import { compose, type ComposeOptions } from './compose';
 import { rank } from './rank';
 import { keysOf, pruneSeen, withoutSeen, type Seen } from './seen';
 import { eligible } from './significance';
@@ -19,6 +19,8 @@ export interface HomeInput {
   personal: PersonalNews | null;
   /** Cold-start sources in order: craft + place, active projects, people, work, houses. */
   coldStart: Candidate[];
+  /** How a first Home is composed (shorter; the role first for someone who came to find work). */
+  options?: ComposeOptions;
 }
 export interface KV {
   get(k: string): string | null;
@@ -60,11 +62,11 @@ export function getComposition(build: () => HomeInput, ctx: { now: number; sessi
 
   const input = build();
   const all = eligible(input.candidates, now);
-  let comp = compose(rank(withoutSeen(all, seen)), input.personal, now);
-  if (units(comp) < MIN_UNITS) comp = compose(rank(all), input.personal, now);
+  let comp = compose(rank(withoutSeen(all, seen)), input.personal, now, input.options);
+  if (units(comp) < MIN_UNITS) comp = compose(rank(all), input.personal, now, input.options);
   if (units(comp) < MIN_UNITS) {
     const ids = new Set(all.map((x) => x.id));
-    comp = compose([...rank(all), ...eligible(input.coldStart, now).filter((x) => !ids.has(x.id))], input.personal, now);
+    comp = compose([...rank(all), ...eligible(input.coldStart, now).filter((x) => !ids.has(x.id))], input.personal, now, input.options);
   }
   comp = withGroups(comp, rank([...all, ...eligible(input.coldStart, now)]));
   kv.set(COMP, JSON.stringify({ sessionKey, comp }));

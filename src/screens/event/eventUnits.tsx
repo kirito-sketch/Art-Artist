@@ -58,6 +58,10 @@ export function EventTicket({ e, reason, onOpen }: { e: IndustryEvent; reason?: 
   const stub = stubLabel(e.start);
   const host = party(e.hostId);
   const status = e.status === 'cancelled' ? 'Cancelled' : e.status === 'under_review' ? 'Under review · only you can see this' : e.changed;
+  // Each fact once (docs/TEXT_LOAD.md): the host isn't repeated when the venue already names it, and an
+  // "In {city}" reason isn't repeated under an address that already ends with the city.
+  const hostLine = host && !e.venue.includes(host.name) ? ` · ${host.name}` : '';
+  const why = reason && reason !== `In ${e.city}` ? reason : undefined;
   return (
     <div className={`ev-ticket ${e.status !== 'scheduled' ? 'is-muted' : ''}`}>
       <PressCard
@@ -81,10 +85,10 @@ export function EventTicket({ e, reason, onOpen }: { e: IndustryEvent; reason?: 
           </span>
           <span className="ev-meta">
             {priceLabel(e)}
-            {host ? ` · ${host.name}` : ''}
+            {hostLine}
           </span>
           {status && <span className="ev-status">{status}</span>}
-          {reason && !status && <em className="ev-why">{reason}</em>}
+          {why && !status && <em className="ev-why">{why}</em>}
         </span>
       </PressCard>
       <InterestedButton e={e} compact />

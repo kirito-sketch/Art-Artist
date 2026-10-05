@@ -47,10 +47,17 @@ test('a new cinematographer in Hyderabad: at least three genuine units, led by a
   assert.match((comp.lead!.reason ?? '') + (comp.lead!.data?.text ?? ''), /Hyderabad|In |Shooting/);
   assert.ok((comp.lead ? 1 : 0) + comp.middle.length >= 3);
 });
-test('a new cinematographer also sees one role in their craft, never in the first two middle units', () => {
+test('a new cinematographer who came to find work sees the role in their craft first, on a shorter page', () => {
   const me: Person = { id: 'you-new', kind: 'person', name: 'Sam Rao', role: 'Cinematographer', craft: 'cinematographer', city: 'Hyderabad', tone: 2 };
-  const comp = getComposition(() => homeInput(ctx({ me, following: [], isNew: true })), { now: NOW, sessionKey: 'n2', kv: memoryKV() });
+  const comp = getComposition(() => homeInput(ctx({ me, following: [], isNew: true, intent: 'work' })), { now: NOW, sessionKey: 'n2', kv: memoryKV() });
   const types = comp.middle.map((x) => x.type);
   assert.equal(types.filter((t) => t === 'opportunity').length, 1, types.join(','));
-  assert.ok(types.indexOf('opportunity') >= 2, types.join(','));
+  assert.equal(types[0], 'opportunity', types.join(','));
+  assert.ok(types.length <= 5, types.join(','));
+});
+test('a new person with another intent still sees a role no higher than the third middle unit', () => {
+  const me: Person = { id: 'you-new', kind: 'person', name: 'Sam Rao', role: 'Cinematographer', craft: 'cinematographer', city: 'Hyderabad', tone: 2 };
+  const comp = getComposition(() => homeInput(ctx({ me, following: [], isNew: true, intent: 'network' })), { now: NOW, sessionKey: 'n3', kv: memoryKV() });
+  const types = comp.middle.map((x) => x.type);
+  assert.ok(!types.includes('opportunity') || types.indexOf('opportunity') >= 2, types.join(','));
 });

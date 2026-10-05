@@ -6,7 +6,7 @@ import { blockedBy, discoverableProjects } from '../discovery';
 import { housesFor, opportunitiesFor, peopleFor, workFor, type Intent, type Signals } from '../relevance';
 import { closeness, creditedOn, reasonForPerson, sharedProject, workedWith } from './graph';
 import type { HomeInput } from './session';
-import type { Candidate, PersonalNews, Significance } from './types';
+import { MAX_MIDDLE_FIRST_RUN, type Candidate, type PersonalNews, type Significance } from './types';
 
 /*
  * Turns the app's real data into Home candidates (docs/HOME.md). Each adapter decides significance with the
@@ -99,7 +99,8 @@ function peopleCandidates(ctx: HomeContext): Candidate[] {
     at: ctx.loadedAt - (6 + i * 12) * H,
     quality: 0.8,
     leadable: false,
-    data: { people: g.map((r) => ({ id: r.item.id, reason: reasonForPerson(ctx.me.id, r.item.id) ?? r.why })) },
+    // The card already shows the craft; a reason is shown only when it's about people you know, otherwise the city.
+    data: { people: g.map((r) => ({ id: r.item.id, reason: reasonForPerson(ctx.me.id, r.item.id) ?? r.item.city })) },
   }));
 }
 
@@ -230,5 +231,7 @@ export function homeInput(ctx: HomeContext): HomeInput {
   const houses = houseCandidates(ctx);
   const updates = seed.projectUpdates.map((u) => updateCandidate(u, ctx)).filter((x): x is Candidate => !!x);
   const candidates = ctx.isNew ? [] : [...updates, ...people, ...posts, ...opportunityCandidates(ctx), ...houses, ...creditRelationCandidate(ctx), ...(ctx.extra ?? [])];
-  return { candidates, personal: personalNews(ctx), coldStart: [...coldStart(ctx, people, posts, houses), ...(ctx.isNew ? ctx.extra ?? [] : [])] };
+  // A first Home is shorter, and answers what the person said they came for: work leads with the role that fits.
+  const options = ctx.isNew ? { maxMiddle: MAX_MIDDLE_FIRST_RUN, opportunityFirst: ctx.intent === 'work' } : undefined;
+  return { candidates, personal: personalNews(ctx), coldStart: [...coldStart(ctx, people, posts, houses), ...(ctx.isNew ? ctx.extra ?? [] : [])], options };
 }

@@ -6,6 +6,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+
+/* The header already clears the status bar; the page itself doesn't add it again (it left a 54px gap). */
+.screen.hn {
+  padding-top: 0;
 }
 
 .hn-search {
@@ -34,6 +41,24 @@
   display: flex;
   flex-direction: column;
   padding-bottom: 120px;
+}
+
+/* Every unit carries the gutter itself, so the sheet adds none: cards line up with the logo and search. */
+.home-sheet.hn-sheet {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* First Home: the welcome and the one next step, right under the lead. */
+.hn-first .first-step {
+  margin-top: 0;
+}
+
+.first-step-welcome {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  margin-bottom: 2px;
 }
 
 /* ---------------------------------------------------------------------------------------- lead */

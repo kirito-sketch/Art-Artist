@@ -46,3 +46,20 @@ test('personal news passes through unchanged', () => {
   const p = { id: 'n1', text: 'Saffron Reel Studios added you to Kaaval as Director of Photography.', actorId: 'saffron', at: NOW, urgent: true };
   assert.equal(compose([], p, NOW).personal, p);
 });
+
+test('first Home for someone who came to find work: the role comes straight after the lead, and the page is shorter', () => {
+  const pool = [
+    c({ type: 'projectUpdates', objectId: 'lead', significance: 'high', leadable: true }),
+    c({ type: 'people', objectId: 'a' }),
+    c({ type: 'post', objectId: 'b' }),
+    c({ type: 'house', objectId: 'c' }),
+    c({ type: 'post', objectId: 'd' }),
+    c({ type: 'event', objectId: 'e' }),
+    c({ type: 'creditRelation', objectId: 'f' }),
+    c({ type: 'opportunity', objectId: 'role' }),
+  ];
+  const r = compose(pool, null, NOW, { opportunityFirst: true, maxMiddle: 5 });
+  assert.equal(r.middle[0].type, 'opportunity');
+  assert.equal(r.middle.length, 5);
+  assert.equal(r.middle.filter((x) => x.type === 'opportunity').length, 1);
+});
