@@ -1,66 +1,192 @@
+import { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import type { Person } from '../../data/types';
-import { averageScore, reviewedProjects, reviewsFor } from '../../data/reviews';
-import { org, party } from '../../state/selectors';
+import type { Work } from '../../data/works';
+import { isOutThisWeek, sortReviews, topRated, type ReviewSort } from '../../domain/reviews';
+import { org, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
-import { work } from '../../state/world';
-import { Avatar, IconButton, Photo, PressCard } from '../../ui/primitives';
+import { publicWorks, reviewsBy, reviewsOf, work, world } from '../../state/world';
+import { Button, Chip, IconButton, Photo, PressCard, SectionHeader } from '../../ui/primitives';
+import { featuredFor, RatingSummary, ReviewCard, ScoreLine } from './reviewUnits';
 
-/** Reviews from people in the industry, film by film (District Home direction; sample content, see data/reviews.ts). */
+const maker = (w: Work) => (w.orgIds[0] ? org(w.orgIds[0]).name : w.format);
+export const outThisWeek = (now = Date.now()) => publicWorks().filter((w) => isOutThisWeek(w, now));
+
+function Top({ title }: { title: string }) {
+  const { pop } = useStore();
+  return (
+    <header className="topbar topbar--nav browse-top">
+      <IconButton label="Back" onClick={pop}>
+        <ChevronLeft size={26} />
+      </IconButton>
+      <h1 className="topbar-title">{title}</h1>
+      <span className="icon-btn-spacer" aria-hidden />
+    </header>
+  );
+}
+
+/** A film out this week: poster, score and the one review it is introduced with. */
+export function WeekFilm({ w, big }: { w: Work; big?: boolean }) {
+  const { push } = useStore();
+  const f = featuredFor(w.id);
+  const who = f && person(f.personId);
+  return (
+    <PressCard className={`wk-film ${big ? 'wk-film--big' : ''}`} onPress={() => push({ name: 'work', id: w.id })} scale={0.985} aria-label={w.title}>
+      <span className="wk-poster">
+        <Photo media={w.media} showPlay={false} />
+      </span>
+      <span className="wk-body">
+        <span className="wk-title">{w.title}</span>
+        <span className="meta">
+          {maker(w)} · {w.format.split(' · ').pop()}
+        </span>
+        <ScoreLine id={w.id} className="wk-score" />
+        {f && who && (
+          <span className="wk-quote">
+            “{f.text}” <span className="wk-by">{who.name}</span>
+          </span>
+        )}
+      </span>
+    </PressCard>
+  );
+}
+
+/** Reviews (District tile): the week's films, the best rated, and what people said lately. */
 export function ReviewsScreen() {
-  const { pop, push } = useStore();
+  const { push, worldVersion } = useStore();
+  void worldVersion;
+  const week = outThisWeek();
+  const top = topRated(publicWorks(), reviewsOf).filter((w) => !week.some((x) => x.id === w.id));
+  const recent = [...world.reviews].filter((r) => r.text && work(r.projectId)).sort((a, b) => b.at - a.at).slice(0, 8);
   return (
     <div className="screen canvas rv">
-      <header className="topbar topbar--nav browse-top">
-        <IconButton label="Back" onClick={pop}>
-          <ChevronLeft size={26} />
-        </IconButton>
-        <h1 className="topbar-title">Reviews</h1>
-        <span className="icon-btn-spacer" aria-hidden />
-      </header>
-      <div className="rv-list">
-        {reviewedProjects().map((id) => {
-          const w = work(id);
-          if (!w) return null;
-          const rs = reviewsFor(id);
-          return (
-            <section key={id} className="rv-film" aria-label={w.title}>
-              <PressCard className="rv-head" onPress={() => push({ name: 'work', id })} scale={0.985} aria-label={`${w.title}, ${averageScore(id)} out of 5`}>
-                <span className="rv-poster">
-                  <Photo media={w.media} showPlay={false} />
-                </span>
-                <span className="rv-head-t">
-                  <b>{w.title}</b>
-                  <span>
-                    {w.orgIds[0] ? org(w.orgIds[0]).name : w.format} · {w.year}
-                  </span>
-                  <span className="rv-score">
-                    ★ {averageScore(id)} <small>· {rs.length} reviews</small>
-                  </span>
-                </span>
-              </PressCard>
-              <div className="rv-quotes">
-                {rs.map((r) => {
-                  const p = party(r.personId);
-                  if (!p) return null;
-                  return (
-                    <PressCard key={r.id} className="rv-q" onPress={() => push({ name: 'profile', id: p.id })} scale={0.99} aria-label={`${p.name}: ${r.quote}`}>
-                      <Avatar party={p} size={34} />
-                      <span className="rv-q-t">
-                        <span className="rv-q-who">
-                          <b>{p.name}</b> · {(p as Person).role}
-                          <span className="rv-q-score">★ {r.score}</span>
-                        </span>
-                        <span className="rv-q-text">{r.quote}</span>
+      <Top title="Reviews" />
+      <div className="rv-page">
+        {week.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Out this Friday" />
+            <div className="wk-list">
+              {week.map((w) => (
+                <WeekFilm key={w.id} w={w} big />
+              ))}
+            </div>
+          </section>
+        )}
+        {top.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Top rated" />
+            <ol className="rv-rank">
+              {top.map((w, i) => (
+                <li key={w.id}>
+                  <PressCard className="rv-rank-row" onPress={() => push({ name: 'work', id: w.id })} scale={0.99} aria-label={w.title}>
+                    <span className="rv-rank-n" aria-hidden>
+                      {i + 1}
+                    </span>
+                    <span className="rv-rank-poster">
+                      <Photo media={w.media} showPlay={false} />
+                    </span>
+                    <span className="rv-rank-t">
+                      <b>{w.title}</b>
+                      <span className="meta">
+                        {maker(w)} · {w.year}
                       </span>
-                    </PressCard>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+                      <ScoreLine id={w.id} />
+                    </span>
+                  </PressCard>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+        {recent.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Recent reviews" />
+            <div className="rv-cards">
+              {recent.map((r) => (
+                <div key={r.id} className="rv-recent">
+                  <button className="rv-recent-film" onClick={() => push({ name: 'work', id: r.projectId })}>
+                    {work(r.projectId)!.title}
+                  </button>
+                  <ReviewCard r={r} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
+  );
+}
+
+/** Every review of one film, most helpful or newest first. */
+export function FilmReviewsScreen({ id }: { id: string }) {
+  const { viewer, mayReview, openSheet, worldVersion } = useStore();
+  void worldVersion;
+  const [sort, setSort] = useState<ReviewSort>('helpful');
+  const w = work(id);
+  if (!w) return null;
+  const all = reviewsOf(id);
+  const mine = all.find((r) => r.personId === viewer.id);
+  const list = sortReviews(
+    all.filter((r) => r !== mine && r.text),
+    sort,
+  );
+  return (
+    <div className="screen canvas rv">
+      <Top title={w.title} />
+      <div className="rv-page">
+        <RatingSummary id={id} />
+        {mine ? <ReviewCard r={mine} /> : mayReview(id) && <Button block variant="secondary" onClick={() => openSheet({ name: 'review', projectId: id })}>Rate and review</Button>}
+        <div className="chips rv-sort" role="group" aria-label="Sort">
+          <Chip active={sort === 'helpful'} onClick={() => setSort('helpful')}>
+            Most helpful
+          </Chip>
+          <Chip active={sort === 'newest'} onClick={() => setSort('newest')}>
+            Newest
+          </Chip>
+        </div>
+        <div className="rv-cards">
+          {list.map((r) => (
+            <ReviewCard key={r.id} r={r} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Everything one person has reviewed, newest first. */
+export function PersonReviewsScreen({ id }: { id: string }) {
+  const { viewer, worldVersion } = useStore();
+  void worldVersion;
+  const list = reviewsBy(id).filter((r) => work(r.projectId));
+  return (
+    <div className="screen canvas rv">
+      <Top title={id === viewer.id ? 'Your reviews' : `${person(id).name.split(' ')[0]}'s reviews`} />
+      <div className="rv-page">
+        <div className="rv-cards">
+          {list.map((r) => (
+            <ReviewCard key={r.id} r={r} showFilm film={work(r.projectId)} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Profile: the latest three reviews, then See all. */
+export function ProfileReviewsSection({ id }: { id: string }) {
+  const { push, worldVersion } = useStore();
+  void worldVersion;
+  const list = reviewsBy(id).filter((r) => work(r.projectId));
+  if (!list.length) return null;
+  return (
+    <section className="section section--flush rv-section">
+      <SectionHeader title="Reviews" action={list.length > 3 ? 'See all' : undefined} onAction={() => push({ name: 'personReviews', id })} />
+      <div className="rv-cards">
+        {list.slice(0, 3).map((r) => (
+          <ReviewCard key={r.id} r={r} showFilm film={work(r.projectId)} />
+        ))}
+      </div>
+    </section>
   );
 }

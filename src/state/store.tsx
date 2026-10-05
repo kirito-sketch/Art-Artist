@@ -44,6 +44,8 @@ export type Route =
   | { name: 'saved' }
   | { name: 'browse'; scope: 'roles' | 'people' | 'projects' | 'events' }
   | { name: 'reviews' }
+  | { name: 'filmReviews'; id: string }
+  | { name: 'personReviews'; id: string }
   | { name: 'event'; id: string }
   | { name: 'composeEvent'; projectId?: string; editId?: string };
 
@@ -67,7 +69,8 @@ export type Sheet =
   | { name: 'identity' }
   | { name: 'share'; label: string }
   | { name: 'more'; id: string }
-  | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event'; id: string } }
+  | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event' | 'Review'; id: string } }
+  | { name: 'review'; projectId: string }
   | { name: 'postMore'; id: string }
   | { name: 'block'; id: string }
   | { name: 'editRole'; id: string }
@@ -613,6 +616,20 @@ function useStoreValue() {
     /** Whether the identity in use and this party can't reach each other, because either person blocked the other. */
     cannotReach: (id: string) => act.blockedBetween(viewer.id, id) || act.blockedBetween(act.speakingAs(actor), id),
     block: (id: string) => (act.block(actor, id), bump()),
+    reviews: world.reviews,
+    mayReview: (projectId: string) => act.mayReview(actor, projectId),
+    saveReview: (projectId: string, d: { stars: number; text?: string; spoiler?: boolean }) => {
+      const ok = act.saveReview(actor, projectId, d);
+      if (ok) bump();
+      return ok;
+    },
+    deleteReview: (id: string) => {
+      const r = act.deleteReview(actor, id);
+      if (!r) return;
+      bump();
+      showToast({ text: 'Review deleted', action: { label: 'Undo', run: () => (act.restoreReview(r), bump()) } });
+    },
+    toggleHelpful: (id: string) => (act.toggleHelpful(actor, id), bump()),
     unblock: (id: string) => (act.unblock(actor, id), bump()),
     /** A filled role keeps its record. Hiring again for the same craft and project is a new role. */
     openAgain: (id: string) => {

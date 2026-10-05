@@ -12,6 +12,7 @@ import './styles/expression.css';
 import './styles/home-next.css';
 import './styles/district.css';
 import './styles/events.css';
+import './styles/reviews.css';
 import './styles/test-mode.css';
 import './styles/a11y.css';
 import './styles/view-modes.css';

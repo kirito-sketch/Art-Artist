@@ -22,6 +22,8 @@ import { RoleRow } from '../discover/RoleRow';
 import { EventRow } from '../event/eventUnits';
 import { eventHomeCandidates } from '../../state/events';
 import { useFeatures } from '../../ui/features';
+import { TEST_MODE } from '../../research-data/surface';
+import { outThisWeek, WeekFilm } from '../reviews/ReviewsScreen';
 
 
 export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?: string) => void }) {
@@ -115,6 +117,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
                 ) : (
                   sections[id]
                 )}
+                {id === 'forYou' && !first && <OutThisFriday />}
                 {/* One reason to come back, after real content, never above it. */}
                 {stage !== 'established' && i === 2 && <FirstStep />}
                 {/* One event at most, after the core professional modules (docs/EVENTS.md). */}
@@ -131,6 +134,24 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
         </div>
       </div>
     </>
+  );
+}
+
+/** The week's releases, Friday to Thursday: score and one good review each. Hidden in a week with none. */
+function OutThisFriday() {
+  const { push, worldVersion } = useStore();
+  void worldVersion;
+  const week = TEST_MODE ? [] : outThisWeek();
+  if (!week.length) return null;
+  return (
+    <section className="v-section" data-world="releases">
+      <SectionHeader title="Out this Friday" action="See all" onAction={() => push({ name: 'reviews' })} />
+      <div className="wk-list wk-list--home">
+        {week.map((w) => (
+          <WeekFilm key={w.id} w={w} />
+        ))}
+      </div>
+    </section>
   );
 }
 

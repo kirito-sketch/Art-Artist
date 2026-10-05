@@ -15,6 +15,7 @@ import { useLoad } from '../../ui/useLoad';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
 import { EventsSection } from '../event/eventUnits';
 import { eventsOfProject } from '../../state/events';
+import { FilmReviewsSection } from '../reviews/reviewUnits';
 
 /**
  * Public project page. What anyone on Art and Artist sees: what it is, who made it, who is credited, whether it
@@ -136,6 +137,8 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             Open in your workspace
           </Button>
         )}
+
+        <FilmReviewsSection w={w} />
 
         {roles.length > 0 && (
           <section className="section section--flush">

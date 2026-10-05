@@ -88,7 +88,7 @@ export function Compare() {
         {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} />}
       </div>
 
-      <p className="cmp-foot">In New, the clips in the spotlight are made from still images and the reviews are sample content.</p>
+      <p className="cmp-foot">In New, the clips in the spotlight are made from still images.</p>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Media } from './types';
+import { isoDay, nextFriday, releaseWeekStart } from '../domain/reviews';
 
 /**
  * Seed input for the project model in src/state/world.ts. Every project in the prototype, including the
@@ -30,6 +31,8 @@ export interface Work {
   stills: Media[];
   /** Accepted credits only. */
   credits: WorkCredit[];
+  /** Release date set by the house (YYYY-MM-DD). Reviews open on this day. */
+  releaseDate?: string;
 }
 
 export interface SeedWork {
@@ -46,6 +49,7 @@ export interface SeedWork {
   media?: Media;
   stills: Media[];
   shared: boolean;
+  releaseDate?: string;
   /** Accepted, production-issued credits (the work is done). */
   credits: WorkCredit[];
   /** Private associations with no credit yet (the work is in progress). */
@@ -53,6 +57,11 @@ export interface SeedWork {
   /** Credits issued and waiting for the person, or sent back for correction. */
   proposed?: (WorkCredit & { line: string; correction?: string })[];
 }
+
+// Films out this week stay out this week whenever the prototype is opened.
+const THIS_FRIDAY = isoDay(releaseWeekStart(Date.now()));
+// Kaaval releases the Friday after its festival premiere.
+const KAAVAL_RELEASE = isoDay(nextFriday(Date.now()) + 7 * 864e5);
 
 const img = (src: string, fallback?: string): Media => ({ id: src, kind: 'image', src: `images/${src}.jpg`, fallback: fallback ? `images/${fallback}.jpg` : undefined });
 
@@ -99,6 +108,7 @@ export const SEED_WORKS: SeedWork[] = [
     media: img('posters/neeli-raat', 'covers/salt-2'),
     stills: [img('stills/kiran-neeli-raat', 'covers/salt-2'), img('stills/sameer-charminar', 'covers/salt-2')],
     shared: true,
+    releaseDate: '2023-08-11',
     credits: [
       { personId: 'arjun', role: 'Director', dept: 'Direction' },
       { personId: 'aditi', role: 'Line Producer', dept: 'Production' },
@@ -122,6 +132,7 @@ export const SEED_WORKS: SeedWork[] = [
     media: img('posters/monsoon-letters', 'covers/paper-boats'),
     stills: [img('stills/kiran-monsoon-letters', 'covers/backwaters'), img('covers/backwaters')],
     shared: true,
+    releaseDate: '2025-03-14',
     credits: [
       { personId: 'devika', role: 'Director', dept: 'Direction' },
       { personId: 'aditi', role: 'Line Producer', dept: 'Production' },
@@ -155,6 +166,7 @@ export const SEED_WORKS: SeedWork[] = [
     media: img('posters/kaaval', 'covers/journalist'),
     stills: [img('stills/nandini-kaaval', 'covers/journalist'), img('stills/kiran-kaaval-desert', 'covers/journalist'), img('stills/kiran-kaaval-test', 'covers/quiet-hours')],
     shared: true,
+    releaseDate: KAAVAL_RELEASE,
     credits: [
       { personId: 'kabir', role: 'Writer-Director', dept: 'Direction' },
       { personId: 'kiran', role: 'Director of Photography', dept: 'Camera' },
@@ -174,6 +186,7 @@ export const SEED_WORKS: SeedWork[] = [
     media: img('posters/fault-lines', 'covers/faultlines'),
     stills: [img('stills/kiran-fault-lines', 'covers/faultlines'), img('stills/tara-faultlines', 'covers/quiet-hours')],
     shared: true,
+    releaseDate: '2024-06-07',
     credits: [
       { personId: 'vikram', role: 'DoP, Episodes 1–2', dept: 'Camera' },
       { personId: 'kiran', role: 'DoP, Episodes 3–5', dept: 'Camera' },
@@ -187,6 +200,40 @@ export const SEED_WORKS: SeedWork[] = [
     ],
     // Blue Lotus has issued Kiran a second credit that he hasn't answered yet.
     proposed: [{ personId: 'kiran', role: 'Additional photography, Episode 6', dept: 'Camera', line: 'DoP, Episode 6 (additional photography)' }],
+  },
+  {
+    id: 'dhoop',
+    title: 'Dhoop',
+    year: '2026',
+    format: 'Feature film · Hindi',
+    stage: 'Released',
+    orgIds: ['bluelotus'],
+    logline: 'A retired lighthouse keeper teaches his granddaughter to swim before the sea takes the house.',
+    media: img('covers/salt-water'),
+    stills: [img('covers/salt-water'), img('covers/coastline')],
+    shared: true,
+    releaseDate: THIS_FRIDAY,
+    credits: [
+      { personId: 'devika', role: 'Director', dept: 'Direction' },
+      { personId: 'farhan', role: 'Sound Designer', dept: 'Sound' },
+    ],
+  },
+  {
+    id: 'ratri',
+    title: 'Ratri',
+    year: '2026',
+    format: 'Feature film · Telugu',
+    stage: 'Released',
+    orgIds: ['saffron'],
+    logline: 'A wedding band plays one last night in the rain before their hall in Vijayawada is torn down.',
+    media: img('covers/neon-monsoon'),
+    stills: [img('covers/neon-monsoon'), img('covers/journalist')],
+    shared: true,
+    releaseDate: THIS_FRIDAY,
+    credits: [
+      { personId: 'raghu', role: 'Camera Operator', dept: 'Camera' },
+      { personId: 'priya', role: 'Focus Puller', dept: 'Camera' },
+    ],
   },
   /* Independent work: shown by the person who made it. No verified credits. */
   { id: 'salt', title: 'Salt', year: '2022', format: 'Short film · 18 min', stage: 'Released', orgIds: [], ownerId: 'kiran', logline: 'Official selection at two regional festivals.', media: img('stills/kiran-salt', 'covers/salt-water'), stills: [img('stills/kiran-salt', 'covers/salt-water')], shared: true, credits: [] },

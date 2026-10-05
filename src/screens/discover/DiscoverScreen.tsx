@@ -1,4 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { isOutThisWeek, reviewsOpen, stats, topRated } from '../../domain/reviews';
+import { reviewsOf } from '../../state/world';
+import { ScoreLine } from '../reviews/reviewUnits';
 import { PostGrid } from './PostGrid';
 import { BadgeCheck, Bookmark, CalendarDays, ChevronLeft, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -169,12 +172,14 @@ const EXPERIENCE: { id: PeopleFilters['experience']; label: string; test: (y?: n
   { id: 'senior', label: '10+ years', test: (y) => (y ?? 0) > 10 },
 ];
 const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
-type ProjectStage = 'all' | 'live' | 'released' | 'hiring';
+type ProjectStage = 'all' | 'live' | 'released' | 'hiring' | 'week' | 'top';
 const STAGES: { id: ProjectStage; label: string }[] = [
   { id: 'all', label: 'All stages' },
   { id: 'live', label: 'Being made now' },
   { id: 'hiring', label: 'Hiring' },
   { id: 'released', label: 'Released' },
+  { id: 'week', label: 'Out this week' },
+  { id: 'top', label: 'Top rated' },
 ];
 
 /**
@@ -252,7 +257,11 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
   const activePeopleFilters = Object.entries(pf).filter(([k, v]) => k !== 'available' && (k === 'experience' ? v !== 'any' : !!v)).length;
   const allProjects = discoverableProjects(blocked).filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const hiringFor = (title: string) => roles.filter((r) => !roleStatus[r.id] && r.project.toLowerCase().startsWith(title.toLowerCase())).length;
-  const projects = allProjects.filter((w) => (stage === 'live' ? isLive(w) : stage === 'released' ? !isLive(w) : stage === 'hiring' ? hiringFor(w.title) > 0 : true));
+  const now = Date.now();
+  const projects =
+    stage === 'top'
+      ? topRated(allProjects, reviewsOf)
+      : allProjects.filter((w) => (stage === 'live' ? isLive(w) : stage === 'released' ? !isLive(w) : stage === 'hiring' ? hiringFor(w.title) > 0 : stage === 'week' ? isOutThisWeek(w, now) : true));
   const allHouses = searchableHouses(blocked).filter((o) => (q ? `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q) : true));
   const houses = q ? allHouses : [];
   const shownHouses = allHouses.filter((o) => (pf.near ? o.city === me.city : true));
@@ -290,7 +299,6 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
   const postCrafts = CRAFTS.filter((c) => c.id === postCraft || allPosts.some((p) => postCraftOf(p) === c.id));
   const posts = postCraft ? allPosts.filter((p) => postCraftOf(p) === postCraft) : allPosts;
   const activeFilters = Object.values(filters).filter(Boolean).length;
-  const now = Date.now();
   const allEvents = features.events ? visibleEvents(events, now, viewer.id, acting).filter((e) => (q ? `${e.title} ${e.venue} ${e.city} ${typeLabel(e.type)} ${party(e.hostId)?.name ?? ''}`.toLowerCase().includes(q) : true)) : [];
   const eventCities = [...new Set(allEvents.map((e) => e.city))].sort();
   const shownEvents = allEvents
@@ -524,7 +532,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
                       <p className="meta">
                         {w.ownerId ? person(w.ownerId).name : <>{org(w.orgIds[0]).name} <Verified size={12} /></>}
                       </p>
-                      <p className="meta">{w.stage}</p>
+                      {reviewsOpen(w, now) && stats(reviewsOf(w.id)).enough ? <ScoreLine id={w.id} className="meta" /> : <p className="meta">{w.stage}</p>}
                       {/* Its own line, so "Hiring 2" never splits or leaves a dot hanging on a narrow card. */}
                       {hiring > 0 && <p className="meta poster-hiring">Hiring {hiring}</p>}
                     </Pressable>

@@ -17,6 +17,7 @@ import { bentoLayout } from '../../ui/bento';
 import { useHeroParallax } from '../../ui/useHeroParallax';
 import { EventsSection } from '../event/eventUnits';
 import { eventsOfHost, speakingAt } from '../../state/events';
+import { ProfileReviewsSection } from '../reviews/ReviewsScreen';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -381,6 +382,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </Pressable>
           </section>
         )}
+
+        <ProfileReviewsSection id={p.id} />
 
         {stills.length > 0 && (
           <section className="section section--flush">

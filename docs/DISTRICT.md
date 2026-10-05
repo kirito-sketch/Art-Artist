@@ -15,7 +15,7 @@ A second version of Home and Discover, built for comparison. Everything else in 
 3. In the spotlight: projects being made near you first, a centred carousel that moves every few seconds and stops when touched. The centre card plays a muted clip (never with Reduce Motion, Save-Data or low power); faces are accepted credits; "Looking for" lists open roles.
 4. New work in your craft: a mosaic of three posts, then "See more in Discover".
 5. Events near you: one featured event, then a short list.
-6. One industry quote, leading to Reviews.
+6. Out this Friday: one quote card per film released this week (score plus its featured review), side by side when there are several. Hidden in a week with no releases.
 7. Continue where you left off: what you saved.
 8. Picked for you: shelves built from rules (your craft's crew free this month in your city, crews forming, projects in your language). A shelf shows only with two or more items.
 9. Near you: people in your craft's crew, in your city.
@@ -29,7 +29,7 @@ A search bar with Saved beside it, and the grid of work. Searching covers people
 
 ## Reviews (`src/screens/reviews/ReviewsScreen.tsx`)
 
-Sample content (`src/data/reviews.ts`): no review feature exists yet, and who may review is a stakeholder decision. The compare page says so; the app does not.
+The real review system (docs/REVIEWS.md): Out this Friday, Top rated, and Recent reviews. The same page is the "See all" from the current Home's Out this Friday section.
 
 ## Media
 

@@ -9,7 +9,7 @@ import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { HomeNext } from './screens/home/HomeNext';
 import { DistrictHome } from './screens/home/DistrictHome';
-import { ReviewsScreen } from './screens/reviews/ReviewsScreen';
+import { FilmReviewsScreen, PersonReviewsScreen, ReviewsScreen } from './screens/reviews/ReviewsScreen';
 import { useFeatures } from './ui/features';
 import { NetworkRow } from './screens/home/NetworkActivity';
 import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
@@ -97,6 +97,10 @@ function RouteView({ r }: { r: Route }) {
       return <BrowseScreen scope={r.scope} />;
     case 'reviews':
       return <ReviewsScreen />;
+    case 'filmReviews':
+      return <FilmReviewsScreen id={r.id} />;
+    case 'personReviews':
+      return <PersonReviewsScreen id={r.id} />;
     case 'network':
       return <NetworkScreen />;
     case 'editProfile':

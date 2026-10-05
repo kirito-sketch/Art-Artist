@@ -4,7 +4,7 @@
  * makes the payload inspectable in QA. The reporter is kept apart from what the author ever sees.
  */
 export interface SentReport {
-  kind: 'Post' | 'Person' | 'Production house' | 'Role' | 'Project' | 'Event' | 'Other';
+  kind: 'Post' | 'Person' | 'Production house' | 'Role' | 'Project' | 'Event' | 'Review' | 'Other';
   objectId?: string;
   authorId?: string;
   subject: string;

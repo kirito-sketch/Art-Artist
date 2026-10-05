@@ -1,7 +1,8 @@
 import * as seed from '../data/seed';
 import type { Opportunity } from '../data/types';
 import { party, person } from '../state/selectors';
-import { world, wid, publicName, project as wproject, type Amendment, type Association, type Format, type HouseProject, type Thread } from '../state/world';
+import { canReview, MAX_TEXT, reviewsOpen, validStars, type Review } from './reviews';
+import { world, wid, publicName, creditedOn, project as wproject, type Amendment, type Association, type Format, type HouseProject, type Thread } from '../state/world';
 
 /*
  * The actions that change Art and Artist's shared records (projects, roles, associations, credits, interests and
@@ -329,4 +330,40 @@ export function openAgainFrom(base: Opportunity) {
 
 export function verifyPendingHouses() {
   seed.orgs.forEach((o) => (o.verified = true));
+}
+
+/* ------------------------------------------------------------ reviews */
+
+/** Whether this actor may review the film right now: released, open, and not made by them or their house. */
+export function mayReview(actor: Actor, projectId: string, now = Date.now()) {
+  const p = wproject(projectId);
+  if (!p?.shared || !reviewsOpen(p, now)) return false;
+  return canReview({ viewerId: actor.viewerId, acting: actor.acting, memberships: actor.memberships, creditedIds: creditedOn(projectId), houseIds: [p.houseId, ...(p.coHouseIds ?? [])].filter((x): x is string => !!x) });
+}
+
+/** One review per person per film: saving again edits it. */
+export function saveReview(actor: Actor, projectId: string, d: { stars: number; text?: string; spoiler?: boolean }) {
+  if (!mayReview(actor, projectId) || !validStars(d.stars)) return false;
+  const text = d.text?.trim().slice(0, MAX_TEXT) || undefined;
+  const mine = world.reviews.find((r) => r.projectId === projectId && r.personId === actor.viewerId);
+  if (mine) Object.assign(mine, { stars: d.stars, text, spoiler: !!text && !!d.spoiler, edited: true });
+  else world.reviews.unshift({ id: wid('rv'), projectId, personId: actor.viewerId, stars: d.stars, text, spoiler: !!text && !!d.spoiler, at: Date.now(), helpful: [] });
+  return true;
+}
+
+export function deleteReview(actor: Actor, id: string) {
+  const i = world.reviews.findIndex((r) => r.id === id && r.personId === actor.viewerId);
+  if (i < 0) return undefined;
+  return world.reviews.splice(i, 1)[0];
+}
+
+export function restoreReview(r: Review) {
+  if (!world.reviews.some((x) => x.projectId === r.projectId && x.personId === r.personId)) world.reviews.unshift(r);
+}
+
+/** Helpful is personal and never on your own review. */
+export function toggleHelpful(actor: Actor, id: string) {
+  const r = world.reviews.find((x) => x.id === id);
+  if (!r || r.personId === actor.viewerId) return;
+  r.helpful = r.helpful.includes(actor.viewerId) ? r.helpful.filter((x) => x !== actor.viewerId) : [...r.helpful, actor.viewerId];
 }

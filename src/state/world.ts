@@ -1,6 +1,8 @@
 import * as seed from '../data/seed';
 import { SEED_WORKS, type Work, type WorkStage } from '../data/works';
 import type { Interest, Media, Notification, Opportunity } from '../data/types';
+import { SEED_REVIEWS } from '../data/reviews';
+import { releaseAt, type Review } from '../domain/reviews';
 
 /*
  * A small shared "backend" for the creation flows. It lives outside the per-viewer store so it survives
@@ -39,6 +41,8 @@ export interface HouseProject {
   logline?: string;
   artwork?: Media;
   shared: boolean;
+  /** Set by the house (YYYY-MM-DD). Reviews open on this day. */
+  releaseDate?: string;
 }
 
 export interface Association {
@@ -155,6 +159,8 @@ export const world = {
   amendments: [] as Amendment[],
   /** Filled or closed roles, by role id. A filled role is a record; hiring again is a new role. */
   roleStatus: {} as Record<string, { state: 'filled' | 'closed'; reason: string }>,
+  /** Film reviews: one per person per film. */
+  reviews: [] as Review[],
 };
 
 let n = 0;
@@ -185,6 +191,7 @@ export function toPublicWork(p: HouseProject): Work | undefined {
     media: p.artwork ?? PLACEHOLDER,
     stills: p.stills ?? (p.artwork ? [p.artwork] : []),
     credits: world.credits.filter((c) => c.projectId === p.id && c.status === 'accepted').map((c) => ({ personId: c.personId, role: c.line, dept: c.dept })),
+    releaseDate: p.releaseDate,
   };
 }
 
@@ -196,6 +203,10 @@ export const work = (id: string) => {
 };
 export const publicWorks = () => world.projects.map(toPublicWork).filter((w): w is Work => !!w);
 export const worksForOrg = (orgId: string) => publicWorks().filter((w) => w.orgIds.includes(orgId));
+export const reviewsOf = (projectId: string) => world.reviews.filter((r) => r.projectId === projectId);
+export const reviewsBy = (personId: string) => world.reviews.filter((r) => r.personId === personId).sort((a, b) => b.at - a.at);
+/** Everyone who holds or was offered a credit on the project, in any state. */
+export const creditedOn = (projectId: string) => [...new Set(world.associations.filter((a) => a.projectId === projectId && a.personId).map((a) => a.personId!))];
 
 /* ------------------------------------------------------------ seeding */
 
@@ -224,6 +235,7 @@ SEED_WORKS.forEach((w) => {
     artwork: w.media,
     stills: w.stills,
     shared: w.shared,
+    releaseDate: w.releaseDate,
   });
   const link = (c: { personId: string; role: string; dept: string }) => {
     const a: Association = { id: `a-${w.id}-${c.personId}-${world.associations.length}`, projectId: w.id, personId: c.personId, workingRole: c.role, dept: c.dept, status: 'added' };
@@ -239,6 +251,12 @@ SEED_WORKS.forEach((w) => {
     const a = link(c);
     world.credits.push({ id: `c-${a.id}`, projectId: w.id, associationId: a.id, personId: c.personId, line: c.line, dept: c.dept, status: c.correction ? 'correction' : 'proposed', note: c.correction });
   });
+});
+
+Object.entries(SEED_REVIEWS).forEach(([pid, list]) => {
+  const rel = project(pid)?.releaseDate;
+  if (!rel) return;
+  list.forEach((r, k) => world.reviews.push({ id: `rv-${pid}-${k}`, projectId: pid, personId: r.personId, stars: r.stars, text: r.text, spoiler: r.spoiler, at: Math.min(Date.now() - 36e5, releaseAt(rel) + r.h * 36e5), helpful: r.helpful ?? [] }));
 });
 
 /* Roles that belong to the houses you can act for move onto their projects. Other houses' roles stay as plain listings. */

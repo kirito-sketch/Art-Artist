@@ -4,7 +4,8 @@ import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
 import type { Craft, Person } from '../../data/types';
 import { isLive, type Work } from '../../data/works';
-import { REVIEWS, averageScore, reviewsFor } from '../../data/reviews';
+import { outThisWeek } from '../reviews/ReviewsScreen';
+import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
 import { blockedBy, discoverableProjects } from '../../domain/discovery';
 import { creditedOn } from '../../domain/home/graph';
 import { discoverPosts, findOpportunity, org, party, person } from '../../state/selectors';
@@ -84,7 +85,7 @@ export function DistrictHome({ go }: { go: Go }) {
         .slice(0, 3)
     : [];
 
-  const quote = REVIEWS[0];
+  const week = outThisWeek(now);
 
   const continueItems = saved
     .slice()
@@ -246,9 +247,19 @@ export function DistrictHome({ go }: { go: Go }) {
         </section>
       )}
 
-      {quote && (
-        <section className="dh-sec dh-pad" aria-label="What the industry is saying">
-          <Quote id={quote.projectId} personId={quote.personId} text={quote.quote} onOpen={() => push({ name: 'reviews' })} />
+      {week.length > 0 && (
+        <section className="dh-sec" aria-label="Out this Friday">
+          <h2 className="dh-h dh-h--row dh-pad">
+            Out this Friday
+            <button className="dh-more" onClick={() => push({ name: 'reviews' })}>
+              See all
+            </button>
+          </h2>
+          <div className={week.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
+            {week.map((w) => (
+              <Quote key={w.id} w={w} onOpen={() => push({ name: 'work', id: w.id })} />
+            ))}
+          </div>
         </section>
       )}
 
@@ -432,37 +443,30 @@ function Clip({ id }: { id: string }) {
   );
 }
 
-function Quote({ id, personId, text, onOpen }: { id: string; personId: string; text: string; onOpen: () => void }) {
-  const w = work(id);
-  const p = party(personId);
-  const score = averageScore(id);
-  const n = reviewsFor(id).length;
+function Quote({ w, onOpen }: { w: Work; onOpen: () => void }) {
+  const f = featuredFor(w.id);
+  const p = f && party(f.personId);
   return (
-    <PressCard className="dh-quote" onPress={onOpen} scale={0.985} aria-label={`${p?.name}: ${text}`}>
-      <span className="dh-qmark" aria-hidden>
-        “
-      </span>
-      <p className="dh-qtext">{text}</p>
-      <span className="dh-qby">
-        {p && <Avatar party={p} size={36} />}
-        <span className="dh-qwho">
-          <b>{p?.name}</b>
-          <span>
-            {p?.kind === 'person' ? (p as Person).role : ''} · on {w?.title}
-          </span>
+    <PressCard className="dh-quote" onPress={onOpen} scale={0.985} aria-label={w.title}>
+      <span className="dh-qfilm dh-qfilm--top">
+        <Photo media={w.media} showPlay={false} />
+        <span className="dh-qfilm-t">
+          <b>{w.title}</b>
+          <ScoreLine id={w.id} />
         </span>
-        {w && (
-          <span className="dh-qfilm">
-            <Photo media={w.media} showPlay={false} />
-            <span>
-              ★ {score} <small>({n})</small>
+      </span>
+      {f && p && (
+        <>
+          <p className="dh-qtext">“{f.text}”</p>
+          <span className="dh-qby">
+            <Avatar party={p} size={32} />
+            <span className="dh-qwho">
+              <b>{p.name}</b>
+              <span>{p.kind === 'person' ? (p as Person).role : ''}</span>
             </span>
           </span>
-        )}
-      </span>
-      <span className="dh-qmore">
-        What the industry is saying <ChevronRight size={15} aria-hidden />
-      </span>
+        </>
+      )}
     </PressCard>
   );
 }

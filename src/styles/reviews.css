@@ -1,0 +1,401 @@
+/* =================================================================== Film reviews (docs/REVIEWS.md)
+ * Stars, review cards, the rating summary and the week's films. Tokens only, so dark mode follows. */
+
+.stars {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.stars-base {
+  color: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+.stars-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  color: #e3a33b;
+}
+
+.score-line {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.score-line b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* Picker: one wide target, half stars by where you tap */
+.star-picker {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+  border-radius: var(--r-m);
+}
+
+.star-picker .stars {
+  font-size: 40px;
+  letter-spacing: 0.08em;
+}
+
+.rv-count {
+  margin-top: -6px;
+  text-align: right;
+}
+
+.rv-count.is-low {
+  color: var(--danger);
+}
+
+.rv-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  font-size: 15px;
+}
+
+/* Summary */
+.rv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rv-section > .section-head,
+.rv-section > header {
+  margin-bottom: -4px;
+}
+
+.rv-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 16px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.rv-summary--thin {
+  display: grid;
+  gap: 2px;
+}
+
+.rv-summary-score {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.rv-avg {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.rv-dist {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.rv-dist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rv-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--fill);
+  overflow: hidden;
+}
+
+.rv-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: #e3a33b;
+}
+
+.rv-opens {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-weight: 600;
+}
+
+/* Cards */
+.rv-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rv-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px 12px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.rv-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rv-card-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.rv-card-who:has(.rv-card-film) {
+  display: grid;
+  gap: 1px;
+}
+
+.rv-card-film {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.rv-card-name {
+  display: grid;
+  min-width: 0;
+}
+
+.rv-card-name b {
+  font-size: 14.5px;
+}
+
+.rv-card-name .meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-more {
+  flex: none;
+  color: var(--text-2);
+}
+
+.rv-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.rv-card-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.rv-spoiler {
+  justify-self: start;
+  min-height: 44px;
+  margin: -6px 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.rv-helpful {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.rv-helpful.is-on {
+  background: var(--action-tint);
+  color: var(--action-ink, var(--action));
+}
+
+.rv-helpful-count {
+  margin: 0;
+}
+
+/* Pages */
+.rv-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px var(--gutter) calc(var(--tabbar-clearance, 96px) + 16px);
+}
+
+.rv-sort {
+  margin: 2px 0 -2px;
+}
+
+.rv-recent {
+  display: grid;
+  gap: 4px;
+}
+
+.rv-recent-film {
+  justify-self: start;
+  min-height: 32px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.rv-rank {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.rv-rank-n {
+  width: 18px;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.rv-rank-poster,
+.wk-poster {
+  flex: none;
+  width: 52px;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--fill);
+}
+
+.rv-rank-poster .photo,
+.rv-rank-poster img,
+.wk-poster .photo,
+.wk-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rv-rank-t,
+.wk-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The week's films */
+.wk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wk-film {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  text-align: left;
+}
+
+.wk-film .wk-poster {
+  width: 76px;
+}
+
+.wk-film--big .wk-poster {
+  width: 92px;
+}
+
+.wk-title {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.wk-score {
+  margin-top: 2px;
+}
+
+.wk-quote {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wk-by {
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.wk-by::before {
+  content: '· ';
+}

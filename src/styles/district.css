@@ -1040,3 +1040,68 @@ html[data-theme='dark'] .dh-wash {
 .dh-evrow .save {
   position: relative;
 }
+
+/* Out this Friday: one quote card per film, side by side when there is more than one */
+.dh-h--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.dh-quotes {
+  gap: 10px;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
+}
+
+.dh-quotes .dh-quote {
+  flex: none;
+  width: min(84%, 340px);
+  scroll-snap-align: start;
+}
+
+.dh-quote {
+  padding-bottom: 16px;
+}
+
+.dh-qfilm--top {
+  display: flex;
+  justify-items: start;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.dh-qfilm-t {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dh-qfilm-t b {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 800;
+  color: #f4efe6;
+}
+
+.dh-qfilm-t .score-line {
+  font-size: 13px;
+  font-weight: 500;
+  color: #c3bcb0;
+}
+
+.dh-qfilm-t .score-line b {
+  font-family: inherit;
+  font-size: inherit;
+  color: #e8a04a;
+}
+
+.dh-quotes .dh-qtext {
+  font-size: 18px;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

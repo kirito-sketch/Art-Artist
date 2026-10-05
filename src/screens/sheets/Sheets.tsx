@@ -17,7 +17,8 @@ import { useLearned } from '../../ui/learned';
 import { Sheet } from '../../ui/Sheet';
 import { RoleRow } from '../discover/RoleRow';
 import { AddPerson, NewProjectForm, PickProject } from '../production/Create';
-import { world, project as wproject } from '../../state/world';
+import { world, project as wproject, work } from '../../state/world';
+import { ReviewSheet } from '../reviews/reviewUnits';
 import { INTENTS } from '../../domain/relevance';
 import { reportLevel, sentReports } from '../../state/reports';
 import type { IndustryEvent } from '../../data/types';
@@ -59,6 +60,9 @@ export function SheetHost() {
       </Sheet>
       <Sheet open={is('more')} onClose={closeSheet} title="" label="More options">
         {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
+      </Sheet>
+      <Sheet open={is('review')} onClose={closeSheet} title="Your review">
+        {sheet?.name === 'review' && <ReviewSheet projectId={sheet.projectId} title={work(sheet.projectId)?.title ?? ''} />}
       </Sheet>
       <Sheet open={is('report')} onClose={closeSheet} title="Report">
         {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} target={sheet.target} />}
@@ -842,6 +846,7 @@ function MoreSheet({ id }: { id: string }) {
 
 /** Events have their own reasons: money for a role, a fake or misleading event, and anything involving a child goes straight to Child Safety. */
 const EVENT_REPORT_REASONS = ['Asks for money for a role or audition', 'Not a real event', 'Misleading price or details', 'Involves a child', 'Something else'];
+const REVIEW_REPORT_REASONS = ['Personal attack or harassment', 'Spoilers not marked', 'Not about the film', 'Fake or paid review', 'Something else'];
 const REPORT_REASONS = ['Fake profile or impersonation', 'Asking for money to apply or audition', 'Harassment or unsafe behaviour', 'Misleading role or project', 'Stolen or misused work', 'Something else'];
 
 /**
@@ -864,7 +869,7 @@ function PostMenu({ id }: { id: string }) {
 }
 
 /** Report: reason, optional detail, a clear promise, and the offer to block. */
-function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: string; target?: { kind: 'Post' | 'Event'; id: string } }) {
+function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: string; target?: { kind: 'Post' | 'Event' | 'Review'; id: string } }) {
   const { openSheet, closeSheet, acting, viewer } = useStore();
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
@@ -889,7 +894,7 @@ function ReportSheet({ subject, partyId, target }: { subject: string; partyId?: 
       <p className="meta">What's wrong with {subject}?</p>
       {acting !== 'self' && <p className="meta">This is a personal action: the report comes from you, {person(viewer.id).name.split(' ')[0]}, not {org(acting).name}.</p>}
       <div className="group">
-        {(target?.kind === 'Event' ? EVENT_REPORT_REASONS : REPORT_REASONS).map((r) => (
+        {(target?.kind === 'Event' ? EVENT_REPORT_REASONS : target?.kind === 'Review' ? REVIEW_REPORT_REASONS : REPORT_REASONS).map((r) => (
           <Row key={r} label={r} onPress={() => setReason(r)} chevron={false} pressed={reason === r} value={reason === r ? <Check size={18} className="accent" aria-hidden /> : undefined} />
         ))}
       </div>
