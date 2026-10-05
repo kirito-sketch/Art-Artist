@@ -39,9 +39,6 @@ export function SheetHost() {
       <Sheet open={is('intent')} onClose={closeSheet} title="What are you looking to do right now?">
         <IntentForm />
       </Sheet>
-      <Sheet open={is('respond')} onClose={closeSheet} title="Respond" size="tall">
-        {sheet?.name === 'respond' && <RespondForm id={sheet.id} />}
-      </Sheet>
       <Sheet open={is('showInterest')} onClose={closeSheet} title="Show interest">
         {sheet?.name === 'showInterest' && <InterestForm id={sheet.id} />}
       </Sheet>
@@ -459,78 +456,6 @@ function AvailabilityForm() {
   );
 }
 
-/* ----------------------------------------------------------------- Respond */
-
-function RespondForm({ id }: { id: string }) {
-  const { respond, userCollabs, viewer, attempt } = useStore();
-  const [failed, setFailed] = useState(false);
-  const o = findOpportunity(id, userCollabs)!;
-  // A new account may have no work yet: then there is simply no reel to attach (V29 crashed here).
-  const reel = (seed.portfolio[viewer.id] ?? [])[0];
-  const credits = world.credits.filter((c) => c.personId === viewer.id && c.status === 'accepted').length;
-  const [answers, setAnswers] = useState<string[]>(() => (o.questions ?? []).map(() => ''));
-  const [withReel, setWithReel] = useState(true);
-  const [withCredits, setWithCredits] = useState(true);
-  const [sending, setSending] = useState(false);
-  const remaining = answers.filter((a) => a.trim().length < 2).length;
-
-  return (
-    <div className="stack">
-      <div>
-        <p className="item-title">{o.role}</p>
-        <p className="meta">
-          {o.project} · {org(o.orgId!).name}
-        </p>
-      </div>
-
-      <div className="group">
-        <Row label="Your profile" value={<Check size={18} className="accent" />} />
-        {reel && <Row label={reel.caption ?? 'Showreel'} onPress={() => setWithReel((v) => !v)} chevron={false} value={withReel ? <Check size={18} className="accent" /> : <span className="meta">Add</span>} />}
-        <Row label={`${credits} credits`} onPress={() => setWithCredits((v) => !v)} chevron={false} value={withCredits ? <Check size={18} className="accent" /> : <span className="meta">Add</span>} />
-      </div>
-
-      {o.questions?.map((q, i) => (
-        <label key={q} className="question">
-          <span className="item-title">{q}</span>
-          <textarea
-            id={`q${i}`}
-            className="field field--area"
-            rows={2}
-            value={answers[i]}
-            onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))}
-            placeholder="Your answer"
-          />
-        </label>
-      ))}
-
-      <div className="sheet-sticky">
-        {failed && <p className="field-error" role="alert">Couldn't send. Your answers are kept, try again.</p>}
-        <Button
-          block
-          size="l"
-          loading={sending}
-          disabled={remaining > 0}
-          onClick={() => {
-            setSending(true);
-            setFailed(false);
-            attempt(
-              `respond-${id}`,
-              () => respond(id, ['Profile', ...(withReel && reel ? ['Showreel'] : []), ...(withCredits ? ['Credits'] : [])]),
-              () => {
-                setSending(false);
-                setFailed(true);
-              },
-              800,
-            );
-          }}
-        >
-          {remaining ? `${remaining} ${remaining === 1 ? 'answer' : 'answers'} to go` : failed ? 'Try again' : 'Send'}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 /* ---------------------------------------------------------------- Interest */
 
 function InterestForm({ id }: { id: string }) {
@@ -778,10 +703,10 @@ function ReportCredit({ title, creditId }: { title: string; creditId?: string })
 
 /** Private to the account owner: what they saved, what they sent, what they posted. */
 function Activity() {
-  const { saved, responses, interestsSent, userCollabs, viewer, push } = useStore();
+  const { saved, interestsSent, userCollabs, viewer, push } = useStore();
   const pick = (ids: string[]) => ids.map((id) => findOpportunity(id, userCollabs)).filter(Boolean) as NonNullable<ReturnType<typeof findOpportunity>>[];
   const sections = [
-    { title: 'Sent', items: pick([...Object.keys(responses), ...Object.keys(interestsSent)]), empty: 'Roles you respond to appear here.' },
+    { title: 'Sent', items: pick(Object.keys(interestsSent)), empty: 'Roles you respond to appear here.' },
     { title: 'Your collaborations', items: [...userCollabs, ...seed.opportunities.filter((o) => o.authorId === viewer.id)], empty: 'Nothing posted yet.' },
   ];
   return (

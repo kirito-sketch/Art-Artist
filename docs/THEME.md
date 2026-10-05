@@ -16,7 +16,7 @@ phone, live, both ways.
 The resolved theme is `<html data-theme="light|dark">`. It is set **only on the normal app**: `/test`,
 `/research`, research sessions, the moderation console and the internal QA pages never receive it, so they
 look exactly as before on any phone. Only the default look takes the dark theme (the prototype's
-alternative looks keep their own palettes). The prototype console around the phone stays light.
+alternative looks keep their own palettes). Studio and the stage around the phone stay light.
 
 ## Semantic tokens
 

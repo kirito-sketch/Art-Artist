@@ -30,11 +30,12 @@ import { dur, ease, spring } from './ui/motion';
 import { IdentityShift } from './ui/IdentityShift';
 import { IconButton, Photo } from './ui/primitives';
 import { ModalContext, activation, applySystemTextSize, currentScreen, focusEl, focusInto, inertProps, mediaName, trackInputModality, type ModalLayer } from './ui/a11y';
-import { PrototypeControls, StageNotice } from './dev/PrototypeControls';
+import { BackToStudio, DeepLink, StageNotice } from './dev/deepLink';
+import { Studio } from './studio/Studio';
 import { RESEARCH, exitResearch } from './research';
 import { ResearchObserver } from './research-data/ResearchObserver';
 import { research } from './research-data/client';
-import { RESEARCH_DASHBOARD, TEST_MODE } from './research-data/surface';
+import { RESEARCH_DASHBOARD, STUDIO, TEST_MODE } from './research-data/surface';
 import { TestMode } from './research-data/TestMode';
 import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
 import { LaunchSplash, type LaunchPhase } from './ui/LaunchSplash';
@@ -311,7 +312,7 @@ function Phone({ app = false }: { app?: boolean }) {
     <MotionConfig reducedMotion="user">
     <LayoutGroup>
     <ModalContext.Provider value={modalLayer}>
-    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look={store.look}>
+    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal">
       <div className="phone-screen" ref={screen}>
         {/* App mode runs on the real device: it supplies the status bar and home indicator. */}
         {!app && <StatusBar tone={statusTone} />}
@@ -412,6 +413,7 @@ export default function App() {
         <TestMode phone={<Phone />} />
       </StoreProvider>
     );
+  if (STUDIO) return <Studio />;
   if (RESEARCH_DASHBOARD)
     return (
       <Suspense fallback={<p className="dash-loading">Loading…</p>}>
@@ -452,7 +454,7 @@ export default function App() {
   return <NormalApp />;
 }
 
-/** The normal prototype, in Prototype mode (phone + console) or App mode (only the product). */
+/** The normal prototype, in Prototype mode (the phone on a stage) or App mode (only the product). Studio links set it up. */
 function NormalApp() {
   const [mode, setMode] = useState<ViewMode>(initialViewMode);
   const standalone = isStandalone();
@@ -477,6 +479,7 @@ function NormalApp() {
   return (
     <StoreProvider>
       <ResearchObserver />
+      <DeepLink />
       {mode === 'app' ? (
         <div className={`app-shell${launch === 'covered' ? ' app-shell--covered' : ''}`} {...inertProps(launch !== 'off')}>
           <Phone app />
@@ -487,9 +490,9 @@ function NormalApp() {
             <StageNotice />
             <Phone />
           </div>
-          <PrototypeControls view={{ mode, onChange: choose }} />
         </div>
       )}
+      <BackToStudio />
       <LaunchSplash enabled={standalone} onPhase={setLaunch} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}
       {!standalone && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}

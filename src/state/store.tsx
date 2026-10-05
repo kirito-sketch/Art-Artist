@@ -20,8 +20,6 @@ import type { Conversation, IndustryEvent, Interest, Media, Notification, Opport
 
 /* ------------------------------------------------------------ navigation */
 
-export type Look = 'minimal' | 'glass' | 'bold' | 'doodle';
-
 export type Tab = 'home' | 'discover' | 'inbox' | 'profile';
 
 export type Route =
@@ -60,7 +58,6 @@ export type Sheet =
   | { name: 'notifications' }
   | { name: 'availability' }
   | { name: 'intent' }
-  | { name: 'respond'; id: string }
   | { name: 'showInterest'; id: string }
   | { name: 'reviewInterest'; opportunityId?: string }
   | { name: 'reportCredit'; title: string; creditId?: string }
@@ -90,11 +87,6 @@ export interface Availability {
   open: boolean;
   from: string;
   scope: string;
-}
-
-export interface ResponseRecord {
-  sentAt: string;
-  items: string[];
 }
 
 export interface Publishing {
@@ -170,7 +162,6 @@ function useStoreValue() {
   /** Test state: the signed-in member holds credit authority for the house. */
   const [canIssue, setCanIssue] = useState(BOOT?.canIssue ?? true);
   const [following, setFollowing] = useState<string[]>(BOOT?.flags?.newUser ? [] : DEFAULT_FOLLOWING);
-  const [responses, setResponses] = useState<Record<string, ResponseRecord>>({});
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
   const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY[START]);
   const [conversations, setConversations] = useState<Conversation[]>(seed.conversations[START]);
@@ -204,14 +195,7 @@ function useStoreValue() {
   /** V30: professional intent per person ("what are you trying to do right now?"). Drives Home's order and ranking. */
   const [intents, setIntents] = useState<Record<string, Intent>>({});
   const intent: Intent = intents[viewer.id] ?? DEFAULT_INTENT[viewer.id] ?? defaultIntent(viewer.craft);
-  const [houseHome, setHouseHome] = useState<'slate' | 'pulse' | 'queue'>('slate');
-  const [houseProfile, setHouseProfile] = useState<'work' | 'hiring'>('work');
-  /** VALIDATE: one Interest model everywhere (A) vs Interest for collaborations plus Respond for crew and casting (B). */
-  const [roleModel, setRoleModel] = useState<'interest' | 'respond'>('interest');
   const [profileVersion, setProfileVersion] = useState(0);
-  const [homeLayout, setHomeLayout] = useState<'slides' | 'cards'>('cards');
-  /** Prototype comparison: visual direction applied across the whole app. */
-  const [look, setLook] = useState<Look>('minimal');
   /** Screens currently showing a full-bleed photo under the status bar, keyed by screen. */
   const [heroUnderStatus, setHeroUnderStatus] = useState<Record<string, boolean>>({});
   const setHero = useCallback((key: string, on: boolean) => {
@@ -243,7 +227,6 @@ function useStoreValue() {
     setInterestsReceived(seed.interests[id]);
     setNotifications(seed.notifications[id]);
     setSaved([]);
-    setResponses({});
     setInterestsSent({});
     setUserPosts([]);
     setUserCollabs([]);
@@ -309,15 +292,6 @@ function useStoreValue() {
       if (on && acting !== 'self') showToast({ text: 'Following from your personal account' });
     },
     [following, acting, showToast],
-  );
-
-  const respond = useCallback(
-    (id: string, items: string[]) => {
-      setResponses((r) => ({ ...r, [id]: { sentAt: 'Today, ' + nowTime(), items } }));
-      setSheet(null);
-      showToast({ text: 'Response sent', tone: 'success' });
-    },
-    [showToast],
   );
 
   const sendInterest = useCallback(
@@ -531,8 +505,6 @@ function useStoreValue() {
     viewer,
     switchViewer,
     heroUnderStatus,
-    homeLayout,
-    setHomeLayout,
     acting,
     memberships,
     entry,
@@ -640,12 +612,6 @@ function useStoreValue() {
     cannotReach: (id: string) => act.blockedBetween(viewer.id, id) || act.blockedBetween(act.speakingAs(actor), id),
     block: (id: string) => (act.block(actor, id), bump()),
     unblock: (id: string) => (act.unblock(actor, id), bump()),
-    houseHome,
-    setHouseHome,
-    houseProfile,
-    setHouseProfile,
-    roleModel,
-    setRoleModel,
     /** A filled role keeps its record. Hiring again for the same craft and project is a new role. */
     openAgain: (id: string) => {
       const base = userCollabs.find((x) => x.id === id) ?? seed.opportunities.find((x) => x.id === id) ?? world.roles.find((x) => x.id === id);
@@ -666,8 +632,6 @@ function useStoreValue() {
       if (w) (w.unread = false), bump();
       setNotifications((ns) => ns.map((n) => (n.id === id ? { ...n, unread: false } : n)));
     },
-    look,
-    setLook,
     setHero,
     scenario,
     setScenario,
@@ -701,13 +665,6 @@ function useStoreValue() {
     cancelEvent: (id: string) => setEvents((list) => list.map((e) => (e.id === id ? { ...e, status: 'cancelled' as const } : e))),
     following,
     toggleFollow,
-    responses,
-    respond,
-    withdrawResponse: (id: string) => {
-      const prev = responses[id];
-      setResponses((r) => { const n = { ...r }; delete n[id]; return n; });
-      showToast({ text: 'Response withdrawn', action: { label: 'Undo', run: () => setResponses((r) => ({ ...r, [id]: prev })) } });
-    },
     /** Roles this person showed interest in: the shared Interest records, plus plain listings kept locally. */
     interestsSent: {
       ...interestsSent,

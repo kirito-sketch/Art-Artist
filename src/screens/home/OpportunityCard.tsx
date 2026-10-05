@@ -37,8 +37,7 @@ export function SaveButton({ id, kind = 'role', floating, name }: { id: string; 
 
 /** The one thing the user has already done with this opportunity, if anything. */
 export function useSentLabel(o: Opportunity) {
-  const { responses, interestsSent } = useStore();
-  if (responses[o.id]) return 'Response sent';
+  const { interestsSent } = useStore();
   if (interestsSent[o.id] !== undefined) return 'Interest sent';
   return null;
 }

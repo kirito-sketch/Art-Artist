@@ -6,7 +6,7 @@ The goal is not a screen for every strange situation. It is Ana behaving intenti
 
 | Layer | Who it is for | Where | What it can see |
 |---|---|---|---|
-| Normal prototype | Stakeholder walkthroughs | `/` | The console. Its only link to testing is Advanced → Testing → Open Edge Case Lab, with a quiet "P0: N remaining". |
+| Normal prototype | Stakeholder walkthroughs | `/` | Only the phone. Studio (`/studio`) links to the Lab, with "P0 remaining: N". |
 | Research Mode | Participant sessions | `?research` or Start research session | Nothing internal. It strips `?scenario` and `?lab` and ignores both. Reload is a clean reset. Shift+E exits. |
 | Edge Case Lab | Design, QA, developers, Claude | `?lab` | The full catalogue, the automated results, and links to every reproducible scenario. |
 | Automated regression | CI and anyone changing rules | `npm run test:edge` | Records and public surfaces only. No UI. |

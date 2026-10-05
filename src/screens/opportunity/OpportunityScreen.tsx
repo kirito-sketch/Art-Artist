@@ -26,7 +26,7 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
-  const { pop, push, userCollabs, viewer, responses, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, withdrawResponse, roleModel, openAgain, showToast, blocked } = useStore();
+  const { pop, push, userCollabs, viewer, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, openAgain, showToast, blocked } = useStore();
   const base = findOpportunity(id, userCollabs);
   const o = base && { ...base, ...roleEdits[id] };
   const status = roleStatus[id];
@@ -56,11 +56,9 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
 
   const author = o.authorId ? person(o.authorId) : null;
   const mine = o.authorId === viewer.id || (!!o.orgId && o.orgId === acting);
-  const response = responses[o.id];
   const interested = interestsSent[o.id] !== undefined;
   const received = interestsReceived.filter((i) => i.opportunityId === o.id && !i.withdrawn).length;
   const poster = author ? firstName(author) : org(o.orgId!).name;
-  const respondModel = o.kind !== 'collab' && roleModel === 'respond';
 
   /* Footer: what it pays and when it closes on the left, the one action on the right. Each fact is said once on
      this page (docs/TEXT_LOAD.md): while the bar shows pay, the facts above leave it out, and the closing date
@@ -128,7 +126,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
         Switch to you
       </Button>
     );
-  } else if ((response || interested) && talking) {
+  } else if (interested && talking) {
     // Once the poster has started a conversation, interest has done its job. Changing your mind happens in the chat.
     left = (
       <>
@@ -137,18 +135,6 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
       </>
     );
     action = <Button onClick={() => push({ name: 'conversation', id: talking.id })}>Open chat</Button>;
-  } else if (response) {
-    left = (
-      <>
-        <p className="item-title">Response sent</p>
-        <p className="meta">{response.sentAt}</p>
-      </>
-    );
-    action = (
-      <Button variant="secondary" onClick={() => withdrawResponse(o.id)}>
-        Withdraw
-      </Button>
-    );
   } else if (interested) {
     left = (
       <>
@@ -174,8 +160,6 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
     );
   } else if (scenario.offline) {
     action = <Button disabled>Offline</Button>;
-  } else if (respondModel) {
-    action = <Button onClick={() => openSheet({ name: 'respond', id: o.id })}>Respond</Button>;
   } else if (o.allowDM) {
     action = (
       <Button
@@ -210,8 +194,8 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
   // The kicker often names the language already ("Feature film · Telugu"); then the facts don't repeat it.
   const languageSaid = !!o.language && o.projectType.toLowerCase().includes(o.language.toLowerCase());
   // Under Show interest the questions are asked in the sheet itself, so the page doesn't list them first.
-  const questionsInSheet = !respondModel && !o.allowDM && !mine;
-  const barKey = status ? 'status' : interested ? 'sent' : response ? 'response' : withdrew ? 'withdrawn' : 'open';
+  const questionsInSheet = !o.allowDM && !mine;
+  const barKey = status ? 'status' : interested ? 'sent' : withdrew ? 'withdrawn' : 'open';
 
   return (
     <div className="detail v-role">
@@ -249,7 +233,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
               </button>
             </div>
           )}
-          {!mine && changed.length > 0 && (response || interested) && <p className="inline-note">Updated since you showed interest: {changed.join(', ')}</p>}
+          {!mine && changed.length > 0 && interested && <p className="inline-note">Updated since you showed interest: {changed.join(', ')}</p>}
           {status && !mine && (() => {
             // The person chosen for a filled role finds their way to the project they're now on.
             const onIt = world.associations.find((a) => a.fromRoleId === o.id && a.personId === viewer.id && a.status !== 'removed');
@@ -278,7 +262,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
               ...(payInBar ? [] : [{ label: 'Pay', value: o.paid ? o.compensation : 'Unpaid' }]),
             ]}
           />
-          {!respondModel && !o.allowDM && !mine && (
+          {!o.allowDM && !mine && (
             <p className="role-decides">
               <Users size={18} /> {poster} sees your profile and decides whether to message you
             </p>
@@ -305,9 +289,9 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
             </section>
           )}
 
-          {o.questions && !response && !questionsInSheet && (
+          {o.questions && !questionsInSheet && (
             <section className="detail-section">
-              <h2 className="section-title">{respondModel ? "You'll be asked" : 'Questions'}</h2>
+              <h2 className="section-title">Questions</h2>
               <ol className="numbered">
                 {o.questions.map((q) => (
                   <li key={q}>{q}</li>

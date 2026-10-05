@@ -3,7 +3,7 @@ import * as seed from '../../data/seed';
 import { useStore } from '../../state/store';
 import { org, party } from '../../state/selectors';
 import { publicName, world, type HouseProject } from '../../state/world';
-import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, SectionHeader } from '../../ui/primitives';
 import { industryActivity, peopleFor } from '../../domain/relevance';
 import type { Person } from '../../data/types';
 import { NetworkRow } from '../home/NetworkActivity';
@@ -57,9 +57,6 @@ function HouseTop() {
 }
 
 export function ProductionHome() {
-  const { houseHome } = useStore();
-  if (houseHome === 'pulse') return <PulseHome />;
-  if (houseHome === 'queue') return <QueueHome />;
   return <SlateHome />;
 }
 
@@ -319,160 +316,4 @@ function EmptyHouse() {
   );
 }
 
-/** What is happening around our work: the house's own notifications, with faces. */
-function Around({ expanded }: { expanded?: boolean }) {
-  const { push, markNotificationRead } = useStore();
-  const h = useHouse();
-  const items = h.houseNotes.slice(0, expanded ? 8 : 3);
-  if (!items.length) return null;
-  return (
-    <section className="section">
-      <SectionHeader title="Around your work" />
-      <div className={`list list--flush ${expanded ? 'around--big' : ''}`}>
-        {items.map((n) => (
-          <PressCard
-            key={n.id}
-            className={`around ${n.kind === 'credit' && /correct|isn't right/.test(n.text) ? 'around--flag' : ''}`}
-            onPress={() => {
-              markNotificationRead(n.id);
-              if (n.route) push(n.route as never);
-            }}
-            scale={0.985}
-          >
-            <span className="faces">
-              <Avatar party={party(n.actorId)!} size={expanded ? 40 : 32} />
-            </span>
-            <span className="around-text">
-              <span className="item-title">{n.text}</span>
-              <span className="meta">{n.time}</span>
-            </span>
-          </PressCard>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function Slate({ compact }: { compact?: boolean }) {
-  const { push } = useStore();
-  const h = useHouse();
-  const poster = (p: HouseProject) =>
-    p.artwork ? (
-      <Photo media={p.artwork} className={`rail-poster ${compact ? 'rail-poster--s' : ''}`} showPlay={false} />
-    ) : (
-      <span className={`rail-poster ph-noposter ${compact ? 'rail-poster--s' : ''}`}>{p.shared ? p.workingTitle[0] : <Lock size={20} />}</span>
-    );
-  if (!h.mine.length && !h.co.length) return null;
-  return (
-    <section className="section">
-      <SectionHeader title="Our slate" />
-      <div className="rail">
-        {h.mine.map((p) => (
-          <Pressable key={p.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'hproject', id: p.id })}>
-            {poster(p)}
-            <p className="item-title">{p.workingTitle}</p>
-            <p className="meta">{!p.shared ? 'Only your house sees this' : p.stage === 'Released' ? p.year : p.stage}</p>
-          </Pressable>
-        ))}
-        {h.co.map((p) => (
-          <Pressable key={p.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'work', id: p.id })}>
-            {poster(p)}
-            <p className="item-title">{publicName(p)}</p>
-            <p className="meta">Co-production with {org(p.houseId!).name}</p>
-          </Pressable>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/** People on Art and Artist who fit roles the house hasn't opened yet: the network doing the work a job board would. */
-function PeopleForRoles() {
-  const { push } = useStore();
-  const h = useHouse();
-  const picks = h.mine
-    .flatMap((p) => h.rolesOf(p).filter((r) => r.visibility === 'private').map((r) => ({ r, p })))
-    .map(({ r, p }) => ({ r, p, who: seed.people.find((x) => x.visibility === 'public' && x.role.toLowerCase().includes(r.role.toLowerCase().split(' ')[0])) }))
-    .filter((x) => x.who)
-    .slice(0, 3);
-  if (!picks.length) return null;
-  return (
-    <section className="section">
-      <SectionHeader title="For roles you haven't opened" />
-      <div className="list list--flush">
-        {picks.map(({ r, p, who }) => (
-          <PressCard key={r.id} className="prow" onPress={() => push({ name: 'profile', id: who!.id })} scale={0.985}>
-            <Avatar party={who!} size={44} available={!!who!.availableFrom} />
-            <div className="prow-text">
-              <p className="item-title">{who!.name}</p>
-              <p className="meta">
-                {r.role} · still private on {p.workingTitle}
-              </p>
-            </div>
-          </PressCard>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------------------------------------ Archived references */
-
-/** Archived: activity first, slate underneath. Reference only. */
-function PulseHome() {
-  const h = useHouse();
-  return (
-    <div className="screen" data-scroll="home">
-      <HouseTop />
-      {!h.live.length && <EmptyHouse />}
-      <Around expanded />
-      <PeopleForRoles />
-      <Slate compact />
-    </div>
-  );
-}
-
-/** Archived: decisions first, then a plain list. Reference for what an admin dashboard would look like. */
-function QueueHome() {
-  const { push } = useStore();
-  const h = useHouse();
-  const unread = h.houseNotes.filter((n) => n.unread);
-  return (
-    <div className="screen" data-scroll="home">
-      <HouseTop />
-      {unread.length > 0 && (
-        <section className="section">
-          <SectionHeader title="Needs a decision" />
-          <div className="list list--flush">
-            {unread.map((n) => (
-              <PressCard key={n.id} className="prow" onPress={() => n.route && push(n.route as never)} scale={0.985}>
-                <div className="prow-text">
-                  <p className="item-title">{n.text}</p>
-                </div>
-              </PressCard>
-            ))}
-          </div>
-        </section>
-      )}
-      <section className="section">
-        <SectionHeader title="Projects" />
-        <div className="list list--flush">
-          {h.mine.map((p) => (
-            <PressCard key={p.id} className="rrow" onPress={() => push({ name: 'hproject', id: p.id })} scale={0.985}>
-              {p.artwork ? <Photo media={p.artwork} className="rrow-thumb" showPlay={false} /> : <span className="rrow-thumb ph-noposter">{p.workingTitle[0]}</span>}
-              <div className="rrow-text">
-                <p className="item-title">{p.workingTitle}</p>
-                <p className="meta">
-                  {p.stage}
-                  {!p.shared && ' · private'}
-                </p>
-              </div>
-            </PressCard>
-          ))}
-        </div>
-      </section>
-      {!h.mine.length && <EmptyHouse />}
-    </div>
-  );
-}
 

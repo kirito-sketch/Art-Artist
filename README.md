@@ -13,8 +13,9 @@ npm run dev        # http://localhost:5173
 npm run build      # typecheck + production build to dist/
 ```
 
-On a desktop browser the app renders inside an iPhone frame with a scenario panel beside it. At phone
-width it runs full screen.
+On a desktop browser the app renders inside an iPhone frame. At phone width it runs full screen.
+Personas, flows, test states, QA tools and the archive of earlier directions live in Studio:
+`/studio` ([`docs/STUDIO.md`](docs/STUDIO.md)).
 
 ## Visual system
 

@@ -8,7 +8,6 @@ import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
 import './styles/screens.css';
-import './styles/looks.css';
 import './styles/expression.css';
 import './styles/home-next.css';
 import './styles/events.css';

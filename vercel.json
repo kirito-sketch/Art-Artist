@@ -3,10 +3,12 @@
   "rewrites": [
     { "source": "/api/research/(.*)", "destination": "/api/research?action=$1" },
     { "source": "/test", "destination": "/index.html" },
-    { "source": "/research", "destination": "/index.html" }
+    { "source": "/research", "destination": "/index.html" },
+    { "source": "/studio", "destination": "/index.html" }
   ],
   "headers": [
     { "source": "/research", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }, { "key": "Cache-Control", "value": "no-store" }] },
-    { "source": "/test", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
+    { "source": "/test", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/studio", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
   ]
 }

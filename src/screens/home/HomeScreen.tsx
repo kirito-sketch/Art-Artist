@@ -1,58 +1,47 @@
 import { motion } from 'framer-motion';
-import { BadgeCheck, Bell, CheckCircle2, ChevronDown, ChevronRight, MessageCircle, RotateCcw, Users } from 'lucide-react';
+import { BadgeCheck, Bell, CheckCircle2, ChevronDown, ChevronRight, MessageCircle, Users } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { craftDef } from '../../data/crafts';
-import type { Opportunity, Person } from '../../data/types';
+import type { Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { homeOrder, housesFor, industryActivity, intentDef, opportunitiesFor, peopleFor, projectsFor, stageOf, workFor, type HomeSection, type Signals, type Stage } from '../../domain/relevance';
 import { FrameLabel, PortraitCard, PosterTile } from '../../ui/compose';
-import { findOpportunity, forYou, kindLabel, org, party, person } from '../../state/selectors';
+import { findOpportunity, org, party, person } from '../../state/selectors';
 import { worksForOrg } from '../../state/world';
 import { isLive } from '../../data/works';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
-import { shared, spring, stagger } from '../../ui/motion';
-import { Button, FollowButton, IconButton, Photo, PressCard, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
+import { shared, stagger } from '../../ui/motion';
+import { Button, FollowButton, IconButton, PressCard, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { LivingBackground } from '../../ui/ambient/LivingBackground';
 import { useAmbientVariant } from '../../ui/ambient/ambient';
 import { NetworkRow } from './NetworkActivity';
-import { Byline, FeaturedCard, SaveButton, useSentLabel } from './OpportunityCard';
+import { FeaturedCard } from './OpportunityCard';
 import { FirstStep, Resolve, useWorldForming } from './FirstHome';
 import { RoleRow } from '../discover/RoleRow';
 import { EventRow } from '../event/eventUnits';
 import { eventHomeCandidates } from '../../state/events';
 import { useFeatures } from '../../ui/features';
 
-const HERO_HEIGHT = 600;
 
 export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?: string) => void }) {
   const store = useStore();
-  const { viewer, scenario, openSheet, notifications, reloadKey, push, setHero, homeLayout, intent } = store;
+  const { viewer, scenario, openSheet, notifications, reloadKey, intent } = store;
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
   const loading = scenario.loading;
   const me = person(viewer.id);
-  const opps = forYou(viewer, scenario);
   const unreadCount = notifications.filter((n) => n.unread).length;
   const unread = unreadCount > 0;
-  const cards = homeLayout === 'cards';
   // First session: a person just out of onboarding (or the "New user" test state). No network yet.
   const first = !loading && (store.isNewPerson || scenario.newUser);
-  const forming = useWorldForming(first && cards);
+  const forming = useWorldForming(first);
   // Living background experiment (Settings › Appearance › Background): Home only, off by default.
   const ambient = useAmbientVariant();
-  const ambientOn = cards && ambient !== 'off';
-  const hasHero = !cards && !loading && !scenario.forYouError && opps.length > 0;
-  const solid = !hasHero || scrollY > 40;
-
-  useEffect(() => {
-    setHero('home', !solid);
-    return () => setHero('home', false);
-  }, [solid, setHero]);
+  const ambientOn = ambient !== 'off';
 
   const publishingId = store.publishing?.id;
   useEffect(() => {
-    if (publishingId) scrollRef.current?.scrollTo({ top: hasHero ? HERO_HEIGHT - 40 : 0, behavior: 'smooth' });
+    if (publishingId) scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, [publishingId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cards layout: the header is part of the page, on the same paper, and scrolls away with it.
@@ -98,32 +87,10 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
   return (
     <>
       {ambientOn && <LivingBackground variant={ambient as Exclude<typeof ambient, 'off'>} scrollRef={scrollRef} />}
-      <div className={`screen screen--hero ${cards ? 'canvas v-home' : ''}${ambientOn ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}-${homeLayout}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
-        {cards ? (
-          header('home-header--inline')
-        ) : loading ? (
-          <div className="hero hero--empty">
-            <Skeleton w="100%" h="100%" r={0} />
-          </div>
-        ) : scenario.forYouError ? (
-          <div className="hero hero--empty">
-            <p className="item-title">Couldn't load your recommendations</p>
-            <Button variant="secondary" size="s" icon={<RotateCcw size={14} />} onClick={() => store.setScenario({ forYouError: false })}>
-              Retry
-            </Button>
-          </div>
-        ) : opps.length ? (
-          <HeroRail opps={opps} scrollY={scrollY} onOpen={(id) => push({ name: 'opportunity', id })} />
-        ) : (
-          <div className="hero hero--empty">
-            <p className="item-title">Nothing matches your craft this week</p>
-            <Button variant="secondary" size="s" onClick={() => goDiscover('roles')}>
-              Browse all opportunities
-            </Button>
-          </div>
-        )}
+      <div className={`screen screen--hero canvas v-home${ambientOn ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
+        {header('home-header--inline')}
 
-        <div className={`home-sheet ${hasHero ? '' : 'home-sheet--flat'}`}>
+        <div className="home-sheet home-sheet--flat">
           <OfflineBanner />
           <PublishBar />
 
@@ -163,9 +130,6 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
           )}
         </div>
       </div>
-
-      {/* Archived hero layout: controls float over the photo, a solid bar once it has scrolled away. */}
-      {!cards && header(solid ? 'is-solid' : '')}
     </>
   );
 }
@@ -492,61 +456,6 @@ function CommunityWork({ me, lead, goDiscover }: HomeCtx) {
         })}
       </div>
     </section>
-  );
-}
-
-/** Full-bleed, swipeable roles. One slide per role, same treatment for every role. */
-function HeroRail({ opps, scrollY, onOpen }: { opps: Opportunity[]; scrollY: number; onOpen: (id: string) => void }) {
-  const railRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
-  return (
-    <div className="hero">
-      <div
-        className="hero-rail"
-        ref={railRef}
-        onScroll={(e) => setActive(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
-        style={{ transform: `translateY(${Math.max(0, scrollY) * 0.35}px)` }}
-      >
-        {opps.map((o) => (
-          <HeroSlide key={o.id} o={o} onOpen={() => onOpen(o.id)} />
-        ))}
-      </div>
-      {opps.length > 1 && (
-        <div className="hero-dots" aria-hidden>
-          {opps.map((o, i) => (
-            <motion.span key={o.id} className="hero-dot" animate={{ width: i === active ? 18 : 6, opacity: i === active ? 1 : 0.5 }} transition={spring.snappy} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HeroSlide({ o, onOpen }: { o: Opportunity; onOpen: () => void }) {
-  const sent = useSentLabel(o);
-  const closing = o.closesInDays !== undefined && o.closesInDays <= 5 ? ` · Closes in ${o.closesInDays} days` : '';
-  return (
-    <div className="hero-slide">
-      <Photo media={o.media} className="hero-photo" />
-      <div className="hero-scrim" />
-      <motion.div className="hero-content" {...stagger(0)}>
-        <span className="hero-pill">{sent ?? `${kindLabel[o.kind]}${closing}`}</span>
-        <h2 className="hero-title">{o.role}</h2>
-        <p className="hero-line">
-          <Byline o={o} />
-          <span>· {o.projectType.split(' · ')[0]}</span>
-        </p>
-        <p className="hero-line hero-line--quiet">{o.highlight ?? `${o.city} · ${o.dates}`}</p>
-        <div className="hero-actions">
-          <Button variant="light" onClick={onOpen}>
-            View role
-          </Button>
-          <span className="hero-save">
-            <SaveButton id={o.id} floating name={`${o.role} role`} />
-          </span>
-        </div>
-      </motion.div>
-    </div>
   );
 }
 

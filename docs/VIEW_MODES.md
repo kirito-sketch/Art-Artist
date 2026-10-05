@@ -4,13 +4,13 @@ The normal Art and Artist prototype has two presentations. `/test` and `/researc
 
 | Mode | What you see |
 |---|---|
-| Prototype | The simulated phone on the desktop canvas, with the persona and QA console beside it. |
-| App | Only the product, filling the viewport. No bezel, console, fake status bar or home indicator. Real safe areas. On a desktop the app is a centred column up to 480 px wide. |
+| Prototype | The simulated phone on the desktop canvas. Personas and QA tools are in Studio (`/studio`, docs/STUDIO.md). |
+| App | Only the product, filling the viewport. No bezel, fake status bar or home indicator. Real safe areas. On a desktop the app is a centred column up to 480 px wide. |
 
 ## Switching
 
-- **Prototype mode:** the `Prototype | App` switch sits at the top of the console, next to the title.
-- **App mode, or Prototype mode on a phone (where the console is hidden):** a small translucent "View" tab on the left edge of the screen, in the page gutter. Tap it to show `Prototype | App`; it collapses again after a choice. It is a development control, styled as a tool, and never appears in the installed app.
+- **Prototype mode on a desktop:** no control on the page; App mode is a Studio link (`/?view=app`).
+- **App mode, or Prototype mode on a phone :** a small translucent "View" tab on the left edge of the screen, in the page gutter. Tap it to show `Prototype | App`; it collapses again after a choice. It is a development control, styled as a tool, and never appears in the installed app.
 
 ## Which mode opens
 

@@ -24,7 +24,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
  *   hiring  Open roles first. The page as a front door for hiring.
  */
 export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
-  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, houseProfile, setHero, showToast, blocked, roleStatus, memberships, setActing, events, viewer } = useStore();
+  const { pop, push, openSheet, acting, following, toggleFollow, startConversation, setHero, showToast, blocked, roleStatus, memberships, setActing, events, viewer } = useStore();
   const o = org(id);
   const own = acting === id;
   const [scrollY, setScrollY] = useState(0);
@@ -104,7 +104,8 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
     </section>
   );
   const upcoming = <EventsSection key="events" title="Upcoming events" list={eventsOfHost(events, id, Date.now(), viewer.id, acting)} />;
-  const sections = houseProfile === 'hiring' ? [hiring, nowMaking, upcoming, filmography, workedWith] : [nowMaking, upcoming, filmography, workedWith, hiring];
+  // Work first: what the house makes leads; open roles follow its record.
+  const sections = [nowMaking, upcoming, filmography, workedWith, hiring];
 
   return (
     <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
