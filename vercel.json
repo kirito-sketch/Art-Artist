@@ -2,6 +2,26 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/studio/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/studio/images/:path*",
+      "destination": "/images/:path*"
+    },
+    {
+      "source": "/studio/video/:path*",
+      "destination": "/video/:path*"
+    },
+    {
+      "source": "/studio/icons/:path*",
+      "destination": "/icons/:path*"
+    },
+    {
+      "source": "/studio/manifest.webmanifest",
+      "destination": "/manifest.webmanifest"
+    },
+    {
       "source": "/api/research/(.*)",
       "destination": "/api/research?action=$1"
     },
