@@ -728,9 +728,13 @@
   pointer-events: none;
 }
 
+/* Frosted, like iOS: over the page's own ground it looks like nothing, and whatever scrolls beneath it is
+   blurred instead of being sliced off at a hard edge. */
 .status-bar--dark {
   color: var(--text);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(18px);
+  backdrop-filter: saturate(1.4) blur(18px);
 }
 
 .status-bar--light {

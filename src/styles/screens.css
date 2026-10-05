@@ -820,7 +820,10 @@
   position: sticky;
   top: 0;
   z-index: 4;
-  background: var(--bg);
+  /* Same frosted material as the status bar above it, so the two read as one bar while the grid scrolls under. */
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(18px);
+  backdrop-filter: saturate(1.4) blur(18px);
   padding-top: 4px;
   margin-bottom: 16px;
 }

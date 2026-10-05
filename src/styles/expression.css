@@ -1001,7 +1001,7 @@
  * covers tab screens only; media-led detail screens keep their own status treatment.)
  */
 .phone-screen:has(> .tab-layer[aria-hidden='false'] .canvas):not(:has(> .route-layer)) > .status-bar--dark {
-  background: var(--base);
+  background: color-mix(in srgb, var(--base) 94%, transparent);
 }
 
 /* =========================================== Title responsiveness */
@@ -1118,7 +1118,7 @@
 /* ================================================== Discover */
 
 .v-discover .search-wrap {
-  background: var(--base);
+  background: color-mix(in srgb, var(--base) 90%, transparent);
 }
 
 .v-discover .search {
@@ -1322,7 +1322,9 @@
 /* Routes that sit on the canvas ask for the paper status bar explicitly. */
 .status-bar--paper {
   color: var(--text);
-  background: var(--base);
+  background: color-mix(in srgb, var(--base) 94%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(18px);
+  backdrop-filter: saturate(1.4) blur(18px);
 }
 
 /* =========================================== First-run Home */
