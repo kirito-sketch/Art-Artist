@@ -20,7 +20,7 @@ Code: `src/ui/features.ts` (`useFeatures`, `setFeatures`, `assignHomeArm`).
 
 A finite page. It has a beginning, a middle and an end.
 
-1. **Header:** the logo, a search pill (opens Discover with the cursor in search) and the bell.
+1. **Header:** the logo and the bell. Search lives in Discover only (one tap away), so Home's top shows what's new for you rather than a tool.
 2. **Lead:** one story. It is a project or a piece of work, **never a role**. Only high-significance items can lead.
 3. **Personal news (optional):** one thing that happened to you, written as news ("Saffron Reel Studios added you to Kaaval as Director of Photography."). Never a count, never a queue. Decisions are grouped under "Needs you" in Notifications instead.
 4. **Composed middle:** whatever the composer returns, from 3 to 8 units.
@@ -65,7 +65,7 @@ No "This week", no "updated Monday", no edition language, no counts ("3 things n
 
 ## Research events
 
-`home_unit_opened` (unit, position, whether it had a reason), `home_end_reached`, `home_search_opened` and `home_refreshed`.
+`home_unit_opened` (unit, position, whether it had a reason), `home_end_reached` and `home_refreshed`. (`home_search_opened` is kept in the taxonomy for sessions recorded before the search pill was removed.)
 
 ## Accessibility
 

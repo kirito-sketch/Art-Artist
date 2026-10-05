@@ -174,7 +174,6 @@ export type ArmRow = {
   medianScenariosDone: number | null;
   reachedEnd: number;
   openedFromHome: number;
-  searchedFromHome: number;
   tasks: { taskId: string; reached: number; finished: number; medianMs: number | null; medianEase: number | null }[];
 };
 
@@ -196,7 +195,6 @@ export function compareHome(d: StudyData, events: HealthEvent[], now = Date.now(
       medianScenariosDone: h.medianScenariosDone,
       reachedEnd: sessionsWith('home_end_reached'),
       openedFromHome: sessionsWith('home_unit_opened'),
-      searchedFromHome: sessionsWith('home_search_opened'),
       tasks: h.tasks.map((t) => ({ taskId: t.task.id, reached: t.reached, finished: t.finished, medianMs: t.medianMs, medianEase: t.medianEase })),
     };
   });

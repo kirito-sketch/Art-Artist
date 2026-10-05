@@ -15,28 +15,6 @@
   padding-top: 0;
 }
 
-.hn-search {
-  flex: 1;
-  min-width: 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-  color: var(--text-2);
-  font-size: 15px;
-  text-align: left;
-}
-
-.hn-search span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .hn-sheet {
   display: flex;
   flex-direction: column;

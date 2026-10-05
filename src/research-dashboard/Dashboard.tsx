@@ -820,7 +820,6 @@ function Health({ v, study }: { v: View; study?: Study }) {
                   <th>Median finished</th>
                   <th>Reached the end of Home</th>
                   <th>Opened something from Home</th>
-                  <th>Searched from Home</th>
                   {v.tasks
                     .slice()
                     .sort((a, b) => a.sequence - b.sequence)
@@ -843,7 +842,6 @@ function Health({ v, study }: { v: View; study?: Study }) {
                     <td>{c.arm === 'next' ? `${c.reachedEnd} (${pct(c.reachedEnd, c.sessions)})` : '-'}</td>
                     {/* Only the new Home sends these events; for the others a 0 would be misleading. */}
                     <td>{c.arm === 'next' ? c.openedFromHome : '-'}</td>
-                    <td>{c.arm === 'next' ? c.searchedFromHome : '-'}</td>
                     {c.tasks.map((t) => (
                       <td key={t.taskId}>
                         {t.finished}/{t.reached} · {fmtDuration(t.medianMs)} · {t.medianEase ?? '-'}

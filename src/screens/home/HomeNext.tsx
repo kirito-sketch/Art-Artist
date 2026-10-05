@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Search } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { homeInput } from '../../domain/home/candidates';
@@ -14,7 +14,7 @@ import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { PortraitCard } from '../../ui/compose';
 import { goldenHourLine } from '../../ui/goldenHour';
 import { Logo } from '../../ui/Logo';
-import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
 import { PostCard } from './PostCard';
 import { FirstStep } from './FirstHome';
@@ -49,7 +49,7 @@ const kv: KV = {
 
 const track = (unit: string, position: number, reason?: string) => research.track('home_unit_opened', { metadata: { unit, position, reason: !!reason } });
 
-export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: string, opts?: { focusSearch?: boolean }) => void }) {
+export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: string) => void }) {
   const store = useStore();
   const { viewer, notifications, openSheet, intent, following, userPosts, userCollabs, roleStatus, pendingCredits, scenario, reloadKey } = store;
   const me = person(viewer.id);
@@ -101,14 +101,12 @@ export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: 
   return (
     <div className="screen canvas v-home hn" data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
       <header className="home-header home-header--inline hn-header">
+        {/* Logo and bell only. Search lives in Discover (one tap away), not on Home. */}
         <h1 className="sr-only">Home</h1>
         <span className="home-logo">
           <Logo />
         </span>
-        <Pressable className="hn-search" onClick={() => (research.track('home_search_opened'), goDiscover('people', undefined, { focusSearch: true }))} scale={0.98} aria-label="Search people, projects and roles">
-          <Search size={16} aria-hidden />
-          <span>People, projects, roles</span>
-        </Pressable>
+        <span className="flex" />
         <IconButton label={unreadCount ? `Notifications, ${unreadCount} new` : 'Notifications'} className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
           <Bell size={19} aria-hidden />
           {unreadCount > 0 && <span className="dot" aria-hidden />}

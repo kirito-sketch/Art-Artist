@@ -175,13 +175,7 @@ const STAGES: { id: ProjectStage; label: string }[] = [
   { id: 'released', label: 'Released' },
 ];
 
-export function DiscoverScreen({ scope, setScope, postFocus, focusSearch = 0 }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number }; focusSearch?: number }) {
-  // Opened from Home's search pill: put the cursor in the search field.
-  useEffect(() => {
-    if (!focusSearch) return;
-    const f = requestAnimationFrame(() => document.getElementById('discover-search')?.focus());
-    return () => cancelAnimationFrame(f);
-  }, [focusSearch]);
+export function DiscoverScreen({ scope, setScope, postFocus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number } }) {
   const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
   const features = useFeatures();
   // Events are behind a switch: without it, a stored 'events' scope falls back to People.
