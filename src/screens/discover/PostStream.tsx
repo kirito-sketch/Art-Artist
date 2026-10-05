@@ -94,6 +94,7 @@ function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
       )}
 
       <div className="stream-body">
+        <PostActions post={post} />
         {post.media.length > 0 && <p className="stream-caption">{post.text}</p>}
         {work ? (
           <Pressable className="stream-context" onClick={() => push({ name: 'work', id: work.id })} scale={0.98}>
@@ -104,7 +105,6 @@ function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
             <span className="stream-context-label">Project</span> {post.project}
           </p>
         ) : null}
-        <PostActions post={post} />
       </div>
     </article>
   );

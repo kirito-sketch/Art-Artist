@@ -2113,3 +2113,31 @@
 .v-home .home-sheet { padding-top: 0; }
 .v-home .home-sheet > .v-section:first-of-type,
 .v-home .home-sheet > div:first-of-type > .v-section { padding-top: 6px; }
+
+/* Post actions: the like count hugs the heart; share and save sit clearly apart from it. */
+.post-actions {
+  gap: 4px;
+  margin-left: -10px;
+}
+.post-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  color: var(--text);
+}
+.post-action.is-on {
+  color: var(--danger);
+}
+.post-action-count {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.post-action-save {
+  margin-right: -10px;
+}
+.post-action-save .save {
+  color: var(--text);
+}

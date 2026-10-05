@@ -81,18 +81,20 @@ export type HomeSection = 'forYou' | 'people' | 'projects' | 'activity' | 'work'
  * projects and creative work somewhere, so nobody mistakes Art and Artist for only a job board, a
  * hiring directory or a feed. Established Homes put personal activity higher; creative work stays last.
  */
+// Looking for work or a collaboration, the roles section already shows the projects behind each role; a
+// "Projects you could join" tray under it repeated the same projects with a hiring count. Those intents don't get it.
 export function homeOrder(intent: Intent, stage: Stage): HomeSection[] {
   if (stage === 'established')
     return {
-      work: ['forYou', 'projects', 'people', 'activity', 'work'],
-      collaborate: ['forYou', 'people', 'projects', 'activity', 'work'],
+      work: ['forYou', 'people', 'activity', 'work'],
+      collaborate: ['forYou', 'people', 'activity', 'work'],
       hire: ['people', 'activity', 'projects', 'forYou', 'work'],
       network: ['people', 'activity', 'work', 'projects', 'forYou'],
       explore: ['activity', 'projects', 'work', 'people', 'forYou'],
     }[intent] as HomeSection[];
   return {
-    work: ['forYou', 'people', 'projects', 'activity', 'work'],
-    collaborate: ['forYou', 'people', 'projects', 'work', 'activity'],
+    work: ['forYou', 'people', 'activity', 'work'],
+    collaborate: ['forYou', 'people', 'work', 'activity'],
     hire: ['people', 'projects', 'activity', 'forYou', 'work'],
     network: ['people', 'work', 'activity', 'projects', 'forYou'],
     explore: ['projects', 'work', 'people', 'activity', 'forYou'],

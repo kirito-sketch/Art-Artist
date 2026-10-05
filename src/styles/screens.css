@@ -1927,3 +1927,42 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
     display: none;
   }
 }
+
+/* Test version only: the code screen says no email is sent and offers the code. */
+.test-code {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--r-m);
+  background: #fff4d6;
+  color: #3d2c00;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.test-code p {
+  margin: 0;
+}
+.test-code-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1a1400;
+  font: inherit;
+  cursor: pointer;
+}
+.test-code-digits {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+.test-code-use {
+  font-weight: 650;
+  color: var(--action);
+}

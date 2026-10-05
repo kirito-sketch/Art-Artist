@@ -1,6 +1,6 @@
 import { getFeatures } from '../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Eye, EyeOff, Lock, Mail, Users } from 'lucide-react';
+import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Lock, Mail, Users } from 'lucide-react';
 import { cloneElement, isValidElement, useEffect, useId, useState, type ReactElement, type ReactNode } from 'react';
 import { focusInto, rovingIndex, rovingKeys } from '../ui/a11y';
 import { CRAFTS, headline } from '../data/crafts';
@@ -27,7 +27,7 @@ import { INTENTS, type Intent } from '../domain/relevance';
  * Apple, Google and email are the ways in. Phone is verification and linking only, never a login.
  */
 
-type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'forgot' | 'consent' | 'verify' | 'you' | 'now' | 'invite' | 'inviteTip';
+type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'consent' | 'verify' | 'you' | 'now' | 'invite' | 'inviteTip';
 
 /** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
@@ -47,12 +47,10 @@ export function EntryFlow() {
   const launchOwed = launchSplashPending(isStandalone());
   const [step, setStep] = useState<Step>(entry?.mode === 'signin' ? 'entry' : launchOwed ? (entry?.mode === 'new' ? 'intro' : 'entry') : 'splash');
   const [history, setHistory] = useState<Step[]>([]);
-  const [via, setVia] = useState<'apple' | 'google' | 'email'>('email');
   const [provider, setProvider] = useState<null | 'apple' | 'google'>(null);
   const [legal, setLegal] = useState<DocId | null>(null);
   // Account
   const [email, setEmail] = useState(invite ? INVITE.email : '');
-  const [password, setPassword] = useState('');
   // Profile
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<string | undefined>();
@@ -185,13 +183,13 @@ export function EntryFlow() {
                 )}
                 <h1 className="entry-line">Where film people find each other and build a record of their work.</h1>
                 <div className="entry-actions">
-                  <button className="auth-btn auth-btn--apple" onClick={() => (setVia('apple'), setProvider('apple'))}>
+                  <button className="auth-btn auth-btn--apple" onClick={() => setProvider('apple')}>
                     <AppleMark /> Continue with Apple
                   </button>
-                  <button className="auth-btn" onClick={() => (setVia('google'), setProvider('google'))}>
+                  <button className="auth-btn" onClick={() => setProvider('google')}>
                     <span className="g-mark">G</span> Continue with Google
                   </button>
-                  <button className="auth-btn" onClick={() => (setVia('email'), go('email'))}>
+                  <button className="auth-btn" onClick={() => go('email')}>
                     <Mail size={17} /> Continue with email
                   </button>
                 </div>
@@ -208,21 +206,16 @@ export function EntryFlow() {
             </div>
           )}
 
+          {/* Email is passwordless, the industry standard (a one-time code): the same flow signs up and signs in. */}
           {step === 'email' && (
-            <Form title="Create your account" onBack={back}>
-              <Field label="Email">
-                <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" autoFocus />
-              </Field>
-              <PasswordField value={password} onChange={setPassword} autoComplete="new-password" hint="At least 8 characters. A mix of words is easiest to remember." />
-              <Button block size="l" disabled={!/.+@.+\..+/.test(email) || password.length < 8} aria-describedby="signup-missing" onClick={() => go('consent')}>
-                Continue
-              </Button>
-              <Missing id="signup-missing" items={[!/.+@.+\..+/.test(email) && 'a valid email address', password.length < 8 && (password ? `${8 - password.length} more password ${8 - password.length === 1 ? 'character' : 'characters'}` : 'a password of at least 8 characters')]} />
+            <Form title="Continue with email" onBack={back}>
+              <EmailForm value={email} onChange={setEmail} onSubmit={() => go('verify')} />
             </Form>
           )}
 
-          {step === 'signin' && <SignIn onBack={back} onForgot={() => go('forgot')} onDone={signInAs} onCreate={() => go('email')} onProvider={(p) => (setVia(p), setProvider(p))} />}
-          {step === 'forgot' && <Forgot onBack={back} onDone={signInAs} />}
+          {step === 'signin' && (
+            <SignIn email={email} onEmail={setEmail} onBack={back} onSubmit={() => go('verify')} onProvider={setProvider} />
+          )}
 
           {step === 'consent' && (
             <Consent
@@ -230,12 +223,24 @@ export function EntryFlow() {
               openDoc={setLegal}
               onAgree={(marketing) => {
                 recordConsent(['Terms of Service', 'Privacy Policy', 'Age 18 or older', ...(marketing ? ['Product emails'] : [])], 'Signup');
-                go(via === 'email' ? 'verify' : 'you');
+                // Email was already confirmed with its code before this screen.
+                go('you');
               }}
             />
           )}
 
-          {step === 'verify' && <Verify email={email} onBack={back} onDone={() => go('you')} />}
+          {step === 'verify' && (
+            <Verify
+              email={email}
+              onBack={back}
+              onDone={() => {
+                // A known address signs in; any other address continues to create an account.
+                const k = Object.keys(KNOWN).find((x) => email.toLowerCase().includes(x));
+                if (k && !invite) return signInAs(KNOWN[k]);
+                go('consent');
+              }}
+            />
+          )}
 
           {step === 'you' && (
             <Onboard step={stepIndex} total={steps.length} image="badge" title="About you" onBack={back}>
@@ -403,10 +408,9 @@ export function EntryFlow() {
               if (acct.house) return signInAs(acct.house.viewer, acct.house.acting);
               setEmail(acct.email);
               setName(acct.name);
-              if (history.includes('signin') || step === 'signin') {
-                const k = Object.keys(KNOWN).find((x) => acct.email.includes(x));
-                return k ? signInAs(KNOWN[k]) : undefined;
-              }
+              // A known account signs in; any other account creates one (never a dead end).
+              const k = Object.keys(KNOWN).find((x) => acct.email.includes(x));
+              if (k && !invite) return signInAs(KNOWN[k]);
               go('consent');
             }}
           />
@@ -474,47 +478,6 @@ function Missing({ id, items }: { id: string; items: (string | false)[] }) {
     <p className="meta missing-hint" id={id}>
       To continue, add {list}.
     </p>
-  );
-}
-
-function PasswordField({ value, onChange, autoComplete = 'current-password', hint, error }: { value: string; onChange: (s: string) => void; autoComplete?: string; hint?: ReactNode; error?: ReactNode }) {
-  const [show, setShow] = useState(false);
-  const id = useId();
-  const hintId = hint ? `${id}-hint` : undefined;
-  const errId = error ? `${id}-err` : undefined;
-  return (
-    <div className="ob-field-wrap">
-      <div className="ob-field">
-        <label className="field-label" htmlFor={`${id}-pw`}>
-          Password
-        </label>
-        <span className="pw">
-          <input
-            id={`${id}-pw`}
-            className="field"
-            type={show ? 'text' : 'password'}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            autoComplete={autoComplete}
-            aria-describedby={[hintId, errId].filter(Boolean).join(' ') || undefined}
-            aria-invalid={error ? true : undefined}
-          />
-          <button type="button" className="pw-toggle" aria-label={show ? 'Hide password' : 'Show password'} aria-pressed={show} onClick={() => setShow((s) => !s)}>
-            {show ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
-          </button>
-        </span>
-      </div>
-      {hint && (
-        <p className="meta field-hint" id={hintId}>
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p className="field-error" id={errId} role="alert">
-          {error}
-        </p>
-      )}
-    </div>
   );
 }
 
@@ -606,11 +569,7 @@ function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; inv
   );
 }
 
-function SignIn({ onBack, onForgot, onDone, onCreate, onProvider }: { onBack: () => void; onForgot: () => void; onDone: (id: string) => void; onCreate: () => void; onProvider: (p: 'apple' | 'google') => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<'none' | 'nouser' | 'password'>('none');
-  const [busy, setBusy] = useState(false);
+function SignIn({ email, onEmail, onBack, onSubmit, onProvider }: { email: string; onEmail: (s: string) => void; onBack: () => void; onSubmit: () => void; onProvider: (p: 'apple' | 'google') => void }) {
   return (
     <Form title="Sign in" onBack={onBack}>
       <button className="auth-btn auth-btn--apple" onClick={() => onProvider('apple')}>
@@ -620,77 +579,33 @@ function SignIn({ onBack, onForgot, onDone, onCreate, onProvider }: { onBack: ()
         <span className="g-mark">G</span> Continue with Google
       </button>
       <p className="or">or</p>
-      <Field label="Email" error={error === 'nouser' ? 'No Art and Artist account uses this email. Check the spelling, or create an account.' : undefined}>
-        <input className="field" type="email" value={email} onChange={(e) => (setEmail(e.target.value), setError('none'))} autoComplete="email" />
-      </Field>
-      {error === 'nouser' && (
-        <button className="link" onClick={onCreate}>
-          Create an account
-        </button>
-      )}
-      <PasswordField value={password} onChange={(s) => (setPassword(s), setError('none'))} error={error === 'password' ? "That password doesn't match. Try again, or reset it with Forgot password." : undefined} />
-      <Button
-        block
-        size="l"
-        loading={busy}
-        disabled={!email || !password}
-        aria-describedby="signin-missing"
-        onClick={() => {
-          setBusy(true);
-          window.setTimeout(() => {
-            setBusy(false);
-            const k = Object.keys(KNOWN).find((x) => email.toLowerCase().includes(x));
-            if (!k) return setError('nouser');
-            if (password.length < 8) return setError('password');
-            onDone(KNOWN[k]);
-          }, 600);
-        }}
-      >
-        Sign in
-      </Button>
-      <Missing id="signin-missing" items={[!email && 'your email', !password && 'your password']} />
-      <button className="link" onClick={onForgot}>
-        Forgot password?
-      </button>
+      <EmailForm value={email} onChange={onEmail} onSubmit={onSubmit} />
     </Form>
   );
 }
 
-function Forgot({ onBack, onDone }: { onBack: () => void; onDone: (id: string) => void }) {
-  const [email, setEmail] = useState('');
-  const [stage, setStage] = useState<'email' | 'code' | 'new'>('email');
-  const [code, setCode] = useState('');
-  const [pw, setPw] = useState('');
+/** One field and one button. An error appears only after Continue, never before anyone has typed. */
+function EmailForm({ value, onChange, onSubmit }: { value: string; onChange: (s: string) => void; onSubmit: () => void }) {
+  const [tried, setTried] = useState(false);
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   return (
-    <Form title={stage === 'new' ? 'New password' : 'Reset your password'} onBack={onBack}>
-      {stage === 'email' && (
-        <>
-          <Field label="Email">
-            <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-          </Field>
-          <Button block size="l" disabled={!/.+@.+\..+/.test(email)} onClick={() => setStage('code')}>
-            Send code
-          </Button>
-        </>
-      )}
-      {stage === 'code' && (
-        <>
-          <p className="meta">If an Art and Artist account uses {email}, we've sent it a 6-digit code.</p>
-          <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" />
-          <Button block size="l" disabled={code.length !== 6} onClick={() => setStage('new')}>
-            Continue
-          </Button>
-        </>
-      )}
-      {stage === 'new' && (
-        <>
-          <PasswordField value={pw} onChange={setPw} autoComplete="new-password" hint="At least 8 characters." />
-          <Button block size="l" disabled={pw.length < 8} onClick={() => onDone(Object.keys(KNOWN).find((x) => email.includes(x)) ?? 'kiran')}>
-            Save and sign in
-          </Button>
-        </>
-      )}
-    </Form>
+    <form
+      className="stack"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        setTried(true);
+        if (valid) onSubmit();
+      }}
+    >
+      <Field label="Email" error={tried && !valid ? 'Enter an email address, like name@example.com.' : undefined}>
+        <input className="field" type="email" value={value} onChange={(e) => onChange(e.target.value)} placeholder="you@example.com" autoComplete="email" inputMode="email" autoFocus />
+      </Field>
+      <p className="meta">We'll send you a 6-digit code. No password needed.</p>
+      <Button block size="l" type="submit">
+        Continue
+      </Button>
+    </form>
   );
 }
 
@@ -819,19 +734,44 @@ function Check2({ on, set, children }: { on: boolean; set: (v: boolean) => void;
   );
 }
 
+/** The one-time code shown on the code screen. This is a test version: no email is ever sent. */
+const TEST_CODE = '246810';
+
 function Verify({ email, onBack, onDone }: { email: string; onBack: () => void; onDone: () => void }) {
   const [code, setCode] = useState('');
   const [wait, setWait] = useState(30);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (wait <= 0) return;
     const t = window.setTimeout(() => setWait((w) => w - 1), 1000);
     return () => window.clearTimeout(t);
   }, [wait]);
+  // Like the real thing: the sixth digit verifies, no extra tap. Any six digits work in the test version.
+  const enter = (v: string) => {
+    const d = v.replace(/\D/g, '').slice(0, 6);
+    setCode(d);
+    if (d.length === 6 && !busy) {
+      setBusy(true);
+      window.setTimeout(onDone, 500);
+    }
+  };
   return (
     <Form title="Check your email" onBack={onBack}>
-      <p className="meta">We sent a 6-digit code to {email}.</p>
-      <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" autoFocus />
-      <Button block size="l" disabled={code.length !== 6} onClick={onDone}>
+      <p className="meta">
+        Enter the 6-digit code for <b>{email}</b>.
+      </p>
+      {/* People testing the app type their real address and wait for a code that never comes. Say so, and give it. */}
+      <div className="test-code" role="note">
+        <p>
+          <b>This is a test version, so no email is sent.</b> Use this code:
+        </p>
+        <button type="button" className="test-code-btn" onClick={() => enter(TEST_CODE)} aria-label={`Use code ${TEST_CODE.split('').join(' ')}`}>
+          <span className="test-code-digits">{TEST_CODE.slice(0, 3)} {TEST_CODE.slice(3)}</span>
+          <span className="test-code-use">Use code</span>
+        </button>
+      </div>
+      <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => enter(e.target.value)} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" autoFocus />
+      <Button block size="l" loading={busy} disabled={code.length !== 6} onClick={() => enter(code)}>
         Verify
       </Button>
       <p className="meta">

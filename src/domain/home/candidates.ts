@@ -71,7 +71,7 @@ export function updateCandidate(u: ProjectUpdate, ctx: HomeContext): Candidate |
     quality: 0.8,
     reason,
     leadable: true,
-    data: { projectId: w.id, text, tag: u.kind === 'stage' ? u.to : w.stage, faces: knownActor ? [knownActor] : creditedOn(w.id).filter((p) => workedWith(me).has(p)).slice(0, 3) },
+    data: { projectId: w.id, project: w.title.toLowerCase(), text, tag: u.kind === 'stage' ? u.to : w.stage, faces: knownActor ? [knownActor] : creditedOn(w.id).filter((p) => workedWith(me).has(p)).slice(0, 3) },
   };
 }
 
@@ -143,7 +143,7 @@ function opportunityCandidates(ctx: HomeContext): Candidate[] {
       quality: 0.8,
       reason: why,
       leadable: false,
-      data: { roleId: o.id },
+      data: { roleId: o.id, project: o.project.toLowerCase() },
     }));
 }
 
@@ -218,7 +218,7 @@ function coldStart(ctx: HomeContext, people: Candidate[], posts: Candidate[], ho
     quality: 0.8,
     reason: near ? `Being made in ${ctx.me.city}` : undefined,
     leadable: true,
-    data: { projectId: w.id, text: w.stage === 'Shooting' ? 'Shooting now' : `In ${w.stage.toLowerCase()}`, tag: w.stage },
+    data: { projectId: w.id, project: w.title.toLowerCase(), text: w.stage === 'Shooting' ? 'Shooting now' : `In ${w.stage.toLowerCase()}`, tag: w.stage },
   });
   // Craft first: one role that fits their craft, if there is one (the composer still keeps it below the third unit).
   const role = opportunityCandidates(ctx).filter((c) => c.significance === 'high').slice(0, 1);

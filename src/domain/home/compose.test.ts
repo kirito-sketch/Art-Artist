@@ -63,3 +63,15 @@ test('first Home for someone who came to find work: the role comes straight afte
   assert.equal(r.middle.length, 5);
   assert.equal(r.middle.filter((x) => x.type === 'opportunity').length, 1);
 });
+
+test('first Home for work: the lead is never the project of the role right under it', () => {
+  const pool = [
+    c({ type: 'projectUpdates', objectId: 'neela', significance: 'high', leadable: true, data: { project: 'neela akasham' } }),
+    c({ type: 'projectUpdates', objectId: 'backwaters', significance: 'high', leadable: true, data: { project: 'backwaters' } }),
+    c({ type: 'opportunity', objectId: 'dop', data: { project: 'neela akasham' } }),
+    c({ type: 'people', objectId: 'a' }),
+  ];
+  const r = compose(pool, null, NOW, { opportunityFirst: true });
+  assert.equal(r.lead?.objectId, 'backwaters');
+  assert.equal(r.middle[0].objectId, 'dop');
+});

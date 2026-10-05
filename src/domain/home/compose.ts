@@ -21,7 +21,15 @@ export interface ComposeOptions {
  */
 export function compose(ranked: Candidate[], personal: PersonalNews | null, now: number, opts: ComposeOptions = {}): Composition {
   const max = opts.maxMiddle ?? MAX_MIDDLE;
-  const leadIdx = ranked.findIndex(canLead);
+  let leadIdx = ranked.findIndex(canLead);
+  // When the role leads the middle, the lead story is a different project: never the role's own project twice.
+  if (opts.opportunityFirst) {
+    const role = ranked.find((x) => x.type === 'opportunity')?.data?.project;
+    if (role && ranked[leadIdx]?.data?.project === role) {
+      const other = ranked.findIndex((x) => canLead(x) && x.data?.project !== role);
+      if (other >= 0) leadIdx = other;
+    }
+  }
   const lead = leadIdx >= 0 ? ranked[leadIdx] : null;
   const left = ranked.filter((_, i) => i !== leadIdx);
   const middle: Candidate[] = [];
