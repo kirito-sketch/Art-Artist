@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
-import { Bell, Search } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Bell } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
 import { homeInput } from '../../domain/home/candidates';
 import { getComposition, type KV } from '../../domain/home/session';
@@ -12,29 +12,24 @@ import { useStore } from '../../state/store';
 import { work } from '../../state/world';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { PortraitCard } from '../../ui/compose';
+import { goldenHourLine } from '../../ui/goldenHour';
 import { Logo } from '../../ui/Logo';
-import { shared, spring } from '../../ui/motion';
 import { Avatar, Button, FollowButton, IconButton, Photo, PressCard, SectionHeader, Verified } from '../../ui/primitives';
-import { ProjectMedia } from '../../ui/ProjectMedia';
-import type { Work } from '../../data/works';
 import { RoleRow } from '../discover/RoleRow';
 import { PostCard } from './PostCard';
 import { FirstStep } from './FirstHome';
-// Studio's quiet-week Home: the same world six days on, with nothing new since (src/dev/deepLink.tsx).
-import { QUIET_WEEK } from '../../dev/deepLink';
+import { eventCandidates, EventRow } from '../event/eventUnits';
 
 /*
- * Home (docs/HOME.md): a fixed frame and a composed middle.
- *   header (mark, search, bell) -> lead story -> personal news (only when something happened to you)
- *   -> middle -> "You're up to date." with ways into Discover
+ * The new Home (docs/HOME.md): a fixed frame and a composed middle.
+ *   header (search, bell) -> lead story -> personal news (only when something happened to you) -> middle -> end
  * The middle comes from the pure composer (src/domain/home). It is composed once per app session and stays
- * the same while you move around; a fresh launch recomposes it. No big heading, no intent switch, no task
- * queue, no Events. The default Home since October 2026; ?home=current shows the earlier one (/test, QA).
+ * the same while you move around; a refresh ("Take 2") or a fresh launch recomposes it. No big heading, no
+ * intent switch, no task queue. Behind ?home=next until the /test comparison is read.
  */
 
 const LOADED_AT = Date.now();
-const DAY = 24 * 60 * 60 * 1000;
-const sessionKey = `s-${LOADED_AT.toString(36)}`;
+let sessionKey = `s-${LOADED_AT.toString(36)}`;
 const kv: KV = {
   get: (k) => {
     try {
@@ -54,13 +49,13 @@ const kv: KV = {
 
 const track = (unit: string, position: number, reason?: string) => research.track('home_unit_opened', { metadata: { unit, position, reason: !!reason } });
 
-type GoDiscover = (scope?: string, craft?: string, opts?: { search?: boolean; who?: 'people' | 'houses' }) => void;
-
-export function HomeNext({ goDiscover }: { goDiscover: GoDiscover }) {
+export function HomeNext({ goDiscover }: { goDiscover: (scope?: string, craft?: string) => void }) {
   const store = useStore();
   const { viewer, notifications, openSheet, intent, following, userPosts, userCollabs, roleStatus, pendingCredits, scenario, reloadKey } = store;
   const me = person(viewer.id);
   const unreadCount = notifications.filter((n) => n.unread).length;
+  const [take, setTake] = useState(1);
+  const [slate, setSlate] = useState(false);
   const signals: Signals = {
     following,
     savedRoleCrafts: store.saved.filter((x) => x.kind === 'role').flatMap((x) => findOpportunity(x.id, userCollabs)?.forCrafts ?? []),
@@ -85,27 +80,33 @@ export function HomeNext({ goDiscover }: { goDiscover: GoDiscover }) {
             pendingCredits,
             loadedAt: LOADED_AT,
             isNew,
+            extra: eventCandidates(me, LOADED_AT, store.events, following),
           }),
-        { now: QUIET_WEEK ? Date.now() + 6 * DAY : Date.now(), sessionKey: `${sessionKey}-${viewer.id}${QUIET_WEEK ? '-quiet' : ''}`, kv },
+        { now: Date.now(), sessionKey: `${sessionKey}-${viewer.id}`, kv },
       ),
     // A new person or persona is a new session; pending credits can bring urgent personal news.
-    [viewer.id, reloadKey, pendingCredits.length], // eslint-disable-line react-hooks/exhaustive-deps
+    [viewer.id, take, reloadKey, pendingCredits.length], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  // One story per project: what's already on the page (a house's "Making" line doesn't repeat it).
-  const onPage = new Set([comp.lead, ...comp.middle].map((x) => String(x?.data?.project ?? '')).filter(Boolean));
+
+  const refresh = () => {
+    sessionKey = `s-${Date.now().toString(36)}`;
+    research.track('home_refreshed');
+    setSlate(true);
+    window.setTimeout(() => {
+      setTake((t) => t + 1);
+      setSlate(false);
+    }, 650);
+  };
 
   return (
     <div className="screen canvas v-home hn" data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
       <header className="home-header home-header--inline hn-header">
-        {/* Mark, search, bell. Search opens Discover with the field focused (search lives in Discover). */}
+        {/* Logo and bell only. Search lives in Discover (one tap away), not on Home. */}
         <h1 className="sr-only">Home</h1>
         <span className="home-logo">
           <Logo />
         </span>
         <span className="flex" />
-        <IconButton label="Search" className="icon-btn--float" onClick={() => (research.track('home_search_opened'), goDiscover(undefined, undefined, { search: true }))}>
-          <Search size={20} aria-hidden />
-        </IconButton>
         <IconButton label={unreadCount ? `Notifications, ${unreadCount} new` : 'Notifications'} className="icon-btn--float" onClick={() => openSheet({ name: 'notifications' })}>
           <Bell size={19} aria-hidden />
           {unreadCount > 0 && <span className="dot" aria-hidden />}
@@ -115,6 +116,15 @@ export function HomeNext({ goDiscover }: { goDiscover: GoDiscover }) {
       <div className="home-sheet home-sheet--flat hn-sheet">
         <OfflineBanner />
         <PublishBar />
+        <AnimatePresence>
+          {slate && (
+            <motion.p className="hn-slate" role="status" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <span className="hn-slate-board" aria-hidden />
+              Take {take + 1}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
         {comp.lead && <Lead c={comp.lead} />}
         {comp.personal && <PersonalNews news={comp.personal} />}
         {/* Just signed up: welcome them by name, with the one thing that makes the profile useful (in place of a toast). */}
@@ -124,9 +134,9 @@ export function HomeNext({ goDiscover }: { goDiscover: GoDiscover }) {
           </section>
         )}
         {comp.middle.map((c, i) => (
-          <Unit key={c.id} c={c} position={i} lead={comp.lead} onPage={onPage} goDiscover={goDiscover} />
+          <Unit key={c.id} c={c} position={i} lead={comp.lead} goDiscover={goDiscover} />
         ))}
-        <TheEnd goDiscover={goDiscover} />
+        <TheEnd city={me.city} goDiscover={goDiscover} onRefresh={refresh} />
       </div>
     </div>
   );
@@ -138,49 +148,47 @@ const restatesTag = (c: Candidate) => {
   const tag = String(c.data?.tag ?? '').toLowerCase();
   return !text || (!!tag && text.includes(tag));
 };
-const stageLine = (w: Work) => (w.stage === 'Released' ? w.year : w.stage);
 
-/** One concise context line: the news when there is news, otherwise who is making it and where it stands. */
-function contextLine(c: Candidate, w: Work) {
-  if (c.type === 'projectUpdates' && !restatesTag(c)) return String(c.data?.text ?? '');
-  const house = w.orgIds[0] ? org(w.orgIds[0]) : undefined;
-  return `${house?.name ?? w.format.split(' · ')[0]} · ${stageLine(w)}`;
-}
-
-function Why({ c, light }: { c: Candidate; light?: boolean }) {
-  if (!c.reason) return null;
-  const faces = ((c.data?.faces as string[] | undefined) ?? []).slice(0, 3);
-  return (
-    <p className={light ? 'hn-lead-why' : 'hn-why'}>
-      {faces.length > 0 && (
-        <span className={`hn-faces ${light ? '' : 'hn-faces--lg'}`} aria-hidden>
-          {faces.map((f) => party(f) && <Avatar key={f} party={party(f)!} size={20} />)}
-        </span>
-      )}
-      {c.reason}
-    </p>
-  );
-}
-
-/**
- * The lead: the first story, the first world you enter. Media carries it, edge to edge; the words are only the
- * title, one line of context and, when it answers "why me?", one reason. No badge, no button.
- */
 function Lead({ c }: { c: Candidate }) {
   const { push } = useStore();
+  if (c.type === 'event') return <EventRow c={c} position={-1} lead />;
   const w = work(String(c.data?.projectId ?? ''));
   if (!w) return null;
-  const context = contextLine(c, w);
+  const house = w.orgIds[0] ? org(w.orgIds[0]) : undefined;
+  const faces = ((c.data?.faces as string[] | undefined) ?? []).slice(0, 3);
   return (
     <section className="hn-lead-wrap" aria-label="Lead story">
-      <PressCard className="hn-lead" onPress={() => (track('lead', 0, c.reason), push({ name: 'work', id: w.id, from: 'card' }))} scale={0.99} aria-label={`${w.title}. ${context}${c.reason ? `. ${c.reason}` : ''}`}>
-        <motion.div layoutId={shared.work(w.id)} className="hn-lead-media" transition={spring.push}>
-          <ProjectMedia w={w} className="hn-lead-photo" />
-        </motion.div>
+      <PressCard className="hn-lead" onPress={() => (track('lead', 0, c.reason), push({ name: 'work', id: w.id }))} scale={0.985} aria-label={`${w.title}. ${String(c.data?.text ?? '')}${c.reason ? `. ${c.reason}` : ''}`}>
+        <Photo media={w.stills[0] ?? w.media} className="hn-lead-photo" />
         <div className="hn-lead-text">
+          <span className="hn-tag">{String(c.data?.tag ?? w.stage)}</span>
           <h2 className="hn-lead-title">{w.title}</h2>
-          <p className="hn-lead-meta">{context}</p>
-          <Why c={c} light />
+          <p className="hn-lead-meta">
+            {house ? (
+              <>
+                {house.name} <Verified size={12} />
+              </>
+            ) : (
+              w.format
+            )}
+            {/* The tag already says the stage ("Pre-production"): the line doesn't repeat it. */}
+            {!restatesTag(c) && (
+              <>
+                {' · '}
+                {String(c.data?.text ?? '')}
+              </>
+            )}
+          </p>
+          {c.reason && (
+            <p className="hn-lead-why">
+              {faces.length > 0 && (
+                <span className="hn-faces" aria-hidden>
+                  {faces.map((f) => party(f) && <Avatar key={f} party={party(f)!} size={20} />)}
+                </span>
+              )}
+              {c.reason}
+            </p>
+          )}
         </div>
       </PressCard>
     </section>
@@ -210,36 +218,12 @@ function PersonalNews({ news }: { news: Composition['personal'] & object }) {
 }
 
 // --------------------------------------------------------------------------------------------- middle
-/*
- * Each object has its own visual language: a project is the most cinematic, a person is portrait-led, work is
- * media-led, a house is its identity plus what it's making, and a role is compact and structured, on purpose
- * the least dominant thing on the page.
- */
-function Unit({ c, position, lead, onPage, goDiscover }: { c: Candidate; position: number; lead: Candidate | null; onPage: Set<string>; goDiscover: GoDiscover }) {
+function Unit({ c, position, lead, goDiscover }: { c: Candidate; position: number; lead: Candidate | null; goDiscover: (scope?: string) => void }) {
   const { push, following, toggleFollow, userCollabs } = useStore();
   const opened = () => track(c.type, position + 1, c.reason);
   switch (c.type) {
-    case 'project': {
-      const w = work(String(c.data?.projectId ?? ''));
-      if (!w) return null;
-      const context = contextLine(c, w);
-      return (
-        <section className="hn-unit hn-project" aria-label={w.title}>
-          <PressCard className="hn-project-card" onPress={() => (opened(), push({ name: 'work', id: w.id, from: 'card' }))} scale={0.985} aria-label={`${w.title}. ${context}${c.reason ? `. ${c.reason}` : ''}`}>
-            <motion.div layoutId={shared.work(w.id)} className="hn-project-media" transition={spring.push}>
-              <ProjectMedia w={w} />
-            </motion.div>
-            <span className="hn-project-text">
-              <b>{w.title}</b>
-              <span>{context}</span>
-            </span>
-          </PressCard>
-          <Why c={c} />
-        </section>
-      );
-    }
     case 'people': {
-      const people = (c.data?.people as { id: string; reason?: string }[]).map((p) => ({ p: person(p.id), reason: p.reason })).filter((x) => x.p);
+      const people = (c.data?.people as { id: string; reason: string }[]).map((p) => ({ p: person(p.id), reason: p.reason })).filter((x) => x.p);
       return (
         <section className="hn-unit v-section" aria-label="People worth knowing" onClickCapture={opened}>
           <SectionHeader title="People worth knowing" action="See more" onAction={() => goDiscover('people')} />
@@ -266,10 +250,10 @@ function Unit({ c, position, lead, onPage, goDiscover }: { c: Candidate; positio
       const o = findOpportunity(String(c.data?.roleId ?? ''), userCollabs);
       if (!o) return null;
       return (
-        <section className="hn-unit hn-role" aria-label="A role that fits you" onClickCapture={opened}>
-          <p className="hn-eyebrow">A role that fits you</p>
+        <section className="hn-unit v-section" aria-label="A role that fits you" onClickCapture={opened}>
+          <SectionHeader title="A role that fits you" />
           <div className="list list--flush">
-            {/* The label already says why it's here; the row keeps its decision facts (City · Pay). */}
+            {/* The title already says why it's here; the row keeps its decision facts (City · Pay). */}
             <RoleRow o={o} />
           </div>
         </section>
@@ -278,36 +262,19 @@ function Unit({ c, position, lead, onPage, goDiscover }: { c: Candidate; positio
     case 'house': {
       const o = org(String(c.data?.houseId ?? ''));
       if (!o) return null;
-      const m = c.data?.makingId ? work(String(c.data.makingId)) : undefined;
-      const making = m && !onPage.has(m.title.toLowerCase()) ? m : undefined;
       return (
         <section className="hn-unit" aria-label={o.name}>
-          <div className="hn-house">
-            <div className="hn-house-id">
-              <PressCard className="hn-row-main" onPress={() => (opened(), push({ name: 'org', id: o.id }))} scale={0.985} aria-label={`${o.name}${c.reason ? `. ${c.reason}` : ''}`}>
-                <Avatar party={o} size={44} />
-                <span className="hn-row-text">
-                  <b>
-                    {o.name} <Verified size={12} />
-                  </b>
-                  <span>{c.reason ?? o.city}</span>
-                </span>
-              </PressCard>
-              <FollowButton on={following.includes(o.id)} onToggle={() => toggleFollow(o.id)} name={o.name} />
-            </div>
-            {/* What they're making is the house's identity: its picture, its title, where it stands. */}
-            {making && (
-              <PressCard className="hn-house-making" onPress={() => (opened(), push({ name: 'work', id: making.id }))} scale={0.985} aria-label={`Making ${making.title}, ${stageLine(making)}`}>
-                <span className="hn-house-thumb">
-                  <ProjectMedia w={making} still />
-                </span>
-                <span className="hn-row-text">
-                  <span>Making</span>
-                  <b>{making.title}</b>
-                  <span>{making.format.split(' · ')[0]} · {stageLine(making)}</span>
-                </span>
-              </PressCard>
-            )}
+          <div className="hn-row hn-house">
+            <PressCard className="hn-row-main" onPress={() => (opened(), push({ name: 'org', id: o.id }))} scale={0.985} aria-label={`${o.name}${c.reason ? `. ${c.reason}` : ''}`}>
+              <Avatar party={o} size={44} />
+              <span className="hn-row-text">
+                <b>
+                  {o.name} <Verified size={12} />
+                </b>
+                <span>{c.reason ?? o.city}</span>
+              </span>
+            </PressCard>
+            <FollowButton on={following.includes(o.id)} onToggle={() => toggleFollow(o.id)} name={o.name} />
           </div>
         </section>
       );
@@ -331,7 +298,8 @@ function Unit({ c, position, lead, onPage, goDiscover }: { c: Candidate; positio
         </section>
       );
     }
-    // Events are not Home content (docs/HOME.md). The composer never places one; this is a second guard.
+    case 'event':
+      return <EventRow c={c} position={position + 1} />;
     default:
       return null;
   }
@@ -341,7 +309,7 @@ function Unit({ c, position, lead, onPage, goDiscover }: { c: Candidate; positio
 function ProjectUpdates({ c, lead, onOpen }: { c: Candidate; lead: Candidate | null; onOpen: () => void }) {
   const { push } = useStore();
   const leadProject = lead?.data?.projectId;
-  const rows = [c, ...((c.data?.more as Candidate[] | undefined) ?? [])].filter((x) => x.data?.projectId !== leadProject).slice(0, 3);
+  const rows = [c, ...(c.data?.more as Candidate[] | undefined ?? [])].filter((x) => x.data?.projectId !== leadProject).slice(0, 3);
   const items = rows.map((r) => ({ r, w: work(String(r.data?.projectId ?? '')) })).filter((x) => x.w);
   if (!items.length) return null;
   return (
@@ -366,44 +334,59 @@ function ProjectUpdates({ c, lead, onOpen }: { c: Candidate; lead: Candidate | n
 }
 
 // ------------------------------------------------------------------------------------------------ end
-/** The page has an end: one short line, then straight into Discover. No filler, no explanation. */
-function TheEnd({ goDiscover }: { goDiscover: GoDiscover }) {
+/** "That's a wrap": the page has an end. The clapper claps once when it comes into view; golden hour today. */
+function TheEnd({ city, goDiscover, onRefresh }: { city: string; goDiscover: (scope?: string) => void; onRefresh: () => void }) {
   const ref = useRef<HTMLElement>(null);
   const [seen, setSeen] = useState(false);
+  const light = goldenHourLine(city);
   useEffect(() => {
     const el = ref.current;
     if (!el || seen) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setSeen(true);
-          research.track('home_end_reached');
-          io.disconnect();
-        }
-      },
-      { threshold: 0.6 },
-    );
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        setSeen(true);
+        research.track('home_end_reached');
+        io.disconnect();
+      }
+    }, { threshold: 0.6 });
     io.observe(el);
     return () => io.disconnect();
   }, [seen]);
-  const exits: [string, string, 'houses' | undefined][] = [
-    ['people', 'People', undefined],
-    ['projects', 'Projects', undefined],
-    ['roles', 'Roles', undefined],
-    ['people', 'Houses', 'houses'],
+  const find: [string, string][] = [
+    ['people', 'People'],
+    ['projects', 'Projects'],
+    ['roles', 'Roles'],
   ];
   return (
     <section className="hn-end" ref={ref} aria-labelledby="hn-end-title">
+      <Clapper clap={seen} />
       <h2 id="hn-end-title" className="hn-end-title">
-        You're up to date.
+        That's a wrap
       </h2>
-      <div className="hn-find" role="group" aria-label="Find more in Discover">
-        {exits.map(([scope, label, who]) => (
-          <button key={label} className="chip" onClick={() => (research.track('home_end_exit', { metadata: { to: label.toLowerCase() } }), goDiscover(scope, undefined, who ? { who } : { who: 'people' }))}>
-            {label}
+      {light && <p className="hn-golden">{light}</p>}
+      <div className="hn-find" role="group" aria-label="Find more">
+        {find.map(([s, l]) => (
+          <button key={s} className="chip" onClick={() => goDiscover(s)}>
+            {l}
           </button>
         ))}
       </div>
+      <button className="link hn-refresh" onClick={onRefresh}>
+        Refresh Home
+      </button>
     </section>
+  );
+}
+
+function Clapper({ clap }: { clap: boolean }): ReactNode {
+  return (
+    <svg className={`hn-clapper ${clap ? 'is-clapping' : ''}`} viewBox="0 0 64 52" width="52" height="42" aria-hidden>
+      <g className="hn-clapper-arm">
+        <rect x="6" y="6" width="52" height="11" rx="2" fill="var(--text)" />
+        <path d="M14 6 l8 11 M28 6 l8 11 M42 6 l8 11" stroke="var(--surface, #fff)" strokeWidth="4" />
+      </g>
+      <rect x="6" y="19" width="52" height="28" rx="3" fill="var(--text)" />
+      <path d="M12 27 h22 M12 34 h14 M12 41 h18" stroke="var(--surface, #fff)" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+    </svg>
   );
 }

@@ -13,5 +13,3 @@ test('only high, leadable items can lead', () => {
   assert.equal(canLead(c({ significance: 'high', leadable: true })), true);
 });
 test('a role can never lead, even if marked leadable by mistake', () => assert.equal(canLead(c({ type: 'opportunity', significance: 'high', leadable: true })), false));
-test('an event is never eligible for Home, however significant', () => assert.deepEqual(eligible([c({ type: 'event', significance: 'high', leadable: true })], NOW), []));
-test('an event can never lead', () => assert.equal(canLead(c({ type: 'event', significance: 'high', leadable: true })), false));

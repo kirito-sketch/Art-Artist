@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronRight, X } from 'lucide-react';
-import { appLink, ARCHIVE, FLOWS, HOME_STATES, HOUSE_STATES, PERSONAS, PROJECT_STATES, STATUS, TEST_STATES } from '../dev/studioData';
+import { appLink, ARCHIVE, FLOWS, HOUSE_STATES, PERSONAS, STATUS, TEST_STATES } from '../dev/studioData';
 import { SCENARIOS } from '../qa/scenarios';
 import { effective, isSettled } from '../qa/status';
 import lastRun from '../qa/last-run.json';
@@ -72,24 +72,11 @@ export function Studio() {
           ))}
         </div>
         <div className="st-row-links">
-          <span className="st-item-hint">View:</span>
+          <span className="st-item-hint">Home:</span>
+          <a href={appLink({ as: 'kiran', home: 'current' })}>Today's Home</a>
+          <a href={appLink({ as: 'kiran', home: 'next' })}>New Home</a>
+          <span className="st-item-hint">· View:</span>
           <a href={appLink({ view: 'app' })}>App mode (full screen)</a>
-        </div>
-      </Section>
-
-      <Section id="home" title="Home states">
-        <div className="st-list st-list--2">
-          {HOME_STATES.map((h) => (
-            <Item key={h.label} href={appLink(h.link)} title={h.label} hint={h.hint} />
-          ))}
-        </div>
-      </Section>
-
-      <Section id="project" title="Project page states" intro="Media in order of preference: video and images, images, one image, no media. For no media, Konark shares Kaal before it has pictures (the real Share on Art and Artist action).">
-        <div className="st-list st-list--2">
-          {PROJECT_STATES.map((h) => (
-            <Item key={h.label} href={appLink(h.link)} title={h.label} hint={h.hint} />
-          ))}
         </div>
       </Section>
 

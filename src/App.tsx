@@ -200,12 +200,9 @@ function Phone({ app = false }: { app?: boolean }) {
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
   const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
   const features = useFeatures();
-  // Home's search icon and its "You're up to date" exits: open Discover with the search field focused, or on Houses.
-  const [discoverFocus, setDiscoverFocus] = useState<{ search: boolean; who: 'people' | 'houses' | null; n: number }>({ search: false, who: null, n: 0 });
-  const goDiscover = (scope?: string, craft?: string, opts: { search?: boolean; who?: 'people' | 'houses' } = {}) => {
+  const goDiscover = (scope?: string, craft?: string) => {
     setDiscoverScope((scope as Scope) ?? DISCOVER_DEFAULT);
     if (scope === 'posts') setPostFocus((f) => ({ craft: craft ?? null, n: f.n + 1 }));
-    if (opts.search || opts.who) setDiscoverFocus((f) => ({ search: !!opts.search, who: opts.who ?? null, n: f.n + 1 }));
     setTab('discover');
   };
 
@@ -339,7 +336,7 @@ function Phone({ app = false }: { app?: boolean }) {
                 {store.acting !== 'self' ? <ProductionHome /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} focus={discoverFocus} />}
+            {t === 'discover' && <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>

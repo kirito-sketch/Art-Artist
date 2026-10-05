@@ -26,6 +26,8 @@ export interface HomeContext {
   loadedAt: number;
   /** Just out of onboarding: no network or behaviour yet. */
   isNew: boolean;
+  /** Extra candidates from other modules (Events, docs/EVENTS.md). */
+  extra?: Candidate[];
 }
 
 const H = 60 * 60 * 1000;
@@ -35,25 +37,6 @@ const first = (name: string) => name.split(' ')[0];
 const personName = (id: string) => seed.people.find((p) => p.id === id)?.name ?? '';
 const usable = (w: Work | undefined): w is Work => !!w && w.media?.id !== 'ph';
 const houseOf = (w: Work) => seed.orgs.find((o) => o.id === w.orgIds[0]);
-const speaks = (me: Person, w: Work) => (me.languages ?? []).some((l) => w.format.includes(l));
-
-/**
- * Why a project is relevant to you, only when it answers that question: people you've verifiably worked with
- * on it, someone you follow, or that it's being made where you are. Otherwise no reason at all.
- */
-export function projectReason(me: Person, following: string[], w: Work): { reason?: string; known: string[]; followed?: string } {
-  const on = creditedOn(w.id).filter((p) => p !== me.id);
-  const known = on.filter((p) => workedWith(me.id).has(p));
-  if (known.length >= 2) return { reason: `${known.length} people you've worked with are on this project`, known };
-  if (known.length === 1) {
-    const shared = sharedProject(me.id, known[0]);
-    return { reason: shared ? `${first(personName(known[0]))} from ${shared.title} is on this project` : undefined, known };
-  }
-  const followed = on.find((p) => following.includes(p));
-  if (followed) return { reason: `Because you follow ${first(personName(followed))}`, known, followed };
-  if (houseOf(w)?.city === me.city && isLive(w)) return { reason: `Being made in ${me.city}`, known };
-  return { known };
-}
 
 /** A project update, with significance from the agreed levels. */
 export function updateCandidate(u: ProjectUpdate, ctx: HomeContext): Candidate | null {
@@ -70,11 +53,10 @@ export function updateCandidate(u: ProjectUpdate, ctx: HomeContext): Candidate |
   const text =
     u.kind === 'stage' ? (u.to === 'Shooting' ? 'Started shooting' : `Moved to ${u.to.toLowerCase()}`) : u.kind === 'crew' ? (actor ? `${actor} joined as ${u.to}` : `${u.to} attached`) : u.to;
   let reason: string | undefined;
-  const on = knownActor ? sharedProject(me, knownActor) : null;
-  // "Rhea worked with you on Kaaval" on a Kaaval update says nothing new: being credited on it is the reason.
-  // Faces only when the reason is about them.
-  if (on && on.id !== w.id) reason = `${first(personName(knownActor!))} worked with you on ${on.title}`;
-  else if (mine) reason = `You're credited on ${w.title}`;
+  if (knownActor) {
+    const on = sharedProject(me, knownActor);
+    reason = on ? `${first(personName(knownActor))} worked with you on ${on.title}` : undefined;
+  } else if (mine) reason = `You're credited on ${w.title}`;
   const house = houseOf(w);
   return {
     id: `projectUpdates:${u.id}`,
@@ -89,7 +71,7 @@ export function updateCandidate(u: ProjectUpdate, ctx: HomeContext): Candidate |
     quality: 0.8,
     reason,
     leadable: true,
-    data: { projectId: w.id, project: w.title.toLowerCase(), text, tag: u.kind === 'stage' ? u.to : w.stage, faces: on && on.id !== w.id ? [knownActor!] : [] },
+    data: { projectId: w.id, project: w.title.toLowerCase(), text, tag: u.kind === 'stage' ? u.to : w.stage, faces: knownActor ? [knownActor] : creditedOn(w.id).filter((p) => workedWith(me).has(p)).slice(0, 3) },
   };
 }
 
@@ -117,8 +99,8 @@ function peopleCandidates(ctx: HomeContext): Candidate[] {
     at: ctx.loadedAt - (6 + i * 12) * H,
     quality: 0.8,
     leadable: false,
-    // The card already shows the craft; a reason only when it's about people you've worked with. No filler.
-    data: { people: g.map((r) => ({ id: r.item.id, reason: reasonForPerson(ctx.me.id, r.item.id) ?? undefined })) },
+    // The card already shows the craft; a reason is shown only when it's about people you know, otherwise the city.
+    data: { people: g.map((r) => ({ id: r.item.id, reason: reasonForPerson(ctx.me.id, r.item.id) ?? r.item.city })) },
   }));
 }
 
@@ -138,7 +120,7 @@ function postCandidates(ctx: HomeContext): Candidate[] {
         place: author?.city === ctx.me.city ? 1 : 0,
         at: ctx.loadedAt - (8 + i * 10) * H,
         quality: p.media.length ? 0.8 : 0.3,
-        // The work speaks for itself: a post from someone you follow needs no "You follow them".
+        reason: ctx.following.includes(p.authorId) ? 'You follow them' : undefined,
         leadable: false,
         data: { postId: p.id },
       };
@@ -171,9 +153,8 @@ function houseCandidates(ctx: HomeContext): Candidate[] {
     .slice(0, 2)
     .map(({ o, live }, i) => {
       const people = new Set(worksForOrg(o.id).flatMap((w) => creditedOn(w.id)).filter((p) => known.has(p)));
-      // What they're making is the house's identity, shown with its picture; the reason is only a relationship.
-      const making = worksForOrg(o.id).find((w) => isLive(w) && usable(w)) ?? worksForOrg(o.id).find(isLive);
-      const reason = people.size ? `Worked with ${people.size} ${people.size === 1 ? 'person' : 'people'} you know` : undefined;
+      const making = worksForOrg(o.id).find(isLive);
+      const reason = [making ? `Making ${making.title}` : null, people.size ? `has worked with ${people.size} ${people.size === 1 ? 'person' : 'people'} you know` : null].filter(Boolean).join(' · ') || undefined;
       return {
         id: `house:${o.id}`,
         type: 'house' as const,
@@ -187,35 +168,9 @@ function houseCandidates(ctx: HomeContext): Candidate[] {
         quality: o.verified ? 0.8 : 0.3,
         reason,
         leadable: false,
-        data: { houseId: o.id, makingId: making?.id },
+        data: { houseId: o.id },
       };
     });
-}
-
-/**
- * A project worth entering on its own (not an update): media-led, immersive, placed low in the middle. Only
- * projects with real pictures, and only when something makes them relevant to you.
- */
-function projectCandidates(ctx: HomeContext): Candidate[] {
-  return discoverableProjects(blockedBy(ctx.me.id))
-    .filter((w) => usable(w) && w.ownerId !== ctx.me.id && !creditedOn(w.id).includes(ctx.me.id))
-    .map((w) => ({ w, ...projectReason(ctx.me, ctx.following, w) }))
-    .filter((x) => x.reason)
-    .map(({ w, reason, known, followed }, i) => ({
-      id: `project:${w.id}`,
-      type: 'project' as const,
-      objectId: w.id,
-      version: w.stage,
-      significance: (known.length || (isLive(w) && houseOf(w)?.city === ctx.me.city) ? 'high' : 'medium') as Significance,
-      relationship: known.length ? 0.7 : followed ? 0.4 : 0,
-      professional: 0.3,
-      place: houseOf(w)?.city === ctx.me.city ? 1 : 0,
-      at: ctx.loadedAt - (3 + i * 5) * H,
-      quality: 0.8,
-      reason,
-      leadable: true,
-      data: { projectId: w.id, project: w.title.toLowerCase(), text: isLive(w) ? (w.stage === 'Shooting' ? 'Shooting now' : `In ${w.stage.toLowerCase()}`) : w.year, tag: w.stage, faces: known.slice(0, 3) },
-    }));
 }
 
 /** Two people in your world verified on the same project. */
@@ -241,19 +196,15 @@ function creditRelationCandidate(ctx: HomeContext): Candidate[] {
       at: ctx.loadedAt - 30 * H,
       quality: 0.8,
       leadable: false,
-      data: { projectId: best.w.id, project: best.w.title.toLowerCase(), people: [a, b], text: `${first(personName(a))} and ${first(personName(b))} were verified on ${best.w.title}${withYou ? ', with you' : ''}` },
+      data: { projectId: best.w.id, people: [a, b], text: `${first(personName(a))} and ${first(personName(b))} were verified on ${best.w.title}${withYou ? ', with you' : ''}` },
     },
   ];
 }
 
-/**
- * Cold start, in sourcing order: place and language (projects being made near you, then in a language you
- * work in), one role in your craft, other active projects, people, work, houses near you.
- */
+/** Cold start, in sourcing order: craft and place (projects near you, one role in your craft), active projects, people, work, houses. */
 function coldStart(ctx: HomeContext, people: Candidate[], posts: Candidate[], houses: Candidate[]): Candidate[] {
   const live = discoverableProjects(blockedBy(ctx.me.id)).filter((w) => isLive(w) && usable(w) && w.ownerId !== ctx.me.id);
   const local = live.filter((w) => houseOf(w)?.city === ctx.me.city);
-  const language = live.filter((w) => !local.includes(w) && speaks(ctx.me, w));
   const projectCard = (w: Work, near: boolean): Candidate => ({
     id: `projectUpdates:live-${w.id}`,
     type: 'projectUpdates',
@@ -269,13 +220,9 @@ function coldStart(ctx: HomeContext, people: Candidate[], posts: Candidate[], ho
     leadable: true,
     data: { projectId: w.id, project: w.title.toLowerCase(), text: w.stage === 'Shooting' ? 'Shooting now' : `In ${w.stage.toLowerCase()}`, tag: w.stage },
   });
-  // A second local project can stand on its own, low on the page (one story per project still holds).
-  const immersive = local.slice(1, 2).map((w): Candidate => ({ ...projectCard(w, true), id: `project:${w.id}`, type: 'project', objectId: w.id, significance: 'medium' }));
-  // A role that fits their craft, if there is one (the composer keeps it at the third unit or lower, and shows one).
-  // Two, so that when the lead is the first role's project (one story per project), the other can still show.
-  const role = opportunityCandidates(ctx).filter((c) => c.significance === 'high').slice(0, 2);
-  const rest = live.filter((w) => !local.includes(w) && !language.includes(w));
-  return [...local.map((w) => projectCard(w, true)), ...language.map((w) => projectCard(w, false)), ...role, ...rest.map((w) => projectCard(w, false)), ...people, ...posts, ...immersive, ...houses.filter((h) => h.place === 1)];
+  // Craft first: one role that fits their craft, if there is one (the composer still keeps it below the third unit).
+  const role = opportunityCandidates(ctx).filter((c) => c.significance === 'high').slice(0, 1);
+  return [...local.map((w) => projectCard(w, true)), ...role, ...live.filter((w) => !local.includes(w)).map((w) => projectCard(w, false)), ...people, ...posts, ...houses.filter((h) => h.place === 1)];
 }
 
 export function homeInput(ctx: HomeContext): HomeInput {
@@ -283,9 +230,8 @@ export function homeInput(ctx: HomeContext): HomeInput {
   const posts = postCandidates(ctx);
   const houses = houseCandidates(ctx);
   const updates = seed.projectUpdates.map((u) => updateCandidate(u, ctx)).filter((x): x is Candidate => !!x);
-  // Events are not Home content (docs/HOME.md): no adapter feeds them here.
-  const candidates = ctx.isNew ? [] : [...updates, ...people, ...posts, ...opportunityCandidates(ctx), ...houses, ...creditRelationCandidate(ctx), ...projectCandidates(ctx)];
-  // A first Home is shorter. The role stays where every Home puts it: never in the first viewport.
-  const options = ctx.isNew ? { maxMiddle: MAX_MIDDLE_FIRST_RUN } : undefined;
-  return { candidates, personal: personalNews(ctx), coldStart: coldStart(ctx, people, posts, houses), options };
+  const candidates = ctx.isNew ? [] : [...updates, ...people, ...posts, ...opportunityCandidates(ctx), ...houses, ...creditRelationCandidate(ctx), ...(ctx.extra ?? [])];
+  // A first Home is shorter, and answers what the person said they came for: work leads with the role that fits.
+  const options = ctx.isNew ? { maxMiddle: MAX_MIDDLE_FIRST_RUN, opportunityFirst: ctx.intent === 'work' } : undefined;
+  return { candidates, personal: personalNews(ctx), coldStart: [...coldStart(ctx, people, posts, houses), ...(ctx.isNew ? ctx.extra ?? [] : [])], options };
 }

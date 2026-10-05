@@ -19,7 +19,7 @@ export interface HomeInput {
   personal: PersonalNews | null;
   /** Cold-start sources in order: craft + place, active projects, people, work, houses. */
   coldStart: Candidate[];
-  /** How a first Home is composed (shorter). */
+  /** How a first Home is composed (shorter; the role first for someone who came to find work). */
   options?: ComposeOptions;
 }
 export interface KV {
@@ -76,20 +76,19 @@ export function getComposition(build: () => HomeInput, ctx: { now: number; sessi
 
 /**
  * Group units show more than one item (In production: up to three updates). The composer places the best
- * one; the next best of the same type ride along in `data.more`, never a project already on the page.
+ * one; the next best of the same type ride along in `data.more`, never the lead's own project.
  */
 function withGroups(comp: Composition, ranked: Candidate[]): Composition {
   const used = new Set([comp.lead?.id, ...comp.middle.map((x) => x.id)]);
-  const onPage = [comp.lead, ...comp.middle].flatMap((x) => [x?.data?.projectId, x?.data?.project]).filter(Boolean);
+  const leadProject = comp.lead?.data?.projectId;
   const middle = comp.middle.map((u) => {
     if (u.type !== 'projectUpdates') return u;
-    const seenProjects = new Set([...onPage, u.data?.projectId, u.data?.project]);
+    const seenProjects = new Set([leadProject, u.data?.projectId]);
     const more: Candidate[] = [];
     for (const x of ranked) {
       if (more.length >= 2) break;
-      if (x.type !== 'projectUpdates' || used.has(x.id) || seenProjects.has(x.data?.projectId) || seenProjects.has(x.data?.project)) continue;
+      if (x.type !== 'projectUpdates' || used.has(x.id) || seenProjects.has(x.data?.projectId)) continue;
       seenProjects.add(x.data?.projectId);
-      seenProjects.add(x.data?.project);
       more.push(x);
     }
     return { ...u, data: { ...u.data, more } };

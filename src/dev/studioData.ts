@@ -38,38 +38,16 @@ export const HOUSE_STATES = [
 ] as const;
 
 /** A link into the app, set up as asked. `from=studio` shows the small way back. */
-export function appLink(opts: { as?: Persona; flow?: Flow; state?: string[]; home?: 'next' | 'current'; view?: 'app'; open?: string; media?: 'standin'; announce?: 'kaal' } = {}) {
+export function appLink(opts: { as?: Persona; flow?: Flow; state?: string[]; home?: 'next' | 'current'; view?: 'app' } = {}) {
   const q = new URLSearchParams();
   if (opts.as) q.set('as', opts.as);
   if (opts.flow) q.set('flow', opts.flow);
   if (opts.state?.length) q.set('state', opts.state.join(','));
   if (opts.home) q.set('home', opts.home);
   if (opts.view) q.set('view', opts.view);
-  if (opts.open) q.set('open', opts.open);
-  if (opts.media) q.set('media', opts.media);
-  if (opts.announce) q.set('announce', opts.announce);
   q.set('from', 'studio');
   return `/?${q.toString()}`;
 }
-
-/** Home as the composer builds it in each situation (docs/HOME.md, "QA states"). */
-export const HOME_STATES: { label: string; hint: string; link: Parameters<typeof appLink>[0] }[] = [
-  { label: 'Rich week', hint: 'Kiran: a full network and a busy week', link: { as: 'kiran' } },
-  { label: 'Quiet week', hint: 'Kiran, six days on with nothing new', link: { as: 'kiran', state: ['quietWeek'] } },
-  { label: 'Cold start', hint: 'Just signed up: craft, city, language, local work', link: { flow: 'new' } },
-  { label: 'Existing network', hint: 'Tara: reasons from verified work together', link: { as: 'tara' } },
-  { label: 'Earlier Home', hint: 'The Home before October 2026 (kept for /test and QA)', link: { as: 'kiran', home: 'current' } },
-];
-
-/** One project page per media situation, plus with and without open roles. */
-export const PROJECT_STATES: { label: string; hint: string; link: Parameters<typeof appLink>[0] }[] = [
-  { label: 'Video and images', hint: 'Kaaval, with a stand-in clip made from its stills', link: { as: 'kiran', open: 'work:kaaval', media: 'standin' } },
-  { label: 'Images only', hint: 'Monsoon Letters', link: { as: 'kiran', open: 'work:monsoon' } },
-  { label: 'One image', hint: 'Backwaters', link: { as: 'kiran', open: 'work:backwaters' } },
-  { label: 'No media', hint: 'Kaal, just shared by Konark with no pictures yet', link: { as: 'kiran', open: 'work:kaal', announce: 'kaal' } },
-  { label: 'With open roles', hint: 'Neela Akasham', link: { as: 'kiran', open: 'work:neela' } },
-  { label: 'Without open roles', hint: 'Monsoon Letters', link: { as: 'tara', open: 'work:monsoon' } },
-];
 
 /** Earlier directions, kept as screenshots (public/studio/archive). Their code was removed in October 2026. */
 export const ARCHIVE: { title: string; note: string; shots: { src: string; alt: string }[] }[] = [
@@ -84,7 +62,7 @@ export const ARCHIVE: { title: string; note: string; shots: { src: string; alt: 
 ];
 
 export const STATUS = {
-  decided: ['Large Cards is the individual Home', 'People can’t claim their own credits', 'Added to project is not a credit', 'One account; acting for a house is separate', 'A house’s profile is its public page', 'Minimal is the only visual', 'Apple, Google and email sign-in', 'Unverified houses can’t post roles or credits', '18+ at launch', 'Deleting an account keeps accepted credits', 'No comments on posts', 'Members are permissions, not a team product', 'Discover opens on Posts', 'Search lives in Discover (Home opens it)', 'Events are not Home content'],
-  validating: ['Who issues credits inside a house', 'Whether “Added to project” is real in practice', 'Recruiting for unannounced projects', 'When final credits are decided', 'Who operates Art and Artist for a house', 'Slate and Work first', 'The composed Home (default; compared on /test)'],
+  decided: ['Large Cards is the individual Home', 'People can’t claim their own credits', 'Added to project is not a credit', 'One account; acting for a house is separate', 'A house’s profile is its public page', 'Minimal is the only visual', 'Apple, Google and email sign-in', 'Unverified houses can’t post roles or credits', '18+ at launch', 'Deleting an account keeps accepted credits', 'No comments on posts', 'Members are permissions, not a team product', 'Discover opens on Posts', 'Search lives in Discover'],
+  validating: ['Who issues credits inside a house', 'Whether “Added to project” is real in practice', 'Recruiting for unannounced projects', 'When final credits are decided', 'Who operates Art and Artist for a house', 'Slate and Work first', 'The new Home (compared on /test)'],
   deferred: ['Credits for independent projects', 'Linking people not yet on Art and Artist', 'Bulk credit issuance', 'Guardian / minor accounts', 'Project publication lifecycle'],
 };

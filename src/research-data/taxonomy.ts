@@ -74,10 +74,9 @@ export const RESEARCH_EVENTS = {
 
   // Home (fixed frame + composed middle, docs/HOME.md)
   home_unit_opened: 'Something on Home was opened (metadata.unit, metadata.position, metadata.reason: whether a reason line was shown)',
-  home_end_reached: 'The participant reached the end of Home ("You\'re up to date.")',
-  home_end_exit: 'A way into Discover was taken from the end of Home (metadata.to: people, projects, roles, houses)',
+  home_end_reached: 'The participant reached the end of Home ("That\'s a wrap")',
   home_search_opened: 'Search opened from the Home header',
-  home_refreshed: 'Home was refreshed and recomposed (Take 2; retired in October 2026, kept for old sessions)',
+  home_refreshed: 'Home was refreshed and recomposed (Take 2)',
 
   // Events (docs/EVENTS.md)
   event_opened: 'An event opened',

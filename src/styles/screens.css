@@ -1593,21 +1593,6 @@
 .whero-kicker { font-size: 13px; opacity: .85; margin: 0 0 4px; }
 .whero-title { font-family: var(--display); font-size: 36px; line-height: 1.05; font-weight: 700; letter-spacing: -.02em; margin: 0; }
 .whero .phero-bar { z-index: 2; }
-/* Project page: the hero is media only (identity sits below it), so it shades the top for the buttons only. */
-.whero--work::after { background: linear-gradient(to bottom, rgba(0,0,0,.38), transparent 32%); }
-.whero--work.whero--title { height: 300px; }
-.whero--title .title-card { padding-bottom: 72px; }
-.whero--title .title-card-title { font-size: 36px; }
-.work-identity { display: grid; gap: 4px; margin-bottom: 12px; }
-.work-title { font-family: var(--display); font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -.025em; margin: 0; text-wrap: balance; }
-.work-kicker { font-size: 14px; color: var(--text-2); margin: 0; }
-.work-mine .item-title { display: inline-flex; align-items: center; gap: 6px; }
-.work-people { margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter)); padding-left: var(--gutter); padding-right: var(--gutter); }
-.work-mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.work-tile { position: relative; aspect-ratio: 4 / 5; border-radius: 12px; overflow: hidden; background: var(--sand, #ece7df); }
-.work-tile:first-child:nth-last-child(odd) { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
-.work-tile .photo, .work-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.work-tile-by { position: absolute; left: 8px; bottom: 8px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; display: inline-flex; }
 .work-logline { font-size: 17px; margin: 0 0 18px; }
 .work-orgs { margin-bottom: 14px; }
 .work-mine { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-m); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); margin-bottom: 14px; }
