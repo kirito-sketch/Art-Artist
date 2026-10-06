@@ -13,6 +13,7 @@ import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world, worksForOrg } from '../../state/world';
 import { priceLabel, typeLabel } from '../../domain/events';
+import { EventTicket } from '../event/eventUnits';
 import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
 import { LivingBackground } from '../../ui/ambient/LivingBackground';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
@@ -222,11 +223,7 @@ export function DistrictHome({ go }: { go: Go }) {
               See all
             </button>
           </h2>
-          <div className="dh-rail dh-evrail">
-            {upcoming.map((e) => (
-              <EventCard key={e.id} e={e} near={e.city === me.city} />
-            ))}
-          </div>
+          <Events list={upcoming.slice(0, 3)} city={me.city} />
         </section>
       )}
 
@@ -335,51 +332,178 @@ function eventArt(e: IndustryEvent): Media | undefined {
   return (seed.portfolio[e.hostId] ?? []).find((m) => m.kind === 'image');
 }
 
-/** An event as a poster: its image with the date on it, then what, where, when and who. */
-function EventCard({ e, near }: { e: IndustryEvent; near: boolean }) {
+// TEMP: layout options for Events near you, shown to choose one (?dhev=a|b|c|d).
+const EV = (typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('dhev')) ?? 'a';
+
+const where = (e: IndustryEvent, city: string) => (e.venue === 'Online' ? 'Online' : e.city === city ? e.venue : `${e.venue}, ${e.city}`);
+const whenOf = (e: IndustryEvent) => `${new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' })}, ${timeOf(e.start)}`;
+const fullDate = (e: IndustryEvent) => new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+
+function Events({ list, city }: { list: IndustryEvent[]; city: string }) {
+  if (EV === 'b') return <EventsB list={list} city={city} />;
+  if (EV === 'c') return <EventsC list={list} city={city} />;
+  if (EV === 'd') return <EventsD list={list} city={city} />;
+  return <EventsA list={list} city={city} />;
+}
+
+/** The big card: image with title, place and time over it, date on it, save in the corner. */
+function Hero({ e, city }: { e: IndustryEvent; city: string }) {
   const { push } = useStore();
   const art = eventArt(e);
-  const host = party(e.hostId);
-  const people = (e.speakerIds ?? []).map((id) => party(id)).filter((p): p is NonNullable<typeof p> => !!p);
-  const day = new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' });
   return (
-    <div className="dh-ev">
-      <PressCard className="dh-ev-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.98} aria-label={`${e.title}, ${new Date(e.start).toDateString()}, ${e.venue}`}>
-        <span className="dh-ev-media">
-          {art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}
-          <DateBlock ms={e.start} />
-        </span>
-        <span className="dh-ev-body">
-          <span className="dh-ev-kicker">
-            {typeLabel(e.type).split(' or ')[0]}
-            {near ? '' : ` · ${e.city}`}
-          </span>
+    <div className="dh-evhero">
+      <PressCard className="dh-evhero-card" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
+        {art ? <Photo media={art} showPlay={false} className="dh-evhero-img" /> : <span className="dh-evhero-img dh-ev-plain" />}
+        <DateBlock ms={e.start} />
+        <span className="dh-evhero-t">
+          <span className="dh-evhero-k">{typeLabel(e.type).split(' or ')[0]}</span>
           <b>{e.title}</b>
-          <span className="dh-ev-where">{e.venue === 'Online' ? 'Online' : e.venue}</span>
-          <span className="dh-ev-foot">
-            <span className="dh-ev-when">
-              {day}, {timeOf(e.start)}
-            </span>
-            <span className={`dh-ev-price ${e.price.kind === 'free' ? 'is-free' : ''}`}>{priceLabel(e)}</span>
+          <span>{where(e, city)}</span>
+          <span className="dh-evhero-foot">
+            {whenOf(e)} <i>{priceLabel(e)}</i>
           </span>
-          {people.length > 0 ? (
-            <span className="dh-ev-who">
-              <span className="dh-faces" aria-hidden>
-                {people.slice(0, 3).map((p) => (
-                  <Avatar key={p.id} party={p} size={20} />
-                ))}
-              </span>
-              {people.map((p) => first(p.name)).slice(0, 2).join(', ')}
-              {people.length > 2 ? ` +${people.length - 2}` : ''}
-            </span>
-          ) : (
-            host && <span className="dh-ev-who">By {host.name}</span>
-          )}
         </span>
       </PressCard>
       <span className="dh-ev-save">
         <SaveButton id={e.id} kind="event" floating name={e.title} />
       </span>
+    </div>
+  );
+}
+
+/* A: the big card, then a clean list with small pictures. */
+function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
+  const { push } = useStore();
+  return (
+    <div className="dh-pad">
+      <Hero e={list[0]} city={city} />
+      {list.length > 1 && (
+        <div className="dh-evl">
+          {list.slice(1).map((e) => {
+            const art = eventArt(e);
+            return (
+              <div key={e.id} className="dh-evl-row">
+                <PressCard className="dh-evl-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={e.title}>
+                  <span className="dh-evl-img">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}</span>
+                  <span className="dh-evl-t">
+                    <span className="dh-evl-when">
+                      {fullDate(e)} · {timeOf(e.start)}
+                    </span>
+                    <b>{e.title}</b>
+                    <span>
+                      {where(e, city)} · {priceLabel(e)}
+                    </span>
+                  </span>
+                </PressCard>
+                <SaveButton id={e.id} kind="event" name={e.title} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* B: the big card, then each other event as its own smaller card with the date on its picture. */
+function EventsB({ list, city }: { list: IndustryEvent[]; city: string }) {
+  const { push } = useStore();
+  return (
+    <div className="dh-pad dh-evb">
+      <Hero e={list[0]} city={city} />
+      {list.slice(1).map((e) => {
+        const art = eventArt(e);
+        return (
+          <div key={e.id} className="dh-evb-card">
+            <PressCard className="dh-evb-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={e.title}>
+              <span className="dh-evb-img">
+                {art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}
+                <DateBlock ms={e.start} />
+              </span>
+              <span className="dh-evb-t">
+                <span className="dh-ev-kicker">{typeLabel(e.type).split(' or ')[0]}</span>
+                <b>{e.title}</b>
+                <span>{where(e, city)}</span>
+                <span className="dh-evb-foot">
+                  {whenOf(e)} <i className={e.price.kind === 'free' ? 'is-free' : ''}>{priceLabel(e)}</i>
+                </span>
+              </span>
+            </PressCard>
+            <span className="dh-evb-save">
+              <SaveButton id={e.id} kind="event" name={e.title} />
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* C: one big card with the next ones stacked behind it; swipe or tap the dots to bring the next forward. */
+function EventsC({ list, city }: { list: IndustryEvent[]; city: string }) {
+  const [i, setI] = useState(0);
+  const x0 = useRef<number | null>(null);
+  const go = (d: number) => setI((v) => (v + d + list.length) % list.length);
+  return (
+    <div className="dh-pad">
+      <div
+        className={`dh-evstack ${list.length > 1 ? 'has-more' : ''} ${list.length > 2 ? 'has-more-2' : ''}`}
+        onPointerDown={(ev) => (x0.current = ev.clientX)}
+        onPointerUp={(ev) => {
+          if (x0.current === null) return;
+          const dx = ev.clientX - x0.current;
+          x0.current = null;
+          if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+        }}
+      >
+        <div key={list[i].id} className="dh-evstack-top">
+          <Hero e={list[i]} city={city} />
+        </div>
+      </div>
+      {list.length > 1 && (
+        <div className="dh-evstack-dots" role="tablist" aria-label="Events">
+          {list.map((e, k) => (
+            <button key={e.id} role="tab" aria-selected={k === i} aria-label={e.title} className={k === i ? 'on' : ''} onClick={() => setI(k)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* D: the big card as a ticket (picture above a perforation, details on the stub), then the app's ticket rows. */
+function EventsD({ list, city }: { list: IndustryEvent[]; city: string }) {
+  const { push } = useStore();
+  const e = list[0];
+  const art = eventArt(e);
+  const d = new Date(e.start);
+  return (
+    <div className="dh-pad dh-evd">
+      <div className="dh-evd-ticket">
+        <PressCard className="dh-evd-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
+          <span className="dh-evd-img">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}</span>
+          <span className="dh-evd-stub">
+            <span className="dh-evd-date">
+              <b>{d.toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}</b>
+              {d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase()}
+            </span>
+            <span className="dh-evd-t">
+              <span className="dh-ev-kicker">{typeLabel(e.type).split(' or ')[0]}</span>
+              <b>{e.title}</b>
+              <span>
+                {where(e, city)} · {whenOf(e)}
+              </span>
+            </span>
+            <i className={`dh-evd-price ${e.price.kind === 'free' ? 'is-free' : ''}`}>{priceLabel(e)}</i>
+          </span>
+        </PressCard>
+        <span className="dh-ev-save">
+          <SaveButton id={e.id} kind="event" floating name={e.title} />
+        </span>
+      </div>
+      {list.slice(1).map((x) => (
+        <EventTicket key={x.id} e={x} />
+      ))}
     </div>
   );
 }
