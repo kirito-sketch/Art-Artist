@@ -1,3 +1,5 @@
+import { useFeatures } from '../../ui/features';
+import { FeaturedWorkSection } from './WorkPortfolio';
 import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
@@ -81,7 +83,8 @@ function useNameFit(name: string) {
 
 export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?: boolean; active?: boolean }) {
   const { isSaved, toggleSave } = useStore();
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events } = useStore();
+  const district = useFeatures().home === 'district';
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events, stack } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -228,10 +231,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
         {/* Availability: one quiet row under credibility. Your own is editable; someone else's shows only when open. */}
         {own ? (
-          <Pressable className="pid-availability" onClick={() => openSheet({ name: 'availability' })} aria-label="Availability">
-            <span className={`status-dot ${availability.open && !scenario.newUser ? 'is-on' : ''}`} />
+          <Pressable className="pid-availability" onClick={() => openSheet({ name: 'availability' })} aria-label="Work preferences">
             {scenario.newUser ? (
-              <span className="link link--underline">Add when you're available</span>
+              <span className="link link--underline">Add work preferences</span>
             ) : (
               <span className="pid-availability-text">
                 <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
@@ -243,7 +245,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         ) : (
           from && (
             <div className="pid-availability">
-              <span className="status-dot is-on" />
               <span className="pid-availability-text">
                 <span>{availableLabel(from)}</span>
                 <span className="meta">
@@ -370,13 +371,13 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </section>
 
-        <ReelCard person={p} />
+        <ReelCard person={p} active={isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile'} />
 
         <ProfileReviewsSection id={p.id} />
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title={craftProfile(p.craft).work.images ?? 'Portfolio'} />
+            <SectionHeader title={district ? 'Portfolio' : craftProfile(p.craft).work.images ?? 'Portfolio'} />
             <div className="bento">
               {stills.map((m, i) => (
                 <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
@@ -387,7 +388,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
 
-        <WorkLinks person={p} />
+        <>{district && <FeaturedWorkSection personId={p.id} />}<WorkLinks person={p} /></>
 
         <ProfileDetails person={p} />
 

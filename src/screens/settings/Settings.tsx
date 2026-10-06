@@ -1,4 +1,4 @@
-import { Bell, Building2, Check, ChevronLeft, CircleHelp, Info, Palette, Shield, UserRound } from 'lucide-react';
+import { Bell, Building2, Check, ChevronLeft, CircleHelp, Info, Monitor, Moon, Palette, Shield, Sun, UserRound } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
@@ -62,37 +62,10 @@ function Switch({ id, label, sub, initial }: { id: string; label: string; sub?: 
   );
 }
 
-/** A row on the index that opens a group's page: icon, label, the current value when it helps, chevron. */
-/** Appearance: in the District version a single Dark mode switch; in the current version the System, Light, Dark page. */
-/** Appearance. District: Light, Dark or System right here, one tap each. Current version: the Appearance page. */
+/** Appearance belongs to this device, from either identity's settings. */
 function AppearanceRow() {
   const appearance = useAppearance();
-  const district = useFeatures().home === 'district';
-  if (!district) return <NavRow icon={<Palette size={19} />} label="Appearance" value={APPEARANCE.find((a) => a.id === appearance)!.label} page="appearance" />;
-  const OPTIONS: { id: Appearance; label: string }[] = [
-    { id: 'light', label: 'Light' },
-    { id: 'dark', label: 'Dark' },
-    { id: 'system', label: 'System' },
-  ];
-  return (
-    <div className="row appearance-inline">
-      <span className="row-icon" aria-hidden>
-        <span className="settings-icon">
-          <Palette size={19} />
-        </span>
-      </span>
-      <span className="row-label" id="appearance-label">
-        Appearance
-      </span>
-      <div className="seg appearance-seg" role="radiogroup" aria-labelledby="appearance-label" onKeyDown={(e) => rovingKeys(e)}>
-        {OPTIONS.map((o) => (
-          <button key={o.id} role="radio" aria-checked={appearance === o.id} tabIndex={appearance === o.id ? 0 : -1} className={appearance === o.id ? 'is-on' : ''} onClick={(e) => setAppearance(o.id, originOf(e.currentTarget))}>
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  return <NavRow icon={<Palette size={19} />} label="Appearance" value={APPEARANCE.find((a) => a.id === appearance)!.label} page="appearance" />;
 }
 
 function NavRow({ icon, label, value, page }: { icon: ReactNode; label: string; value?: string; page: SettingsPage }) {
@@ -102,10 +75,11 @@ function NavRow({ icon, label, value, page }: { icon: ReactNode; label: string; 
 
 export function SettingsScreen({ page }: { page?: SettingsPage }) {
   const { pop, acting } = useStore();
+  const district = useFeatures().home === 'district' && acting !== 'self';
   const house = acting !== 'self';
   const title = page ? TITLES[page] : house ? 'House settings' : 'Settings';
   return (
-    <div className="screen">
+    <div className={`screen${district ? ' dhouse-page' : ''}`}>
       <header className="topbar topbar--nav">
         <IconButton label="Back" onClick={pop}>
           <ChevronLeft size={26} />
@@ -300,19 +274,26 @@ function PersonalPage({ page }: { page: SettingsPage }) {
 /** System, Light or Dark. Applies at once, no Save; stored on this device. */
 function AppearancePage() {
   const appearance = useAppearance();
+  const district = useFeatures().home === 'district';
+  const icons = { system: Monitor, light: Sun, dark: Moon };
+  const descriptions = { system: 'Follow device appearance', light: 'Always use light mode', dark: 'Always use dark mode' };
   return (
     <div className="settings">
       <section className="settings-group">
-        <div className="group picker settings-radio" role="radiogroup" aria-label="Appearance">
-          {APPEARANCE.map((a) => (
-            <button key={a.id} role="radio" aria-checked={appearance === a.id} className={`picker-row ${appearance === a.id ? 'is-on' : ''}`} onClick={(e) => setAppearance(a.id, originOf(e.currentTarget))}>
-              <span className="settings-label">
-                <span>{a.label}</span>
-                <span className="meta">{a.sub}</span>
-              </span>
-              {appearance === a.id && <Check size={18} strokeWidth={2.4} aria-hidden />}
-            </button>
-          ))}
+        <div className={`group picker settings-radio ${district ? 'appearance-options' : ''}`} role="radiogroup" aria-label="Appearance" onKeyDown={district ? (e) => rovingKeys(e) : undefined}>
+          {APPEARANCE.map((a) => {
+            const Icon = icons[a.id];
+            return (
+              <button key={a.id} role="radio" aria-checked={appearance === a.id} tabIndex={district ? appearance === a.id ? 0 : -1 : undefined} className={`picker-row ${appearance === a.id ? 'is-on' : ''}`} onClick={(e) => setAppearance(a.id, originOf(e.currentTarget))}>
+                {district && <span className="appearance-icon" aria-hidden><Icon size={22} /></span>}
+                <span className="settings-label">
+                  <span>{a.label}</span>
+                  <span className="meta">{district ? descriptions[a.id] : a.sub}</span>
+                </span>
+                {district ? <span className={`appearance-check ${appearance === a.id ? 'is-on' : ''}`} aria-hidden>{appearance === a.id && <Check size={14} strokeWidth={2.8} />}</span> : appearance === a.id && <Check size={18} strokeWidth={2.4} aria-hidden />}
+              </button>
+            );
+          })}
         </div>
       </section>
     </div>

@@ -1,6 +1,7 @@
 import * as seed from '../data/seed';
 import type { IndustryEvent, Person } from '../data/types';
 import { listable, type HostFacts } from '../domain/events';
+import { eventEndsAt } from '../domain/eventAttendance';
 import { creditedOn, workedWith } from '../domain/home/graph';
 import type { Candidate, Significance } from '../domain/home/types';
 
@@ -20,7 +21,7 @@ export const isHost = (e: IndustryEvent, viewerId: string, acting: string) => e.
 /** Everything this person may see, soonest first. Hosts also see their own under review or cancelled. */
 export function visibleEvents(events: IndustryEvent[], now: number, viewerId = '', acting = 'self'): IndustryEvent[] {
   return events
-    .filter((e) => listable(e, hostFacts(e.hostId), now) || (isHost(e, viewerId, acting) && (e.end ?? e.start) >= now))
+    .filter((e) => listable(e, hostFacts(e.hostId), now) || (isHost(e, viewerId, acting) && eventEndsAt(e) >= now))
     .sort((a, b) => a.start - b.start);
 }
 

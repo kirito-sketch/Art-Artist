@@ -1,21 +1,17 @@
-import { CalendarDays, Ticket, TicketCheck } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarDays } from 'lucide-react';
 import type { IndustryEvent, Person } from '../../data/types';
-import { priceLabel, stubLabel, typeLabel, whenLabel } from '../../domain/events';
+import { typeLabel, whenLabel } from '../../domain/events';
 import type { Candidate } from '../../domain/home/types';
 import { research } from '../../research-data/client';
 import { eventHomeCandidates } from '../../state/events';
 import { party } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { work } from '../../state/world';
+import { SaveButton } from '../home/OpportunityCard';
 import { getFeatures, useFeatures } from '../../ui/features';
-import { Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
+import { Photo, PressCard, SectionHeader } from '../../ui/primitives';
 
-/*
- * Event units (docs/EVENTS.md). An event looks like a ticket stub: the date on a perforated stub, the
- * details beside it. Marking Interested punches the stub (a small, one-off motion; still under Reduce
- * Motion). Interest is private.
- */
+/* Event cards pair a cover with concise details. Save remains a private bookmark. */
 
 /** Home candidates, only when Events are switched on. */
 export function eventCandidates(me: Person, loadedAt: number, events?: IndustryEvent[], following: string[] = []): Candidate[] {
@@ -23,75 +19,54 @@ export function eventCandidates(me: Person, loadedAt: number, events?: IndustryE
   return eventHomeCandidates(events, me, following, loadedAt);
 }
 
-export function InterestedButton({ e, compact }: { e: IndustryEvent; compact?: boolean }) {
-  const { isSaved, toggleSave } = useStore();
-  const on = isSaved('event', e.id);
-  const [punched, setPunched] = useState(false);
-  if (e.status !== 'scheduled') return null;
+/** Saving is a private bookmark. It never sends an attendance request. */
+export function EventSaveButton({ e }: { e: IndustryEvent }) {
   return (
-    <Pressable
-      className={`ev-interest ${on ? 'is-on' : ''} ${punched && on ? 'is-punched' : ''} ${compact ? 'ev-interest--compact' : ''}`}
-      aria-pressed={on}
-      aria-label={on ? `Interested in ${e.title}. Tap to remove` : `Mark interested in ${e.title}`}
-      onClick={(ev: React.MouseEvent) => {
-        ev.stopPropagation();
-        setPunched(!on);
-        toggleSave(e.id, 'event');
-      }}
-      scale={0.94}
-    >
-      {compact ? (
-        on ? <TicketCheck size={20} aria-hidden className="ev-punch-icon" /> : <Ticket size={20} aria-hidden />
-      ) : (
-        <>
-          <span className="ev-punch" aria-hidden />
-          {on ? 'Interested' : 'Interested?'}
-        </>
-      )}
-    </Pressable>
+    <span className="ev-card-save">
+      <SaveButton id={e.id} kind="event" name={e.title} />
+    </span>
   );
 }
 
-/** One event as a ticket stub row. */
 export function EventTicket({ e, reason, onOpen }: { e: IndustryEvent; reason?: string; onOpen?: () => void }) {
-  const { push } = useStore();
-  const stub = stubLabel(e.start);
+  const { push, eventStatus } = useStore();
   const host = party(e.hostId);
-  const status = e.status === 'cancelled' ? 'Cancelled' : e.status === 'under_review' ? 'Under review · only you can see this' : e.changed;
-  // Each fact once (docs/TEXT_LOAD.md): the host isn't repeated when the venue already names it, and an
-  // "In {city}" reason isn't repeated under an address that already ends with the city.
-  const hostLine = host && !e.venue.includes(host.name) ? ` · ${host.name}` : '';
-  const why = reason && reason !== `In ${e.city}` ? reason : undefined;
+  const project = e.projectId ? work(e.projectId) : undefined;
+  const art = e.cover ?? (project && project.media.id !== 'ph' ? (project.stills[0] ?? project.media) : undefined);
+  const status = eventStatus(e.id);
   return (
-    <div className={`ev-ticket ${e.status !== 'scheduled' ? 'is-muted' : ''}`}>
+    <div className="ev-ticket ev-discovery-card">
       <PressCard
         className="ev-ticket-main"
         onPress={() => {
           onOpen?.();
           push({ name: 'event', id: e.id });
         }}
-        scale={0.985}
-        aria-label={`${e.title}. ${whenLabel(e.start)}, ${e.venue}, ${e.city}. ${priceLabel(e)}.${status ? ` ${status}.` : ''}${reason ? ` ${reason}.` : ''}`}
+        aria-label={`${e.title}. ${whenLabel(e.start)}. ${e.venue === 'Online' ? 'Online' : e.city}. Free. Places by request. ${status}.`}
       >
-        <span className="ev-stub" aria-hidden>
-          <span className="ev-stub-month">{stub.month}</span>
-          <span className="ev-stub-day">{stub.day}</span>
+        <span className="ev-ticket-cover">
+          {art ? (
+            <Photo media={art} showPlay={false} />
+          ) : (
+            <span className="ev-card-fallback">
+              <CalendarDays size={22} aria-hidden />
+            </span>
+          )}
         </span>
         <span className="ev-body">
           <span className="ev-kind">{typeLabel(e.type)}</span>
           <b className="ev-title">{e.title}</b>
+          <span className="ev-meta">{whenLabel(e.start)}</span>
           <span className="ev-meta">
-            {whenLabel(e.start)} · {e.venue}, {e.city}
+            {e.venue === 'Online' ? 'Online' : e.city}
+            {host ? ` · ${host.name}` : ''}
           </span>
-          <span className="ev-meta">
-            {priceLabel(e)}
-            {hostLine}
-          </span>
-          {status && <span className="ev-status">{status}</span>}
-          {why && !status && <em className="ev-why">{why}</em>}
+          <span className="ev-meta">Free · Places by request</span>
+          {!['Upcoming', 'Today'].includes(status) && <span className="ev-status">{status}</span>}
+          {reason && <em className="ev-why">{reason}</em>}
         </span>
       </PressCard>
-      <InterestedButton e={e} compact />
+      <EventSaveButton e={e} />
     </div>
   );
 }
@@ -101,12 +76,20 @@ export function EventRow({ c, position, lead }: { c: Candidate; position: number
   const { events, push } = useStore();
   const e = events.find((x) => x.id === c.data?.eventId);
   if (!e) return null;
-  const opened = () => research.track('home_unit_opened', { metadata: { unit: lead ? 'lead' : 'event', position, reason: !!c.reason } });
+  const opened = () =>
+    research.track('home_unit_opened', {
+      metadata: { unit: lead ? 'lead' : 'event', position, reason: !!c.reason },
+    });
   if (lead) {
     const w = e.projectId ? work(e.projectId) : undefined;
     return (
       <section className="hn-lead-wrap" aria-label="Lead story">
-        <PressCard className="hn-lead" onPress={() => (opened(), push({ name: 'event', id: e.id }))} scale={0.985} aria-label={`${e.title}. ${whenLabel(e.start)}, ${e.venue}. ${c.reason ?? ''}`}>
+        <PressCard
+          className="hn-lead"
+          onPress={() => (opened(), push({ name: 'event', id: e.id }))}
+          scale={0.985}
+          aria-label={`${e.title}. ${whenLabel(e.start)}, ${e.venue}. ${c.reason ?? ''}`}
+        >
           {w && <Photo media={w.stills[0] ?? w.media} className="hn-lead-photo" />}
           <div className="hn-lead-text">
             <span className="hn-tag">
@@ -131,7 +114,17 @@ export function EventRow({ c, position, lead }: { c: Candidate; position: number
 }
 
 /** A page section of events (project, house, profile). Nothing at all when Events are off or there are none. */
-export function EventsSection({ title, list, action, onAction }: { title: string; list: IndustryEvent[]; action?: string; onAction?: () => void }) {
+export function EventsSection({
+  title,
+  list,
+  action,
+  onAction,
+}: {
+  title: string;
+  list: IndustryEvent[];
+  action?: string;
+  onAction?: () => void;
+}) {
   const on = useFeatures().events;
   if (!on || (!list.length && !action)) return null;
   return (

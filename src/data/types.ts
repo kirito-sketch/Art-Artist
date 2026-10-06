@@ -190,12 +190,12 @@ export interface Interest {
 
 export interface Notification {
   id: string;
-  kind: 'credit' | 'message' | 'interest' | 'follow' | 'response';
+  kind: 'credit' | 'message' | 'interest' | 'follow' | 'response' | 'event';
   text: string;
   actorId: string;
   time: string;
   unread: boolean;
-  route?: { name: 'conversation' | 'profile' | 'opportunity' | 'project' | 'hproject' | 'association'; id: string };
+  route?: { name: 'conversation' | 'profile' | 'opportunity' | 'project' | 'hproject' | 'association' | 'event'; id: string };
   /** The organisation this belongs to. Absent means it's for the person. */
   forId?: string;
 }
@@ -227,9 +227,9 @@ export interface ProjectUpdate {
 /**
  * An industry event (docs/EVENTS.md): a screening or premiere, a workshop, a meetup or a festival. Always
  * hosted by a verified production house or a verified adult; optionally linked to a project and speakers.
- * Auditions are never events: they are roles. Interest is private (Saved, kind 'event').
+ * Auditions are never events: they are roles. Saved is a private bookmark; attendance uses a separate request.
  */
-export type EventType = 'screening' | 'workshop' | 'meetup' | 'festival';
+export type EventType = 'screening' | 'workshop' | 'meetup' | 'festival' | 'talk' | 'exhibition' | 'other';
 export interface IndustryEvent {
   id: string;
   type: EventType;
@@ -250,10 +250,14 @@ export interface IndustryEvent {
   cover?: Media;
   summary: string;
   /** 'under_review' belongs to the future paid flow; V1 never creates it. */
-  status: 'scheduled' | 'cancelled' | 'under_review';
+  status: 'scheduled' | 'closed' | 'draft' | 'cancelled' | 'under_review';
+  capacity?: number;
+  location?: 'physical' | 'online';
+  /** Only returned to the organiser and confirmed attendees; never used on public cards. */
+  joiningUrl?: string;
   /** Checked by the curation team (lets a reviewed event mention, say, casting directors). */
   reviewed?: boolean;
-  /** Set when the host changes the date, time or place after people marked interest. */
+  /** Set when the host changes the date, time or place after people requested attendance. */
   changed?: string;
   /** Who it's for: crafts, or everyone (the default). Used to rank Home's events, never to hide an event. */
   audience?: Craft[] | 'everyone';

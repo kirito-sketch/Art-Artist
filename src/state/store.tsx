@@ -5,6 +5,10 @@ import { TEST_MODE } from '../research-data/surface';
 import { BOOT } from '../qa/boot';
 import * as act from '../domain/actions';
 import { notificationsFor } from '../domain/discovery';
+import { canManageEvent, confirmedCount, eventForActor, eventState, requestsOpen, requestPlace, acceptRequest, withdrawRequest, resolvePending, requestsForOrganiser } from '../domain/eventAttendance';
+import { eventRequests, accountEmails } from './eventAttendance';
+import { listable, validateDraft } from '../domain/events';
+import { hostFacts } from './events';
 import { defaultIntent, type Intent } from '../domain/relevance';
 
 /** Research sessions start as Aditi acting for Konark; an edge-case scenario starts where it says; everything else starts as Kiran. */
@@ -35,7 +39,8 @@ export type Route =
   | { name: 'houseSetup' }
   | { name: 'legal'; doc: 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority' }
   | { name: 'yourData'; step?: 'delete' }
-  | { name: 'hproject'; id: string }
+  | { name: 'hproject'; id: string; focusAssociation?: string }
+  | { name: 'houseList'; kind: import('../screens/production/DistrictHouse').HouseListKind }
   | { name: 'association'; id: string }
   | { name: 'org'; id: string }
   | { name: 'composePost' }
@@ -129,6 +134,19 @@ const DEFAULT_AVAILABILITY: Record<string, Availability> = {
   aditi: { open: false, from: 'Now', scope: 'Hyderabad' },
 };
 
+let eventNoticeSequence = 0;
+function eventNotice(event: IndustryEvent, target: string, text: string, actorId: string, house = false) {
+  world.notifications.unshift({ id: `en-${Date.now()}-${eventNoticeSequence++}`, kind: 'event', text, actorId, time: 'now', unread: true, route: { name: 'event', id: event.id }, ...(house ? { forId: target } : { toPersonId: target }) });
+}
+function finishEventRequests(events: IndustryEvent[]) {
+  let changed = false;
+  for (const event of events) for (const request of resolvePending(event, eventRequests, Date.now())) {
+    eventNotice(event, request.personId, `We couldn't offer you a place at ${event.title}.`, event.hostId);
+    changed = true;
+  }
+  return changed;
+}
+
 function useStoreValue() {
   const [viewerId, setViewerId] = useState<string>(START);
   const viewer = VIEWERS[viewerId];
@@ -165,6 +183,18 @@ function useStoreValue() {
   const [worldVersion, setWorldVersion] = useState(0);
   const bump = useCallback(() => setWorldVersion((v) => v + 1), []);
   /** Test state: the signed-in member holds credit authority for the house. */
+  useEffect(() => {
+    let signature = events.map(e => eventState(e, eventRequests, Date.now())).join('|');
+    const sync = () => {
+      const finished = finishEventRequests(events);
+      const next = events.map(e => eventState(e, eventRequests, Date.now())).join('|');
+      if (finished || next !== signature) bump();
+      signature = next;
+    };
+    sync();
+    const timer = window.setInterval(sync, 15000);
+    return () => window.clearInterval(timer);
+  }, [events, bump]);
   const [canIssue, setCanIssue] = useState(BOOT?.canIssue ?? true);
   const [following, setFollowing] = useState<string[]>(BOOT?.flags?.newUser ? [] : DEFAULT_FOLLOWING);
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
@@ -281,7 +311,7 @@ function useStoreValue() {
       // Removing is a loss (and from the Saved list the item disappears), so it always says so, with Undo.
       else if (!on) {
         const was = saved.find((x) => x.kind === kind && x.id === id);
-        showToast({ text: kind === 'event' ? 'No longer interested' : 'Removed from Saved', action: { label: 'Undo', run: () => was && setSaved((s) => (s.some((x) => x.kind === kind && x.id === id) ? s : [was, ...s])) } });
+        showToast({ text: 'Removed from Saved', action: { label: 'Undo', run: () => was && setSaved((s) => (s.some((x) => x.kind === kind && x.id === id) ? s : [was, ...s])) } });
       }
     },
     [saved, showToast, acting, push],
@@ -324,7 +354,7 @@ function useStoreValue() {
     (a: Availability, silent = false) => {
       setAvailabilityState(a);
       setReloadKey((k) => k + 1);
-      if (!silent) showToast({ text: a.open ? 'Availability updated. For You is refreshing.' : 'Marked as not available', tone: 'success' });
+      if (!silent) showToast({ text: a.open ? 'Work preferences updated. For You is refreshing.' : 'Work preferences updated.', tone: 'success' });
     },
     [showToast],
   );
@@ -525,10 +555,12 @@ function useStoreValue() {
     setPolicyUpdate,
     isNewPerson: newPeople.includes(viewer.id),
     intent,
+    onboardingIntents: profileOf(viewer.id).onboardingIntents ?? [intent],
     setIntent: (i: Intent) => setIntents((m) => ({ ...m, [viewer.id]: i })),
     /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
     createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {
       const id = `you-${Date.now().toString(36)}`;
+      accountEmails[id] = d.email.trim();
       Object.assign(profileOf(id), d.extra ?? {});
       const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, visibility: 'public', identityVerified: false };
       seed.people.push(p);
@@ -696,17 +728,77 @@ function useStoreValue() {
     isSaved,
     toggleSave,
     events,
-    /** Publish an event hosted by the signed-in person or the house they act for. Paid events from individuals wait for review. */
     replace,
-    createEvent: (e: Omit<IndustryEvent, 'id' | 'status'>, review: 'live' | 'under_review') => {
+    accountEmail: accountEmails[viewer.id] ?? '',
+    eventForViewer: (id: string) => { const event = events.find(e => e.id === id); return event ? eventForActor(event, eventRequests, actor) : undefined; },
+    eventRequest: (id: string) => eventRequests.find(r => r.eventId === id && r.personId === viewer.id),
+    eventRequestsForHost: (id: string) => {
+      const event = events.find(e => e.id === id);
+      return event ? requestsForOrganiser(event, eventRequests, actor) : [];
+    },
+    canManageEvent: (id: string) => {
+      const event = events.find(e => e.id === id);
+      return !!event && canManageEvent(event, actor);
+    },
+    eventStatus: (id: string) => { const event = events.find(e => e.id === id); return event ? eventState(event, eventRequests, Date.now()) : 'Unavailable'; },
+    eventConfirmedCount: (id: string) => { const event = events.find(e => e.id === id); return event ? confirmedCount(event, eventRequests) : 0; },
+    canRequestEvent: (id: string) => {
+      const event = events.find(e => e.id === id);
+      return !!event && listable(event, hostFacts(event.hostId), Date.now()) && requestsOpen(event, eventRequests, Date.now()) && !world.blocks.some(b => (b.by === viewer.id && b.target === event.hostId) || (b.by === event.hostId && b.target === viewer.id));
+    },
+    requestEventPlace: (id: string, email: string, note: string): string | null => {
+      const event = events.find(e => e.id === id);
+      if (!event || !listable(event, hostFacts(event.hostId), Date.now()) || world.blocks.some(b => (b.by === viewer.id && b.target === event.hostId) || (b.by === event.hostId && b.target === viewer.id))) return 'This event is not accepting requests.';
+      const result = requestPlace(event, eventRequests, viewer.id, email, note, Date.now());
+      if (typeof result === 'string') return result;
+      eventNotice(event, event.hostId, `${party(viewer.id)?.name ?? 'Someone'} requested a place at ${event.title}.`, viewer.id, party(event.hostId)?.kind === 'org');
+      bump();
+      return null;
+    },
+    acceptEventRequest: (id: string, requestId: string): string | null => {
+      const event = events.find(e => e.id === id);
+      if (!event) return 'Event not found.';
+      const result = acceptRequest(event, eventRequests, requestId, actorRef.current, Date.now());
+      if (typeof result === 'string') return result;
+      eventNotice(event, result.personId, `Your place at ${event.title} is confirmed.`, event.hostId);
+      if (event.capacity !== undefined && confirmedCount(event, eventRequests) === event.capacity) eventNotice(event, event.hostId, `${event.title} has reached capacity. Pending requests remain until requests close.`, event.hostId, party(event.hostId)?.kind === 'org');
+      bump(); return null;
+    },
+    withdrawEventRequest: (id: string) => {
+      const event = events.find(e => e.id === id);
+      if (!event || !withdrawRequest(event, eventRequests, viewer.id, Date.now())) return false;
+      bump(); return true;
+    },
+    closeEventRequests: (id: string) => {
+      const event = events.find(e => e.id === id);
+      if (!event || !canManageEvent(event, actorRef.current) || event.status !== 'scheduled') return false;
+      const closed = { ...event, status: 'closed' as const };
+      setEvents(es => es.map(e => e.id === id ? closed : e));
+      finishEventRequests([closed]); bump(); return true;
+    },
+    createEvent: (e: Omit<IndustryEvent, 'id' | 'status'>, _review: 'live' | 'under_review') => {
+      const draftEvent = { ...e, id: '', status: 'scheduled' as const };
+      if (e.price.kind !== 'free' || !canManageEvent(draftEvent, actorRef.current) || !validateDraft(e, hostFacts(e.hostId), Date.now()).ok) return '';
       const id = `ev-${Date.now().toString(36)}`;
-      setEvents((list) => [{ ...e, id, status: review === 'live' ? 'scheduled' : 'under_review' }, ...list]);
+      setEvents(list => [{ ...e, id, status: 'scheduled', publishedAt: Date.now() }, ...list]);
       return id;
     },
-    /** Edit an event. A change to when or where is flagged so people who are interested hear about it. */
-    updateEvent: (id: string, patch: Partial<IndustryEvent>) =>
-      setEvents((list) => list.map((e) => (e.id !== id ? e : { ...e, ...patch, changed: patch.start !== undefined && patch.start !== e.start ? 'Date or time changed' : patch.venue && patch.venue !== e.venue ? 'Venue changed' : e.changed }))),
-    cancelEvent: (id: string) => setEvents((list) => list.map((e) => (e.id === id ? { ...e, status: 'cancelled' as const } : e))),
+    updateEvent: (id: string, patch: Partial<IndustryEvent>) => {
+      const event = events.find(e => e.id === id);
+      if (!event || !canManageEvent(event, actorRef.current) || patch.hostId && patch.hostId !== event.hostId || patch.price?.kind === 'paid' || patch.capacity !== undefined && patch.capacity < confirmedCount(event, eventRequests)) return false;
+      if (!validateDraft({ ...event, ...patch }, hostFacts(event.hostId), Date.now()).ok) return false;
+      const material = ['start', 'end', 'venue', 'city', 'location', 'joiningUrl'].some(key => key in patch && patch[key as keyof IndustryEvent] !== event[key as keyof IndustryEvent]);
+      setEvents(list => list.map(e => e.id !== id ? e : { ...e, ...patch, id: event.id, hostId: event.hostId, status: event.status, changed: material ? 'Event details changed' : e.changed }));
+      if (material) eventRequests.filter(r => r.eventId === id && ['pending', 'confirmed'].includes(r.status)).forEach(r => eventNotice(event, r.personId, `Details for ${event.title} changed. Check the event before attending.`, event.hostId));
+      bump(); return true;
+    },
+    cancelEvent: (id: string) => {
+      const event = events.find(e => e.id === id);
+      if (!event || !canManageEvent(event, actorRef.current) || event.status === 'cancelled') return false;
+      setEvents(list => list.map(e => e.id === id ? { ...e, status: 'cancelled' as const } : e));
+      eventRequests.filter(r => r.eventId === id && ['pending', 'confirmed'].includes(r.status)).forEach(r => { eventNotice(event, r.personId, `${event.title} was cancelled by the organiser.`, event.hostId); if (r.status === 'pending') r.status = 'not-accommodated'; });
+      bump(); return true;
+    },
     following,
     toggleFollow,
     /** Roles this person showed interest in: the shared Interest records, plus plain listings kept locally. */

@@ -221,13 +221,12 @@ export function PersonPhoto({ party, className = '' }: { party: Party; className
 }
 
 /** Headshot when delivered, otherwise a neutral monogram. Organisations are rounded squares. */
-export function Avatar({ party, size = 40, available }: { party: Party; size?: number; available?: boolean }) {
+export function Avatar({ party, size = 40 }: { party: Party; size?: number }) {
   const img = usePartyImage(party);
   const isOrg = party.kind === 'org';
   return (
     <span className={`avatar ${isOrg ? 'avatar--org' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden>
       {img.show ? <img src={img.src} alt="" onError={img.onError} /> : size >= 24 ? initials(party.name) : null}
-      {available && <span className="avatar-dot" style={{ width: Math.max(10, size * 0.24), height: Math.max(10, size * 0.24) }} />}
     </span>
   );
 }

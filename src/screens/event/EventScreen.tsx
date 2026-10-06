@@ -1,184 +1,382 @@
-import { CalendarDays, ChevronLeft, ExternalLink, Flag, IndianRupee, MapPin, MoreHorizontal, Pencil, Share, ShieldCheck, XCircle } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ExternalLink, Flag, MapPin, MoreHorizontal, Pencil, Share, Users, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { priceLabel, stubLabel, typeLabel, whenLabel } from '../../domain/events';
-import { research } from '../../research-data/client';
-import { isHost } from '../../state/events';
-import { party, person } from '../../state/selectors';
+import { hostFacts } from '../../state/events';
+import { listable, typeLabel, whenLabel } from '../../domain/events';
+import { CRAFTS } from '../../data/crafts';
+import { party } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { work } from '../../state/world';
-import { scriptLang } from '../../ui/compose';
+import { useFeatures } from '../../ui/features';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Row, SectionHeader, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { InterestedButton } from './eventUnits';
+import { SaveButton } from '../home/OpportunityCard';
+import { EventAttendance } from './EventAttendance';
 
-/*
- * Event page (docs/EVENTS.md). Everything needed to decide fits above the fold: what, when, where, what
- * it costs, who hosts it. Tickets live wherever the host sells them; Art and Artist never takes money.
- * The host sees Edit and Cancel; everyone else sees Report.
- */
 export function EventScreen({ id }: { id: string }) {
-  const { events, pop, push, openSheet, viewer, acting, cancelEvent, showToast } = useStore();
-  const e = events.find((x) => x.id === id);
+  const district = useFeatures().home === 'district';
+  const store = useStore();
+  const { pop, push, openSheet, following, toggleFollow, showToast } = store;
+  const event = store.eventForViewer(id);
   const [menu, setMenu] = useState(false);
-  const [confirm, setConfirm] = useState(false);
-  if (!e)
+  const [confirmation, setConfirmation] = useState<'cancel' | 'close' | null>(null);
+  const [requests, setRequests] = useState(false);
+  const [error, setError] = useState('');
+  if (
+    !event ||
+    !listable({ ...event, status: 'scheduled' }, hostFacts(event.hostId), Math.min(Date.now(), event.start - 1)) ||
+    event.price.kind !== 'free' ||
+    event.status === 'under_review' ||
+    event.status === 'draft'
+  )
     return (
       <div className="screen">
-        <header className="topbar topbar--nav">
+        <header className="topbar">
           <IconButton label="Back" onClick={pop}>
-            <ChevronLeft size={26} />
+            <ChevronLeft size={24} />
           </IconButton>
         </header>
-        <EmptyState title="This event is no longer available" body="The host may have removed it." />
+        <EmptyState title="This event is unavailable" />
       </div>
     );
-  const host = party(e.hostId);
-  const w = e.projectId ? work(e.projectId) : undefined;
-  const mine = isHost(e, viewer.id, acting);
-  const stub = stubLabel(e.start);
-  const speakers = (e.speakerIds ?? []).map((s) => person(s)).filter(Boolean);
-  const art = e.cover ?? (w && w.media.id !== 'ph' ? w.stills[0] ?? w.media : undefined);
-
+  const host = party(event.hostId);
+  const project = event.projectId ? work(event.projectId) : undefined;
+  const mine = store.canManageEvent(id);
+  const organiserElsewhere = !mine && (event.hostId === store.viewer.id || store.memberships.includes(event.hostId));
+  const status = store.eventStatus(id);
+  const ownRequest = store.eventRequest(id);
+  const online = event.location === 'online' || event.venue === 'Online';
+  const art = event.cover ?? (project && project.media.id !== 'ph' ? (project.stills[0] ?? project.media) : undefined);
+  const rows = store.eventRequestsForHost(id);
+  const pending = rows.filter((r) => r.status === 'pending');
+  const confirmed = rows.filter((r) => r.status === 'confirmed');
+  const ended = status === 'Ended';
   return (
-    <div className="screen canvas ev-screen">
-      <div className={`ev-hero ${art ? '' : 'ev-hero--type'}`}>
-        {art ? <Photo media={art} className="ev-hero-photo" showPlay={false} /> : <span className="ev-hero-day" aria-hidden>{stub.day}</span>}
+    <div className={`screen canvas ev-screen${district ? ' dhouse-page' : ''}`}>
+      <div className={`ev-hero ${art ? '' : 'ev-hero--branded'}`}>
+        {art ? (
+          <Photo media={art} className="ev-hero-photo" showPlay={false} />
+        ) : (
+          <span className="ev-hero-fallback" aria-hidden>
+            <CalendarDays size={40} strokeWidth={1.2} />
+            <span>Ana · Events</span>
+          </span>
+        )}
         <div className="phero-bar">
           <IconButton label="Back" className="icon-btn--float" onClick={pop}>
             <ChevronLeft size={24} />
           </IconButton>
           <span className="flex" />
-          <IconButton label={`Share ${e.title}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: e.title })}>
+          <IconButton
+            label={`Share ${event.title}`}
+            className="icon-btn--float"
+            onClick={() => openSheet({ name: 'share', label: event.title })}
+          >
             <Share size={18} />
           </IconButton>
-          <IconButton label={`More options for ${e.title}`} className="icon-btn--float" onClick={() => setMenu(true)}>
+          <IconButton label={`More options for ${event.title}`} className="icon-btn--float" onClick={() => setMenu(true)}>
             <MoreHorizontal size={20} />
           </IconButton>
         </div>
       </div>
-
       <div className="psheet ev-sheet">
-        <p className="ev-kind">
-          <CalendarDays size={13} aria-hidden /> {typeLabel(e.type)}
-        </p>
-        <h1 className="title-1 ev-page-title" lang={scriptLang(e.title)}>
-          {e.title}
-        </h1>
-
-        {e.status === 'cancelled' && (
-          <p className="ev-banner ev-banner--stop" role="status">
-            The host cancelled this event.
+        {organiserElsewhere && (
+          <div className="ev-identity-notice">
+            <p className="meta">This event belongs to {host?.name}. Switch identity to manage it.</p>
+            <Button size="s" variant="secondary" onClick={() => store.setActing(event.hostId === store.viewer.id ? 'self' : event.hostId, true, true)}>
+              Switch to organiser
+            </Button>
+          </div>
+        )}
+        <p className="ev-kind">{typeLabel(event.type)}</p>
+        <h1 className="title-1 ev-page-title">{event.title}</h1>
+        {['Cancelled', 'Full', 'Closed', 'Ended', 'Today'].includes(status) && (
+          <p className={`ev-banner ${status === 'Cancelled' ? 'ev-banner--stop' : ''}`} role="status">
+            {status === 'Cancelled' ? 'The organiser cancelled this event.' : status}
           </p>
         )}
-        {/* Future paid flow only (docs/EVENTS.md): V1 never creates an event under review. */}
-        {e.status === 'under_review' && (
-          <p className="ev-banner" role="status">
-            Under review. Paid events from individuals are checked by the Art and Artist team first. Only you can see it until then.
-          </p>
+        {event.changed && event.status !== 'cancelled' && (
+          <p className="meta">Event details have changed. Please check the time and location.</p>
         )}
-        {e.status === 'scheduled' && e.changed && (
-          <p className="ev-banner" role="status">
-            {e.changed}. People who are interested have been told.
-          </p>
-        )}
-
         <div className="group ev-facts">
-          <Row icon={<CalendarDays size={20} aria-hidden />} label={whenLabel(e.start)} value={e.end ? `until ${whenLabel(e.end).split(' · ')[1]}` : undefined} chevron={false} />
-          <Row icon={<MapPin size={20} aria-hidden />} label={`${e.venue}, ${e.city}`} chevron={false} />
-          <Row icon={<IndianRupee size={20} aria-hidden />} label={priceLabel(e)} value={e.price.kind === 'paid' ? 'Paid to the host' : undefined} chevron={false} />
+          <Row
+            icon={<CalendarDays size={20} />}
+            label={whenLabel(event.start)}
+            value={event.end ? `Ends ${whenLabel(event.end)}` : undefined}
+            chevron={false}
+          />
+          <Row
+            icon={<MapPin size={20} />}
+            label={online ? 'Online event' : event.venue}
+            value={online ? undefined : event.city}
+            chevron={false}
+          />
+          <Row label="Free" value={event.capacity ? `${event.capacity} ${event.capacity === 1 ? 'place' : 'places'}` : undefined} chevron={false} />
         </div>
-
-        <div className="ev-actions">
-          <InterestedButton e={e} />
-          {e.link && e.status === 'scheduled' && (
-            <a className="btn btn--secondary btn--m ev-link" href={e.link} target="_blank" rel="noopener noreferrer">
-              {e.price.kind === 'paid' ? 'Tickets and details' : 'Register'} <ExternalLink size={15} aria-hidden />
-              <span className="sr-only"> (opens the host's site)</span>
-            </a>
-          )}
-        </div>
-
-        <p className="body ev-summary">{e.summary}</p>
-
-        {host && (
-          <PressCard className="prow" onPress={() => push(host.kind === 'org' ? { name: 'org', id: host.id } : { name: 'profile', id: host.id })} scale={0.985}>
-            <Avatar party={host} size={40} />
-            <div className="prow-text">
-              <p className="item-title">
-                {host.name} {host.kind === 'org' && host.verified && <Verified size={13} />}
-              </p>
-              <p className="meta">Host</p>
-            </div>
-          </PressCard>
-        )}
-        {w && (
-          <PressCard className="prow" onPress={() => push({ name: 'work', id: w.id })} scale={0.985}>
-            <Photo media={w.media} className="ev-project-thumb" />
-            <div className="prow-text">
-              <p className="item-title" lang={scriptLang(w.title)}>{w.title}</p>
-              <p className="meta">
-                {w.format} · {w.stage}
-              </p>
-            </div>
-          </PressCard>
-        )}
-
-        {speakers.length > 0 && (
-          <section className="section section--flush">
-            <SectionHeader title={e.type === 'screening' ? 'With' : 'Speakers'} />
-            <div className="list list--flush">
-              {speakers.map((p) => (
-                <PressCard key={p.id} className="prow" onPress={() => push({ name: 'profile', id: p.id })} scale={0.985}>
-                  <Avatar party={p} size={40} />
-                  <div className="prow-text">
-                    <p className="item-title">{p.name}</p>
-                    <p className="meta">{p.role}</p>
-                  </div>
-                </PressCard>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <p className="meta ev-trust">
-          <ShieldCheck size={14} aria-hidden /> Art and Artist never charges to apply or audition. If anyone asks for money for a role at this event, report it.
-        </p>
-      </div>
-
-      <Sheet open={menu} onClose={() => (setMenu(false), setConfirm(false))} title={confirm ? 'Cancel this event?' : e.title}>
-        {confirm ? (
-          <div className="stack">
-            <p className="body">It stays on the page marked Cancelled, and everyone who marked Interested is told.</p>
+        {mine ? (
+          <div className="ev-host-controls">
             <Button
               block
               size="l"
-              variant="danger"
+              icon={<Users size={18} />}
               onClick={() => {
-                cancelEvent(e.id);
-                research.track('event_cancelled', { objectType: 'event', objectId: e.id });
-                setMenu(false);
-                setConfirm(false);
-                showToast({ text: 'Event cancelled. People who were interested have been told.' });
+                setError('');
+                setRequests(true);
               }}
             >
-              Cancel event
+              Requests · {pending.length}
             </Button>
-            <Button block size="l" variant="secondary" onClick={() => setConfirm(false)}>
-              Keep it
-            </Button>
+            <p className="meta">
+              {confirmed.length} confirmed
+              {event.capacity !== undefined ? ` · ${Math.max(0, event.capacity - confirmed.length)} places remaining` : ''}
+            </p>
           </div>
         ) : (
-          <div className="group">
-            {mine && e.status !== 'cancelled' && (
-              <>
-                <Row icon={<Pencil size={20} />} label="Edit event" onPress={() => (setMenu(false), push({ name: 'composeEvent', editId: e.id }))} />
-                <Row icon={<XCircle size={20} />} label="Cancel event" onPress={() => setConfirm(true)} />
-              </>
-            )}
-            {!mine && <Row icon={<Flag size={20} />} label="Report event" onPress={() => (setMenu(false), openSheet({ name: 'report', subject: e.title, partyId: e.hostId, target: { kind: 'Event', id: e.id } }))} />}
-            {mine && e.status === 'cancelled' && <p className="meta">This event is cancelled. Nothing more to change.</p>}
-          </div>
+          <EventAttendance event={event} />
         )}
+        <section className="section section--flush">
+          <SectionHeader title="About" />
+          <p className="body ev-summary">{event.summary}</p>
+        </section>
+        {Array.isArray(event.audience) && event.audience.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Who this is for" />
+            <p className="body">{event.audience.map((id) => CRAFTS.find((c) => c.id === id)?.label ?? id).join(', ')}</p>
+          </section>
+        )}
+        {host && (
+          <section className="section section--flush">
+            <SectionHeader title="Hosted by" />
+            <div className="ev-host-card">
+              <PressCard
+                className="prow"
+                onPress={() => push(host.kind === 'org' ? { name: 'org', id: host.id } : { name: 'profile', id: host.id })}
+              >
+                <Avatar party={host} size={44} />
+                <span className="prow-text">
+                  <b>
+                    {host.name} {host.kind === 'org' && host.verified && <Verified size={13} />}
+                  </b>
+                  <span className="meta">{host.kind === 'org' ? 'Production House' : 'Event organiser'}</span>
+                </span>
+              </PressCard>
+              {host.id !== store.viewer.id && (
+                <Button size="s" variant={following.includes(host.id) ? 'secondary' : 'primary'} onClick={() => toggleFollow(host.id)}>
+                  {following.includes(host.id) ? 'Following' : 'Follow'}
+                </Button>
+              )}
+            </div>
+          </section>
+        )}
+        <section className="section section--flush">
+          <SectionHeader title={online ? 'Joining the event' : 'Venue'} />
+          {online ? (
+            <>
+              {event.joiningUrl && (mine || ownRequest?.status === 'confirmed') && event.status !== 'cancelled' ? (
+                <a className="btn btn--secondary btn--m" href={event.joiningUrl} target="_blank" rel="noopener noreferrer">
+                  Open joining link <ExternalLink size={15} />
+                </a>
+              ) : (
+                <p className="meta">
+                  {event.status === 'cancelled'
+                    ? 'This event was cancelled. Joining details are no longer available.'
+                    : ownRequest?.status === 'confirmed'
+                      ? 'The organiser will share joining details with you.'
+                      : 'Joining details are shared after your place is confirmed.'}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="body">
+                {event.venue}
+                <br />
+                {event.city}
+              </p>
+              <a
+                className="link"
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.city}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on map <ExternalLink size={13} />
+              </a>
+            </>
+          )}
+        </section>
+        {event.link && (
+          <a className="link ev-info-link" href={event.link} target="_blank" rel="noopener noreferrer">
+            More information <ExternalLink size={14} />
+          </a>
+        )}
+        <div className="ev-save-row">
+          <SaveButton id={event.id} kind="event" name={event.title} />
+          <span className="meta">Save for later</span>
+        </div>
+      </div>
+      <Sheet open={requests && mine} onClose={() => setRequests(false)} title="Requests" size="tall">
+        <div className="stack">
+          <p className="meta">
+            {pending.length} pending · {confirmed.length} confirmed
+            {event.capacity !== undefined ? ` · ${Math.max(0, event.capacity - confirmed.length)} places remaining` : ''}
+          </p>
+          {status === 'Full' && <p className="meta">New requests are paused. Pending requests stay here in case a place becomes free.</p>}
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+          {(['pending', 'confirmed', 'not-accommodated'] as const).map((state) => {
+            const list = rows.filter((r) => r.status === state);
+            if (!list.length) return null;
+            return (
+              <section key={state}>
+                <h2 className="title-3">
+                  {state === 'pending' ? 'Pending' : state === 'confirmed' ? 'Confirmed attendees' : 'Requests closed'}
+                </h2>
+                <div className="ev-request-list">
+                  {list.map((r) => {
+                    const person = party(r.personId);
+                    return (
+                      <article key={r.id} className="ev-request-card">
+                        {person && (
+                          <PressCard
+                            className="prow"
+                            onPress={() => {
+                              setRequests(false);
+                              push({ name: 'profile', id: r.personId });
+                            }}
+                          >
+                            <Avatar party={person} size={40} />
+                            <span className="prow-text">
+                              <b>{person.name}</b>
+                              <span className="meta">{person.kind === 'person' ? `${person.role} · ${person.city}` : person.city}</span>
+                            </span>
+                          </PressCard>
+                        )}
+                        {r.note && <p className="body">{r.note}</p>}
+                        <a className="meta ev-private-contact" href={`mailto:${r.email}`}>
+                          {r.email}
+                        </a>
+                        {state === 'pending' && (
+                          <Button
+                            size="s"
+                            disabled={status === 'Full' || event.status !== 'scheduled' || event.start <= Date.now()}
+                            onClick={() => {
+                              const problem = store.acceptEventRequest(id, r.id);
+                              setError(problem ?? '');
+                              if (!problem)
+                                showToast({
+                                  text: 'Place confirmed.',
+                                });
+                            }}
+                          >
+                            Accept
+                          </Button>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+          {!rows.length && <EmptyState title="No requests yet" body="People who request a place will appear here." />}
+          {event.status === 'scheduled' && !ended && (
+            <Button
+              variant="secondary"
+              block
+              onClick={() => {
+                setRequests(false);
+                setConfirmation('close');
+              }}
+            >
+              Close requests
+            </Button>
+          )}
+        </div>
+      </Sheet>
+      <Sheet open={menu} onClose={() => setMenu(false)} title={event.title}>
+        <div className="group">
+          {mine && event.status !== 'cancelled' && !ended ? (
+            <>
+              <Row
+                icon={<Pencil size={20} />}
+                label="Edit event"
+                onPress={() => {
+                  setMenu(false);
+                  push({ name: 'composeEvent', editId: id });
+                }}
+              />
+              {event.status === 'scheduled' && (
+                <Row
+                  label="Close requests"
+                  onPress={() => {
+                    setMenu(false);
+                    setConfirmation('close');
+                  }}
+                />
+              )}
+              <Row
+                icon={<XCircle size={20} />}
+                label="Cancel event"
+                onPress={() => {
+                  setMenu(false);
+                  setConfirmation('cancel');
+                }}
+              />
+            </>
+          ) : !mine ? (
+            <Row
+              icon={<Flag size={20} />}
+              label="Report event"
+              onPress={() => {
+                setMenu(false);
+                openSheet({
+                  name: 'report',
+                  subject: event.title,
+                  partyId: event.hostId,
+                  target: { kind: 'Event', id },
+                });
+              }}
+            />
+          ) : (
+            <p className="meta">{status}</p>
+          )}
+        </div>
+      </Sheet>
+      <Sheet
+        open={!!confirmation && mine}
+        onClose={() => setConfirmation(null)}
+        title={confirmation === 'cancel' ? 'Cancel this event?' : 'Close requests?'}
+      >
+        <div className="stack">
+          <p className="body">
+            {confirmation === 'cancel'
+              ? 'Pending and confirmed attendees will receive an Ana notification.'
+              : 'Confirmed places stay confirmed. Remaining pending requests will be told that a place could not be offered.'}
+          </p>
+          <Button
+            block
+            variant="danger"
+            onClick={() => {
+              const ok = confirmation === 'cancel' ? store.cancelEvent(id) : store.closeEventRequests(id);
+              setConfirmation(null);
+              showToast({
+                text: ok
+                  ? confirmation === 'cancel'
+                    ? 'Event cancelled.'
+                    : 'Requests closed.'
+                  : 'Switch to the organiser identity to do this.',
+                tone: ok ? 'success' : 'error',
+              });
+            }}
+          >
+            {confirmation === 'cancel' ? 'Cancel event' : 'Close requests'}
+          </Button>
+          <Button block variant="secondary" onClick={() => setConfirmation(null)}>
+            Keep it
+          </Button>
+        </div>
       </Sheet>
     </div>
   );

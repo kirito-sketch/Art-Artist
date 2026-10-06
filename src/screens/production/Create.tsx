@@ -10,6 +10,8 @@ import { DEPTS, FORMATS, LANGUAGES, STAGES, creditState, project, publicName, wo
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, Row, SectionHeader, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { DateField, fmtPay, fmtRange, MissingHint, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
+import { useFeatures } from '../../ui/features';
+import { searchablePeople } from '../../domain/discovery';
 
 /* ============================================================ New project */
 
@@ -107,11 +109,12 @@ export function PickProject() {
 
 const CREDIT_LABEL: Record<string, string> = { prepared: 'Credit prepared', proposed: 'Credit proposed', accepted: 'Credited', correction: 'Correction asked' };
 
-export function HouseProjectScreen({ id }: { id: string }) {
+export function HouseProjectScreen({ id, focusAssociation }: { id: string; focusAssociation?: string }) {
   const { pop, push, acting, viewer, interestsReceived, roleStatus, setRoleVisibility, showToast, canIssue, proposePrepared, memberships, setActing } = useStore();
   const p = project(id);
+  const district = useFeatures().home === 'district' && !!p?.houseId;
   const [confirmRole, setConfirmRole] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'share' | 'details' | 'role' | 'person' | { issue: string } | { edit: string } | { revise: string }>(null);
+  const [sheet, setSheet] = useState<null | 'share' | 'details' | 'role' | 'person' | { issue: string } | { edit: string } | { revise: string }>(() => district && p?.houseId === acting && world.associations.some((a) => a.id === focusAssociation && a.projectId === id && a.status !== 'removed') ? { edit: focusAssociation! } : null);
   if (!p) return <EmptyState title="Project not found" />;
   const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
   const canAct = p.houseId ? acting === p.houseId : acting === 'self' && viewer.id === p.ownerId;
@@ -120,8 +123,21 @@ export function HouseProjectScreen({ id }: { id: string }) {
   const roles = world.roles.filter((r) => r.projectId === id);
   const people = world.associations.filter((a) => a.projectId === id && a.status !== 'removed');
 
+  const detailsSection = (
+<section className="section dhouse-details">
+        <SectionHeader title="Details" />
+        <div className="group">
+          <Row label="Public title" value={p.publicTitle ?? 'Not set'} onPress={canAct ? () => setSheet('details') : undefined} />
+          <Row label="Logline" value={p.logline ? 'Added' : 'Not set'} onPress={canAct ? () => setSheet('details') : undefined} />
+          <Row label="Artwork" value={p.artwork ? 'Added' : 'Not set'} onPress={canAct ? () => setSheet('details') : undefined} />
+          <Row label="Stage" value={p.stage} onPress={canAct ? () => setSheet('details') : undefined} />
+        </div>
+        <p className="meta settings-note">{p.shared ? 'Changes to these show on the public page.' : 'Private until you share.'}</p>
+      </section>
+  );
+
   return (
-    <div className="screen">
+    <div className={`screen${district ? ' dhouse-page dhouse-workspace' : ''}`}>
       <header className="topbar topbar--nav">
         <IconButton label="Back" onClick={pop}>
           <ChevronLeft size={26} />
@@ -132,13 +148,14 @@ export function HouseProjectScreen({ id }: { id: string }) {
           </button>
         )}
       </header>
+      {district && p.artwork && <div className="dhouse-workspace-art"><Photo media={p.artwork} showPlay={false} /></div>}
       <div className="title-block">
         <p className="kicker">
           {p.format} · {p.languages.join(', ')} · {p.stage}
         </p>
         <h1 className="large-title" lang={scriptLang(p.workingTitle)}>{p.workingTitle}</h1>
         <p className="meta ws-visibility">
-          {p.shared ? <Globe2 size={13} /> : <Lock size={13} />} {p.shared ? `Shared on Art and Artist as "${publicName(p)}"` : `Only ${owner} can see this project`}
+          {p.shared ? <Globe2 size={13} /> : <Lock size={13} />} {district ? p.shared ? `Public as ${publicName(p)}` : 'Private project' : p.shared ? `Shared on Art and Artist as "${publicName(p)}"` : `Only ${owner} can see this project`}
         </p>
       </div>
 
@@ -159,23 +176,14 @@ export function HouseProjectScreen({ id }: { id: string }) {
       {!p.shared && (
         <div className="ws-announce">
           <p className="item-title">Not announced</p>
-          <p className="meta">Add details and roles privately. Share when you're ready, and you'll see exactly what becomes public.</p>
+          <p className="meta">{district ? 'Share when you’re ready.' : "Add details and roles privately. Share when you're ready, and you'll see exactly what becomes public."}</p>
           <Button disabled={!canAct || !verified} onClick={() => setSheet('share')}>
             Share on Art and Artist
           </Button>
         </div>
       )}
 
-      <section className="section">
-        <SectionHeader title="Details" />
-        <div className="group">
-          <Row label="Public title" value={p.publicTitle ?? 'Not set'} onPress={canAct ? () => setSheet('details') : undefined} />
-          <Row label="Logline" value={p.logline ? 'Added' : 'Not set'} onPress={canAct ? () => setSheet('details') : undefined} />
-          <Row label="Artwork" value={p.artwork ? 'Added' : 'Not set'} onPress={canAct ? () => setSheet('details') : undefined} />
-          <Row label="Stage" value={p.stage} onPress={canAct ? () => setSheet('details') : undefined} />
-        </div>
-        <p className="meta settings-note">{p.shared ? 'Changes to these show on the public page.' : 'Private until you share.'}</p>
-      </section>
+      {!district && detailsSection}
 
       {(p.stage !== 'Released' || roles.length > 0) && (
       <section className="section">
@@ -224,8 +232,8 @@ export function HouseProjectScreen({ id }: { id: string }) {
       )}
 
       <section className="section">
-        <SectionHeader title="On this project" />
-        <p className="meta ph-note">Private to {owner} and each person. Being added isn't a credit. Issue a credit when it's earned.</p>
+        <SectionHeader title={district ? 'People on this project' : 'On this project'} />
+        <p className="meta ph-note">{district ? <><Lock size={12} /> Private associations</> : `Private to ${owner} and each person. Being added isn't a credit. Issue a credit when it's earned.`}</p>
         <div className="list list--flush">
           {people.map((a) => {
             const { current, pending, amendment } = creditState(a.id);
@@ -238,12 +246,12 @@ export function HouseProjectScreen({ id }: { id: string }) {
                 {who ? <Avatar party={who} size={40} /> : <span className="ph-initial">{a.pending!.name[0]}</span>}
                 <div className="prow-text">
                   <p className="item-title">{who?.name ?? a.pending!.name}</p>
-                  <p className="meta">{c && c.status !== 'prepared' ? c.line : current ? current.line : a.workingRole}</p>
+                  <p className="meta">{district ? a.workingRole : c && c.status !== 'prepared' ? c.line : current ? current.line : a.workingRole}</p>
                   {a.status === 'flagged' && <p className="meta meta--attention">Says this isn't right</p>}
-                  {c?.status === 'correction' && c.note && <p className="meta meta--attention">Asked: {c.note}</p>}
-                  {amending && <p className="meta meta--attention">Asked to amend: {amendment!.reason}. The credit stays public until you decide.</p>}
+                  {!district && c?.status === 'correction' && c.note && <p className="meta meta--attention">Asked: {c.note}</p>}
+                  {!district && amending && <p className="meta meta--attention">Asked to amend: {amendment!.reason}. The credit stays public until you decide.</p>}
                 </div>
-                <span className={`ph-state ${!pending && !amending && current ? 'ph-state--confirmed' : c ? 'ph-state--invited' : 'ph-state--added'}`}>{label}</span>
+                <span className={`ph-state ${district ? 'ph-state--added' : !pending && !amending && current ? 'ph-state--confirmed' : c ? 'ph-state--invited' : 'ph-state--added'}`}>{district ? a.pending ? 'Not on Ana' : 'Added' : label}</span>
               </PressCard>
             );
           })}
@@ -252,7 +260,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
         <Button block variant="outline" disabled={!canAct} onClick={() => setSheet('person')}>
           <Plus size={16} /> Add person
         </Button>
-        {canIssue &&
+        {!district && canIssue &&
           world.credits
             .filter((c) => c.projectId === id && c.status === 'prepared')
             .map((c) => (
@@ -265,7 +273,25 @@ export function HouseProjectScreen({ id }: { id: string }) {
             ))}
       </section>
 
-      <Sheet open={!!confirmRole} onClose={() => setConfirmRole(null)} title="Open on Art and Artist?">
+      {district && p.houseId && <section className="section dhouse-credits">
+        <SectionHeader title="Credits" />
+        <div className="list list--flush">{people.filter((a) => { const cs = creditState(a.id); return cs.current || cs.pending; }).map((a) => {
+          const { current, pending, amendment } = creditState(a.id);
+          const c = pending ?? current!;
+          const who = person(a.personId!);
+          const amending = amendment?.status === 'open';
+          const label = amending ? 'Amendment asked' : pending?.supersedes ? 'Revision proposed' : pending ? CREDIT_LABEL[pending.status] : p.shared ? 'Public credit' : 'Accepted · project private';
+          return <PressCard key={a.id} className="prow" onPress={() => canAct && setSheet({ edit: a.id })} aria-label={`${who.name}, ${label}`}>
+            <Avatar party={who} size={48} /><div className="prow-text"><p className="item-title">{who.name}</p><p className="meta">{c.line}</p><p className="meta">{label}</p>{(c.note || amending) && <p className="meta meta--attention">{amending ? amendment!.reason : c.note}</p>}</div>
+            {c.status === 'prepared' && canIssue && <Button size="s" disabled={!canAct || !verified} onClick={(e) => { e.stopPropagation(); proposePrepared(c.id); }}>Issue</Button>}
+          </PressCard>;
+        })}</div>
+        {!people.some((a) => { const cs = creditState(a.id); return cs.current || cs.pending; }) && <p className="meta">No credits issued yet.</p>}
+      </section>}
+
+      {district && detailsSection}
+
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={!!confirmRole} onClose={() => setConfirmRole(null)} title="Open on Art and Artist?">
         {confirmRole && (
           <div className="stack">
             <RoleDisclosure projectId={id} />
@@ -284,25 +310,25 @@ export function HouseProjectScreen({ id }: { id: string }) {
           </div>
         )}
       </Sheet>
-      <Sheet open={sheet === 'share'} onClose={() => setSheet(null)} title="Share on Art and Artist" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={sheet === 'share'} onClose={() => setSheet(null)} title="Share on Art and Artist" size="tall">
         {sheet === 'share' && <ShareProject id={id} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={sheet === 'details'} onClose={() => setSheet(null)} title="Details" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={sheet === 'details'} onClose={() => setSheet(null)} title="Details" size="tall">
         {sheet === 'details' && <ProjectDetails id={id} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={sheet === 'role'} onClose={() => setSheet(null)} title="Add role" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={sheet === 'role'} onClose={() => setSheet(null)} title="Add role" size="tall">
         {sheet === 'role' && <AddRole projectId={id} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={sheet === 'person'} onClose={() => setSheet(null)} title="Add person" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={sheet === 'person'} onClose={() => setSheet(null)} title="Add person" size="tall">
         {sheet === 'person' && <AddPerson projectId={id} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={!!sheet && typeof sheet === 'object' && 'edit' in sheet} onClose={() => setSheet(null)} title="" label="Person on this project">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={!!sheet && typeof sheet === 'object' && 'edit' in sheet} onClose={() => setSheet(null)} title="" label="Person on this project">
         {sheet && typeof sheet === 'object' && 'edit' in sheet && <PersonActions id={sheet.edit} issue={() => setSheet({ issue: sheet.edit })} revise={(m) => setSheet({ revise: m })} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={!!sheet && typeof sheet === 'object' && 'issue' in sheet} onClose={() => setSheet(null)} title="Issue credit" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={!!sheet && typeof sheet === 'object' && 'issue' in sheet} onClose={() => setSheet(null)} title={district && !canIssue ? 'Prepare credit' : 'Issue credit'} size="tall">
         {sheet && typeof sheet === 'object' && 'issue' in sheet && <IssueCredit associationId={sheet.issue} done={() => setSheet(null)} />}
       </Sheet>
-      <Sheet open={!!sheet && typeof sheet === 'object' && 'revise' in sheet} onClose={() => setSheet(null)} title="Propose revised credit" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={!!sheet && typeof sheet === 'object' && 'revise' in sheet} onClose={() => setSheet(null)} title="Propose revised credit" size="tall">
         {sheet && typeof sheet === 'object' && 'revise' in sheet && <ReviseCredit amendmentId={sheet.revise} done={() => setSheet(null)} />}
       </Sheet>
     </div>
@@ -315,6 +341,7 @@ export function HouseProjectScreen({ id }: { id: string }) {
 function ShareProject({ id, done }: { id: string; done: () => void }) {
   const { updateProject, showToast, roleStatus } = useStore();
   const p = project(id)!;
+  const district = useFeatures().home === 'district' && !!p.houseId;
   const [title, setTitle] = useState(p.publicTitle ?? '');
   const shownTitle = title.trim() || `Untitled ${p.languages[0]} ${p.format.toLowerCase()}`;
   const open = world.roles.filter((r) => r.projectId === id && r.visibility === 'open' && !roleStatus[r.id]).length;
@@ -322,14 +349,8 @@ function ShareProject({ id, done }: { id: string; done: () => void }) {
   const added = world.associations.filter((a) => a.projectId === id && a.status !== 'removed').length;
   const accepted = world.credits.filter((c) => c.projectId === id && c.status === 'accepted').length;
   const notAccepted = world.credits.filter((c) => c.projectId === id && c.status !== 'accepted').length;
-  return (
-    <div className="stack">
-      <div>
-        <label className="field-label" htmlFor="sp-title">Public title</label>
-        <input id="sp-title" className="field" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Untitled ${p.languages[0]} ${p.format.toLowerCase()}`} />
-        <p className="meta field-hint">Leave empty to announce without a title.</p>
-      </div>
-      <div className="share-lists">
+  const visibility = (
+<div className="share-lists">
         <div>
           <p className="field-label">
             <Globe2 size={13} /> Becomes public
@@ -358,6 +379,22 @@ function ShareProject({ id, done }: { id: string; done: () => void }) {
           </ul>
         </div>
       </div>
+  );
+  return (
+    <div className="stack">
+      <div>
+        <label className="field-label" htmlFor="sp-title">Public title</label>
+        <input id="sp-title" className="field" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Untitled ${p.languages[0]} ${p.format.toLowerCase()}`} />
+        <p className="meta field-hint">Leave empty to announce without a title.</p>
+      </div>
+      {district ? <>
+        <div className="dhouse-share-preview">
+          {p.artwork && <Photo media={p.artwork} showPlay={false} />}
+          <div><p className="item-title" lang={scriptLang(shownTitle)}>{shownTitle}</p><p className="meta">{p.format} · {p.languages.join(', ')} · {p.stage}</p><p className="meta">{p.houseId ? org(p.houseId).name : person(p.ownerId!).name}</p>{p.logline && <p className="body">{p.logline}</p>}<p className="meta">{open} open roles · {accepted} accepted credits</p></div>
+        </div>
+        <p className="meta"><Lock size={13} /> People added privately and unaccepted credits stay private.</p>
+        <details className="dhouse-privacy"><summary>Public and private details</summary>{visibility}</details>
+      </> : visibility}
       <Button
         block
         size="l"
@@ -375,11 +412,14 @@ function ShareProject({ id, done }: { id: string; done: () => void }) {
 
 function ProjectDetails({ id, done }: { id: string; done: () => void }) {
   const { updateProject } = useStore();
+  const districtFeature = useFeatures().home === 'district';
   const p = project(id)!;
+  const district = districtFeature && !!p.houseId;
   const [title, setTitle] = useState(p.publicTitle ?? '');
   const [logline, setLogline] = useState(p.logline ?? '');
   const [stage, setStage] = useState(p.stage);
   const [art, setArt] = useState<Media | undefined>(p.artwork);
+  const [releaseDate, setReleaseDate] = useState(p.releaseDate ?? '');
   return (
     <div className="stack">
       <div>
@@ -410,11 +450,12 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
           ))}
         </div>
       </div>
+      {district && <div><span className="field-label">Release date</span><DateField label="Release date" value={releaseDate} onChange={setReleaseDate} clearable /></div>}
       <Button
         block
         size="l"
         onClick={() => {
-          updateProject(id, { publicTitle: title.trim() || undefined, logline: logline.trim() || undefined, stage, artwork: art });
+          updateProject(id, { publicTitle: title.trim() || undefined, logline: logline.trim() || undefined, stage, artwork: art, ...(district ? { releaseDate: releaseDate || undefined } : {}) });
           done();
         }}
       >
@@ -432,6 +473,7 @@ const QUICK_ROLES = ['Director of Photography', 'Colourist', 'Gaffer', 'Editor',
 function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
   const { addRole, showToast } = useStore();
   const p = project(projectId)!;
+  const district = useFeatures().home === 'district' && !!p.houseId;
   const [role, setRole] = useState('');
   const [about, setAbout] = useState('');
   const [start, setStart] = useState('');
@@ -515,7 +557,7 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
             Add a question
           </button>
         )}
-        <p className="meta field-hint">Answers are optional for people showing interest. To see work, ask for a link (for example "A link to a scene you lit"): nothing can be uploaded when showing interest.</p>
+        <p className="meta field-hint">{district ? 'Answers are optional. Ask for a link to see their work.' : 'Answers are optional for people showing interest. To see work, ask for a link (for example "A link to a scene you lit"): nothing can be uploaded when showing interest.'}</p>
       </div>
       <div>
         <span className="field-label">Who can see it</span>
@@ -552,8 +594,10 @@ function AddRole({ projectId, done }: { projectId: string; done: () => void }) {
 
 /** Adding is private and tells the person. It is never a credit; "Add and issue credit" creates both records. */
 export function AddPerson({ projectId, done, preset }: { projectId: string; done: () => void; preset?: { personId: string; role: string; fromRoleId: string } }) {
-  const { addToProject, issueCredit, showToast, canIssue } = useStore();
+  const { addToProject, issueCredit, showToast, canIssue, viewer, blocked } = useStore();
+  const districtFeature = useFeatures().home === 'district';
   const p = project(projectId)!;
+  const district = districtFeature && !!p.houseId;
   const [q, setQ] = useState('');
   const [picked, setPicked] = useState<string | null>(preset?.personId ?? null);
   const [pending, setPending] = useState<{ name: string; phone: string } | null>(null);
@@ -562,7 +606,8 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
   const [step, setStep] = useState<'find' | 'role' | 'credit'>(preset ? 'role' : 'find');
   const [line, setLine] = useState('');
   const already = world.associations.filter((a) => a.projectId === projectId && a.status !== 'removed').map((a) => a.personId);
-  const results = seed.people.filter((x) => x.visibility === 'public' && !already.includes(x.id) && (!q || `${x.name} ${x.role}`.toLowerCase().includes(q.toLowerCase()))).slice(0, 6);
+  const pool = district ? searchablePeople(viewer.id, blocked) : seed.people;
+  const results = pool.filter((x) => x.visibility === 'public' && !already.includes(x.id) && (!q || `${x.name} ${x.role}`.toLowerCase().includes(q.toLowerCase()))).slice(0, 6);
   const name = picked ? person(picked).name : pending?.name ?? '';
   const house = !!p.houseId;
 
@@ -600,13 +645,13 @@ export function AddPerson({ projectId, done, preset }: { projectId: string; done
           </>
         ) : (
           <>
-            <p className="meta">This stays inside your project. It doesn't create an Art and Artist profile, can't be found in search and can't be credited until they join.</p>
+            <p className="meta">{district ? 'Private record. No public profile or credit until they join.' : "This stays inside your project. It doesn't create an Art and Artist profile, can't be found in search and can't be credited until they join."}</p>
             <label className="ob-field">
               <span className="field-label">Name</span>
               <input className="field" value={pending.name} onChange={(e) => setPending({ ...pending, name: e.target.value })} autoComplete="off" />
             </label>
             <label className="ob-field">
-              <span className="field-label">Phone (optional, to invite them to Art and Artist)</span>
+              <span className="field-label">{district ? 'Phone (optional)' : 'Phone (optional, to invite them to Art and Artist)'}</span>
               <input className="field" value={pending.phone} onChange={(e) => setPending({ ...pending, phone: e.target.value.replace(/(?!^\+)[^\d]/g, '').slice(0, 15) })} inputMode="tel" autoComplete="off" />
             </label>
             <Button block disabled={!pending.name.trim()} onClick={() => setStep('role')}>
@@ -789,7 +834,8 @@ function ReviseCredit({ amendmentId, done }: { amendmentId: string; done: () => 
 }
 
 function PersonActions({ id, issue, revise, done }: { id: string; issue: () => void; revise: (amendmentId: string) => void; done: () => void }) {
-  const { editAssociation, removeAssociation, showToast, keepCredit } = useStore();
+  const { editAssociation, removeAssociation, showToast, keepCredit, canIssue } = useStore();
+  const district = useFeatures().home === 'district';
   const a = world.associations.find((x) => x.id === id)!;
   const p = project(a.projectId)!;
   const { current, pending, amendment } = creditState(id);
@@ -828,7 +874,7 @@ function PersonActions({ id, issue, revise, done }: { id: string; issue: () => v
         </div>
       )}
       <div className="group">
-        {canCredit && <Row label={c?.status === 'correction' ? 'Issue corrected credit' : 'Issue credit'} onPress={issue} />}
+        {canCredit && <Row label={district && !canIssue ? 'Prepare credit' : c?.status === 'correction' ? 'Issue corrected credit' : 'Issue credit'} onPress={issue} />}
         {!p.houseId && <Row label={<span className="meta">Credits for independent projects aren't available yet</span>} chevron={false} />}
         {p.houseId && !org(p.houseId).verified && <Row label={<span className="meta">Credits unlock once Art and Artist verifies {org(p.houseId).name}</span>} chevron={false} />}
         {a.pending && <Row label={<span className="meta">Can be credited once they join Art and Artist</span>} chevron={false} />}
@@ -893,6 +939,7 @@ function PersonActions({ id, issue, revise, done }: { id: string; issue: () => v
  */
 export function AssociationScreen({ id }: { id: string }) {
   const { pop, flagAssociation, showToast, push, viewer, acting, setActing, acceptCredit, creditBusy, justAccepted, openSheet, declineRevision } = useStore();
+  const district = useFeatures().home === 'district';
   const a = world.associations.find((x) => x.id === id);
   const [confirm, setConfirm] = useState(false);
   const back = (
@@ -905,7 +952,7 @@ export function AssociationScreen({ id }: { id: string }) {
   // Only the person it is about opens this view. The house manages the same record in its workspace.
   if (!a || a.personId !== viewer.id)
     return (
-      <div className="screen">
+      <div className={`screen${district ? ' dhouse-page dhouse-association' : ''}`}>
         {back}
         <EmptyState icon={<Lock />} title="This isn't available" body="It's private to the person and the production." />
       </div>
@@ -923,7 +970,7 @@ export function AssociationScreen({ id }: { id: string }) {
   const creditValue = current ? (revision ? 'Accepted · revision waiting' : asked ? 'Accepted · amendment asked' : 'Accepted') : !pending ? 'Not issued' : pending.status === 'proposed' ? 'Waiting for you' : 'Correction sent';
   const canAmend = !!current && !asked && !revision;
   return (
-    <div className="screen">
+    <div className={`screen${district ? ' dhouse-page dhouse-association' : ''}`}>
       {back}
       <div className="title-block">
         <p className="kicker">
@@ -1054,7 +1101,13 @@ export function AssociationScreen({ id }: { id: string }) {
 /** What an open role on an unannounced project reveals, and what it doesn't. */
 function RoleDisclosure({ projectId }: { projectId: string }) {
   const p = project(projectId)!;
+  const district = useFeatures().home === 'district' && !!p.houseId;
   const owner = p.houseId ? org(p.houseId).name : person(p.ownerId!).name;
+  if (district) return <div className="disclosure dhouse-role-disclosure">
+    <p className="meta"><Globe2 size={12} /> Public as <b>{publicName(p)}</b> · {owner}</p>
+    <p className="meta"><Lock size={12} /> Keep the working title out of the role description.</p>
+    <details className="dhouse-privacy"><summary>What people can see</summary><p className="meta">The production, format, languages, stage and this role’s details are public. The working title, artwork, people added, other roles and credits stay private.</p></details>
+  </div>;
   return (
     <div className="disclosure">
       <p className="meta">

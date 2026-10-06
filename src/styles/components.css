@@ -438,15 +438,6 @@
   color: var(--on-primary);
 }
 
-.avatar-dot {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  border-radius: 50%;
-  background: var(--available);
-  box-shadow: 0 0 0 2px var(--bg);
-}
-
 .verified {
   display: inline-flex;
   color: var(--verified);

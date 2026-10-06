@@ -174,7 +174,7 @@ export function peopleFor(me: Person, intent: Intent, following: string[], signa
     const relevant = team ? !sameCraft : intent === 'work' ? sameCraft || hires : sameCraft;
     const tier: Ranked<Person>['tier'] = relevant && near ? 1 : relevant ? 2 : credits ? 3 : 4;
     const why = team
-      ? [available ? `Available from ${p.availableFrom}` : '', near ? `In ${me.city}` : p.city].filter(Boolean).join(' · ')
+      ? [available ? p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}` : '', near ? `In ${me.city}` : p.city].filter(Boolean).join(' · ')
       : intent === 'work' && hires && !sameCraft
         ? `Hires crew · ${near ? me.city : p.city}`
         : sameCraft

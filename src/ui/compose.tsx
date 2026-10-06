@@ -70,10 +70,9 @@ export function FrameLabel({ children, tone = 'plate', icon }: { children: React
  */
 export function PortraitCard({ person, context, action, onPress }: { person: Person; context?: ReactNode; action?: ReactNode; onPress: () => void }) {
   return (
-    <PressCard className="portrait-card" onPress={onPress} scale={0.98} aria-label={person.availableFrom ? `${person.name}, available` : person.name}>
+    <PressCard className="portrait-card" onPress={onPress} scale={0.98} aria-label={person.name}>
       <span className="portrait-card-photo">
         <PersonPhoto party={person} />
-        {person.availableFrom && <span className="portrait-card-available" aria-hidden />}
       </span>
       <div className="portrait-card-text">
         <p className="item-title" lang={scriptLang(person.name)} title={person.name}>

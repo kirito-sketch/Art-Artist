@@ -18,6 +18,7 @@ import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
 import { EditProfile } from './screens/profile/EditProfile';
 import { ProductionHome } from './screens/production/Production';
+import { DistrictHouseHome, HouseListScreen, type HousePeopleFocus } from './screens/production/DistrictHouse';
 import { WorkScreen } from './screens/org/WorkScreen';
 import { OrgScreen } from './screens/org/OrgScreen';
 import { SettingsScreen } from './screens/settings/Settings';
@@ -113,7 +114,9 @@ function RouteView({ r }: { r: Route }) {
     case 'settings':
       return <SettingsScreen page={r.page} />;
     case 'hproject':
-      return <HouseProjectScreen id={r.id} />;
+      return <HouseProjectScreen id={r.id} focusAssociation={r.focusAssociation} />;
+    case 'houseList':
+      return <HouseListScreen kind={r.kind} />;
     case 'association':
       return <AssociationScreen id={r.id} />;
     case 'houseSetup':
@@ -210,6 +213,13 @@ function Phone({ app = false }: { app?: boolean }) {
   const [discoverScope, setDiscoverScope] = useState<Scope>(DISCOVER_DEFAULT);
   // District Discover's chip: Home's tiles and "See all" open it on a chip; switching chips adds no Back step.
   const [districtChip, setDistrictChip] = useState<DiscoverChip>(DISCOVER_CHIP_DEFAULT);
+  const [houseChip, setHouseChip] = useState<DiscoverChip>('people');
+  const [housePeopleFocus, setHousePeopleFocus] = useState<HousePeopleFocus>({ roleId: null, n: 0 });
+  const openHouseDiscover = (chip: DiscoverChip = 'people', roleId: string | null = null) => {
+    setHouseChip(chip);
+    setHousePeopleFocus((f) => ({ roleId, n: f.n + 1 }));
+    setTab('discover');
+  };
   const openDistrict = (c?: DiscoverChip) => {
     setDistrictChip(c ?? DISCOVER_CHIP_DEFAULT);
     setTab('discover');
@@ -329,7 +339,7 @@ function Phone({ app = false }: { app?: boolean }) {
     <MotionConfig reducedMotion="user">
     <LayoutGroup>
     <ModalContext.Provider value={modalLayer}>
-    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal">
+    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal" data-home={features.home} data-acting={store.acting}>
       <div className="phone-screen" ref={screen}>
         {/* App mode runs on the real device: it supplies the status bar and home indicator. */}
         {!app && <StatusBar tone={statusTone} />}
@@ -350,10 +360,10 @@ function Phone({ app = false }: { app?: boolean }) {
               // Identity switch: the home world fades up anew so the change of context is felt, not just read.
               // (Keyed remount, no exit layer: an exiting copy of the old home must never linger under the new one.)
               <motion.div key={store.acting} className="identity-layer" initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: dur.ui, ease: ease.out }}>
-                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ discover: openDistrict }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
+                {store.acting !== 'self' ? features.home === 'district' ? <DistrictHouseHome discover={openHouseDiscover} /> : <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ discover: openDistrict }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && (features.home === 'district' && store.acting === 'self' ? <DiscoverScreen scope={districtChip} setScope={setDistrictChip} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={(s) => setDiscoverScope(s as Scope)} postFocus={postFocus} />)}
+            {t === 'discover' && (features.home === 'district' ? <DiscoverScreen key={store.acting} scope={store.acting === 'self' ? districtChip : houseChip} setScope={store.acting === 'self' ? setDistrictChip : setHouseChip} houseFocus={housePeopleFocus} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={(s) => setDiscoverScope(s as Scope)} postFocus={postFocus} />)}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>

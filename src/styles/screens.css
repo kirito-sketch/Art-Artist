@@ -42,18 +42,6 @@
   color: var(--text-2);
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-3);
-  flex: none;
-}
-
-.status-dot.is-on {
-  background: var(--available);
-}
-
 .section {
   padding: var(--section) var(--gutter) 0;
 }

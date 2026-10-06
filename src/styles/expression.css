@@ -180,17 +180,6 @@
   background: var(--tint);
 }
 
-.portrait-card-available {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--available);
-  box-shadow: 0 0 0 2px var(--raised);
-}
-
 /* The canonical person image block (fills its box): photo, else initials. */
 .person-photo {
   position: relative;
@@ -2015,7 +2004,6 @@
 .intent-chip { background: var(--action-tint); color: var(--action-ink); border: 0; }
 .filter-pill { background: transparent; color: var(--text); border: 1px solid var(--line); padding: 0 12px; }
 .filter-pill.is-on { background: var(--text); color: var(--surface); border-color: var(--text); }
-.filter-pill .status-dot { width: 7px; height: 7px; }
 
 /* Intent choices (onboarding and the Home sheet): one tappable row each, the selected one marked. */
 .intent-list { display: flex; flex-direction: column; gap: 8px; }

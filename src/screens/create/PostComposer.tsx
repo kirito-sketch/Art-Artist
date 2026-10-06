@@ -108,7 +108,7 @@ export function PostComposer() {
   );
 }
 
-export function MediaPicker({ selected, onDone, single }: { selected: Media[]; onDone: (m: Media[]) => void; single?: boolean }) {
+export function MediaPicker({ selected, onDone, single, kind }: { selected: Media[]; onDone: (m: Media[]) => void; single?: boolean; kind?: Media['kind'] }) {
   const [picked, setPicked] = useState<Media[]>(selected);
   const toggle = (m: Media) => {
     if (single) return onDone([m]);
@@ -119,14 +119,14 @@ export function MediaPicker({ selected, onDone, single }: { selected: Media[]; o
       {/* V30: the limit is stated up front, not discovered by a tap that does nothing. */}
       {!single && (
         <p className="meta picker-limit" role="status">
-          {picked.length >= MEDIA_LIMIT ? `That's the limit: ${MEDIA_LIMIT} photos or videos at a time.` : `Choose up to ${MEDIA_LIMIT} photos or videos. ${picked.length} selected.`}
+          {picked.length >= MEDIA_LIMIT ? `That's the limit: ${MEDIA_LIMIT} ${kind === 'image' ? 'images' : 'photos or videos'} at a time.` : `Choose up to ${MEDIA_LIMIT} ${kind === 'image' ? 'images' : 'photos or videos'}. ${picked.length} selected.`}
         </p>
       )}
       <div className="picker">
-        {seed.cameraRoll.map((m) => {
+        {seed.cameraRoll.filter((m) => !kind || m.kind === kind).map((m, i) => {
           const idx = picked.findIndex((x) => x.id === m.id);
           return (
-            <motion.button key={m.id} className={`picker-item ${idx >= 0 ? 'is-on' : ''}`} whileTap={{ scale: 0.94 }} onClick={() => toggle(m)} aria-pressed={idx >= 0}>
+            <motion.button key={m.id} className={`picker-item ${idx >= 0 ? 'is-on' : ''}`} whileTap={{ scale: 0.94 }} onClick={() => toggle(m)} aria-label={kind ? `Image ${i + 1}` : undefined} aria-pressed={idx >= 0}>
               <Photo media={m} />
               {!single && <span className="picker-check">{idx >= 0 ? <Check size={14} strokeWidth={3} /> : null}</span>}
             </motion.button>

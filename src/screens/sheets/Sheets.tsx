@@ -26,15 +26,18 @@ import { stubLabel, whenLabel } from '../../domain/events';
 import { DateField, fmtDay, fmtRange, parseDays, todayIso } from '../../ui/fields';
 
 export function SheetHost() {
-  const { sheet, closeSheet } = useStore();
+  const { sheet, closeSheet, acting } = useStore();
+  const district = useFeatures().home === 'district';
+  const districtHouse = district && acting !== 'self';
+  const creditFlow = district && sheet?.name === 'reportCredit' && !!wproject(world.credits.find((c) => c.id === sheet.creditId)?.projectId ?? '')?.houseId;
   const is = (n: SheetRoute['name']) => sheet?.name === n;
   return (
     <>
       <CreateSurface open={is('create')} onClose={closeSheet} />
-      <Sheet open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
         <Notifications />
       </Sheet>
-      <Sheet open={is('availability')} onClose={closeSheet} title="Availability">
+      <Sheet open={is('availability')} onClose={closeSheet} title="Work preferences">
         <AvailabilityForm />
       </Sheet>
       <Sheet open={is('intent')} onClose={closeSheet} title="What are you looking to do right now?">
@@ -43,16 +46,16 @@ export function SheetHost() {
       <Sheet open={is('showInterest')} onClose={closeSheet} title="Show interest">
         {sheet?.name === 'showInterest' && <InterestForm id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('reviewInterest')} onClose={closeSheet} title="Interested" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('reviewInterest')} onClose={closeSheet} title="Interested" size="tall">
         <ReviewInterest opportunityId={sheet?.name === 'reviewInterest' ? sheet.opportunityId : undefined} />
       </Sheet>
-      <Sheet open={is('reportCredit')} onClose={closeSheet} title="Report credit">
+      <Sheet className={creditFlow ? 'dhouse-sheet' : undefined} open={is('reportCredit')} onClose={closeSheet} title="Report credit">
         {sheet?.name === 'reportCredit' && <ReportCredit title={sheet.title} creditId={sheet.creditId} />}
       </Sheet>
       <Sheet open={is('activity')} onClose={closeSheet} title="Your activity" size="tall">
         <Activity />
       </Sheet>
-      <Sheet open={is('identity')} onClose={closeSheet} title="Acting as">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('identity')} onClose={closeSheet} title="Acting as">
         <Identity />
       </Sheet>
       <Sheet open={is('share')} onClose={closeSheet} title="Share">
@@ -70,16 +73,16 @@ export function SheetHost() {
       <Sheet open={is('postMore')} onClose={closeSheet} title="" label="Post options">
         {sheet?.name === 'postMore' && <PostMenu id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
         <NewProjectForm />
       </Sheet>
-      <Sheet open={is('pickProject')} onClose={closeSheet} title="Open a role">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('pickProject')} onClose={closeSheet} title="Open a role">
         <PickProject />
       </Sheet>
-      <Sheet open={is('editRole')} onClose={closeSheet} title="Edit role" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('editRole')} onClose={closeSheet} title="Edit role" size="tall">
         {sheet?.name === 'editRole' && <EditRole id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('closeRole')} onClose={closeSheet} title="Close role">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('closeRole')} onClose={closeSheet} title="Close role">
         {sheet?.name === 'closeRole' && <CloseRole id={sheet.id} />}
       </Sheet>
       <Sheet open={is('block')} onClose={closeSheet} title="" label="Block">
@@ -165,7 +168,7 @@ function CreateMenu() {
     <div className="group create-rows">
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
-      <Row icon={<CircleCheck size={22} />} label="Available for work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
+      <Row icon={<CircleCheck size={22} />} label="Open to work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
       <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
       {eventRow}
     </div>
@@ -201,18 +204,11 @@ function dayWord(at: number, now: number) {
   return d <= 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'Soon';
 }
 
-/** Interested events that need a word: starting within 48 hours, changed, or cancelled. Past ones drop off. */
-function comingUp(saved: { kind: string; id: string }[], events: IndustryEvent[], now: number) {
-  const out: { e: IndustryEvent; line: string }[] = [];
-  for (const s of saved) {
-    if (s.kind !== 'event') continue;
-    const e = events.find((x) => x.id === s.id);
-    if (!e || (e.end ?? e.start) < now) continue;
-    if (e.status === 'cancelled') out.push({ e, line: 'Cancelled by the host.' });
-    else if (e.status === 'scheduled' && e.changed) out.push({ e, line: `${e.changed}: now ${whenLabel(e.start)}.` });
-    else if (e.status === 'scheduled' && e.start - now <= 48 * 36e5) out.push({ e, line: `${dayWord(e.start, now)}: ${whenLabel(e.start)}.` });
-  }
-  return out.sort((a, b) => a.e.start - b.e.start);
+/** One upcoming reminder for a confirmed place; changes and cancellations are real notices. */
+function comingUp(events: IndustryEvent[], now: number) {
+  return events.filter(e => ['scheduled', 'closed'].includes(e.status) && e.start >= now && e.start - now <= 48 * 36e5)
+    .sort((a, b) => a.start - b.start)
+    .map(e => ({ e, line: `${dayWord(e.start, now)}: ${whenLabel(e.start)}.` }));
 }
 
 /** A new item that asks for a decision: a credit to accept, a correction to answer, interest to review (N4). */
@@ -225,13 +221,12 @@ const asksForDecision = (n: { kind: string; text: string; unread: boolean }) =>
  * you); conversations live in Inbox.
  */
 function Notifications() {
-  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario, saved, events } = useStore();
+  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario, events, eventRequest } = useStore();
   const [filter, setFilter] = useState<string>(acting);
   const features = useFeatures();
   const homeNext = features.home === 'next';
-  // Events you marked Interested (docs/EVENTS.md): a reminder from 48 hours before, and any change or
-  // cancellation, until the event is over. Derived, so it can never drift from the event itself.
-  const reminders = features.events && (filter === 'self' || filter === 'all') ? comingUp(saved, events, Date.now()) : [];
+  // Only confirmed places receive upcoming reminders. A bookmark does not imply attendance.
+  const reminders = features.events && (filter === 'self' || filter === 'all') ? comingUp(events.filter(e => eventRequest(e.id)?.status === 'confirmed'), Date.now()) : [];
   // News from your network (credits, new projects, availability) lives here, not on Home, which only
   // shows what needs you (docs/UX_HEURISTIC_AUDIT.md F2, F13). It belongs to the person, not a house.
   const network = filter === 'self' || filter === 'all' ? networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel') : [];
@@ -438,7 +433,7 @@ function AvailabilityForm() {
               From a date
             </button>
           </div>
-          {later && <DateField className="field" value={fromDay} onChange={setFromDay} label="Available from" placeholder="Choose a start date" />}
+          {later && <DateField className="field" value={fromDay} onChange={setFromDay} label="Open to work from" placeholder="Choose a start date" />}
           <label className="field-label" htmlFor="avail-scope">
             Where
           </label>
@@ -550,20 +545,22 @@ function InterestForm({ id }: { id: string }) {
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
   const { interestsReceived, reviewInterest, startConversation, push, userCollabs, acting, blocked, conversations, cannotReach } = useStore();
   const all = (opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived).filter((i) => !blocked.includes(i.personId));
-  if (!all.length) return <EmptyState title="No one yet" />;
+
   const groups: { title?: string; items: typeof all }[] = [
-    { items: all.filter((i) => !i.withdrawn && !i.review) },
+    { title: 'New', items: all.filter((i) => !i.withdrawn && !i.review) },
     { title: 'In conversation', items: all.filter((i) => !i.withdrawn && i.review === 'messaged') },
     { title: 'Not now', items: all.filter((i) => !i.withdrawn && i.review === 'notNow') },
     { title: 'No longer interested', items: all.filter((i) => i.withdrawn) },
   ];
   const as = acting !== 'self' ? org(acting).name : null;
+  const districtHouse = useFeatures().home === 'district' && !!as;
+  if (!all.length) return <EmptyState title="No one yet" />;
   return (
     <div className="stack">
       {groups.map((g, gi) =>
         g.items.length ? (
           <section key={gi} className="stack">
-            {g.title ? <p className="meta">{g.title}</p> : null}
+            {g.title && (g.title !== 'New' || districtHouse) ? <p className="meta">{g.title}</p> : null}
             <div className="list list--flush">
               {g.items.map((it) => {
                 const p = person(it.personId);
@@ -741,9 +738,10 @@ function Activity() {
 
 /** Who am I acting as. One person, the organisations they may act for, one tap to switch. */
 function Identity() {
-  const { viewer, acting, setActing, memberships, tab } = useStore();
+  const { viewer, acting, setActing, memberships, tab, canIssue } = useStore();
+  const district = useFeatures().home === 'district';
   const me = person(viewer.id);
-  const rows = [{ id: 'self', party: me, sub: 'Your personal profile' }, ...memberships.map((m) => ({ id: m, party: org(m), sub: 'You can open roles and issue credits' }))];
+  const rows = [{ id: 'self', party: me, sub: 'Your personal profile' }, ...memberships.map((m) => ({ id: m, party: org(m), sub: district ? !org(m).verified ? 'Private projects · verification pending' : canIssue ? 'Roles, projects and credits' : 'Roles and projects' : 'You can open roles and issue credits' }))];
   return (
     <div className="stack">
       <div className="list list--flush">
@@ -758,7 +756,7 @@ function Identity() {
           </Pressable>
         ))}
       </div>
-      <p className="meta">The house's owner decides who can act for it. Your own profile and credits always stay yours.</p>
+      {!district && <p className="meta">The house's owner decides who can act for it. Your own profile and credits always stay yours.</p>}
     </div>
   );
 }

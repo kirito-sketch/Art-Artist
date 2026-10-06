@@ -17,6 +17,7 @@ interface SheetProps {
   size?: 'auto' | 'tall';
   /** The visible close control. Omit it only where the sheet already has its own Cancel or Done. */
   close?: 'Close' | 'Done' | false;
+  className?: string;
 }
 
 /**
@@ -25,7 +26,7 @@ interface SheetProps {
  * It is a modal dialog: focus moves in, stays in, and returns to whatever opened it; the screens
  * behind are inert while it is open. Title is centred and quiet.
  */
-export function Sheet({ open, onClose, title, label, children, footer, size = 'auto', close = 'Close' }: SheetProps) {
+export function Sheet({ open, onClose, title, label, children, footer, size = 'auto', close = 'Close', className = '' }: SheetProps) {
   const controls = useDragControls();
   const layer = useModalLayer();
   const titleId = useId();
@@ -36,6 +37,15 @@ export function Sheet({ open, onClose, title, label, children, footer, size = 'a
   };
 
   useEffect(() => {
+    // A replaced District sheet can still be animating out below its successor.
+    if (className === 'dhouse-sheet' || className === 'ana-work-sheet') {
+      const dialog = panel.current?.closest<HTMLElement>('.sheet-layer');
+      if (dialog) {
+        dialog.inert = !open;
+        if (open) dialog.removeAttribute('aria-hidden');
+        else dialog.setAttribute('aria-hidden', 'true');
+      }
+    }
     if (!open) return;
     const active = document.activeElement;
     opener.current = active && active !== document.body ? active : activation.el;
@@ -46,7 +56,7 @@ export function Sheet({ open, onClose, title, label, children, footer, size = 'a
       release?.();
       restoreFocus(opener.current, currentScreen);
     };
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, className]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
@@ -66,7 +76,7 @@ export function Sheet({ open, onClose, title, label, children, footer, size = 'a
           <motion.div
             ref={panel}
             tabIndex={-1}
-            className={`sheet sheet--${size}`}
+            className={`sheet sheet--${size}${className ? ` ${className}` : ''}`}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

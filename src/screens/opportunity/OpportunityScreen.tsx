@@ -1,3 +1,4 @@
+import { useFeatures } from '../../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
 import { dur, shared, spring } from '../../ui/motion';
 import { Check, ChevronLeft, Clock, MapPin, Share, Sparkles, Users } from 'lucide-react';
@@ -26,9 +27,11 @@ function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
+  const districtFeature = useFeatures().home === 'district';
   const { pop, push, userCollabs, viewer, interestsSent, openSheet, withdrawInterest, startConversation, scenario, interestsReceived, setHero, acting, setActing, roleEdits, roleStatus, reopenRole, conversations, openAgain, showToast, blocked } = useStore();
   const base = findOpportunity(id, userCollabs);
   const o = base && { ...base, ...roleEdits[id] };
+  const district = districtFeature && !!o?.orgId;
   const status = roleStatus[id];
   const changed = roleEdits[id]?.changed ?? [];
   const [scrollY, setScrollY] = useState(0);
@@ -199,7 +202,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
 
   return (
     <div className="detail v-role">
-      <div className="screen screen--hero canvas" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+      <div className={`screen screen--hero canvas${district ? ' dhouse-page' : ''}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
         <div className="ohero">
           <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
             {/* Opened from a card: the card's artwork becomes this hero. Otherwise it simply appears. */}

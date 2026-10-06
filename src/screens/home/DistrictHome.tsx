@@ -14,7 +14,7 @@ import { discoverPosts, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world, worksForOrg } from '../../state/world';
-import { priceLabel, typeLabel } from '../../domain/events';
+import { typeLabel, whenLabel } from '../../domain/events';
 import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
 import { markOpened, markShown, readSeen } from '../../state/eventSeen';
 import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
@@ -25,6 +25,8 @@ import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHe
 import { SaveButton } from './OpportunityCard';
 import { FirstStep } from './FirstHome';
 import { spotCard, spotlightFor, type SpotCard } from './districtFeed';
+import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
+import { Sheet } from '../../ui/Sheet';
 
 /*
  * The District version of Home (docs/DISTRICT.md, docs/DISTRICT_FIXES.md): where you are, what the app offers
@@ -67,7 +69,7 @@ export function DistrictHome({ go }: { go: Go }) {
   // The Spotlight: chosen once for the session; a save, follow or block chooses again.
   const network = [...workedWith(me.id)];
   const spotlit = spotlightFor(
-    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool, releases: week },
+    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool.filter(e => e.id !== seed.HOME_REQUEST_EVENT_ID), releases: week },
     { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
     [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
   );
@@ -96,8 +98,10 @@ export function DistrictHome({ go }: { go: Go }) {
   // Home's three events: chosen for this person (docs/REVIEW_EVENTS_PROFILE.md §2), fixed for the session, minus the Spotlight's.
   const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
   const eventPool = pool.filter((e) => !shown.has(`event:${e.id}`));
-  const allEvents = pool.filter((e) => e.status === 'scheduled' && (e.end ?? e.start) >= now).length;
-  const upcoming = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
+  const rankedEvents = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
+  // Keep one concrete request-to-attend example in the Home event shelf of this prototype.
+  const requestExample = eventPool.find(e => e.id === seed.HOME_REQUEST_EVENT_ID && e.status === 'scheduled' && !blocked.includes(e.hostId));
+  const upcoming = requestExample ? [requestExample, ...rankedEvents.filter(e => e.id !== requestExample.id && e.hostId !== requestExample.hostId)].slice(0, 3) : rankedEvents;
   const friday = week.filter((w) => !shown.has(`release:${w.id}`));
 
   const continueItems = saved
@@ -131,6 +135,7 @@ export function DistrictHome({ go }: { go: Go }) {
   }, [me.id, me.city, me.craft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [spot, setSpot] = useState(0);
+  const [spotlightAll, setSpotlightAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const atmosphere = useAtmosphere();
 
@@ -176,8 +181,16 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {cards.length > 0 && (
         <section className="dh-sec" aria-label="In the spotlight">
-          <SectionHeader title="In the spotlight" className="dh-pad" />
+          <SectionHeader title="In the spotlight" action="See all" onAction={() => setSpotlightAll(true)} className="dh-pad" />
           <Spotlight items={cards} i={Math.min(spot, cards.length - 1)} setI={setSpot} />
+          <Sheet open={spotlightAll} onClose={() => setSpotlightAll(false)} title="In the spotlight">
+            <div className="dh-spot-list">
+              {cards.map((card) => <button key={card.key} onClick={() => { setSpotlightAll(false); push(card.open); }}>
+                <Photo media={card.media} showPlay={false} />
+                <span><small>{card.kicker}</small><b>{card.title}</b><small>{card.meta}</small></span>
+              </button>)}
+            </div>
+          </Sheet>
         </section>
       )}
 
@@ -216,7 +229,7 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {upcoming.length > 0 && (
         <section className="dh-sec" aria-label={eventsTitle(upcoming, me.city)}>
-          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action={allEvents > upcoming.length ? 'See all' : undefined} onAction={() => go.discover('events')} />
+          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action="See all" onAction={() => go.discover('events')} />
           <EventsA list={upcoming} city={me.city} />
         </section>
       )}
@@ -336,7 +349,7 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
                   <span>
                     {p.role} · {p.city}
                   </span>
-                  <span className="dh-irow-fact dh-irow-fact--ok">Available from {p.availableFrom}</span>
+                  <span className="dh-irow-fact">{p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}`}</span>
                 </span>
               </PressCard>
             </div>
@@ -348,18 +361,6 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
   return null;
 }
 
-const timeOf = (ms: number) => new Date(ms).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
-
-function DateBlock({ ms }: { ms: number }) {
-  const d = new Date(ms);
-  return (
-    <span className="dh-date" aria-hidden>
-      <b>{d.toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}</b>
-      {d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase()}
-    </span>
-  );
-}
-
 /** What an event looks like: its film, else the host's current project, else the host's own work. */
 function eventArt(e: IndustryEvent): Media | undefined {
   if (e.cover) return e.cover;
@@ -369,10 +370,6 @@ function eventArt(e: IndustryEvent): Media | undefined {
   if (lead) return lead.stills[0] ?? lead.media;
   return (seed.portfolio[e.hostId] ?? []).find((m) => m.kind === 'image');
 }
-
-const where = (e: IndustryEvent, city: string) => (e.venue === 'Online' ? 'Online' : e.city === city ? e.venue : `${e.venue}, ${e.city}`);
-const whenOf = (e: IndustryEvent) => `${new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' })}, ${timeOf(e.start)}`;
-const fullDate = (e: IndustryEvent) => new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
 
 // One choice per person per day; a change that matters (Interested, a block) recalculates. Never while on screen.
 const chosen = new Map<string, IndustryEvent[]>();
@@ -398,142 +395,59 @@ function homeEvents(pool: IndustryEvent[], me: Person, following: string[], inte
   return list;
 }
 
-/** The big card: image with title, place and time over it, date on it, save in the corner. */
-function Hero({ e, city }: { e: IndustryEvent; city: string }) {
-  const { push, viewer } = useStore();
-  const art = eventArt(e);
-  return (
-    <div className="dh-evhero">
-      <PressCard className="dh-evhero-card" onPress={() => (markOpened(viewer.id, e.id), push({ name: 'event', id: e.id }))} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
-        {art ? <Photo media={art} showPlay={false} className="dh-evhero-img" /> : <span className="dh-evhero-img dh-ev-plain" />}
-        <DateBlock ms={e.start} />
-        <span className="dh-evhero-t">
-          <span className="dh-evhero-k">{typeLabel(e.type).split(' or ')[0]}</span>
-          <b>{e.title}</b>
-          <span>{where(e, city)}</span>
-          <span className="dh-evhero-foot">
-            {whenOf(e)} <i>{priceLabel(e)}</i>
+/** Image-led, manual event shelf. Attendance details live on Event Detail. */
+function EventsA({ list }: { list: IndustryEvent[]; city: string }) {
+  const { viewer, push } = useStore();
+  return <div className="dh-events-rail" aria-label="Upcoming events">
+    {list.map(e => {
+      const art = eventArt(e);
+      return <div className="dh-event-card" key={e.id}>
+        <PressCard className="dh-event-main" onPress={() => { markOpened(viewer.id, e.id); push({ name: 'event', id: e.id }); }} aria-label={`${e.title}. ${whenLabel(e.start)}. ${e.venue === 'Online' ? 'Online' : e.city}. Free.`}>
+          <span className="dh-event-image">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /><b>Meet. Make.<br />Be inspired.</b></span>}</span>
+          <span className="dh-event-copy">
+            <span className="dh-event-category">{typeLabel(e.type).split(' or ')[0]}</span>
+            <b>{e.title}</b>
+            <span className="dh-event-when">{whenLabel(e.start)}</span>
+            <span className="dh-event-place">{e.venue === 'Online' ? 'Online' : e.city}<span>Free</span></span>
           </span>
-        </span>
-      </PressCard>
-      <span className="dh-ev-save">
-        <SaveButton id={e.id} kind="event" floating name={e.title} />
-      </span>
-    </div>
-  );
+        </PressCard>
+        <span className="dh-event-save"><SaveButton id={e.id} kind="event" floating name={e.title} /></span>
+      </div>;
+    })}
+  </div>;
 }
 
-/** Direction A: one large event and two rows, all visible, nothing moves (docs/REVIEW_EVENTS_PROFILE.md §1). */
-function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
-  const { push } = useStore();
-  return (
-    <div className="dh-pad">
-      <Hero e={list[0]} city={city} />
-      {list.length > 1 && (
-        <div className="dh-evl">
-          {list.slice(1).map((e) => {
-            const art = eventArt(e);
-            return (
-              <div key={e.id} className="dh-evl-row">
-                <PressCard className="dh-evl-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={e.title}>
-                  <span className="dh-evl-img">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}</span>
-                  <span className="dh-evl-t">
-                    <span className="dh-evl-when">
-                      {fullDate(e)} · {timeOf(e.start)}
-                    </span>
-                    <b>{e.title}</b>
-                    <span>
-                      {where(e, city)} · {priceLabel(e)}
-                    </span>
-                  </span>
-                </PressCard>
-                <SaveButton id={e.id} kind="event" name={e.title} />
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-/**
- * Centred carousel: moves on its own, the centre card plays its clip; touching it stops the movement. Every card has
- * the same anatomy whatever it is: a big image with one label on it, then the title, one meta line and one fact.
- */
+/** One editorial shell, with continuously scaled side previews and a compact dot group. */
 function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f: number | ((x: number) => number)) => void }) {
   const { push } = useStore();
-  const held = useRef(false);
   const low = useLowPower();
-  const animate = motionOk() && !low;
-  const wrap = useRef<HTMLDivElement>(null);
-  const [w, setW] = useState(360);
-  useEffect(() => {
-    const el = wrap.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setW(el.clientWidth));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  useEffect(() => {
-    if (!animate || items.length < 2) return;
-    const t = window.setInterval(() => !held.current && document.visibilityState === 'visible' && setI((x) => (x + 1) % items.length), 4200);
-    return () => window.clearInterval(t);
-  }, [animate, items.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  const CARD = Math.max(220, Math.min(280, w - 80));
-  const GAP = 12;
-  return (
-    <div className="dh-car" ref={wrap} onPointerDown={() => (held.current = true)}>
-      <div className="dh-track" style={{ transform: `translateX(${(w - CARD) / 2 - i * (CARD + GAP)}px)` }}>
-        {items.map((c, k) => {
-          const active = k === i;
-          return (
-            <div key={c.key} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`} style={{ width: CARD }} aria-hidden={!active}>
-              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : setI(k))} scale={0.985} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`} tabIndex={active ? 0 : -1}>
-                <span className="dh-card-media">
-                  {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-ev-plain" />}
-                  {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
-                  <span className="dh-card-shade" aria-hidden />
-                  <span className="dh-badge">{c.kicker}</span>
-                </span>
-                <span className="dh-card-body">
-                  <b>{c.title}</b>
-                  <span>{c.meta}</span>
-                  {c.faces && c.faces.length > 0 ? (
-                    <span className="dh-who">
-                      <span className="dh-faces" aria-hidden>
-                        {c.faces.slice(0, 3).map((f) => party(f) && <Avatar key={f} party={party(f)!} size={20} />)}
-                      </span>
-                      {c.faces
-                        .slice(0, 2)
-                        .map((f) => first(person(f).name))
-                        .join(', ')}
-                      {c.faces.length > 2 ? ` +${c.faces.length - 2}` : ''}
-                    </span>
-                  ) : c.fact ? (
-                    <span className="dh-fact">{c.fact}</span>
-                  ) : (
-                    <span className="dh-fact" aria-hidden>
-                      &nbsp;
-                    </span>
-                  )}
-                </span>
-              </PressCard>
-              <span className="dh-card-save">
-                <SaveButton id={c.save.id} kind={c.save.kind} floating name={c.title} />
+  const { track, physical, canAnimate: animate, select } = useSpotlightCarousel(items.map((c) => c.key).join('|'), items.length, i, low, setI);
+  const repeated = items.length > 1 ? [...items, ...items, ...items] : items;
+  return <div className="dh-car" role="region" aria-roledescription="carousel" aria-label="In the spotlight">
+    <div className="dh-track" ref={track} tabIndex={0} aria-label="Spotlight cards. Use left and right arrow keys to browse.">
+      {repeated.map((c, k) => {
+        const active = k === physical;
+        return <div key={`${k}:${c.key}`} role="group" aria-roledescription="slide" aria-label={`${k % items.length + 1} of ${items.length}`} aria-hidden={!active} {...(!active ? { inert: '' } : {})} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`}>
+          <div className="dh-card-visual">
+            <PressCard className="dh-card-main" onPress={() => active ? push(c.open) : select(k % items.length)} scale={1} aria-label={`${c.kicker}. ${c.title}. ${c.meta}. ${c.fact ?? ''}`}>
+              <span className="dh-card-media">
+                {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /></span>}
+                {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
+                <span className="dh-card-shade" aria-hidden />
+                <span className="dh-spot-type">{c.kicker}</span>
+                <span className="dh-card-caption"><b>{c.title}</b><span>{c.meta}</span></span>
               </span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="dh-dots" role="tablist" aria-label="Spotlight">
-        {items.map((c, k) => (
-          <button key={c.key} role="tab" aria-selected={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => ((held.current = true), setI(k))} />
-        ))}
-      </div>
+              <span className="dh-card-fact">{c.fact || '\u00a0'}</span>
+            </PressCard>
+            <span className="dh-card-save"><SaveButton id={c.save.id} kind={c.save.kind} floating name={c.title} /></span>
+          </div>
+        </div>;
+      })}
     </div>
-  );
+    <div className="dh-dots" role="group" aria-label="Spotlight pagination">
+      {items.map((c, k) => <button key={c.key} aria-pressed={k === i} aria-label={`Show ${c.title}`} className={k === i ? 'on' : ''} onClick={(event) => { select(k); if (event.detail > 0) event.currentTarget.blur(); }} />)}
+    </div>
+  </div>;
 }
 
 function Clip({ id }: { id: string }) {
@@ -593,7 +507,6 @@ function NearCard({ p }: { p: Person }) {
       <PressCard className="dh-near-main" onPress={() => push({ name: 'profile', id: p.id })} scale={0.98} aria-label={`${p.name}, ${p.role}`}>
         <span className="dh-near-img">
           <PersonPhoto party={p} />
-          {p.availableFrom && <span className="dh-avail">Available</span>}
         </span>
         <span className="dh-near-t">
           <b>{p.name}</b>
@@ -601,7 +514,7 @@ function NearCard({ p }: { p: Person }) {
             {p.role}
             {p.years ? ` · ${p.years} yrs` : ''}
           </span>
-          {p.availableFrom ? <span className="dh-free">From {p.availableFrom}</span> : <span>{p.city}</span>}
+          {p.availableFrom ? <span>Open to work{p.availableFrom !== 'Now' ? ` from ${p.availableFrom}` : ''}</span> : <span>{p.city}</span>}
         </span>
       </PressCard>
       <button className={`dh-follow ${on ? 'is-on' : ''}`} aria-label={on ? `Following ${p.name}` : `Follow ${p.name}`} aria-pressed={on} onClick={() => toggleFollow(p.id)}>
@@ -610,3 +523,4 @@ function NearCard({ p }: { p: Person }) {
     </div>
   );
 }
+

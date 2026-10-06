@@ -5,15 +5,17 @@ import './studio.css';
 /*
  * Studio › Compare (/studio/compare): the New Home (the product's Home and Discover) and the Legacy Home, each a
  * live, tappable app in a phone, shown one at a time or side by side. New is the recommended one and comes first.
- * Only Home and Discover differ between the two; everything else is the same app. The Legacy frame opens with
- * ?home=legacy, which applies to that frame only and is never remembered. Behind the shared password like the rest of Studio.
+ * It includes the house pages and flows. The Legacy frame opens with ?home=legacy, which applies to that frame
+ * only and is never remembered. Behind the shared password like the rest of Studio.
  */
 type Show = 'district' | 'current' | 'both';
-type Who = 'kiran' | 'tara' | 'new';
+type Who = 'kiran' | 'tara' | 'new' | 'konark' | 'tidewater';
 const WHO: { id: Who; label: string }[] = [
   { id: 'kiran', label: 'Kiran Varma, cinematographer' },
   { id: 'tara', label: 'Tara Menon, actor' },
   { id: 'new', label: 'Someone who just signed up' },
+  { id: 'konark', label: 'Konark Pictures, production house' },
+  { id: 'tidewater', label: 'Tidewater Films, production house' },
 ];
 const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Legacy Home', district: 'New Home' };
 
@@ -97,7 +99,7 @@ export function Compare() {
         {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} scale={scale} />}
       </div>
 
-      <p className="cmp-foot">In the New Home, the clips in the spotlight are made from still images.</p>
+      {who !== 'konark' && who !== 'tidewater' && <p className="cmp-foot">In the New Home, the clips in the spotlight are made from still images.</p>}
     </div>
   );
 }

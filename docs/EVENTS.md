@@ -1,122 +1,79 @@
-# Events
+# Events — approved V1
 
-Screenings, premieres, workshops, industry meetups, festivals and markets. Events are an object type tied to the graph (a host, an optional project, optional speakers). They have **no tab of their own and no ticketing**.
+Events are free gatherings hosted by verified adult individuals or verified Production Houses. V1 uses **Request to attend** only. Publishing is immediate after validation; attendance requires the organiser's acceptance. There is no active payment, ticketing, external registration or moderation workflow.
 
-## V1 (active)
+## Creation → attendee mapping
 
-Ana has no internal moderation team yet, so V1 makes no promise that anyone at Ana reviews events.
+| Organiser enters | Required | Card | Event detail / management |
+| --- | --- | --- | --- |
+| Title, up to 80 characters | Yes | Title | Main heading |
+| Category | Yes | Subtle metadata | Subtle category above heading |
+| Cover image | No, recommended | Thumbnail | Hero; otherwise a deliberate calendar/Ana fallback, or associated project artwork |
+| Date and start time | Yes | Date/time | Key details; Indian time, explicit end if supplied |
+| End date/time | No | — | End time; must follow start |
+| Physical / online | Yes, physical default | City or Online | Venue/map or confirmed-only joining details |
+| City and venue | For physical events | City | Key details and venue with View on map |
+| Online joining URL | No | Never | Only the active organiser or personally confirmed attendee; cancelled events revoke attendee access |
+| What happens | Yes | — | About: purpose, expectations and intended audience |
+| Audience crafts | No | — | Who this is for; informational, never eligibility gates |
+| Maximum attendees | No | Full when reached | Host confirmed count and remaining places; attendee total capacity, without scarcity promotions |
+| More information URL | No | — | Secondary information link; never Register or a second attendance CTA |
+| Existing active identity | Automatic | Organiser name | Hosted by card, profile navigation, verification and Follow |
+| Associated project | From project entry | Relevant artwork | Project association retained in the event record |
+| Attendance method | Fixed | Free · Places by request | Request to attend; no redundant method field |
+| Price | Fixed free | Free | Free; no price/payment inputs |
 
-- **Free events only.** The composer doesn't ask about price. Every V1 event is free.
-- **Immediate publishing.** Once the required fields are valid, "Publish event" makes it live at once. The automated rules still run (verified adult host, no auditions or casting, nothing aimed at children). There's no "Send for review", no review queue and no "checked by the team" copy.
-- **Optional registration or RSVP link.** Price and registration are separate: a free event can still need registration (Google Forms, BookMyShow free registration, the organiser's site). On the event page the link is a "Register" button.
-- **Paid events aren't available.** The composer has no paid option. (The approved alternative, a disabled "Paid events · Coming soon" row, wasn't needed: the preferred option is not to ask about price at all.)
+Categories: Screening or premiere; Workshop or masterclass; Meetup or networking; Panel or talk; Festival or market; Exhibition; Other. Audition/casting wording is caught during creation and offers **Create a Role** through the existing project/role picker. Generic Event Detail carries no role application/audition warning.
 
-**V1 fields:**
-- Event type
-- Title
-- Date
-- Time
-- City
-- Venue
-- Optional registration or RSVP link
-- Optional cover image (without one, the event uses its film's or its host's imagery)
-- What happens
-- Organiser: whoever is creating it, or the house they act for
+## Attendance and privacy
 
-The CTA is "Publish event".
+A request always belongs to the signed-in **person**, even when they currently act for a house. It collects a valid email (account email prefilled when known), with explicit notice that this event organiser receives it, and an optional note of up to 300 characters. The request email is separate from account email and never becomes public profile information.
 
-**Architecture.** The data model keeps the future shape. `price` is the pricing type, `{ kind: 'free' } | { kind: 'paid'; amount }`, and `status` keeps `'under_review'`. V1 only ever writes `free` and never writes `under_review`. The switch is `EVENT_CAPABILITIES.paidEvents` in `src/domain/events.ts`. It's off, nothing in the product turns it on, and with it off:
-- `validateDraft` treats a missing price as free, refuses a paid draft ("Paid events are coming later.") and always returns `review: 'live'`;
-- `listable` never shows a paid record.
+Only the exact active organiser can review requests: the personal owner acting as self, or an authorised member acting for the hosting house. Membership alone does not silently switch identity. Other members get an explicit Switch to organiser action. Review shows photo, name, craft/city, note and request contact. **Accept** is the only selection action; there is no Decline workflow.
 
-Unit tests cover V1, and cover the future paid flow by switching paid events on.
+| Attendee state | Screen | Transition |
+| --- | --- | --- |
+| Not requested | Request to attend | Email/note → pending |
+| Pending | Request sent | Organiser accepts, attendee withdraws, or requests close/start |
+| Confirmed | Place confirmed | Joining details available; can give up place before start |
+| Withdrawn | Withdrawal acknowledgement | Can request again while requests remain open, using the same record |
+| Not accommodated | Requests closed; “We couldn’t offer you a place at this event.” | Final state for that event |
+| Cancelled event | Event cancelled | No request or joining action |
 
-## Future: not active in V1
+**Save** is an independent private bookmark. It does not submit a request, imply attendance, reveal contact, notify the organiser or generate attendance reminders. Duplicate pending/confirmed requests are refused.
 
-Designed and kept for when Ana has the operational capacity to moderate. None of it appears in the app today.
+## Lifecycle and capacity
 
-- **Paid events.** Free / Paid selection, price, an external tickets link, "the price is always shown; people pay the host directly; Art and Artist never takes money".
-- **Organiser eligibility.** Who may sell tickets (for example verified houses first, then verified individuals with a track record).
-- **Review states.** Draft → **Send for review** → **In review** → one of:
-  - Approved → Live
-  - Changes requested → Edit → Resubmit
-  - Rejected
+Composer input remains an unpublished local draft until Publish event; no saved-draft capability is claimed. Published events are Upcoming or Today, with derived Full/Ended and explicit Closed/Cancelled states. With no explicit end, the event remains visible until the end of its calendar day in India.
 
-  A paid event from an individual waits for review; a paid event from a verified house goes live. Only the host can see an event while it's in review.
-- **Internal review screen** (admin):
-  - event preview
-  - organiser information
-  - price and tickets URL
-  - safety and risk checks (promises of roles, auditions, children, misleading price)
-  - Approve & publish · Request changes · Reject · Escalate
-- **Rules that only apply to paid events:** a paid event can never promise a role, an audition or selection.
-- **Already in the code, behind the switch:** the paid fields and "Send for review" in `EventComposer.tsx`, the "Under review" banner on the event page and ticket, and `review: 'under_review'` in `validateDraft`. The review states beyond under review, eligibility and the admin screen are specified here only.
+Requests and acceptance stop at event start. Optional capacity limits **confirmed places**, not pending requests. Full pauses new requests and acceptance but keeps pending people in case someone gives up a place. Withdrawal releases a confirmed place. Closing requests or reaching start resolves remaining pending requests exactly once, without revoking existing confirmed places. Cancel notifies pending and confirmed attendees and prevents further attendance actions. Capacity cannot be edited below confirmed attendance; material edits retain confirmed places and notify participants.
 
-## Switch
+## Notifications
 
-**On by default** in the app: Discover has an Events tab, Create has Event, project, house and profile pages show their events, Saved and Notifications include them, and Home shows at most one event (today's Home places it after the core professional modules; the new Home composes it like any other unit, cap 1). `?events=off` hides them on this device; `?events=on` brings them back. On `/test` Events stay off so the Home comparison changes one thing only.
+| Trigger | Attendee | Organiser |
+| --- | --- | --- |
+| Request submitted | Inline/sheet Request sent confirmation | New request notification |
+| Acceptance | Place confirmed notification and state | Updated confirmed/remaining counts |
+| Capacity reached | Existing state; pending requests preserved | Capacity reached notification |
+| Close or event start | Pending people receive couldn't-accommodate notice | Requests resolved in management |
+| Material time/location/joining change | Pending and confirmed participants receive change notice | Editor confirmation |
+| Cancellation | Pending and confirmed participants receive cancellation notice | Cancellation confirmation |
+| Upcoming event | One derived reminder within 48 hours for confirmed places | — |
 
-## Rules (`src/domain/events.ts`, unit-tested)
+Notifications are actual shared Ana notification records linked to Event Detail. Email addresses are collected for organiser coordination; **no automated email delivery is implemented or claimed**. Changes/cancellation have one actual notification, rather than an additional duplicate derived reminder.
 
-These follow the stakeholder principles.
+## Surfaces and implementation
 
-- **No paid access to opportunities.**
-  - Auditions and casting are roles, never events. A draft that reads like an audition is refused with "Auditions and casting are roles, not events. Open a role instead."
-  - A paid event can never promise a role, an audition or selection.
-- **Children.** Events are for adults. Nothing may be aimed at under-18s, and a minor can never host. Work involving children goes through a role, where the guardian responds.
-- **Who can host.** Verified production houses and verified adult individuals. Anyone else sees "Verify your identity to host events."
-- **Publishing (V1).** Every event goes live once it's valid. Nothing waits for review (see Future for the paid-event review model).
-- **Price is always shown.** In V1 that's "Free". Every event page says "Art and Artist never charges to apply or audition."
-- **What anyone can see** (`listable`): scheduled, not past, free (in V1), a verified adult host, and none of the rules above broken. Hosts also see their own events after cancelling.
+Discover, Home, house/profile/project sections and Saved use the same event card. Detail, composer, request sheet and organiser request sheet use the shared identity model in both Current and District experiences. Existing feature flag behavior remains: Events default on; `?events=off` hides them; `/test` retains its existing comparison configuration.
 
-## Where events appear
+`src/domain/events.ts` validates creation. `src/domain/eventAttendance.ts` owns request uniqueness, permissions, capacity, lifecycle and joining-link redaction; unit tests exercise those boundaries. Store actions repeat permission/validation checks before mutations. Contact records live in `src/state/eventAttendance.ts`; account-email defaults there are fictitious demo addresses, not public contact data. Event report reasons/escalation remain available through the existing Report flow.
 
-| Place | What |
-| --- | --- |
-| Discover › Events | Filters for City, When (next 7 or 30 days) and Type. Empty state: "No events match. Try another city or date." |
-| Event page | What, when, where and price ("Free") at the top. Interested, a "Register" button when there's a registration link (opens the host's site), host, project, speakers, summary. More menu: Report (for others), or Edit and Cancel (for the host). |
-| Project page | "Screenings". The lead house gets "Add a screening". |
-| House page | "Upcoming events" |
-| Profile | "Hosting" and "Speaking at" |
-| Saved | "Events", private. Past events drop off, and cancelled ones stay, marked. |
-| Notifications | "Coming up": Interested events from 48 hours before (Today, Tomorrow), plus changes and cancellations. These are derived from the event, so they can never drift from it. |
-| Create menu | "Event", or "Event by {house}" when acting for a house |
-| New Home | A compact "Coming up" unit, cap 1. A screening of a film you're credited on is high significance and can lead. |
+This is a session-backed prototype: events, requests and new notifications do not survive a reload. Client-side permission/redaction checks demonstrate the intended flow; a production implementation requires authenticated server access control, durable request storage, atomic seat allocation, a background lifecycle worker and an email provider before claiming multi-device privacy or email delivery.
 
-## Interested
+## Future paid architecture — inactive
 
-Interested is private, like every save, and nobody is told. On a card it is a 44px round ticket toggle. On the page it is a labelled button. Marking it punches a small hole through the ticket, once; under Reduce Motion it simply appears.
+The type model and `EVENT_CAPABILITIES.paidEvents` retain future pricing/review states, and domain tests still cover that future policy. The switch stays false. Future work may add price, external ticket providers/payment, eligibility and review/approval, once operational ownership exists. Current V1 screens expose none of those capabilities or a paid moderation team.
 
-## Reports
+## Home attendance example
 
-Event reports have their own reasons:
-
-- Asks for money for a role or audition
-- Not a real event
-- Misleading price or details
-- Involves a child
-- Something else
-
-Each report carries an escalation level (`src/state/reports.ts`): anything about a child goes to **Child Safety**; money, fake or misleading listings go to **Trust and Safety**; everything else goes to **Support**. Admin is the final level.
-
-## Research events
-
-`event_opened`, `event_saved`, `event_unsaved`, `event_created` (type, paid, review, linked, host kind, registration, cover; in V1 paid is always false and review always live) and `event_cancelled`, with object type `event`.
-
-## Seed
-
-`seedEvents(now)` in `src/data/seed.ts` has thirteen events. Nine are shown. Four are hidden on purpose so the rules can be seen working:
-
-- an unverified host;
-- a cancelled event;
-- a past event;
-- an "open auditions" listing.
-
-Every seeded event is free. The workshop and the film market keep a registration link.
-
-## Accessibility
-
-- Every ticket has one accessible name with the date, the venue, the price and any status.
-- Composer errors sit next to their field. A failed publish moves focus to the first field that needs attention.
-- Discover's tab row scrolls by itself, so the page never scrolls sideways.
-- axe: 0 violations on Discover events, the event page, its menu, the composer (empty and with errors) and Notifications, in light and dark.
+Home features **Camera crew evening** by Konark Pictures with 20 places. Home keeps concise image-led event metadata; private attendance, capacity and selection are explained in event detail. The example stays in District's event shelf, separate from Spotlight, and also appears in Current Home. Kiran starts with no attendance request and can try the email/note flow. Konark starts with two clearly fictitious pending requests from Sameer and Sana; their event contact addresses use example.com and appear only in organiser review. Hosts can accept these requests or a new request submitted during the session.

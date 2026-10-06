@@ -43,6 +43,25 @@ function researchApi(mode: string): Plugin {
   };
 }
 
+/** Same bounded metadata lookup in development and preview as the Vercel function. */
+function showreelMetadata(): Plugin {
+  const mount = (server: ViteDevServer | PreviewServer, load: () => Promise<{ default: (...a: unknown[]) => Promise<unknown> }>) => {
+    server.middlewares.use('/api/showreel', async (req, res) => {
+      try { await (await load()).default(req, res); }
+      catch { res.statusCode = 502; res.end('{"error":"metadata_unavailable"}'); }
+    });
+  };
+  return {
+    name: 'ana-showreel-metadata',
+    configureServer(server) { mount(server, () => server.ssrLoadModule('/api/showreel.ts') as never); },
+    async configurePreviewServer(server) {
+      const { createServer } = await import('vite');
+      let mod: Promise<never> | null = null;
+      mount(server, () => (mod ??= createServer({ configFile: false, server: { middlewareMode: true }, logLevel: 'silent' }).then((v) => v.ssrLoadModule('/api/showreel.ts') as never)));
+    },
+  };
+}
+
 /**
  * Private access on the local dev and preview servers: the same gate Vercel runs in middleware.ts
  * (server/access.ts). Only active when APP_ACCESS_PASSWORD is set in .env.local, so plain local
@@ -94,5 +113,5 @@ function launchSplashHtml(): Plugin {
 // Relative base so the build can be served from any path (artifact, static host, file preview).
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [privateAccess(mode), launchSplashHtml(), react(), researchApi(mode)],
+  plugins: [privateAccess(mode), launchSplashHtml(), react(), researchApi(mode), showreelMetadata()],
 }));

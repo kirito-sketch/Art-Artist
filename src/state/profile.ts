@@ -3,6 +3,8 @@ import type { Media, Person } from '../data/types';
 import { craftProfile, FIELDS, setsFor, skillCategoriesFor, type Experience, type Visibility } from '../data/profileSchema';
 import { world } from './world';
 import { TEST_MODE } from '../research-data/surface';
+import type { VideoSource } from '../domain/showreel';
+import type { Intent } from '../domain/relevance';
 
 /*
  * The richer half of a person's profile (docs/REVIEW_EVENTS_PROFILE.md). One record per person, written by
@@ -11,12 +13,16 @@ import { TEST_MODE } from '../research-data/surface';
  */
 
 export interface Reel {
-  /** External link (YouTube, Vimeo, Drive). Ana does not host video in v1. */
+  id?: string;
+  source?: VideoSource;
+  /** Legacy external URL or a device-only draft URL. Native ready assets require the production pipeline. */
   url: string;
   title: string;
   cover?: Media;
   duration?: string;
 }
+
+export type FeaturedWork = { id: string; kind: 'project'; projectId: string } | { id: string; kind: 'external'; title: string; url: string };
 
 export interface WorkLink {
   id: string;
@@ -33,6 +39,8 @@ export interface ProfileSkill {
 export type DetailValue = string | string[] | number | [number, number];
 
 export interface ProfileExtra {
+  /** Private onboarding goals, kept as IDs for future Home and Discover personalisation. */
+  onboardingIntents?: Intent[];
   /** For identity and matching only. Never shown, never shared automatically. */
   phone?: { number: string; verified: boolean };
   skills: ProfileSkill[];
@@ -47,6 +55,9 @@ export interface ProfileExtra {
   links: WorkLink[];
   /** The work section: one reel (first on the profile), then portfolio images (seed.portfolio, in order), then these. */
   reel?: Reel;
+  /** Private device preview, never published or sent to research storage. */
+  reelDraft?: Reel;
+  featuredWork?: FeaturedWork[];
   workLinks: WorkLink[];
 }
 
@@ -135,7 +146,7 @@ export function openSteps(f: CompletionFacts): Step[] {
   const steps: Step[] = [];
   if (!f.extra.phone?.verified) steps.push('phone');
   if (!f.person.photo) steps.push('photo');
-  if (!f.extra.reel && f.images === 0 && f.extra.workLinks.length === 0 && (work.reel || work.images || work.links)) steps.push('work');
+  if (!f.extra.reel && f.images === 0 && (f.extra.featuredWork?.length ?? f.extra.workLinks.length) === 0 && (work.reel || work.images || work.links)) steps.push('work');
   if (!(f.person.languages ?? []).length) steps.push('languages');
   if (f.wantsWork && !f.availabilityOpen) steps.push('availability');
   if (sets.length && !sets.some((s) => s.fields.some((fd) => !fd.sensitive && filled(f.extra.details[fd.id])))) steps.push('details');
@@ -184,3 +195,4 @@ export function writePacing(who: string, p: Pacing) {
     /* storage blocked: pacing lasts this session */
   }
 }
+
