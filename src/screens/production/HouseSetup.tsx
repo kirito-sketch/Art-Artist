@@ -1,3 +1,4 @@
+import { useFeatures } from '../../ui/features';
 import { Camera, ChevronLeft, FileText, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import type { Media } from '../../data/types';
@@ -17,6 +18,7 @@ const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata
  * stay locked until Art and Artist verifies it. Not business registration: four short things, then a check.
  */
 export function HouseSetup() {
+  const district = useFeatures().home === 'district';
   const { pop, createHouse, setActing, showToast, recordConsent } = useStore();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
@@ -33,7 +35,7 @@ export function HouseSetup() {
   const draft = { id: 'draft', kind: 'org' as const, name: name || 'New house', city, tone: 2, verified: false, about, logo };
 
   return (
-    <div className="screen">
+    <div className={`screen${district ? ' dhouse-page dhouse-setup' : ''}`}>
       <header className="topbar topbar--nav">
         <button className="icon-btn" aria-label="Back" onClick={() => (step && !id ? setStep(step - 1) : pop())}>
           <ChevronLeft size={26} />
@@ -44,7 +46,7 @@ export function HouseSetup() {
       {step === 0 && (
         <div className="ws-pad stack">
           <h1 className="large-title">Set up a production house</h1>
-          <p className="meta">Most houses are set up with the Art and Artist team. If yours isn't on Art and Artist yet, start here. You'll be its owner.</p>
+          <p className="meta">{district ? "Add your house details to get started." : "Most houses are set up with the Art and Artist team. If yours isn't on Art and Artist yet, start here. You'll be its owner."}</p>
           <div className="ob-photo">
             <Avatar party={draft} size={72} />
             <button className="link" onClick={() => setPicker('logo')}>
@@ -139,8 +141,8 @@ export function HouseSetup() {
             <ShieldCheck size={32} />
           </div>
           <h1 className="large-title">{org(id).name} is set up</h1>
-          <p className="body">Art and Artist checks houses within 2 working days. Until then you can edit your page and prepare private projects.</p>
-          <ul className="block-list">
+          <p className="body">{district ? "Verification pending. You can edit your page and prepare private projects." : "Art and Artist checks houses within 2 working days. Until then you can edit your page and prepare private projects."}</p>
+          <ul className={`block-list${district ? ' dhouse-verification-list' : ''}`}>
             <li>Public roles unlock after verification</li>
             <li>Credits unlock after verification</li>
             <li>Sharing projects on Art and Artist unlocks after verification</li>
@@ -162,7 +164,7 @@ export function HouseSetup() {
         </div>
       )}
 
-      <Sheet open={!!picker} onClose={() => setPicker(null)} title={picker === 'logo' ? 'Logo' : 'Verification document'} size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={!!picker} onClose={() => setPicker(null)} title={picker === 'logo' ? 'Logo' : 'Verification document'} size="tall">
         <MediaPicker
           single
           selected={[]}

@@ -1,6 +1,6 @@
 # District direction (Home and Discover)
 
-A second version of Home and Discover, built for comparison. Everything else in the app is shared and unchanged.
+A second version of Home and Discover, built for comparison. Production-house pages and connected flows also have a District presentation; their records and product rules are shared with Current.
 
 | How | Effect |
 | --- | --- |
@@ -79,3 +79,10 @@ In District, “What brings you here?” allows one to three goals. Selected row
 
 The full ordered ID array is stored privately in `ProfileExtra.onboardingIntents` and exposed by the store, in the same session state as the prototype profile. The first selected ID supplies the existing single-intent Home shelf; no ranking or Discover redesign is included. Availability is asked if any goal is work or collaboration. Selection rules are pure and unit-tested.
 
+## Production house
+
+District houses have their own Home: a compact Needs you list, equal-sized project artwork cards, open roles, people for their roles, hosted events and released films. Shared co-productions open their public pages; only lead-owned projects open the workspace. Operational See all opens owned records. People See all opens Discover, defaulting to People, with optional own-role matching, taxonomy crafts, availability, city and verified-credit filters. Saved and Follow remain personal.
+
+House profiles remain work first. Public project pages disclose only announced details and accepted credits. The workspace puts roles and private associations before secondary project details, and gives credits their own section. Announcement uses a public preview with expandable visibility details. Creation, roles, Interest review, association/credit flows, free events, setup, identity switching, Inbox and house Settings share the District spacing and surfaces.
+
+Current and /test retain their existing presentation. Interest, messaging, permission, role lifecycle and credit rules are unchanged. The handoff's shortlist language is intentionally not implemented: review retains New, In conversation, Not now and No longer interested. Waiting for credit acceptance and associations without credits stay as project statuses rather than Home tasks. Full plan and validation: `docs/DISTRICT_HOUSE.md`.

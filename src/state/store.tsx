@@ -35,7 +35,8 @@ export type Route =
   | { name: 'houseSetup' }
   | { name: 'legal'; doc: 'terms' | 'privacy' | 'conduct' | 'reporting' | 'blocking' | 'authority' }
   | { name: 'yourData'; step?: 'delete' }
-  | { name: 'hproject'; id: string }
+  | { name: 'hproject'; id: string; focusAssociation?: string }
+  | { name: 'houseList'; kind: import('../screens/production/DistrictHouse').HouseListKind }
   | { name: 'association'; id: string }
   | { name: 'org'; id: string }
   | { name: 'composePost' }

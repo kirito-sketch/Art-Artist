@@ -1,0 +1,447 @@
+/* District houses use the same page grid and tokens as individual District pages. */
+.dhouse-head {
+  padding-top: 18px;
+}
+.dhouse-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  text-align: left;
+}
+.dhouse-identity > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.dhouse-identity b {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 17px;
+}
+.dhouse-identity .meta {
+  font-size: 12px;
+}
+.dhouse-start {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.dhouse-pending {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 20px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--tint);
+}
+.dhouse-pending > svg {
+  flex: none;
+  margin-top: 3px;
+}
+.dhouse-pending > span {
+  display: grid;
+  gap: 4px;
+}
+.dhouse .dh-sec {
+  margin-top: 0;
+}
+.dhouse-decisions {
+  border-top: 1px solid var(--hairline);
+}
+.dhouse-decision {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.dhouse-decision-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+.dhouse-fact {
+  color: var(--action-ink);
+  font-size: 12px;
+}
+.dhouse-decision-text > span,
+.dhouse-project-body > .item-title,
+.dhouse-project-body > .meta,
+.dhouse-person-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dhouse-projects,
+.dhouse-people {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 20px 8px;
+  scroll-padding-inline: 20px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.dhouse-projects::after,
+.dhouse-people::after {
+  content: '';
+  flex: 0 0 16px;
+}
+.dhouse-people::after { flex-basis: calc(100% - 192px); }
+.dhouse-project {
+  flex: 0 0 calc(100% - 28px);
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  scroll-snap-align: start;
+}
+.dhouse-project-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.dhouse-project-media > .photo,
+.dhouse-project-media > .title-card {
+  width: 100%;
+  height: 100%;
+}
+.dhouse-project-media .dh-badge {
+  left: 14px;
+  top: 14px;
+  bottom: auto;
+  max-width: calc(100% - 28px);
+}
+.dhouse-project-body {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  text-align: left;
+}
+.dhouse-project-body .item-title {
+  font-size: 18px;
+}
+.dhouse-project-fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--hairline);
+  margin-top: 6px;
+  padding-top: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.dhouse-visibility {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+.dhouse-role {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.dhouse-role > svg {
+  flex: none;
+}
+.dhouse .dh-irow-t {
+  flex: 1;
+}
+.dhouse-role .title-card {
+  height: 100%;
+  padding: 6px;
+}
+.dhouse-role .title-card-title {
+  font-size: 11px;
+}
+.dhouse-person {
+  flex: 0 0 180px;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.dhouse-person-main {
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--raised);
+}
+.dhouse-person-image {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+.dhouse-person-image > .photo,
+.dhouse-person-image > .person-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+.dhouse-person-image .dh-avail {
+  left: 10px;
+  bottom: 10px;
+}
+.dhouse-person-text {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+.dhouse-person-text .meta {
+  font-size: 12px;
+}
+.dhouse-fit {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+  font-size: 12px;
+  color: var(--action-ink);
+}
+.dhouse-person .btn {
+  min-height: 44px;
+}
+.dhouse-empty {
+  display: grid;
+  gap: 12px;
+}
+.dhouse-empty h2 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+.dhouse .dh-end {
+  margin-top: 30px;
+}
+.dhouse-project-grid {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 20px;
+}
+.dhouse-project-grid .dhouse-project-media {
+  aspect-ratio: 4 / 3;
+}
+
+/* Public pages and the private workspace retain their existing actions and visibility. */
+.dhouse-page {
+  background: var(--bg);
+}
+.dhouse-page .section-head h2 {
+  font-size: 20px;
+  letter-spacing: -0.025em;
+}
+.dhouse-page .section {
+  margin-top: 28px;
+  padding-top: 0;
+}
+.dhouse-page .prow {
+  gap: 12px;
+  padding-block: 14px;
+}
+.dhouse-page .prow-text {
+  min-width: 0;
+}
+.dhouse-page .ph-state {
+  flex: none;
+}
+.dhouse-page .group {
+  background: var(--raised);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  border-radius: 18px;
+}
+.dhouse-page .inline-note {
+  background: var(--tint);
+  border-radius: 16px;
+  margin: 12px 20px;
+  padding: 14px;
+}
+.dhouse-page .ws-announce {
+  border-radius: 18px;
+  background: var(--tint);
+  padding: 16px;
+}
+.dhouse-page .large-title {
+  font-size: 30px;
+}
+.dhouse-workspace .title-block {
+  padding-top: 18px;
+}
+.dhouse-workspace-art {
+  margin: 0 20px;
+  border-radius: 22px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+}
+.dhouse-workspace-art > .photo {
+  height: 100%;
+  width: 100%;
+}
+.dhouse-workspace .ph-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.dhouse-workspace .ws-announce .btn {
+  margin-top: 12px;
+}
+.dhouse-profile .whero--org {
+  height: 260px;
+}
+.dhouse-profile .org-id {
+  padding-bottom: 18px;
+}
+.dhouse-profile .org-now {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 0 8px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.dhouse-profile .org-now .dhouse-project {
+  flex-basis: calc(100% - 28px);
+}
+.dhouse-profile .rail-item {
+  width: 180px;
+}
+.dhouse-profile .rail-poster {
+  aspect-ratio: 4 / 5;
+  border-radius: 18px;
+}
+.dhouse-profile .org-person {
+  flex: 0 0 80px;
+  min-height: 100px;
+}
+.dhouse-public-project .whero {
+  height: 380px;
+}
+.dhouse-public-project .work-logline:empty {
+  display: none;
+}
+.dhouse-public-project .ph-dept {
+  margin-top: 18px;
+}
+.dhouse-association .pending-credit-card {
+  background: var(--raised);
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+/* Sheet classes are supplied only by District house flows. */
+.dhouse-sheet {
+  background: var(--surface);
+  border-radius: 26px 26px 0 0;
+}
+.dhouse-sheet .sheet-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+.dhouse-sheet .sheet-body {
+  padding-inline: 20px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.dhouse-sheet .stack {
+  gap: 20px;
+}
+.dhouse-sheet .field {
+  background: var(--raised);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  min-height: 48px;
+}
+.dhouse-sheet .field--area {
+  min-height: 100px;
+}
+.dhouse-sheet .group {
+  background: var(--raised);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.dhouse-sheet .interest {
+  padding-block: 16px;
+}
+.dhouse-sheet .interest-who {
+  min-height: 64px;
+}
+.dhouse-sheet .interest-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dhouse-sheet .interest-actions .btn {
+  min-height: 44px;
+}
+.dhouse-sheet .interest-answers {
+  border-radius: 14px;
+  background: var(--tint);
+  padding: 12px;
+}
+.dhouse-share-preview {
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--hairline);
+  background: var(--raised);
+}
+.dhouse-share-preview > .photo {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+.dhouse-share-preview > div {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+}
+.dhouse-share-preview .item-title {
+  font-size: 22px;
+}
+.dhouse-privacy {
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  padding: 0 14px;
+}
+.dhouse-privacy > summary {
+  min-height: 48px;
+  padding: 14px 0;
+  cursor: pointer;
+}
+.dhouse-privacy .share-lists {
+  padding-bottom: 14px;
+}
+.dhouse-sheet .credit-preview {
+  border-radius: 20px;
+  background: var(--tint);
+}
+.dhouse-page .composer-body {
+  padding-inline: 20px;
+}
+.dhouse-page .filter-tiles {
+  gap: 10px;
+}
+.dhouse-conversation .convo-context { border-radius: 16px; margin: 12px 20px; background: var(--tint); }
+.dhouse-conversation .convo-scroll { padding-inline: 20px; }
+.dhouse-conversation .convo-as { color: var(--text-2); }
+.dhouse-role-disclosure .dhouse-privacy { margin-top: 10px; }
+.dhouse-role-disclosure .dhouse-privacy p { padding-bottom: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dhouse-projects,
+  .dhouse-people,
+  .dhouse-profile .org-now {
+    scroll-behavior: auto;
+  }
+}

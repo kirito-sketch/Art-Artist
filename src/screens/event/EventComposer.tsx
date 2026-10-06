@@ -1,3 +1,4 @@
+import { useFeatures } from '../../ui/features';
 import { CalendarDays, Check, Clock, ImagePlus, IndianRupee, Link2, MapPin, ShieldCheck, X } from 'lucide-react';
 import { useState } from 'react';
 import type { EventType, IndustryEvent } from '../../data/types';
@@ -24,11 +25,13 @@ const isoDay = (ms: number) => new Date(ms + 5.5 * 36e5).toISOString().slice(0, 
 const isoTime = (ms: number) => new Date(ms + 5.5 * 36e5).toISOString().slice(11, 16);
 
 export function EventComposer({ projectId, editId }: { projectId?: string; editId?: string }) {
+  const districtFeature = useFeatures().home === 'district';
   const { pop, viewer, acting, events, createEvent, updateEvent, showToast, replace } = useStore();
   const editing = editId ? events.find((e) => e.id === editId) : undefined;
   const hostId = editing?.hostId ?? (acting !== 'self' ? acting : viewer.id);
   const host = acting !== 'self' && !editing ? org(acting) : hostId === viewer.id ? person(viewer.id) : org(hostId);
   const facts = hostFacts(hostId);
+  const district = districtFeature && facts?.kind === 'org';
   const linked = editing?.projectId ?? projectId;
   const w = linked ? work(linked) : undefined;
 
@@ -80,7 +83,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
 
   if (check.errors.host && !editing)
     return (
-      <div className="composer ev-composer">
+      <div className={`composer ev-composer${district ? ' dhouse-page' : ''}`}>
         <header className="composer-bar">
           <IconButton label="Close" onClick={pop}>
             <X size={24} />
@@ -99,7 +102,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
     );
 
   return (
-    <div className="composer ev-composer">
+    <div className={`composer ev-composer${district ? ' dhouse-page' : ''}`}>
       <header className="composer-bar">
         <IconButton label={dirty ? 'Close (asks before discarding)' : 'Close'} onClick={() => (dirty ? setDiscard(true) : pop())}>
           <X size={24} />
@@ -224,10 +227,10 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
         </Button>
       </div>
 
-      <Sheet open={coverPick} onClose={() => setCoverPick(false)} title="Cover" size="tall">
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={coverPick} onClose={() => setCoverPick(false)} title="Cover" size="tall">
         <MediaPicker single selected={[]} onDone={(ms: Media[]) => (ms[0] && setCover(ms[0]), setCoverPick(false))} />
       </Sheet>
-      <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard?" close={false}>
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={discard} onClose={() => setDiscard(false)} title="Discard?" close={false}>
         <div className="stack">
           <Button block size="l" variant="danger" onClick={pop}>
             Discard

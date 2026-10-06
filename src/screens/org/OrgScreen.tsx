@@ -12,6 +12,8 @@ import { useLoad } from '../../ui/useLoad';
 import { EventsSection } from '../event/eventUnits';
 import { eventsOfHost } from '../../state/events';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
+import { useFeatures } from '../../ui/features';
+import { ScoreLine } from '../reviews/reviewUnits';
 
 /**
  * The organisation's public identity. One page: visitors see it from a byline, a credit or search;
@@ -26,6 +28,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
 export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const { pop, push, openSheet, acting, following, toggleFollow, startConversation, setHero, showToast, blocked, roleStatus, memberships, setActing, events, viewer } = useStore();
   const o = org(id);
+  const district = useFeatures().home === 'district';
   const own = acting === id;
   const [scrollY, setScrollY] = useState(0);
   const heroKey = isTab ? 'org-tab' : `org-${id}`;
@@ -54,7 +57,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       <SectionHeader title="Now making" />
       <div className="org-now">
         {live.map((w) => (
-          <NowCard key={w.id} w={w} roles={roles.filter((r) => r.project === w.title).map((r) => r.role)} />
+          <NowCard key={w.id} w={w} district={district} roles={roles.filter((r) => r.project === w.title).map((r) => r.role)} />
         ))}
       </div>
     </section>
@@ -78,7 +81,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             <Photo media={w.media} className="rail-poster" showPlay={false} />
             <p className="item-title">{w.title}</p>
             <p className="meta">
-              {w.year}
+              {district ? <ScoreLine id={w.id} /> : w.year}
               {w.orgIds[0] !== id ? ` · with ${org(w.orgIds[0]).name}` : ''}
             </p>
           </Pressable>
@@ -105,10 +108,10 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   );
   const upcoming = <EventsSection key="events" title="Upcoming events" list={eventsOfHost(events, id, Date.now(), viewer.id, acting)} />;
   // Work first: what the house makes leads; open roles follow its record.
-  const sections = [nowMaking, upcoming, filmography, workedWith, hiring];
+  const sections = district ? [nowMaking, filmography, hiring, workedWith, upcoming] : [nowMaking, upcoming, filmography, workedWith, hiring];
 
   return (
-    <div className="screen screen--hero" data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+    <div className={`screen screen--hero${district ? ' dhouse-page dhouse-profile' : ''}`} data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="whero whero--org">
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
           {hero ? <Photo media={hero} className="whero-photo" showPlay={false} /> : <div className="whero-photo whero-empty" />}
@@ -204,7 +207,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </>
               )}
             </div>
-            {own && <p className="meta org-own-note">This is how people on Art and Artist see {o.name}.</p>}
+            {own && !district && <p className="meta org-own-note">This is how people on Art and Artist see {o.name}.</p>}
             {sections}
             {!ws.length && !roles.length && <EmptyState title="Nothing public yet" body={own ? 'Projects appear here once you share them on Art and Artist.' : `${o.name} hasn't shared any projects yet.`} />}
           </>
@@ -214,8 +217,12 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   );
 }
 
-function NowCard({ w, roles }: { w: Work; roles: string[] }) {
+function NowCard({ w, roles, district }: { w: Work; roles: string[]; district?: boolean }) {
   const { push } = useStore();
+  if (district) return <PressCard className="dhouse-project" onPress={() => push({ name: 'work', id: w.id })} aria-label={w.title}>
+    <span className="dhouse-project-media"><Photo media={w.media} showPlay={false} /><span className="dh-badge">{w.stage}</span></span>
+    <span className="dhouse-project-body"><span className="item-title" lang={scriptLang(w.title)}>{w.title}</span><span className="meta">{w.format}</span><span className="dhouse-project-fact">{roles.length ? `${roles.length} open ${roles.length === 1 ? 'role' : 'roles'}` : 'View project'}</span></span>
+  </PressCard>;
   return (
     <PressCard className="now-card" onPress={() => push({ name: 'work', id: w.id })} scale={0.985}>
       <Photo media={w.stills[0] ?? w.media} className="now-card-photo" showPlay={false} />

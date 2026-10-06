@@ -4,15 +4,17 @@ import './studio.css';
 
 /*
  * Studio › Compare (/studio/compare): today's app and the District direction, each a live, tappable app in a
- * phone, shown one at a time or side by side. Only Home and Discover differ between the two; everything
- * else is the same app. Behind the shared password like the rest of Studio.
+ * phone, shown one at a time or side by side, including the house pages and flows.
+ * Behind the shared password like the rest of Studio.
  */
 type Show = 'current' | 'district' | 'both';
-type Who = 'kiran' | 'tara' | 'new';
+type Who = 'kiran' | 'tara' | 'new' | 'konark' | 'tidewater';
 const WHO: { id: Who; label: string }[] = [
   { id: 'kiran', label: 'Kiran Varma, cinematographer' },
   { id: 'tara', label: 'Tara Menon, actor' },
   { id: 'new', label: 'Someone who just signed up' },
+  { id: 'konark', label: 'Konark Pictures, production house' },
+  { id: 'tidewater', label: 'Tidewater Films, production house' },
 ];
 const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Current', district: 'New' };
 
@@ -96,7 +98,7 @@ export function Compare() {
         {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} scale={scale} />}
       </div>
 
-      <p className="cmp-foot">In New, the clips in the spotlight are made from still images.</p>
+      {who !== 'konark' && who !== 'tidewater' && <p className="cmp-foot">In New, the clips in the spotlight are made from still images.</p>}
     </div>
   );
 }

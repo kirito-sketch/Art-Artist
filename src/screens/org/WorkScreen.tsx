@@ -16,6 +16,7 @@ import { PageError, PageSkeleton } from '../../ui/PageStates';
 import { EventsSection } from '../event/eventUnits';
 import { eventsOfProject } from '../../state/events';
 import { FilmReviewsSection } from '../reviews/reviewUnits';
+import { useFeatures } from '../../ui/features';
 
 /**
  * Public project page. What anyone on Art and Artist sees: what it is, who made it, who is credited, whether it
@@ -24,6 +25,7 @@ import { FilmReviewsSection } from '../reviews/reviewUnits';
 export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
   const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked, events } = useStore();
   const wp = wproject(id);
+  const district = useFeatures().home === 'district' && !!wp?.houseId;
   const w = work(id);
   const [scrollY, setScrollY] = useState(0);
   useEffect(() => {
@@ -58,7 +60,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
   const released = w.stage === 'Released';
 
   return (
-    <div className="screen screen--hero" onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
+    <div className={`screen screen--hero${district ? ' dhouse-page dhouse-public-project' : ''}`} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="whero">
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
           {w.media.id === 'ph' ? (

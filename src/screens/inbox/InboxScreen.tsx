@@ -1,3 +1,4 @@
+import { useFeatures } from '../../ui/features';
 import { motion } from 'framer-motion';
 import { scriptLang } from '../../ui/compose';
 import { ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -24,7 +25,9 @@ function ThreadThumb({ c }: { c: Conversation }) {
 }
 
 export function InboxScreen() {
-  const { conversations, interestsReceived: allInterest, push, openSheet, userCollabs, sendMessage, showToast } = useStore();
+  const districtFeature = useFeatures().home === 'district';
+  const { conversations, interestsReceived: allInterest, push, openSheet, userCollabs, sendMessage, showToast, acting } = useStore();
+  const district = districtFeature && acting !== 'self';
   const [filter, setFilter] = useState<Filter>('all');
   const [done, setDone] = useState<string[]>([]);
   // Only Interest nobody has reviewed yet. Reviewed records stay in the review sheet.
@@ -34,7 +37,7 @@ export function InboxScreen() {
   const interestFor = interestsReceived[0] ? findOpportunity(interestsReceived[0].opportunityId, userCollabs) : null;
 
   return (
-    <div className="screen" data-scroll="inbox">
+    <div className={`screen${district ? ' dhouse-page' : ''}`} data-scroll="inbox">
       <div className="title-block title-block--top">
         <h1 className="large-title">Inbox</h1>
       </div>
@@ -129,8 +132,10 @@ export function InboxScreen() {
 }
 
 export function ConversationScreen({ id }: { id: string }) {
-  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage, cannotReach, blocked, unblock } = useStore();
+  const districtFeature = useFeatures().home === 'district';
+  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage, cannotReach, blocked, unblock, acting } = useStore();
   const c = conversations.find((x) => x.id === id);
+  const district = districtFeature && acting !== 'self';
   const [text, setText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -152,7 +157,7 @@ export function ConversationScreen({ id }: { id: string }) {
   };
 
   return (
-    <div className="convo">
+    <div className={`convo${district ? ' dhouse-conversation' : ''}`}>
       <h1 className="sr-only">Conversation with {p.name}</h1>
       <header className="convo-bar">
         <IconButton label="Back" onClick={pop}>

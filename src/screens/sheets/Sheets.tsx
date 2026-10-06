@@ -26,12 +26,15 @@ import { stubLabel, whenLabel } from '../../domain/events';
 import { DateField, fmtDay, fmtRange, parseDays, todayIso } from '../../ui/fields';
 
 export function SheetHost() {
-  const { sheet, closeSheet } = useStore();
+  const { sheet, closeSheet, acting } = useStore();
+  const district = useFeatures().home === 'district';
+  const districtHouse = district && acting !== 'self';
+  const creditFlow = district && sheet?.name === 'reportCredit' && !!wproject(world.credits.find((c) => c.id === sheet.creditId)?.projectId ?? '')?.houseId;
   const is = (n: SheetRoute['name']) => sheet?.name === n;
   return (
     <>
       <CreateSurface open={is('create')} onClose={closeSheet} />
-      <Sheet open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
         <Notifications />
       </Sheet>
       <Sheet open={is('availability')} onClose={closeSheet} title="Availability">
@@ -43,16 +46,16 @@ export function SheetHost() {
       <Sheet open={is('showInterest')} onClose={closeSheet} title="Show interest">
         {sheet?.name === 'showInterest' && <InterestForm id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('reviewInterest')} onClose={closeSheet} title="Interested" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('reviewInterest')} onClose={closeSheet} title="Interested" size="tall">
         <ReviewInterest opportunityId={sheet?.name === 'reviewInterest' ? sheet.opportunityId : undefined} />
       </Sheet>
-      <Sheet open={is('reportCredit')} onClose={closeSheet} title="Report credit">
+      <Sheet className={creditFlow ? 'dhouse-sheet' : undefined} open={is('reportCredit')} onClose={closeSheet} title="Report credit">
         {sheet?.name === 'reportCredit' && <ReportCredit title={sheet.title} creditId={sheet.creditId} />}
       </Sheet>
       <Sheet open={is('activity')} onClose={closeSheet} title="Your activity" size="tall">
         <Activity />
       </Sheet>
-      <Sheet open={is('identity')} onClose={closeSheet} title="Acting as">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('identity')} onClose={closeSheet} title="Acting as">
         <Identity />
       </Sheet>
       <Sheet open={is('share')} onClose={closeSheet} title="Share">
@@ -70,16 +73,16 @@ export function SheetHost() {
       <Sheet open={is('postMore')} onClose={closeSheet} title="" label="Post options">
         {sheet?.name === 'postMore' && <PostMenu id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('newProject')} onClose={closeSheet} title="New project" size="tall">
         <NewProjectForm />
       </Sheet>
-      <Sheet open={is('pickProject')} onClose={closeSheet} title="Open a role">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('pickProject')} onClose={closeSheet} title="Open a role">
         <PickProject />
       </Sheet>
-      <Sheet open={is('editRole')} onClose={closeSheet} title="Edit role" size="tall">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('editRole')} onClose={closeSheet} title="Edit role" size="tall">
         {sheet?.name === 'editRole' && <EditRole id={sheet.id} />}
       </Sheet>
-      <Sheet open={is('closeRole')} onClose={closeSheet} title="Close role">
+      <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('closeRole')} onClose={closeSheet} title="Close role">
         {sheet?.name === 'closeRole' && <CloseRole id={sheet.id} />}
       </Sheet>
       <Sheet open={is('block')} onClose={closeSheet} title="" label="Block">
@@ -550,20 +553,22 @@ function InterestForm({ id }: { id: string }) {
 function ReviewInterest({ opportunityId }: { opportunityId?: string }) {
   const { interestsReceived, reviewInterest, startConversation, push, userCollabs, acting, blocked, conversations, cannotReach } = useStore();
   const all = (opportunityId ? interestsReceived.filter((i) => i.opportunityId === opportunityId) : interestsReceived).filter((i) => !blocked.includes(i.personId));
-  if (!all.length) return <EmptyState title="No one yet" />;
+
   const groups: { title?: string; items: typeof all }[] = [
-    { items: all.filter((i) => !i.withdrawn && !i.review) },
+    { title: 'New', items: all.filter((i) => !i.withdrawn && !i.review) },
     { title: 'In conversation', items: all.filter((i) => !i.withdrawn && i.review === 'messaged') },
     { title: 'Not now', items: all.filter((i) => !i.withdrawn && i.review === 'notNow') },
     { title: 'No longer interested', items: all.filter((i) => i.withdrawn) },
   ];
   const as = acting !== 'self' ? org(acting).name : null;
+  const districtHouse = useFeatures().home === 'district' && !!as;
+  if (!all.length) return <EmptyState title="No one yet" />;
   return (
     <div className="stack">
       {groups.map((g, gi) =>
         g.items.length ? (
           <section key={gi} className="stack">
-            {g.title ? <p className="meta">{g.title}</p> : null}
+            {g.title && (g.title !== 'New' || districtHouse) ? <p className="meta">{g.title}</p> : null}
             <div className="list list--flush">
               {g.items.map((it) => {
                 const p = person(it.personId);
@@ -741,9 +746,10 @@ function Activity() {
 
 /** Who am I acting as. One person, the organisations they may act for, one tap to switch. */
 function Identity() {
-  const { viewer, acting, setActing, memberships, tab } = useStore();
+  const { viewer, acting, setActing, memberships, tab, canIssue } = useStore();
+  const district = useFeatures().home === 'district';
   const me = person(viewer.id);
-  const rows = [{ id: 'self', party: me, sub: 'Your personal profile' }, ...memberships.map((m) => ({ id: m, party: org(m), sub: 'You can open roles and issue credits' }))];
+  const rows = [{ id: 'self', party: me, sub: 'Your personal profile' }, ...memberships.map((m) => ({ id: m, party: org(m), sub: district ? !org(m).verified ? 'Private projects · verification pending' : canIssue ? 'Roles, projects and credits' : 'Roles and projects' : 'You can open roles and issue credits' }))];
   return (
     <div className="stack">
       <div className="list list--flush">
@@ -758,7 +764,7 @@ function Identity() {
           </Pressable>
         ))}
       </div>
-      <p className="meta">The house's owner decides who can act for it. Your own profile and credits always stay yours.</p>
+      {!district && <p className="meta">The house's owner decides who can act for it. Your own profile and credits always stay yours.</p>}
     </div>
   );
 }

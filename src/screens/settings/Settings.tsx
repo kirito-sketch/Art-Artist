@@ -75,10 +75,11 @@ function NavRow({ icon, label, value, page }: { icon: ReactNode; label: string; 
 
 export function SettingsScreen({ page }: { page?: SettingsPage }) {
   const { pop, acting } = useStore();
+  const district = useFeatures().home === 'district' && acting !== 'self';
   const house = acting !== 'self';
   const title = page ? TITLES[page] : house ? 'House settings' : 'Settings';
   return (
-    <div className="screen">
+    <div className={`screen${district ? ' dhouse-page' : ''}`}>
       <header className="topbar topbar--nav">
         <IconButton label="Back" onClick={pop}>
           <ChevronLeft size={26} />
@@ -359,4 +360,3 @@ function House({ id }: { id: string }) {
     </div>
   );
 }
-

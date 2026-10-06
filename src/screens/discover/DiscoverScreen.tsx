@@ -23,6 +23,10 @@ import { visibleEvents } from '../../state/events';
 import { useFeatures } from '../../ui/features';
 import { CONTENT_TYPES, chipDef, type DiscoverChip } from '../../domain/contentTypes';
 import { ReviewsBody } from '../reviews/ReviewsScreen';
+import { peopleForHouseRoles } from '../../domain/house';
+import { TAXONOMY } from '../../data/taxonomy';
+import type { HousePeopleFocus } from '../production/DistrictHouse';
+import { world } from '../../state/world';
 
 export type Scope = Exclude<DiscoverChip, 'reviews'>;
 
@@ -120,7 +124,7 @@ function Picker<T extends string>({ open, onClose, title, value, options, groups
 
 
 /** A person as a search result: what they do, where, whether they are available, and their verified credits. */
-function PersonRow({ p }: { p: Person }) {
+function PersonRow({ p, matchedRole, primary = false }: { p: Person; matchedRole?: string; primary?: boolean }) {
   const { push, following, toggleFollow } = useStore();
   const on = following.includes(p.id);
   const credits = publicCreditsFor(p.id).length;
@@ -132,6 +136,7 @@ function PersonRow({ p }: { p: Person }) {
         <p className="meta">
           {p.role} · {p.city}
         </p>
+        {matchedRole && <p className="meta dhouse-fact">For {matchedRole}</p>}
         {(p.availableFrom || credits > 0) && (
           <p className="meta prow-facts">
             {p.availableFrom && <span className="prow-available">Available from {p.availableFrom}</span>}
@@ -143,7 +148,7 @@ function PersonRow({ p }: { p: Person }) {
           </p>
         )}
       </div>
-      <FollowButton on={on} onToggle={() => toggleFollow(p.id)} name={p.name} />
+      <FollowButton primary={primary} on={on} onToggle={() => toggleFollow(p.id)} name={p.name} />
     </PressCard>
   );
 }
@@ -187,9 +192,21 @@ const STAGES: { id: ProjectStage; label: string }[] = [
  * (Posts · People · Opportunities · Projects · Events · Reviews). Home's tiles and "See all" open it on a chip.
  * Searching on Posts looks through everything; on another chip it looks through that kind, with a row to widen it.
  */
-export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: { scope: DiscoverChip; setScope: (s: DiscoverChip) => void; postFocus?: { craft: string | null; n: number }; variant?: 'district'; focus?: number }) {
+export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, houseFocus }: { scope: DiscoverChip; setScope: (s: DiscoverChip) => void; postFocus?: { craft: string | null; n: number }; variant?: 'district'; focus?: number; houseFocus?: HousePeopleFocus }) {
   const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
   const district = variant === 'district';
+  const houseMode = district && acting !== 'self';
+  const houseCity = houseMode ? org(acting).city : person(viewer.id).city;
+  const ownRoles = houseMode ? world.roles.filter((r) => r.orgId === acting && !roleStatus[r.id] && (r.closesInDays == null || r.closesInDays >= 0)) : [];
+  const [houseRoleId, setHouseRoleId] = useState<string | null>(houseMode ? houseFocus?.roleId ?? null : null);
+  const selectedHouseRole = ownRoles.find((r) => r.id === houseRoleId);
+  const matchedRoles = houseRoleId === 'our-roles' ? ownRoles : selectedHouseRole ? [selectedHouseRole] : [];
+  useEffect(() => {
+    if (houseMode && houseFocus?.n) { setHouseRoleId(houseFocus.roleId); setCraft(null); setWho('people'); }
+  }, [houseMode, houseFocus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (houseRoleId && houseRoleId !== 'our-roles' && !selectedHouseRole) setHouseRoleId(null);
+  }, [houseRoleId, selectedHouseRole]);
   /** District: "Search all" on a chip other than Posts. Choosing a chip goes back to that chip's own results. */
   const [searchAll, setSearchAll] = useState(false);
   const pickChip = (c: DiscoverChip) => {
@@ -220,9 +237,10 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
   const [who, setWho] = useState<'people' | 'houses'>('people');
   const [pf, setPf] = useState<PeopleFilters>(NO_PEOPLE_FILTERS);
   const [pfDraft, setPfDraft] = useState<PeopleFilters>(NO_PEOPLE_FILTERS);
+  const [pfCraftDraft, setPfCraftDraft] = useState<string | null>(null);
   const [pfOpen, setPfOpen] = useState(false);
   const [stage, setStage] = useState<ProjectStage>('all');
-  const [picker, setPicker] = useState<'craft' | 'postCraft' | 'kind' | 'stage' | 'evCity' | 'evWhen' | 'evType' | null>(null);
+  const [picker, setPicker] = useState<'craft' | 'houseRole' | 'postCraft' | 'kind' | 'stage' | 'evCity' | 'evWhen' | 'evType' | null>(null);
   // Research observation only (no-op outside a research session): which section and craft were chosen.
   const seen = useRef({ scope, craft });
   useEffect(() => {
@@ -253,16 +271,21 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
   const applyPeopleFilters = (list: Person[], f: PeopleFilters) =>
     list
       .filter((p) => (f.available ? !!p.availableFrom : true))
-      .filter((p) => (f.near ? p.city === me.city : true))
+      .filter((p) => (f.near ? p.city === houseCity : true))
       .filter((p) => (f.credited ? publicCreditsFor(p.id).length > 0 : true))
       .filter((p) => (f.travel ? !!p.openToTravel : true))
       .filter((p) => EXPERIENCE.find((e) => e.id === f.experience)!.test(p.years))
       .filter((p) => (f.language ? (p.languages ?? []).includes(f.language) : true));
-  const craftPeople = searchablePeople(viewer.id, blocked)
-    .filter((p) => (craft ? p.craft === craft || (p.crafts ?? []).includes(craft as Person['craft']) : true))
+  const queryPeople = searchablePeople(viewer.id, blocked)
     .filter((p) => (q ? [p.name, p.role, p.city].join(' ').toLowerCase().includes(q) : true));
+  const withCraft = (list: Person[], selected: string | null) => list.filter((p) => !selected || p.craft === selected || (p.crafts ?? []).includes(selected as Person['craft']));
+  const craftPool = withCraft(queryPeople, craft);
+  const houseMatches = houseMode ? peopleForHouseRoles(craftPool, matchedRoles, houseCity, Object.fromEntries(craftPool.map((p) => [p.id, publicCreditsFor(p.id).length]))) : [];
+  const craftPeople = houseMode ? houseMatches.map((m) => m.person) : craftPool;
+  const matchedRoleLabel = (id: string) => houseMatches.find((m) => m.person.id === id)?.role?.role;
   const people = applyPeopleFilters(craftPeople, pf);
-  const activePeopleFilters = Object.entries(pf).filter(([k, v]) => k !== 'available' && (k === 'experience' ? v !== 'any' : !!v)).length;
+  const activePeopleFilters = Object.entries(pf).filter(([k, v]) => k !== 'available' && (k === 'experience' ? v !== 'any' : !!v)).length + Number(houseMode && !!craft);
+  const draftPeople = houseMode ? peopleForHouseRoles(withCraft(queryPeople, pfCraftDraft), matchedRoles, houseCity).map((m) => m.person) : craftPeople;
   const allProjects = discoverableProjects(blocked).filter((w) => (q ? `${w.title} ${w.format} ${w.orgIds.map((o) => org(o).name).join(' ')} ${w.ownerId ? person(w.ownerId).name : ''}`.toLowerCase().includes(q) : true));
   const hiringFor = (title: string) => roles.filter((r) => !roleStatus[r.id] && r.project.toLowerCase().startsWith(title.toLowerCase())).length;
   const now = Date.now();
@@ -272,7 +295,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
       : allProjects.filter((w) => (stage === 'live' ? isLive(w) : stage === 'released' ? !isLive(w) : stage === 'hiring' ? hiringFor(w.title) > 0 : stage === 'week' ? isOutThisWeek(w, now) : true));
   const allHouses = searchableHouses(blocked).filter((o) => (q ? `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q) : true));
   const houses = q ? allHouses : [];
-  const shownHouses = allHouses.filter((o) => (pf.near ? o.city === me.city : true));
+  const shownHouses = allHouses.filter((o) => (pf.near ? o.city === houseCity : true));
   const grouped = !!q && (district ? scope === 'posts' || searchAll : !narrowed);
   const [announce, setAnnounce] = useState('');
   useEffect(() => {
@@ -315,7 +338,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
     .filter((e) => (evType === 'any' ? true : e.type === evType));
 
   return (
-    <motion.div className="screen canvas v-discover" data-scroll="discover" layoutScroll>
+    <motion.div className={`screen canvas v-discover${houseMode ? ' dhouse-page' : ''}`} data-scroll="discover" layoutScroll>
       <div className="title-block title-block--top">
         <h1 className="large-title">Discover</h1>
       </div>
@@ -411,7 +434,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
               <SectionHeader title="People" action={people.length > 3 ? 'See all' : undefined} onAction={() => seeAll('people')} />
               <div className="list list--flush">
                 {people.slice(0, 3).map((p) => (
-                  <PersonRow key={p.id} p={p} />
+                  <PersonRow key={p.id} p={p} matchedRole={houseMode ? matchedRoleLabel(p.id) : undefined} primary={houseMode} />
                 ))}
               </div>
             </section>
@@ -474,9 +497,9 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
             <>
               <FilterBar label="Opportunity filters">
                 <Facet label="Type" any="All types" value={kind === 'all' ? null : KINDS.find((k) => k.id === kind)!.label} onOpen={() => setPicker('kind')} />
-                <Chip active={mineOnly} onClick={() => setMineOnly((v) => !v)}>
+                {!houseMode && <Chip active={mineOnly} onClick={() => setMineOnly((v) => !v)}>
                   My crafts
-                </Chip>
+                </Chip>}
                 <span className="fbar-gap" aria-hidden />
                 <FiltersButton count={activeFilters} onOpen={() => {
                     setDraft(filters);
@@ -496,13 +519,14 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
             <>
               {who === 'people' && (
                 <FilterBar label="People filters">
-                  <Facet label="Craft" any="Any craft" value={craftLabel(craft)} onOpen={() => setPicker('craft')} />
+                  {houseMode && ownRoles.length > 0 ? <Facet label="For role" any="Any role" value={houseRoleId === 'our-roles' ? 'Our roles' : selectedHouseRole?.role ?? null} onOpen={() => setPicker('houseRole')} /> : <Facet label="Craft" any="Any craft" value={craftLabel(craft)} onOpen={() => setPicker('craft')} />}
                   <Chip active={pf.available} onClick={() => setPf((f) => ({ ...f, available: !f.available }))}>
                     Available now
                   </Chip>
                   <span className="fbar-gap" aria-hidden />
                   <FiltersButton count={activePeopleFilters} onOpen={() => {
                       setPfDraft(pf);
+                      setPfCraftDraft(craft);
                       setPfOpen(true);
                     }} />
                 </FilterBar>
@@ -521,10 +545,10 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
                 <>
                   <div className="list">
                     {people.map((p) => (
-                      <PersonRow key={p.id} p={p} />
+                      <PersonRow key={p.id} p={p} matchedRole={houseMode ? matchedRoleLabel(p.id) : undefined} primary={houseMode} />
                     ))}
                   </div>
-                  {!people.length && <EmptyState title="No one matches" body={activePeopleFilters || craft || pf.available ? 'Try removing a filter.' : undefined} />}
+                  {!people.length && <EmptyState title="No one matches" body={activePeopleFilters || craft || pf.available || houseRoleId ? 'Try removing a filter.' : undefined} />}
                 </>
               ) : (
                 <div className="list">
@@ -598,7 +622,8 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
       </AnimatePresence>
       )}
 
-      <Picker open={picker === 'craft'} onClose={() => setPicker(null)} title="Craft" value={craft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={DEPARTMENTS.map((d) => ({ label: d.label, options: d.crafts.map((c) => ({ id: c, label: craftLabel(c)! })) }))} onPick={(v) => setCraft(v === 'any' ? null : v)} />
+      <Picker open={picker === 'houseRole'} onClose={() => setPicker(null)} title="People for a role" value={houseRoleId ?? 'any'} options={[{ id: 'any', label: 'Any role' }, { id: 'our-roles', label: 'All our roles' }, ...ownRoles.map((r) => ({ id: r.id, label: `${r.role} · ${world.projects.find((p) => p.id === r.projectId)?.workingTitle}` }))]} onPick={(v) => { setHouseRoleId(v === 'any' ? null : v); setCraft(null); }} />
+      <Picker open={picker === 'craft'} onClose={() => setPicker(null)} title="Craft" value={craft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={(houseMode ? TAXONOMY.flatMap((d) => d.families) : DEPARTMENTS).map((d) => ({ label: d.label, options: d.crafts.map((c) => ({ id: c, label: craftLabel(c)! })) }))} onPick={(v) => setCraft(v === 'any' ? null : v)} />
       <Picker open={picker === 'postCraft'} onClose={() => setPicker(null)} title="Craft" value={postCraft ?? 'any'} options={[{ id: 'any', label: 'Any craft' }]} groups={DEPARTMENTS.map((d) => ({ label: d.label, options: d.crafts.filter((c) => postCrafts.some((x) => x.id === c)).map((c) => ({ id: c, label: craftLabel(c)! })) })).filter((g) => g.options.length)} onPick={(v) => setPostCraft(v === 'any' ? null : v)} />
       <Picker open={picker === 'kind'} onClose={() => setPicker(null)} title="Type" value={kind} options={KINDS.map((k) => ({ id: k.id, label: k.id === 'all' ? 'All types' : k.label }))} onPick={setKind} />
       <Picker open={picker === 'evCity'} onClose={() => setPicker(null)} title="City" value={evCity} options={[{ id: 'any', label: 'Any city' }, ...eventCities.map((c) => ({ id: c, label: c }))]} onPick={setEvCity} />
@@ -608,10 +633,11 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
 
       <Sheet open={pfOpen} onClose={() => setPfOpen(false)} title="Filter people">
         <div className="stack">
+          {houseMode && <div><label className="field-label" htmlFor="house-people-craft">Craft</label><select id="house-people-craft" className="field" value={pfCraftDraft ?? 'any'} onChange={(e) => setPfCraftDraft(e.target.value === 'any' ? null : e.target.value)}><option value="any">Any craft</option>{TAXONOMY.flatMap((d) => d.families).map((f) => <optgroup key={f.id} label={f.label}>{f.crafts.map((c) => <option key={c} value={c}>{craftLabel(c)}</option>)}</optgroup>)}</select></div>}
           <div className="filter-tiles">
             {(
               [
-                ['near', `In ${me.city || 'my city'}`, <MapPin key="i" size={24} />],
+                ['near', `In ${houseCity || 'my city'}`, <MapPin key="i" size={24} />],
                 ['credited', 'Verified credits', <BadgeCheck key="i" size={24} />],
                 ['travel', 'Open to travel', <Plane key="i" size={24} />],
               ] as [keyof PeopleFilters, string, ReactNode][]
@@ -639,17 +665,18 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
             ))}
           </div>
           <div className="sheet-actions">
-            <button className="link link--underline" onClick={() => setPfDraft(NO_PEOPLE_FILTERS)}>
+            <button className="link link--underline" onClick={() => { setPfDraft(NO_PEOPLE_FILTERS); setPfCraftDraft(null); }}>
               Clear all
             </button>
             <Button
               size="l"
               onClick={() => {
                 setPf(pfDraft);
+                if (houseMode) setCraft(pfCraftDraft);
                 setPfOpen(false);
               }}
             >
-              Show {applyPeopleFilters(craftPeople, pfDraft).length} people
+              Show {applyPeopleFilters(draftPeople, pfDraft).length} people
             </Button>
           </div>
         </div>

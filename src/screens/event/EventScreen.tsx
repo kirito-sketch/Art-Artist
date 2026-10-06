@@ -1,3 +1,4 @@
+import { useFeatures } from '../../ui/features';
 import { CalendarDays, ChevronLeft, ExternalLink, Flag, IndianRupee, MapPin, MoreHorizontal, Pencil, Share, ShieldCheck, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { priceLabel, stubLabel, typeLabel, whenLabel } from '../../domain/events';
@@ -17,8 +18,10 @@ import { InterestedButton } from './eventUnits';
  * The host sees Edit and Cancel; everyone else sees Report.
  */
 export function EventScreen({ id }: { id: string }) {
+  const districtFeature = useFeatures().home === 'district';
   const { events, pop, push, openSheet, viewer, acting, cancelEvent, showToast } = useStore();
   const e = events.find((x) => x.id === id);
+  const district = districtFeature && !!e && party(e.hostId)?.kind === 'org';
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
   if (!e)
@@ -40,7 +43,7 @@ export function EventScreen({ id }: { id: string }) {
   const art = e.cover ?? (w && w.media.id !== 'ph' ? w.stills[0] ?? w.media : undefined);
 
   return (
-    <div className="screen canvas ev-screen">
+    <div className={`screen canvas ev-screen${district ? ' dhouse-page' : ''}`}>
       <div className={`ev-hero ${art ? '' : 'ev-hero--type'}`}>
         {art ? <Photo media={art} className="ev-hero-photo" showPlay={false} /> : <span className="ev-hero-day" aria-hidden>{stub.day}</span>}
         <div className="phero-bar">
@@ -145,7 +148,7 @@ export function EventScreen({ id }: { id: string }) {
         </p>
       </div>
 
-      <Sheet open={menu} onClose={() => (setMenu(false), setConfirm(false))} title={confirm ? 'Cancel this event?' : e.title}>
+      <Sheet className={district ? 'dhouse-sheet' : undefined} open={menu} onClose={() => (setMenu(false), setConfirm(false))} title={confirm ? 'Cancel this event?' : e.title}>
         {confirm ? (
           <div className="stack">
             <p className="body">It stays on the page marked Cancelled, and everyone who marked Interested is told.</p>
