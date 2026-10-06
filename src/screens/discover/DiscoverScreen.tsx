@@ -130,7 +130,7 @@ function PersonRow({ p, matchedRole, primary = false }: { p: Person; matchedRole
   const credits = publicCreditsFor(p.id).length;
   return (
     <PressCard className="prow" onPress={() => push({ name: 'profile', id: p.id })} scale={0.985}>
-      <Avatar party={p} size={48} available={!!p.availableFrom} />
+      <Avatar party={p} size={48} />
       <div className="prow-text">
         <p className="item-title">{p.name}</p>
         <p className="meta">
@@ -139,7 +139,7 @@ function PersonRow({ p, matchedRole, primary = false }: { p: Person; matchedRole
         {matchedRole && <p className="meta dhouse-fact">For {matchedRole}</p>}
         {(p.availableFrom || credits > 0) && (
           <p className="meta prow-facts">
-            {p.availableFrom && <span className="prow-available">Available from {p.availableFrom}</span>}
+            {p.availableFrom && <span className="work-preference">{p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}`}</span>}
             {credits > 0 && (
               <span>
                 <BadgeCheck size={12} /> {credits} verified {credits === 1 ? 'credit' : 'credits'}
@@ -521,7 +521,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
                 <FilterBar label="People filters">
                   {houseMode && ownRoles.length > 0 ? <Facet label="For role" any="Any role" value={houseRoleId === 'our-roles' ? 'Our roles' : selectedHouseRole?.role ?? null} onOpen={() => setPicker('houseRole')} /> : <Facet label="Craft" any="Any craft" value={craftLabel(craft)} onOpen={() => setPicker('craft')} />}
                   <Chip active={pf.available} onClick={() => setPf((f) => ({ ...f, available: !f.available }))}>
-                    Available now
+                    Open to work
                   </Chip>
                   <span className="fbar-gap" aria-hidden />
                   <FiltersButton count={activePeopleFilters} onOpen={() => {
@@ -615,7 +615,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
                 ))}
               </div>
               {!shownEvents.length && <EmptyState title="No events match" body="Try another city or date." />}
-              <p className="meta ev-trust">Events show their price up front. Art and Artist never charges to apply or audition.</p>
+
             </>
           )}
         </motion.div>

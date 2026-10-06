@@ -870,19 +870,6 @@ html[data-theme='dark'] .dh {
   overflow: hidden;
 }
 
-/* The Available marker, on the photo. */
-.dh-avail {
-  position: absolute;
-  left: 8px;
-  top: 8px;
-  padding: 3px 9px;
-  border-radius: var(--r-pill);
-  background: var(--success, #2f7d4f);
-  color: #fff;
-  font-size: 11.5px;
-  font-weight: 700;
-}
-
 .dh-near-img .person-photo,
 .dh-near-img img {
   width: 100%;
@@ -904,11 +891,6 @@ html[data-theme='dark'] .dh {
 .dh-near-t span {
   font-size: 12.5px;
   color: var(--text-2);
-}
-
-.dh-near-t .dh-free {
-  color: var(--success, #2f7d4f);
-  font-weight: 600;
 }
 
 .dh-follow {

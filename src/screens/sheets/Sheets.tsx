@@ -37,7 +37,7 @@ export function SheetHost() {
       <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
         <Notifications />
       </Sheet>
-      <Sheet open={is('availability')} onClose={closeSheet} title="Availability">
+      <Sheet open={is('availability')} onClose={closeSheet} title="Work preferences">
         <AvailabilityForm />
       </Sheet>
       <Sheet open={is('intent')} onClose={closeSheet} title="What are you looking to do right now?">
@@ -168,7 +168,7 @@ function CreateMenu() {
     <div className="group create-rows">
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
-      <Row icon={<CircleCheck size={22} />} label="Available for work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
+      <Row icon={<CircleCheck size={22} />} label="Open to work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
       <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
       {eventRow}
     </div>
@@ -204,18 +204,11 @@ function dayWord(at: number, now: number) {
   return d <= 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'Soon';
 }
 
-/** Interested events that need a word: starting within 48 hours, changed, or cancelled. Past ones drop off. */
-function comingUp(saved: { kind: string; id: string }[], events: IndustryEvent[], now: number) {
-  const out: { e: IndustryEvent; line: string }[] = [];
-  for (const s of saved) {
-    if (s.kind !== 'event') continue;
-    const e = events.find((x) => x.id === s.id);
-    if (!e || (e.end ?? e.start) < now) continue;
-    if (e.status === 'cancelled') out.push({ e, line: 'Cancelled by the host.' });
-    else if (e.status === 'scheduled' && e.changed) out.push({ e, line: `${e.changed}: now ${whenLabel(e.start)}.` });
-    else if (e.status === 'scheduled' && e.start - now <= 48 * 36e5) out.push({ e, line: `${dayWord(e.start, now)}: ${whenLabel(e.start)}.` });
-  }
-  return out.sort((a, b) => a.e.start - b.e.start);
+/** One upcoming reminder for a confirmed place; changes and cancellations are real notices. */
+function comingUp(events: IndustryEvent[], now: number) {
+  return events.filter(e => ['scheduled', 'closed'].includes(e.status) && e.start >= now && e.start - now <= 48 * 36e5)
+    .sort((a, b) => a.start - b.start)
+    .map(e => ({ e, line: `${dayWord(e.start, now)}: ${whenLabel(e.start)}.` }));
 }
 
 /** A new item that asks for a decision: a credit to accept, a correction to answer, interest to review (N4). */
@@ -228,13 +221,12 @@ const asksForDecision = (n: { kind: string; text: string; unread: boolean }) =>
  * you); conversations live in Inbox.
  */
 function Notifications() {
-  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario, saved, events } = useStore();
+  const { notifications, markNotificationsReadWhere, markNotificationRead, push, openSheet, acting, memberships, viewer, scenario, events, eventRequest } = useStore();
   const [filter, setFilter] = useState<string>(acting);
   const features = useFeatures();
   const homeNext = features.home === 'next';
-  // Events you marked Interested (docs/EVENTS.md): a reminder from 48 hours before, and any change or
-  // cancellation, until the event is over. Derived, so it can never drift from the event itself.
-  const reminders = features.events && (filter === 'self' || filter === 'all') ? comingUp(saved, events, Date.now()) : [];
+  // Only confirmed places receive upcoming reminders. A bookmark does not imply attendance.
+  const reminders = features.events && (filter === 'self' || filter === 'all') ? comingUp(events.filter(e => eventRequest(e.id)?.status === 'confirmed'), Date.now()) : [];
   // News from your network (credits, new projects, availability) lives here, not on Home, which only
   // shows what needs you (docs/UX_HEURISTIC_AUDIT.md F2, F13). It belongs to the person, not a house.
   const network = filter === 'self' || filter === 'all' ? networkFor(viewer, scenario).filter((e) => e.kind !== 'portfolio' && e.kind !== 'reel') : [];
@@ -441,7 +433,7 @@ function AvailabilityForm() {
               From a date
             </button>
           </div>
-          {later && <DateField className="field" value={fromDay} onChange={setFromDay} label="Available from" placeholder="Choose a start date" />}
+          {later && <DateField className="field" value={fromDay} onChange={setFromDay} label="Open to work from" placeholder="Choose a start date" />}
           <label className="field-label" htmlFor="avail-scope">
             Where
           </label>

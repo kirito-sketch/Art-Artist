@@ -91,7 +91,7 @@ export function SavedScreen() {
         const n = publicCreditsFor(p.id).length;
         return (
           <PressCard key={p.id} className="prow" onPress={() => push({ name: 'profile', id: p.id })} scale={0.985}>
-            <Avatar party={p} size={48} available={!!p.availableFrom} />
+            <Avatar party={p} size={48} />
             <div className="prow-text">
               <p className="item-title">{p.name}</p>
               <p className="meta">

@@ -56,8 +56,8 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
       dates,
       compensation: pay === 'Paid' ? fmtPay(amount, '', unit) || 'Paid' : pay,
       paid: pay === 'Paid',
-      stage: available ? 'Available' : 'In development',
-      about: about.trim() || (available ? `Available for ${role.toLowerCase()} work.` : 'Details to follow.'),
+      stage: available ? 'Open to work' : 'In development',
+      about: about.trim() || (available ? `Open to ${role.toLowerCase()} work.` : 'Details to follow.'),
       lookingFor: [],
       match: [],
       forCrafts: [],
@@ -74,7 +74,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
         <IconButton label={dirty ? 'Close (asks before discarding)' : 'Close'} onClick={() => (dirty ? setDiscard(true) : pop())}>
           <X size={24} />
         </IconButton>
-        <h1 className="composer-title">{available ? 'Available for work' : 'Looking for someone'}</h1>
+        <h1 className="composer-title">{available ? 'Open to work' : 'Looking for someone'}</h1>
         <button className="confirm" disabled={!valid} onClick={publish} aria-label="Publish" aria-describedby="collab-missing">
           <Check size={22} strokeWidth={2.6} />
         </button>

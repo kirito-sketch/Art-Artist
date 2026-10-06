@@ -256,7 +256,7 @@ function ForYou({ me, stage, signals, goDiscover, lead }: HomeCtx) {
 }
 
 /**
- * People, ranked for what you are doing now, each with the reason they are here. "Available now" is a
+ * People, ranked for what you are doing now, each with the reason they are here. "Open to work" is a
  * filter on this tray (not a separate section): when building a team, availability is a way of
  * narrowing the same people, not a different question.
  */
@@ -275,7 +275,7 @@ function PeopleFor({ me, signals, goDiscover, lead }: HomeCtx) {
       <Context lead={lead}>
         {canFilter && (
           <button className={`filter-pill ${availableOnly ? 'is-on' : ''}`} aria-pressed={availableOnly} onClick={() => setAvailableOnly((v) => !v)}>
-            <span className="status-dot is-on" /> Available now
+             Open to work
           </button>
         )}
       </Context>
@@ -287,7 +287,7 @@ function PeopleFor({ me, signals, goDiscover, lead }: HomeCtx) {
             context={
               p.availableFrom && !team ? (
                 <>
-                  <span className="status-dot is-on" /> Available from {p.availableFrom}
+                   {p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}`}
                 </>
               ) : (
                 reason

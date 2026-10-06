@@ -348,7 +348,7 @@ export function EntryFlow() {
                           </button>
                         ))}
                       </div>
-                      {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Available from" placeholder="Choose a start date" />}
+                      {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Open to work from" placeholder="Choose a start date" />}
                     </>
                   )}
                   <Button block size="l" disabled={!intent || !city.trim()} aria-describedby="now-missing" onClick={finishProfile}>
@@ -427,7 +427,7 @@ export function EntryFlow() {
                       </button>
                     ))}
                   </div>
-                  {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Available from" placeholder="Choose a start date" />}
+                  {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Open to work from" placeholder="Choose a start date" />}
                 </>
               )}
               <Button block size="l" disabled={!city.trim()} aria-describedby="where-missing" onClick={() => (invite ? finishProfile() : go('work'))}>

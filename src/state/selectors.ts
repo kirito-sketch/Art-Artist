@@ -62,4 +62,4 @@ export const kindLabel: Record<Opportunity['kind'], string> = {
   collab: 'Collaboration',
 };
 
-export const availableLabel = (from: string) => (from === 'Now' ? 'Available now' : `Available from ${from}`);
+export const availableLabel = (from: string) => (from === 'Now' ? 'Open to work' : `Open to work from ${from}`);

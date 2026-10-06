@@ -231,10 +231,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
         {/* Availability: one quiet row under credibility. Your own is editable; someone else's shows only when open. */}
         {own ? (
-          <Pressable className="pid-availability" onClick={() => openSheet({ name: 'availability' })} aria-label="Availability">
-            <span className={`status-dot ${availability.open && !scenario.newUser ? 'is-on' : ''}`} />
+          <Pressable className="pid-availability" onClick={() => openSheet({ name: 'availability' })} aria-label="Work preferences">
             {scenario.newUser ? (
-              <span className="link link--underline">Add when you're available</span>
+              <span className="link link--underline">Add work preferences</span>
             ) : (
               <span className="pid-availability-text">
                 <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
@@ -246,7 +245,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         ) : (
           from && (
             <div className="pid-availability">
-              <span className="status-dot is-on" />
               <span className="pid-availability-text">
                 <span>{availableLabel(from)}</span>
                 <span className="meta">

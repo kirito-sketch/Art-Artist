@@ -14,7 +14,8 @@ import { discoverPosts, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world, worksForOrg } from '../../state/world';
-import { priceLabel, typeLabel } from '../../domain/events';
+import { eventEndsAt } from '../../domain/eventAttendance';
+import { EventTicket } from '../event/eventUnits';
 import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
 import { markOpened, markShown, readSeen } from '../../state/eventSeen';
 import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
@@ -98,7 +99,7 @@ export function DistrictHome({ go }: { go: Go }) {
   // Home's three events: chosen for this person (docs/REVIEW_EVENTS_PROFILE.md §2), fixed for the session, minus the Spotlight's.
   const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
   const eventPool = pool.filter((e) => !shown.has(`event:${e.id}`));
-  const allEvents = pool.filter((e) => e.status === 'scheduled' && (e.end ?? e.start) >= now).length;
+  const allEvents = pool.filter((e) => e.status === 'scheduled' && eventEndsAt(e) >= now).length;
   const upcoming = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
   const friday = week.filter((w) => !shown.has(`release:${w.id}`));
 
@@ -347,7 +348,7 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
                   <span>
                     {p.role} · {p.city}
                   </span>
-                  <span className="dh-irow-fact dh-irow-fact--ok">Available from {p.availableFrom}</span>
+                  <span className="dh-irow-fact">{p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}`}</span>
                 </span>
               </PressCard>
             </div>
@@ -359,18 +360,6 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
   return null;
 }
 
-const timeOf = (ms: number) => new Date(ms).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
-
-function DateBlock({ ms }: { ms: number }) {
-  const d = new Date(ms);
-  return (
-    <span className="dh-date" aria-hidden>
-      <b>{d.toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}</b>
-      {d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase()}
-    </span>
-  );
-}
-
 /** What an event looks like: its film, else the host's current project, else the host's own work. */
 function eventArt(e: IndustryEvent): Media | undefined {
   if (e.cover) return e.cover;
@@ -380,10 +369,6 @@ function eventArt(e: IndustryEvent): Media | undefined {
   if (lead) return lead.stills[0] ?? lead.media;
   return (seed.portfolio[e.hostId] ?? []).find((m) => m.kind === 'image');
 }
-
-const where = (e: IndustryEvent, city: string) => (e.venue === 'Online' ? 'Online' : e.city === city ? e.venue : `${e.venue}, ${e.city}`);
-const whenOf = (e: IndustryEvent) => `${new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' })}, ${timeOf(e.start)}`;
-const fullDate = (e: IndustryEvent) => new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
 
 // One choice per person per day; a change that matters (Interested, a block) recalculates. Never while on screen.
 const chosen = new Map<string, IndustryEvent[]>();
@@ -409,65 +394,11 @@ function homeEvents(pool: IndustryEvent[], me: Person, following: string[], inte
   return list;
 }
 
-/** The big card: image with title, place and time over it, date on it, save in the corner. */
-function Hero({ e, city }: { e: IndustryEvent; city: string }) {
-  const { push, viewer } = useStore();
-  const art = eventArt(e);
-  return (
-    <div className="dh-evhero">
-      <PressCard className="dh-evhero-card" onPress={() => (markOpened(viewer.id, e.id), push({ name: 'event', id: e.id }))} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
-        {art ? <Photo media={art} showPlay={false} className="dh-evhero-img" /> : <span className="dh-evhero-img dh-ev-plain" />}
-        <DateBlock ms={e.start} />
-        <span className="dh-evhero-t">
-          <span className="dh-evhero-k">{typeLabel(e.type).split(' or ')[0]}</span>
-          <b>{e.title}</b>
-          <span>{where(e, city)}</span>
-          <span className="dh-evhero-foot">
-            {whenOf(e)} <i>{priceLabel(e)}</i>
-          </span>
-        </span>
-      </PressCard>
-      <span className="dh-ev-save">
-        <SaveButton id={e.id} kind="event" floating name={e.title} />
-      </span>
-    </div>
-  );
+/** Event shelf uses the same concise cover/category/details card as Discover and profiles. */
+function EventsA({ list }: { list: IndustryEvent[]; city: string }) {
+  const { viewer } = useStore();
+  return <div className="dh-pad ev-list">{list.map(e => <EventTicket key={e.id} e={e} onOpen={() => markOpened(viewer.id, e.id)} />)}</div>;
 }
-
-/** Direction A: one large event and two rows, all visible, nothing moves (docs/REVIEW_EVENTS_PROFILE.md §1). */
-function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
-  const { push } = useStore();
-  return (
-    <div className="dh-pad">
-      <Hero e={list[0]} city={city} />
-      {list.length > 1 && (
-        <div className="dh-evl">
-          {list.slice(1).map((e) => {
-            const art = eventArt(e);
-            return (
-              <div key={e.id} className="dh-evl-row">
-                <PressCard className="dh-evl-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={e.title}>
-                  <span className="dh-evl-img">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}</span>
-                  <span className="dh-evl-t">
-                    <span className="dh-evl-when">
-                      {fullDate(e)} · {timeOf(e.start)}
-                    </span>
-                    <b>{e.title}</b>
-                    <span>
-                      {where(e, city)} · {priceLabel(e)}
-                    </span>
-                  </span>
-                </PressCard>
-                <SaveButton id={e.id} kind="event" name={e.title} />
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 
 /**
  * Grid-aligned carousel: the active card plays its clip; touching or focusing it stops automatic movement. Every card has
@@ -589,7 +520,6 @@ function NearCard({ p }: { p: Person }) {
       <PressCard className="dh-near-main" onPress={() => push({ name: 'profile', id: p.id })} scale={0.98} aria-label={`${p.name}, ${p.role}`}>
         <span className="dh-near-img">
           <PersonPhoto party={p} />
-          {p.availableFrom && <span className="dh-avail">Available</span>}
         </span>
         <span className="dh-near-t">
           <b>{p.name}</b>
@@ -597,7 +527,7 @@ function NearCard({ p }: { p: Person }) {
             {p.role}
             {p.years ? ` · ${p.years} yrs` : ''}
           </span>
-          {p.availableFrom ? <span className="dh-free">From {p.availableFrom}</span> : <span>{p.city}</span>}
+          {p.availableFrom ? <span>Open to work{p.availableFrom !== 'Now' ? ` from ${p.availableFrom}` : ''}</span> : <span>{p.city}</span>}
         </span>
       </PressCard>
       <button className={`dh-follow ${on ? 'is-on' : ''}`} aria-label={on ? `Following ${p.name}` : `Follow ${p.name}`} aria-pressed={on} onClick={() => toggleFollow(p.id)}>

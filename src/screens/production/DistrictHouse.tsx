@@ -241,7 +241,6 @@ export function DistrictHouseHome({ discover }: { discover: (chip?: DiscoverChip
                   <PressCard className="dhouse-person-main" onPress={() => push({ name: 'profile', id: p.id })} aria-label={`${p.name}, ${p.role}`}>
                     <span className="dhouse-person-image">
                       <PersonPhoto party={p} />
-                      {p.availableFrom && <span className="dh-avail">Available</span>}
                     </span>
                     <span className="dhouse-person-text">
                       <span className="item-title">{p.name}</span>

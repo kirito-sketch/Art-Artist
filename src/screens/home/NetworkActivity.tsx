@@ -25,7 +25,7 @@ function sentence(e: NetworkEvent, role?: string, city?: string) {
     case 'collab':
       return <>{who} is looking for a {role?.toLowerCase()} in {city}</>;
     case 'available':
-      return <>{who} is available from {first.availableFrom}</>;
+      return <>{who} {first.availableFrom === 'Now' ? 'is open to work' : `is open to work from ${first.availableFrom}`} </>;
     case 'reel':
       return <>{who} added a new showreel</>;
     case 'portfolio':
@@ -56,7 +56,7 @@ export function NetworkRow({ e, index = 0, quiet = false }: { e: NetworkEvent; i
   return (
     <motion.div {...stagger(index)}>
       <PressCard className={`nrow ${quiet ? 'nrow--quiet' : ''}`} onPress={open} scale={0.985}>
-        <Avatar party={first} size={quiet ? 36 : 44} available={e.kind === 'available'} />
+        <Avatar party={first} size={quiet ? 36 : 44} />
         <div className="nrow-text">
           <p className="nrow-line">{sentence(e, o?.role, o?.city)}</p>
           <p className="meta">{e.time}</p>
