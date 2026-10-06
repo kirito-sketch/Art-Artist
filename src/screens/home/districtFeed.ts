@@ -1,9 +1,9 @@
 import * as seed from '../../data/seed';
 import type { Craft, IndustryEvent, Media, Opportunity, Person, Post } from '../../data/types';
 import { isLive, type Work } from '../../data/works';
-import { agoDays, kicker, pickSpotlight, type SpotContext, type SpotItem, type Spotlit } from '../../domain/spotlight';
+import { agoDays, pickSpotlight, type SpotContext, type SpotItem, type Spotlit } from '../../domain/spotlight';
 import { stats } from '../../domain/reviews';
-import { priceLabel } from '../../domain/events';
+import { priceLabel, whenLabel } from '../../domain/events';
 import { creditedOn } from '../../domain/home/graph';
 import { org, party, person } from '../../state/selectors';
 import { reviewsOf, work } from '../../state/world';
@@ -105,39 +105,36 @@ export interface SpotCard {
 
 /** A spotlit item as a card. Undefined when its record has gone (filled, removed) since the list was chosen. */
 export function spotCard(it: Spotlit, d: { roles: Opportunity[]; posts: Post[]; events: IndustryEvent[]; meId: string; city: string; quote: (id: string) => { text: string; by: string } | undefined }): SpotCard | undefined {
-  const k = kicker(it);
+  const k = ({ role: 'ROLE', event: 'EVENT', project: 'PROJECT', post: 'POST', release: 'REVIEW' } as const)[it.type];
   switch (it.type) {
     case 'role': {
       const o = d.roles.find((x) => x.id === it.ref);
       if (!o) return undefined;
       const by = o.orgId ? org(o.orgId).name : o.authorId ? person(o.authorId).name : '';
-      return { key: it.key, kicker: k, title: o.role, meta: [o.project, by].filter(Boolean).join(' · '), fact: [o.paid ? o.compensation : 'Unpaid', o.dates].filter(Boolean).join(' · '), media: o.media, save: { id: o.id, kind: 'role' }, open: { name: 'opportunity', id: o.id } };
+      return { key: it.key, kicker: k, title: o.role, meta: [o.project, by].filter(Boolean).join(' · '), fact: [o.closesInDays === 0 ? 'Closes today' : o.closesInDays != null ? `Closes in ${o.closesInDays} days` : 'Open role', o.city, o.paid ? 'Paid' : 'Unpaid'].join(' · '), media: o.media, save: { id: o.id, kind: 'role' }, open: { name: 'opportunity', id: o.id } };
     }
     case 'project': {
       const w = work(it.ref);
       if (!w) return undefined;
-      const faces = creditedOn(w.id).filter((x) => x !== d.meId);
-      return { key: it.key, kicker: k, title: w.title, meta: [houseOf(w)?.name ?? (w.ownerId ? person(w.ownerId).name : ''), langOf(w) ?? w.format].filter(Boolean).join(' · '), faces, media: w.stills[0] ?? w.media, clip: w.id, save: { id: w.id, kind: 'project' }, open: { name: 'work', id: w.id } };
+      return { key: it.key, kicker: k, title: w.title, meta: houseOf(w)?.name ?? (w.ownerId ? person(w.ownerId).name : ''), fact: w.stage, media: w.stills[0] ?? w.media, clip: w.id, save: { id: w.id, kind: 'project' }, open: { name: 'work', id: w.id } };
     }
     case 'post': {
       const p = d.posts.find((x) => x.id === it.ref);
       const a = p && party(p.authorId);
       if (!p || !a) return undefined;
       const line = p.project ?? p.text.split(/[.!?\n]/)[0];
-      return { key: it.key, kicker: k, title: line, meta: [a.kind === 'person' ? (a as Person).role : 'Production house', p.time].filter(Boolean).join(' · '), media: p.media[0], save: { id: p.id, kind: 'post' }, open: { name: 'posts', ids: [p.id], index: 0 } };
+      return { key: it.key, kicker: k, title: line, meta: a.name, fact: [a.kind === 'person' ? (a as Person).role : 'Production house', a.city].filter(Boolean).join(' · '), media: p.media[0], save: { id: p.id, kind: 'post' }, open: { name: 'posts', ids: [p.id], index: 0 } };
     }
     case 'event': {
       const e = d.events.find((x) => x.id === it.ref);
       if (!e) return undefined;
-      const time = new Date(e.start).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
-      const place = e.venue === 'Online' ? 'Online' : e.city === d.city ? e.venue : `${e.venue}, ${e.city}`;
-      return { key: it.key, kicker: k, title: e.title, meta: `${place} · ${time}`, fact: [priceLabel(e), party(e.hostId)?.name].filter(Boolean).join(' · '), save: { id: e.id, kind: 'event' }, open: { name: 'event', id: e.id } };
+      return { key: it.key, kicker: k, title: e.title, meta: party(e.hostId)?.name ?? e.venue, fact: [whenLabel(e.start), e.venue === 'Online' ? 'Online' : e.city, priceLabel(e)].join(' · '), media: e.cover, save: { id: e.id, kind: 'event' }, open: { name: 'event', id: e.id } };
     }
     case 'release': {
       const w = work(it.ref);
       if (!w) return undefined;
-      const q = d.quote(w.id);
-      return { key: it.key, kicker: k, title: w.title, meta: [houseOf(w)?.name, langOf(w) ?? w.format].filter(Boolean).join(' · '), fact: q ? `“${q.text}” ${q.by}` : undefined, media: w.stills[0] ?? w.media, clip: w.id, save: { id: w.id, kind: 'project' }, open: { name: 'work', id: w.id } };
+      const rating = stats(reviewsOf(w.id));
+      return { key: it.key, kicker: k, title: w.title, meta: [houseOf(w)?.name, langOf(w) ?? w.format].filter(Boolean).join(' · '), fact: rating.enough ? `★ ${rating.avg.toFixed(1)} · ${rating.count} ratings` : 'Read the reviews', media: w.stills[0] ?? w.media, clip: w.id, save: { id: w.id, kind: 'project' }, open: { name: 'work', id: w.id } };
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Bell, MapPin, Play, Pause, Plus, Check } from 'lucide-react';
+import { Bell, MapPin, Play, Plus, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
@@ -14,8 +14,7 @@ import { discoverPosts, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world, worksForOrg } from '../../state/world';
-import { eventEndsAt } from '../../domain/eventAttendance';
-import { EventTicket } from '../event/eventUnits';
+import { typeLabel, whenLabel } from '../../domain/events';
 import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
 import { markOpened, markShown, readSeen } from '../../state/eventSeen';
 import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
@@ -99,7 +98,6 @@ export function DistrictHome({ go }: { go: Go }) {
   // Home's three events: chosen for this person (docs/REVIEW_EVENTS_PROFILE.md §2), fixed for the session, minus the Spotlight's.
   const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
   const eventPool = pool.filter((e) => !shown.has(`event:${e.id}`));
-  const allEvents = pool.filter((e) => e.status === 'scheduled' && eventEndsAt(e) >= now).length;
   const rankedEvents = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
   // Keep one concrete request-to-attend example in the Home event shelf of this prototype.
   const requestExample = eventPool.find(e => e.id === seed.HOME_REQUEST_EVENT_ID && e.status === 'scheduled' && !blocked.includes(e.hostId));
@@ -231,7 +229,7 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {upcoming.length > 0 && (
         <section className="dh-sec" aria-label={eventsTitle(upcoming, me.city)}>
-          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action={allEvents > upcoming.length ? 'See all' : undefined} onAction={() => go.discover('events')} />
+          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action="See all" onAction={() => go.discover('events')} />
           <EventsA list={upcoming} city={me.city} />
         </section>
       )}
@@ -397,73 +395,59 @@ function homeEvents(pool: IndustryEvent[], me: Person, following: string[], inte
   return list;
 }
 
-/** Event shelf uses the same concise cover/category/details card as Discover and profiles. */
+/** Image-led, manual event shelf. Attendance details live on Event Detail. */
 function EventsA({ list }: { list: IndustryEvent[]; city: string }) {
-  const { viewer } = useStore();
-  return <div className="dh-pad ev-list">{list.map(e => <EventTicket key={e.id} e={e} reason={e.id === seed.HOME_REQUEST_EVENT_ID ? 'Private attendance requests' : undefined} onOpen={() => markOpened(viewer.id, e.id)} />)}</div>;
+  const { viewer, push } = useStore();
+  return <div className="dh-events-rail" aria-label="Upcoming events">
+    {list.map(e => {
+      const art = eventArt(e);
+      return <div className="dh-event-card" key={e.id}>
+        <PressCard className="dh-event-main" onPress={() => { markOpened(viewer.id, e.id); push({ name: 'event', id: e.id }); }} aria-label={`${e.title}. ${whenLabel(e.start)}. ${e.venue === 'Online' ? 'Online' : e.city}. Free.`}>
+          <span className="dh-event-image">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /><b>Meet. Make.<br />Be inspired.</b></span>}</span>
+          <span className="dh-event-copy">
+            <span className="dh-event-category">{typeLabel(e.type).split(' or ')[0]}</span>
+            <b>{e.title}</b>
+            <span className="dh-event-when">{whenLabel(e.start)}</span>
+            <span className="dh-event-place">{e.venue === 'Online' ? 'Online' : e.city}<span>Free</span></span>
+          </span>
+        </PressCard>
+        <span className="dh-event-save"><SaveButton id={e.id} kind="event" floating name={e.title} /></span>
+      </div>;
+    })}
+  </div>;
 }
 
-/**
- * Grid-aligned carousel: the active card plays its clip; touching or focusing it stops automatic movement. Every card has
- * the same anatomy whatever it is: a big image with one label on it, then the title, one meta line and one fact.
- */
+/** One editorial shell, with continuously scaled side previews and a compact dot group. */
 function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f: number | ((x: number) => number)) => void }) {
   const { push } = useStore();
   const low = useLowPower();
-  const { track, physical, canAnimate: animate, paused, togglePaused, select } = useSpotlightCarousel(items.map((c) => c.key).join('|'), items.length, i, low, setI);
+  const { track, physical, canAnimate: animate, select } = useSpotlightCarousel(items.map((c) => c.key).join('|'), items.length, i, low, setI);
   const repeated = items.length > 1 ? [...items, ...items, ...items] : items;
-  return (
-    <div className="dh-car" role="region" aria-roledescription="carousel" aria-label="In the spotlight">
-      <div className="dh-track" ref={track} tabIndex={0} aria-label="Spotlight cards. Use left and right arrow keys to browse.">
-        {repeated.map((c, k) => {
-          const active = k === physical;
-          return (
-            <div key={`${k}:${c.key}`} role="group" aria-roledescription="slide" aria-label={`${k % items.length + 1} of ${items.length}`} aria-hidden={!active} {...(!active ? { inert: '' } : {})} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`}>
-              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : select(k % items.length))} scale={1} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`}>
-                <span className="dh-card-media">
-                  {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-ev-plain" />}
-                  {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
-                  <span className="dh-card-shade" aria-hidden />
-                  <span className="dh-badge">{c.kicker}</span>
-                </span>
-                <span className="dh-card-body">
-                  <b>{c.title}</b>
-                  <span>{c.meta}</span>
-                  {c.faces && c.faces.length > 0 ? (
-                    <span className="dh-who">
-                      <span className="dh-faces" aria-hidden>
-                        {c.faces.slice(0, 3).map((f) => party(f) && <Avatar key={f} party={party(f)!} size={20} />)}
-                      </span>
-                      {c.faces
-                        .slice(0, 2)
-                        .map((f) => first(person(f).name))
-                        .join(', ')}
-                      {c.faces.length > 2 ? ` +${c.faces.length - 2}` : ''}
-                    </span>
-                  ) : c.fact ? (
-                    <span className="dh-fact">{c.fact}</span>
-                  ) : (
-                    <span className="dh-fact" aria-hidden>
-                      &nbsp;
-                    </span>
-                  )}
-                </span>
-              </PressCard>
-              <span className="dh-card-save">
-                <SaveButton id={c.save.id} kind={c.save.kind} floating name={c.title} />
+  return <div className="dh-car" role="region" aria-roledescription="carousel" aria-label="In the spotlight">
+    <div className="dh-track" ref={track} tabIndex={0} aria-label="Spotlight cards. Use left and right arrow keys to browse.">
+      {repeated.map((c, k) => {
+        const active = k === physical;
+        return <div key={`${k}:${c.key}`} role="group" aria-roledescription="slide" aria-label={`${k % items.length + 1} of ${items.length}`} aria-hidden={!active} {...(!active ? { inert: '' } : {})} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`}>
+          <div className="dh-card-visual">
+            <PressCard className="dh-card-main" onPress={() => active ? push(c.open) : select(k % items.length)} scale={1} aria-label={`${c.kicker}. ${c.title}. ${c.meta}. ${c.fact ?? ''}`}>
+              <span className="dh-card-media">
+                {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /></span>}
+                {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
+                <span className="dh-card-shade" aria-hidden />
+                <span className="dh-spot-type">{c.kicker}</span>
+                <span className="dh-card-caption"><b>{c.title}</b><span>{c.meta}</span></span>
               </span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="dh-dots" role="group" aria-label="Spotlight">
-        {items.length > 1 && animate && <button className="dh-car-pause" onClick={togglePaused} aria-label={paused ? 'Play Spotlight' : 'Pause Spotlight'}>{paused ? <Play size={14} /> : <Pause size={14} />}</button>}
-        {items.map((c, k) => (
-          <button key={c.key} aria-pressed={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => select(k)} />
-        ))}
-      </div>
+              <span className="dh-card-fact">{c.fact || '\u00a0'}</span>
+            </PressCard>
+            <span className="dh-card-save"><SaveButton id={c.save.id} kind={c.save.kind} floating name={c.title} /></span>
+          </div>
+        </div>;
+      })}
     </div>
-  );
+    <div className="dh-dots" role="group" aria-label="Spotlight pagination">
+      {items.map((c, k) => <button key={c.key} aria-pressed={k === i} aria-label={`Show ${c.title}`} className={k === i ? 'on' : ''} onClick={(event) => { select(k); if (event.detail > 0) event.currentTarget.blur(); }} />)}
+    </div>
+  </div>;
 }
 
 function Clip({ id }: { id: string }) {

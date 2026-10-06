@@ -4,10 +4,9 @@ import { useLayoutEffect, useRef, useState } from 'react';
 export function useSpotlightCarousel(keys: string, count: number, initial: number, lowPower: boolean, onSelect: (index: number) => void) {
   const track = useRef<HTMLDivElement>(null);
   const [physical, setPhysical] = useState(count > 1 ? count + initial : 0);
-  const [paused, setPaused] = useState(false);
   const [canAnimate, setCanAnimate] = useState(false);
-  const latest = useRef({ initial, lowPower, paused, onSelect });
-  latest.current = { initial, lowPower, paused, onSelect };
+  const latest = useRef({ initial, lowPower, onSelect });
+  latest.current = { initial, lowPower, onSelect };
   const controls = useRef({ select: (_index: number) => {}, sync: () => {} });
 
   useLayoutEffect(() => {
@@ -20,23 +19,32 @@ export function useSpotlightCarousel(keys: string, count: number, initial: numbe
     let stepping = false, touching = false, visible = false, focused = document.hasFocus();
     const normal = (index: number) => ((index % count) + count) % count;
     const animated = () => !reduced.matches && !connection?.saveData && !latest.current.lowPower;
-    const allowed = () => count > 1 && animated() && !latest.current.paused && visible && focused &&
-      document.visibilityState === 'visible' && !el.closest('[inert]') && !touching && !el.contains(document.activeElement);
+    const allowed = () => count > 1 && animated() && visible && focused &&
+      document.visibilityState === 'visible' && !el.closest('[inert]') && !touching && !el.parentElement?.contains(document.activeElement);
     const position = (index: number) => {
       const card = el.children[index] as HTMLElement;
       return card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2;
+    };
+    // Scale follows position continuously, including a finger-driven swipe. Layout widths stay fixed.
+    const paint = () => {
+      for (let index = 0; index < el.children.length; index++) {
+        const card = el.children[index] as HTMLElement;
+        const distance = Math.min(1, Math.abs(el.scrollLeft - position(index)) / (card.offsetWidth + 10));
+        card.style.setProperty('--spot-scale', String(1 - distance * 0.12));
+      }
     };
     const clearTimer = () => { window.clearTimeout(timer); timer = 0; };
     const schedule = () => {
       clearTimer();
       setCanAnimate(animated());
-      if (allowed() && !stepping) timer = window.setTimeout(() => move(current + 1), 2500);
+      if (allowed() && !stepping) timer = window.setTimeout(() => move(current + 1), 6000);
     };
     const commit = (index: number) => {
       const logical = normal(index);
       current = count > 1 ? count + logical : 0;
       // Same neighbours, same pixels. Only the invisible physical run changes.
       el.scrollLeft = position(current);
+      paint();
       setPhysical(current);
       latest.current.onSelect(logical);
       schedule();
@@ -53,9 +61,10 @@ export function useSpotlightCarousel(keys: string, count: number, initial: numbe
       stepping = true; el.classList.add('is-stepping');
       const start = performance.now();
       const tick = (now: number) => {
-        const t = Math.min(1, (now - start) / 450);
+        const t = Math.min(1, (now - start) / 600);
         const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         el.scrollLeft = from + (to - from) * eased;
+        paint();
         if (t < 1) frame = requestAnimationFrame(tick);
         else { cancelMotion(); commit(target); }
       };
@@ -69,6 +78,7 @@ export function useSpotlightCarousel(keys: string, count: number, initial: numbe
     };
     const settle = () => { if (!touching && !stepping) commit(nearest()); };
     const scroll = () => {
+      paint();
       if (stepping) return;
       clearTimer(); window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(settle, 140);
@@ -90,7 +100,7 @@ export function useSpotlightCarousel(keys: string, count: number, initial: numbe
     };
     const resize = () => {
       cancelMotion();
-      const width = Math.min(280, Math.max(1, el.clientWidth - 80));
+      const width = Math.min(300, Math.max(1, el.clientWidth * 0.7));
       el.style.setProperty('--spot-width', `${width}px`);
       el.style.paddingInline = `${(el.clientWidth - width) / 2}px`;
       commit(current);
@@ -114,7 +124,7 @@ export function useSpotlightCarousel(keys: string, count: number, initial: numbe
     window.addEventListener('pointercancel', release, { passive: true });
     el.addEventListener('wheel', wheel, { passive: true });
     el.addEventListener('keydown', key);
-    el.addEventListener('focusin', sync); el.addEventListener('focusout', focusOut);
+    el.parentElement?.addEventListener('focusin', sync); el.parentElement?.addEventListener('focusout', focusOut);
     document.addEventListener('visibilitychange', sync);
     window.addEventListener('focus', focus); window.addEventListener('blur', blur);
     reduced.addEventListener('change', sync); connection?.addEventListener('change', sync);
@@ -124,12 +134,12 @@ export function useSpotlightCarousel(keys: string, count: number, initial: numbe
       el.removeEventListener('scroll', scroll); el.removeEventListener('pointerdown', touch);
       window.removeEventListener('pointerup', release); window.removeEventListener('pointercancel', release);
       el.removeEventListener('wheel', wheel); el.removeEventListener('keydown', key);
-      el.removeEventListener('focusin', sync); el.removeEventListener('focusout', focusOut);
+      el.parentElement?.removeEventListener('focusin', sync); el.parentElement?.removeEventListener('focusout', focusOut);
       document.removeEventListener('visibilitychange', sync);
       window.removeEventListener('focus', focus); window.removeEventListener('blur', blur);
       reduced.removeEventListener('change', sync); connection?.removeEventListener('change', sync);
     };
   }, [keys, count]);
-  useLayoutEffect(() => { controls.current.sync(); }, [paused, lowPower]);
-  return { track, physical, canAnimate, paused, togglePaused: () => setPaused((p) => !p), select: (index: number) => controls.current.select(index) };
+  useLayoutEffect(() => { controls.current.sync(); }, [lowPower]);
+  return { track, physical, canAnimate, select: (index: number) => controls.current.select(index) };
 }

@@ -165,7 +165,7 @@ function ComingUp({ me }: { me: Person }) {
   const best = candidates.find(c => c.objectId === HOME_REQUEST_EVENT_ID) ?? candidates
     .filter((c) => c.significance !== 'low')
     .sort((a, b) => rank[b.significance] - rank[a.significance] || b.relationship - a.relationship || b.place - a.place)[0];
-  return best ? <EventRow c={best.objectId === HOME_REQUEST_EVENT_ID ? { ...best, reason: 'Private attendance requests' } : best} position={4} /> : null;
+  return best ? <EventRow c={best.objectId === HOME_REQUEST_EVENT_ID ? { ...best, reason: undefined } : best} position={4} /> : null;
 }
 
 /**
