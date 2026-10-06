@@ -52,41 +52,58 @@
   padding-bottom: 6px;
 }
 
-/* Artwork: the spotlight's current image, blurred into a field of its own colours behind the header and
-   tiles. It crossfades as the spotlight moves, so the top of Home always belongs to what is showing. */
-.dh-art {
+/*
+ * Spotlight ambient (docs/DISTRICT.md, Top of Home). Soft atmospheric light behind the main spotlight card:
+ * one broad warm radial, one quieter cool radial for depth, eased stops so there is no band or edge, and a
+ * blur over both. Static. Separate tokens per theme: light is a barely-there warmth on the page; dark carries a
+ * little more colour, still low in saturation.
+ */
+.dh {
+  --spotlight-ambient: #e0a15f; /* Ana's warm accent, toward paper */
+  --spotlight-ambient-strength: 22%;
+  --spotlight-ambient-2: #8fb3a6; /* a hint of Ana green, desaturated */
+  --spotlight-ambient-2-strength: 6%;
+}
+
+html[data-theme='dark'] .dh {
+  --spotlight-ambient: #b9733c;
+  --spotlight-ambient-strength: 19%;
+  --spotlight-ambient-2: #2f6b5c;
+  --spotlight-ambient-2-strength: 10%;
+}
+
+.dh-spot {
+  position: relative;
+  isolation: isolate;
+}
+
+.dh-spot-amb {
   position: absolute;
-  inset: 0 0 -60px;
   z-index: -1;
-  overflow: hidden;
+  left: 0;
+  right: 0;
+  top: -16px;
+  bottom: -90px;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent);
-  mask-image: linear-gradient(180deg, #000 45%, transparent);
-}
-
-.dh-art > span {
-  position: absolute;
-  inset: -20%;
-  opacity: 0;
-  transition: opacity 1.2s ease;
-  will-change: opacity;
-}
-
-.dh-art > span.on {
-  opacity: var(--art-strength, 0.78);
-}
-
-.dh-art .photo,
-.dh-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: blur(36px) saturate(1.35);
-  transform: scale(1.15);
-}
-
-html[data-theme='dark'] .dh-art {
-  --art-strength: 0.6;
+  --a: var(--spotlight-ambient-strength);
+  --b: var(--spotlight-ambient-2-strength);
+  background:
+    radial-gradient(
+      ellipse 78% 60% at 50% 50%,
+      color-mix(in srgb, var(--spotlight-ambient) var(--a), transparent) 0%,
+      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.82), transparent) 22%,
+      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.52), transparent) 44%,
+      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.24), transparent) 66%,
+      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.07), transparent) 86%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 56% 44% at 60% 62%,
+      color-mix(in srgb, var(--spotlight-ambient-2) var(--b), transparent) 0%,
+      color-mix(in srgb, var(--spotlight-ambient-2) calc(var(--b) * 0.5), transparent) 45%,
+      transparent 100%
+    );
+  filter: blur(28px);
 }
 
 .dh-head {
@@ -885,8 +902,7 @@ html[data-theme='dark'] .dh-art {
     transition: none;
   }
 
-  .dh-drift img,
-  .dh-art > span {
+  .dh-drift img {
     transition: none;
   }
 }

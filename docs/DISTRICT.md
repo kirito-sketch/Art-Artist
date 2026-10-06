@@ -37,7 +37,18 @@ Tile icons: `public/images/tiles/*.webp`. Spotlight clips: `public/video/<projec
 
 ## Top of Home
 
-Behind the header and tiles: the cinematic atmosphere every Home has, plus the spotlight's current artwork blurred into a soft field of its colours. It crossfades as the spotlight moves, like District's banner-tinted header. (Chosen over a brand-green band and atmosphere-only; the drifting three-colour glow is removed.) Settings has a single Dark mode switch.
+Behind the header and tiles: only the cinematic atmosphere every Home has.
+
+Behind "In the spotlight": a static ambient glow centred on the main card (`.dh-spot-amb`). It's one broad warm radial plus a quieter, desaturated green one, with eased stops and a 28 px blur, so there's no band or edge. It never moves and never touches the cards.
+
+Theme tokens on `.dh`:
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--spotlight-ambient` | #e0a15f at 22% | #b9733c at 19% |
+| `--spotlight-ambient-2` | #8fb3a6 at 6% | #2f6b5c at 10% |
+
+Measured on the background around the card: light adds about 2–3% warmth, fading to under 1% at the page edges. Dark lifts the area just below the card by about 11 levels and fades to about 1 at the edges. It replaced the blurred, crossfading spotlight artwork, which read as a coloured section in light mode.
 
 ## Events (Direction A)
 

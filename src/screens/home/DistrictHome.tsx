@@ -145,16 +145,6 @@ export function DistrictHome({ go }: { go: Go }) {
     {atmosphere && <LivingBackground scrollRef={scrollRef} />}
     <div className={`screen canvas v-home dh${atmosphere ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
       <div className="dh-wash">
-        {/* The spotlight's current artwork, blurred into a field of its colours; it changes with the spotlight. */}
-        {spotlight.length > 0 && (
-          <span className="dh-art" aria-hidden>
-            {spotlight.map((w, k) => (
-              <span key={w.id} className={k === spot % spotlight.length ? 'on' : ''}>
-                <Photo media={w.stills[0] ?? w.media} showPlay={false} />
-              </span>
-            ))}
-          </span>
-        )}
         <header className="dh-head">
           <h1 className="sr-only">Home</h1>
           <MapPin size={20} className="dh-pin" aria-hidden />
@@ -181,7 +171,9 @@ export function DistrictHome({ go }: { go: Go }) {
       </div>
 
       {spotlight.length > 0 && (
-        <section className="dh-sec" aria-label="In the spotlight">
+        <section className="dh-sec dh-spot" aria-label="In the spotlight">
+          {/* Static ambient light behind the main card. Background only: never moves, never touches the cards. */}
+          <span className="dh-spot-amb" aria-hidden />
           <SectionHeader title="In the spotlight" className="dh-pad" action={projects.length > spotlight.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'projects' })} />
           <Spotlight items={spotlight} rolesOf={rolesOf} meId={me.id} i={spot} setI={setSpot} />
         </section>
