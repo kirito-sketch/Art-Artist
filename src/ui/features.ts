@@ -2,33 +2,40 @@ import { useSyncExternalStore } from 'react';
 import { TEST_MODE } from '../research-data/surface';
 
 /*
- * Product switches for work that is built but not yet the default (docs/plans/2026-10-03-home-and-events.md):
- *  - home: 'current' (today's Home, the default), 'next' (fixed frame + composed middle, docs/HOME.md) or
- *    'district' (tiles and shelves, with Discover as search and a grid; docs/DISTRICT.md);
+ * Product switches (docs/plans/2026-10-03-home-and-events.md):
+ *  - home: 'district' is the product Home and Discover everywhere (tiles, shelves, Discover as chips; docs/DISTRICT.md).
+ *    'current' is the Legacy Home, kept for comparison, regression and debugging; 'next' is an earlier experiment.
+ *    The internal id stays 'current' so older /test sessions, which stored it, still load.
  *  - events: on by default (docs/EVENTS.md). ?events=off hides them on this device.
- * Set with ?home=next, ?events=on|off, or ?next (both). Stored on this device. On /test the Home comes from the
- * participant's assigned arm and Events are always off, so the comparison changes one thing only.
+ * Home is never remembered: ?home=legacy (or current, next) applies to that page load only, so a visit through
+ * Compare or a debug link can never decide what the next normal launch shows. Events are remembered.
+ * On /test the Home comes from the participant's assigned arm and Events are always off, so the comparison
+ * changes one thing only.
  */
 export type HomeVariant = 'current' | 'next' | 'district';
 export type Features = { home: HomeVariant; events: boolean };
 
-// v2: Events became the default; a new key so an old stored "off" (written before anyone chose it) is not kept.
-const KEY = 'aa-features-v2';
+export const DEFAULT_HOME: HomeVariant = 'district';
+
+// v3 stores Events only. v2 also held a Home choice written by earlier debugging; it is read for Events and never for Home.
+const KEY = 'aa-features-v3';
+const OLD_KEY = 'aa-features-v2';
 export function parseFeatures(query: URLSearchParams, stored: Partial<Features> | null): Features {
-  const base: Features = { home: stored?.home === 'next' || stored?.home === 'district' ? stored.home : 'current', events: stored?.events !== false };
+  const events = stored?.events !== false;
   if (query.has('next')) return { home: 'next', events: true };
   const h = query.get('home');
   const e = query.get('events');
-  return { home: h === 'next' || h === 'current' || h === 'district' ? h : base.home, events: e === 'on' ? true : e === 'off' ? false : base.events };
+  const home: HomeVariant = h === 'legacy' || h === 'current' ? 'current' : h === 'next' ? 'next' : h === 'district' ? 'district' : DEFAULT_HOME;
+  return { home, events: e === 'on' ? true : e === 'off' ? false : events };
 }
 
-let features: Features = { home: 'current', events: true };
+let features: Features = { home: DEFAULT_HOME, events: true };
 if (typeof window !== 'undefined') {
   try {
-    const stored = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Partial<Features> | null;
+    const stored = JSON.parse(localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY) ?? 'null') as Partial<Features> | null;
     features = parseFeatures(new URLSearchParams(location.search), TEST_MODE ? null : stored);
     if (TEST_MODE) features = { home: 'current', events: false };
-    else localStorage.setItem(KEY, JSON.stringify(features));
+    else localStorage.setItem(KEY, JSON.stringify({ events: features.events }));
   } catch {
     /* storage blocked: defaults */
   }
@@ -38,7 +45,7 @@ export function setFeatures(f: Partial<Features>, persist = !TEST_MODE) {
   features = { ...features, ...f };
   if (persist) {
     try {
-      localStorage.setItem(KEY, JSON.stringify(features));
+      localStorage.setItem(KEY, JSON.stringify({ events: features.events }));
     } catch {
       /* ignore */
     }

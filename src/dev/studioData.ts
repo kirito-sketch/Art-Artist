@@ -38,7 +38,7 @@ export const HOUSE_STATES = [
 ] as const;
 
 /** A link into the app, set up as asked. `from=studio` shows the small way back. */
-export function appLink(opts: { as?: Persona; flow?: Flow; state?: string[]; home?: 'next' | 'current'; view?: 'app' } = {}) {
+export function appLink(opts: { as?: Persona; flow?: Flow; state?: string[]; home?: 'next' | 'current' | 'legacy' | 'district'; view?: 'app' } = {}) {
   const q = new URLSearchParams();
   if (opts.as) q.set('as', opts.as);
   if (opts.flow) q.set('flow', opts.flow);

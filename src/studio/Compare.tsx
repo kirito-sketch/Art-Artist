@@ -3,21 +3,22 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import './studio.css';
 
 /*
- * Studio › Compare (/studio/compare): today's app and the District direction, each a live, tappable app in a
- * phone, shown one at a time or side by side. Only Home and Discover differ between the two; everything
- * else is the same app. Behind the shared password like the rest of Studio.
+ * Studio › Compare (/studio/compare): the New Home (the product's Home and Discover) and the Legacy Home, each a
+ * live, tappable app in a phone, shown one at a time or side by side. New is the recommended one and comes first.
+ * Only Home and Discover differ between the two; everything else is the same app. The Legacy frame opens with
+ * ?home=legacy, which applies to that frame only and is never remembered. Behind the shared password like the rest of Studio.
  */
-type Show = 'current' | 'district' | 'both';
+type Show = 'district' | 'current' | 'both';
 type Who = 'kiran' | 'tara' | 'new';
 const WHO: { id: Who; label: string }[] = [
   { id: 'kiran', label: 'Kiran Varma, cinematographer' },
   { id: 'tara', label: 'Tara Menon, actor' },
   { id: 'new', label: 'Someone who just signed up' },
 ];
-const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Current', district: 'New' };
+const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Legacy Home', district: 'New Home' };
 
 const src = (home: 'current' | 'district', who: Who, n: number) => {
-  const q = new URLSearchParams({ view: 'app', home, embed: '1', r: String(n) });
+  const q = new URLSearchParams({ view: 'app', home: home === 'current' ? 'legacy' : home, embed: '1', r: String(n) });
   if (who === 'new') q.set('flow', 'new');
   else q.set('as', who);
   return `/?${q.toString()}`;
@@ -70,7 +71,7 @@ export function Compare() {
         </a>
         <div className="cmp-controls">
           <div className="cmp-seg" role="group" aria-label="Show">
-            {(['current', 'district', 'both'] as Show[])
+            {(['district', 'current', 'both'] as Show[])
               .filter((s) => !(isNarrow && s === 'both'))
               .map((s) => (
                 <button key={s} aria-pressed={view === s} className={view === s ? 'on' : ''} onClick={() => setShow(s)}>
@@ -92,11 +93,11 @@ export function Compare() {
       </header>
 
       <div className={`cmp-stage ${view === 'both' ? 'cmp-stage--both' : ''}`}>
-        {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} scale={scale} />}
         {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} scale={scale} />}
+        {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} scale={scale} />}
       </div>
 
-      <p className="cmp-foot">In New, the clips in the spotlight are made from still images.</p>
+      <p className="cmp-foot">In the New Home, the clips in the spotlight are made from still images.</p>
     </div>
   );
 }
