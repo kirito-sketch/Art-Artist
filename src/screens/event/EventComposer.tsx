@@ -1,20 +1,23 @@
-import { CalendarDays, Check, Clock, IndianRupee, Link2, MapPin, ShieldCheck, X } from 'lucide-react';
+import { CalendarDays, Check, Clock, ImagePlus, IndianRupee, Link2, MapPin, ShieldCheck, X } from 'lucide-react';
 import { useState } from 'react';
 import type { EventType, IndustryEvent } from '../../data/types';
-import { EVENT_TYPES, validateDraft, type EventDraft } from '../../domain/events';
+import { EVENT_CAPABILITIES, EVENT_TYPES, validateDraft, type EventDraft } from '../../domain/events';
+import type { Media } from '../../data/types';
+import { MediaPicker } from '../create/PostComposer';
 import { research } from '../../research-data/client';
 import { hostFacts } from '../../state/events';
 import { org, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { work } from '../../state/world';
 import { DateField, RowField } from '../../ui/fields';
-import { Avatar, Button, IconButton, Row } from '../../ui/primitives';
+import { Avatar, Button, IconButton, Photo, Row } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 
 /*
  * Event composer (docs/EVENTS.md). One page, like the role composer. Errors appear next to the field
- * they belong to, only after a first try, and every message says what to do. Free events, and paid
- * events from houses, go live; a paid event from an individual goes to the team first.
+ * they belong to, only after a first try, and every message says what to do.
+ * V1: free events only, published at once, with an optional registration or RSVP link. The paid fields and
+ * review path below are the future flow; they only render when EVENT_CAPABILITIES.paidEvents is on (off in V1).
  */
 const IST = '+05:30';
 const isoDay = (ms: number) => new Date(ms + 5.5 * 36e5).toISOString().slice(0, 10);
@@ -35,7 +38,10 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
   const [time, setTime] = useState(editing ? isoTime(editing.start) : '18:30');
   const [city, setCity] = useState(editing?.city ?? host.city ?? '');
   const [venue, setVenue] = useState(editing?.venue ?? '');
-  const [paid, setPaid] = useState(editing?.price.kind === 'paid');
+  const paidOn = EVENT_CAPABILITIES.paidEvents;
+  const [paid, setPaid] = useState(paidOn && editing?.price.kind === 'paid');
+  const [cover, setCover] = useState<Media | undefined>(editing?.cover);
+  const [coverPick, setCoverPick] = useState(false);
   const [amount, setAmount] = useState(editing?.price.kind === 'paid' ? editing.price.amount.replace(/^₹/, '') : '');
   const [link, setLink] = useState(editing?.link ?? '');
   const [summary, setSummary] = useState(editing?.summary ?? '');
@@ -43,7 +49,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
   const [discard, setDiscard] = useState(false);
 
   const start = date && time ? new Date(`${date}T${time}:00${IST}`).getTime() : undefined;
-  const draft: EventDraft = { type, title, summary, city, venue, start, price: paid ? { kind: 'paid', amount: amount.trim() ? `₹${amount.trim().replace(/^₹/, '')}` : '' } : { kind: 'free' }, link: link.trim() || undefined, projectId: linked };
+  const draft: EventDraft = { type, title, summary, city, venue, start, price: paidOn && paid ? { kind: 'paid', amount: amount.trim() ? `₹${amount.trim().replace(/^₹/, '')}` : '' } : { kind: 'free' }, link: link.trim() || undefined, projectId: linked };
   const check = validateDraft(draft, facts, Date.now());
   const err = (k: keyof typeof check.errors) => (tried ? check.errors[k] : undefined);
   const dirty = !!(title || venue || summary || date) && !editing;
@@ -59,7 +65,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
       });
       return;
     }
-    const body: Omit<IndustryEvent, 'id' | 'status'> = { type: type!, title: title.trim(), hostId, projectId: linked, city: city.trim(), venue: venue.trim(), start: start!, price: draft.price!, link: draft.link, summary: summary.trim(), speakerIds: editing?.speakerIds };
+    const body: Omit<IndustryEvent, 'id' | 'status'> = { type: type!, title: title.trim(), hostId, projectId: linked, city: city.trim(), venue: venue.trim(), start: start!, price: draft.price!, link: draft.link, cover, summary: summary.trim(), speakerIds: editing?.speakerIds };
     if (editing) {
       updateEvent(editing.id, body);
       showToast({ text: editing.start !== start || editing.venue !== body.venue ? 'Saved. People who are interested will be told what changed.' : 'Saved.' });
@@ -67,7 +73,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
       return;
     }
     const id = createEvent(body, check.review);
-    research.track('event_created', { objectType: 'event', objectId: id, metadata: { type, paid, review: check.review, linked: !!linked, host: facts?.kind } });
+    research.track('event_created', { objectType: 'event', objectId: id, metadata: { type, paid, review: check.review, linked: !!linked, host: facts?.kind, registration: !!draft.link, cover: !!cover } });
     showToast({ text: check.review === 'live' ? "It's live. You'll find it on your profile." : "Sent for review. We'll let you know, usually within a day." });
     replace({ name: 'event', id });
   };
@@ -150,29 +156,53 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
 
         <div>
           <div className="group">
-            <Row
-              icon={<IndianRupee size={20} aria-hidden />}
-              label={
-                paid ? (
-                  <RowField id="ev-amount" label="Price (₹)">
-                    <input id="ev-amount" className="row-input" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d,]/g, ''))} placeholder="500" aria-invalid={!!err('price')} />
-                  </RowField>
-                ) : (
-                  'Free'
-                )
-              }
-              value={
-                <select className="row-select" value={paid ? 'paid' : 'free'} onChange={(e) => setPaid(e.target.value === 'paid')} aria-label="Free or paid">
-                  <option value="free">Free</option>
-                  <option value="paid">Paid</option>
-                </select>
-              }
-            />
-            <Row icon={<Link2 size={20} aria-hidden />} label={<RowField id="ev-link" label={paid ? 'Tickets link' : 'Link (optional)'}><input id="ev-link" className="row-input" type="url" inputMode="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" aria-invalid={!!err('link')} /></RowField>} />
+            {/* Future paid flow: price and tickets. Not rendered in V1 (every event is free). */}
+            {paidOn && (
+              <Row
+                icon={<IndianRupee size={20} aria-hidden />}
+                label={
+                  paid ? (
+                    <RowField id="ev-amount" label="Price (₹)">
+                      <input id="ev-amount" className="row-input" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d,]/g, ''))} placeholder="500" aria-invalid={!!err('price')} />
+                    </RowField>
+                  ) : (
+                    'Free'
+                  )
+                }
+                value={
+                  <select className="row-select" value={paid ? 'paid' : 'free'} onChange={(e) => setPaid(e.target.value === 'paid')} aria-label="Free or paid">
+                    <option value="free">Free</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                }
+              />
+            )}
+            <Row icon={<Link2 size={20} aria-hidden />} label={<RowField id="ev-link" label={paidOn && paid ? 'Tickets link' : 'Registration or RSVP link (optional)'}><input id="ev-link" className="row-input" type="url" inputMode="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" aria-invalid={!!err('link')} /></RowField>} />
           </div>
           {err('price') && <p className="field-error">{err('price')}</p>}
           {err('link') && <p className="field-error">{err('link')}</p>}
-          <p className="group-note">The price is always shown. People pay you directly; Art and Artist never takes money for events.</p>
+          {paidOn && <p className="group-note">The price is always shown. People pay you directly; Art and Artist never takes money for events.</p>}
+        </div>
+
+        <div>
+          <span className="field-label">Cover (optional)</span>
+          {cover ? (
+            <div className="ev-cover">
+              <Photo media={cover} showPlay={false} />
+              <span className="ev-cover-actions">
+                <Button size="s" variant="secondary" onClick={() => setCoverPick(true)}>
+                  Change
+                </Button>
+                <Button size="s" variant="secondary" onClick={() => setCover(undefined)}>
+                  Remove
+                </Button>
+              </span>
+            </div>
+          ) : (
+            <Button variant="secondary" icon={<ImagePlus size={16} />} onClick={() => setCoverPick(true)}>
+              Add a cover
+            </Button>
+          )}
         </div>
 
         <div>
@@ -185,6 +215,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
 
         <p className="meta ev-trust">
           <ShieldCheck size={14} aria-hidden /> Auditions and casting are roles, not events. Events are for adults.
+          {/* Future paid flow only: never shown in V1, where nothing waits for review. */}
           {reviewing ? ' Paid events from individuals are checked by the Art and Artist team before they go live.' : ''}
         </p>
 
@@ -193,6 +224,9 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
         </Button>
       </div>
 
+      <Sheet open={coverPick} onClose={() => setCoverPick(false)} title="Cover" size="tall">
+        <MediaPicker single selected={[]} onDone={(ms: Media[]) => (ms[0] && setCover(ms[0]), setCoverPick(false))} />
+      </Sheet>
       <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard?" close={false}>
         <div className="stack">
           <Button block size="l" variant="danger" onClick={pop}>

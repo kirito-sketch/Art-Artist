@@ -54,3 +54,7 @@ Measured against the same frame without it, at the top centre: light is about 15
 
 One large event and two rows, all visible, nothing moves. Chosen for the person by `domain/eventRank.ts` (city, craft, network, followed houses, date, newness; one per organiser, two per type) and fixed for the session. Titled "Events near you" when the large event is in your city, otherwise "Events coming up". See all opens the Events page. Rules: docs/REVIEW_EVENTS_PROFILE.md §1 and §2.
 
+
+## Settings
+
+Appearance is Light / Dark / System, inline in Settings (one tap each, no separate page). Switching opens the new theme as a circle from the button tapped. Under Reduce Motion it switches without the animation.

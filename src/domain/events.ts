@@ -8,6 +8,16 @@ import type { EventType, IndustryEvent } from '../data/types';
  *  - children: events are for adults; nothing may target under-18 participants or name a child host;
  *  - only verified hosts (houses, or verified adult individuals) can list events.
  */
+/**
+ * What events can do in V1 (docs/EVENTS.md). Free events only, published at once. Paid events (price, tickets,
+ * eligibility, the review states and the internal review screen) are designed and kept for later behind this
+ * switch; it stays off in the app, and nothing in the product turns it on.
+ */
+export interface EventCapabilities {
+  paidEvents: boolean;
+}
+export const EVENT_CAPABILITIES: EventCapabilities = { paidEvents: false };
+
 export const EVENT_TYPES: { id: EventType; label: string }[] = [
   { id: 'screening', label: 'Screening or premiere' },
   { id: 'workshop', label: 'Workshop or masterclass' },
@@ -27,8 +37,10 @@ export interface HostFacts {
 }
 
 /** May this event be shown to anyone? */
-export function listable(e: IndustryEvent, host: HostFacts | undefined, now: number): boolean {
+export function listable(e: IndustryEvent, host: HostFacts | undefined, now: number, caps: EventCapabilities = EVENT_CAPABILITIES): boolean {
   if (e.status !== 'scheduled') return false;
+  // V1: free events only. A paid record (future capability) is never shown while paid events are off.
+  if (!caps.paidEvents && e.price.kind === 'paid') return false;
   if ((e.end ?? e.start) < now) return false;
   if (!host || !host.verified || host.minor) return false;
   const text = `${e.title} ${e.summary}`;
@@ -47,7 +59,9 @@ export interface EventDraft {
   city: string;
   venue: string;
   start?: number;
+  /** Pricing type and amount. V1 only allows free; left out, a V1 draft is free. */
   price?: IndustryEvent['price'];
+  /** Optional registration, RSVP or tickets link, separate from price: a free event can need registration too. */
   link?: string;
   projectId?: string;
 }
@@ -57,9 +71,13 @@ export const AUDITION_MESSAGE = 'Auditions and casting are roles, not events. Op
 export const CHILDREN_MESSAGE = 'Events on Art and Artist are for adults (18 and over). Work involving children goes through a role, where the guardian responds.';
 export const PROMISE_MESSAGE = "Paid events can't promise roles, auditions or selection.";
 
-/** Checks a draft before it can be published. Every message says what to do next. */
-export function validateDraft(d: EventDraft, host: HostFacts | undefined, now: number): { ok: boolean; errors: DraftErrors; review: 'live' | 'under_review' } {
+/**
+ * Checks a draft before it can be published. Every message says what to do next. V1 publishes at once
+ * ('live'); 'under_review' only exists for the future paid flow.
+ */
+export function validateDraft(raw: EventDraft, host: HostFacts | undefined, now: number, caps: EventCapabilities = EVENT_CAPABILITIES): { ok: boolean; errors: DraftErrors; review: 'live' | 'under_review' } {
   const errors: DraftErrors = {};
+  const d: EventDraft = { ...raw, price: raw.price ?? (caps.paidEvents ? undefined : { kind: 'free' }) };
   if (!host?.verified || host.minor) errors.host = 'Verify your identity to host events.';
   if (!d.type) errors.type = 'Choose what kind of event this is.';
   if (!d.title.trim()) errors.title = 'Give your event a title.';
@@ -73,10 +91,12 @@ export function validateDraft(d: EventDraft, host: HostFacts | undefined, now: n
   if (!d.start) errors.start = 'Choose a date and time.';
   else if (d.start < now) errors.start = 'Choose a date and time in the future.';
   if (!d.price) errors.price = 'Say whether it is free or paid.';
+  else if (d.price.kind === 'paid' && !caps.paidEvents) errors.price = 'Paid events are coming later.';
   else if (d.price.kind === 'paid' && !d.price.amount.trim()) errors.price = 'Add the price, for example ₹500.';
   else if (d.price.kind === 'paid' && PROMISE.test(text)) errors.summary = PROMISE_MESSAGE;
   if (d.link && !/^https:\/\/[^\s]+\.[^\s]+/.test(d.link.trim())) errors.link = 'Use a full web address starting with https://';
-  const review = d.price?.kind === 'paid' && host?.kind === 'person' ? 'under_review' : 'live';
+  // Future (paid events on): a paid event from an individual waits for review. V1: always live.
+  const review = caps.paidEvents && d.price?.kind === 'paid' && host?.kind === 'person' ? 'under_review' : 'live';
   return { ok: Object.keys(errors).length === 0, errors, review };
 }
 

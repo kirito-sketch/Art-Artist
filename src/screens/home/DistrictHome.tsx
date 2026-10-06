@@ -310,6 +310,7 @@ function DateBlock({ ms }: { ms: number }) {
 
 /** What an event looks like: its film, else the host's current project, else the host's own work. */
 function eventArt(e: IndustryEvent): Media | undefined {
+  if (e.cover) return e.cover;
   const w = e.projectId ? work(e.projectId) : undefined;
   if (w && w.media.id !== 'ph') return w.stills[0] ?? w.media;
   const lead = worksForOrg(e.hostId).filter((x) => x.media.id !== 'ph').sort((a, b) => Number(isLive(b)) - Number(isLive(a)))[0];

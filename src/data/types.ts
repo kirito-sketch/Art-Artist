@@ -242,10 +242,14 @@ export interface IndustryEvent {
   /** Epoch ms. */
   start: number;
   end?: number;
+  /** Pricing type. V1 events are always free; 'paid' is kept for the future paid-event flow (docs/EVENTS.md). */
   price: { kind: 'free' } | { kind: 'paid'; amount: string };
-  /** Tickets or details, opened outside the app. */
+  /** Registration, RSVP or tickets link, opened outside the app. Separate from price: a free event can need it too. */
   link?: string;
+  /** Optional cover. Without one, the event uses its film's or its host's imagery. */
+  cover?: Media;
   summary: string;
+  /** 'under_review' belongs to the future paid flow; V1 never creates it. */
   status: 'scheduled' | 'cancelled' | 'under_review';
   /** Checked by the curation team (lets a reviewed event mention, say, casting directors). */
   reviewed?: boolean;

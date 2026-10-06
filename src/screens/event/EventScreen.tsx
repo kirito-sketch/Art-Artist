@@ -37,7 +37,7 @@ export function EventScreen({ id }: { id: string }) {
   const mine = isHost(e, viewer.id, acting);
   const stub = stubLabel(e.start);
   const speakers = (e.speakerIds ?? []).map((s) => person(s)).filter(Boolean);
-  const art = w && w.media.id !== 'ph' ? w.stills[0] ?? w.media : undefined;
+  const art = e.cover ?? (w && w.media.id !== 'ph' ? w.stills[0] ?? w.media : undefined);
 
   return (
     <div className="screen canvas ev-screen">
@@ -70,6 +70,7 @@ export function EventScreen({ id }: { id: string }) {
             The host cancelled this event.
           </p>
         )}
+        {/* Future paid flow only (docs/EVENTS.md): V1 never creates an event under review. */}
         {e.status === 'under_review' && (
           <p className="ev-banner" role="status">
             Under review. Paid events from individuals are checked by the Art and Artist team first. Only you can see it until then.
@@ -91,7 +92,7 @@ export function EventScreen({ id }: { id: string }) {
           <InterestedButton e={e} />
           {e.link && e.status === 'scheduled' && (
             <a className="btn btn--secondary btn--m ev-link" href={e.link} target="_blank" rel="noopener noreferrer">
-              {e.price.kind === 'paid' ? 'Tickets and details' : 'Details'} <ExternalLink size={15} aria-hidden />
+              {e.price.kind === 'paid' ? 'Tickets and details' : 'Register'} <ExternalLink size={15} aria-hidden />
               <span className="sr-only"> (opens the host's site)</span>
             </a>
           )}

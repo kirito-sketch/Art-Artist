@@ -8,7 +8,7 @@
 
 ## Theme switch
 
-Changing the theme opens the new theme as a circle from the control that was used (View Transitions API, `src/ui/theme.ts`), in both versions. Without View Transitions support, or with Reduce Motion, it falls back to the short crossfade (or none). The current version keeps Settings › Appearance (System, Light, Dark); the District version has a single **Dark mode** switch in Settings.
+Changing the theme opens the new theme as a circle from the control that was used (View Transitions API, `src/ui/theme.ts`), in both versions. Without View Transitions support, or with Reduce Motion, it falls back to the short crossfade (or none). The current version keeps Settings › Appearance (System, Light, Dark); the District version has **Light / Dark / System** inline in Settings.
 
 ## 1. Audit: where atmosphere helps and where it distracts
 

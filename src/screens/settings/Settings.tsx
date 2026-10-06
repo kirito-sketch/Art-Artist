@@ -1,9 +1,10 @@
-import { Bell, Building2, Check, ChevronLeft, CircleHelp, Info, Moon, Palette, Shield, UserRound } from 'lucide-react';
+import { Bell, Building2, Check, ChevronLeft, CircleHelp, Info, Palette, Shield, UserRound } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
 import { usePref } from '../../state/settingsPrefs';
-import { originOf, setAppearance, useAppearance, useTheme, type Appearance } from '../../ui/theme';
+import { originOf, setAppearance, useAppearance, type Appearance } from '../../ui/theme';
+import { rovingKeys } from '../../ui/a11y';
 import { useFeatures } from '../../ui/features';
 import { ANA_PROTOTYPE_VERSION } from '../../version';
 import { Avatar, Button, IconButton, Row, Toggle, Verified } from '../../ui/primitives';
@@ -63,15 +64,34 @@ function Switch({ id, label, sub, initial }: { id: string; label: string; sub?: 
 
 /** A row on the index that opens a group's page: icon, label, the current value when it helps, chevron. */
 /** Appearance: in the District version a single Dark mode switch; in the current version the System, Light, Dark page. */
+/** Appearance. District: Light, Dark or System right here, one tap each. Current version: the Appearance page. */
 function AppearanceRow() {
   const appearance = useAppearance();
-  const theme = useTheme();
   const district = useFeatures().home === 'district';
   if (!district) return <NavRow icon={<Palette size={19} />} label="Appearance" value={APPEARANCE.find((a) => a.id === appearance)!.label} page="appearance" />;
+  const OPTIONS: { id: Appearance; label: string }[] = [
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'system', label: 'System' },
+  ];
   return (
-    <Row icon={<span className="settings-icon"><Moon size={19} /></span>} label="Dark mode" chevron={false} value={<span onClick={(e) => {
-      setAppearance(theme === 'dark' ? 'light' : 'dark', originOf(e.currentTarget));
-    }}><Toggle on={theme === 'dark'} onChange={() => undefined} label="Dark mode" /></span>} />
+    <div className="row appearance-inline">
+      <span className="row-icon" aria-hidden>
+        <span className="settings-icon">
+          <Palette size={19} />
+        </span>
+      </span>
+      <span className="row-label" id="appearance-label">
+        Appearance
+      </span>
+      <div className="seg appearance-seg" role="radiogroup" aria-labelledby="appearance-label" onKeyDown={(e) => rovingKeys(e)}>
+        {OPTIONS.map((o) => (
+          <button key={o.id} role="radio" aria-checked={appearance === o.id} tabIndex={appearance === o.id ? 0 : -1} className={appearance === o.id ? 'is-on' : ''} onClick={(e) => setAppearance(o.id, originOf(e.currentTarget))}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

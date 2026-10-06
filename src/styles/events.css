@@ -408,3 +408,24 @@
 .v-discover .tabs:has(> .tab:nth-child(5)) .tab {
   font-size: var(--t-4);
 }
+
+/* Composer: optional cover */
+.ev-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-l);
+  overflow: hidden;
+}
+
+.ev-cover .photo {
+  position: absolute;
+  inset: 0;
+}
+
+.ev-cover-actions {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 6px;
+}
