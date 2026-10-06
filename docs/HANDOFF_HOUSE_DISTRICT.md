@@ -49,43 +49,54 @@ Before writing code, read the repo docs listed below. Then write a short plan in
   - Shared `SectionHeader` in `src/ui/primitives.tsx` (title left; a visible "See all" right, only when there is more).
 - Docs to read first: `docs/DISTRICT.md`, `docs/DISTRICT_FIXES.md`, `docs/REVIEW_HOME_DISCOVER.md`, `docs/REVIEW_EVENTS_PROFILE.md`, `docs/PRODUCTION_HOUSE_EXPLORATION.md`, `docs/CREATION_FLOWS.md`, `docs/CONSOLIDATION.md`, `docs/PERSONA_BRIDGES.md`, `docs/EVENTS.md`, `docs/REVIEWS.md`, `docs/CTA_SYSTEM.md`, `docs/SAVE_MODEL.md`, `docs/THEME.md`, `docs/ACCESSIBILITY_AUDIT.md`.
 
-## What the District individual experience established (match it for houses)
+## Houses are not individuals: design for their jobs
 
-- **Home structure:** location header over a static top glow (`.dh-top-amb`), then tiles, then a Spotlight carousel, then a completion prompt when one is due, then one **intent shelf**, then shelves that each do a different job, then an end ("You're up to date." plus chips). Nothing appears twice on the page: anything in the Spotlight is removed from the shelves below.
-- **Spotlight:** at most 5 cards, mixed kinds, at most 2 of a kind, one per organiser, one label per card. Fixed for the session; recalculated daily or after save, follow or block. The rules are a pure, tested domain function.
-- **Card anatomy:** a big 4:5 image with **one** label on it (what it is and why it's here, e.g. "Crew forming · needs a DoP"), then the title, one meta line, then one fact under a hairline (the thing that helps you decide). Text is single-line with ellipsis. Save sits top right.
-- **Compact rows** (intent shelf): 64 px image, title, meta, then the deciding fact (closing date first), with Save on the right.
-- **Discover:** search with Saved beside it, then one chip row (Posts · People · Opportunities · Projects · Events · Reviews), Posts by default. Tiles and every "See all" on Home open Discover on a chip; there are no separate category pages. Search on Posts covers everything; on other chips it is scoped, with a first row "Search all of Art and Artist for '…'". The query carries over between chips; filters are kept per chip; switching chips adds no Back step.
-- **Visual system:** app tokens only (they follow light and dark), the District section header size (20 px), the Available marker on people photos, LivingBackground "cinematic" ambient, theme options Light / Dark / System.
-- **Taxonomy** (`src/data/taxonomy.ts`): domain → family → craft, with neighbouring families. Use it for any craft grouping or labels; don't hard-code craft lists.
+A production house uses Ana for different reasons than a person does, so its District Home, Discover and other screens should be **different in content and structure**, while sharing the District **visual language** (tokens, card anatomy, section headers, motion rules, light and dark). Do not copy the individual's Home shelf for shelf. Start from what a house needs:
 
-## What to design and build for houses (District only)
+| A house needs to | What that means on screen |
+| --- | --- |
+| Run its hiring | Each open role with its interest count, new interest since last visit, people shortlisted, roles closing soon, roles with no interest yet |
+| Keep its records right | Credits waiting for acceptance, credits sent back for correction, amendments, people added privately who have no credit yet |
+| Run its projects | Live projects by stage, which are announced and which are not, what each still needs (roles, crew, artwork, release date) |
+| Find people | People who fit an open role (craft, related crafts from the taxonomy, city, availability, verified credits), not a general social feed |
+| Be seen | Its public page, announced projects, events it hosts, reviews of its released films |
+| Manage itself | Verification state, who can act for the house (house permissions are a frozen rule), switching identity |
 
-Do the plan doc first, then build. At minimum:
+Things that are wrong for a house and should not be on its Home: "Opportunities for you", "New work" from people it follows as a social feed, a Spotlight of other houses' roles, "People near you" as a generic grid, or the individual's completion prompt.
 
-1. **House Home in District.** Replace SlateHome for District with a District-structured Home. Keep the house identity switcher and New project.
-   - The jobs, in priority order:
-     - what needs the house now: interest received on open roles, credits waiting or sent back for correction, amendments, roles closing soon, unverified house state
-     - the house's live projects, with the lead project's artwork as the hero
-     - open roles and their interest counts
-     - people to consider for the house's open roles (department first, then neighbouring departments, from the taxonomy; Available marker)
-     - the house's events
-     - its released films and their reviews
-   - Use the same shelf shapes and card anatomy as the individual's District Home: a Spotlight or lead slate, an intent-like "Needs you" shelf of compact rows, and grids or rails.
-   - Cold start (no projects yet): content first, then starting a project as the next step.
-   - Pending verification: a quiet card, not a wall.
-2. **Discover while acting for a house.** Use the District Discover with chips for houses too. Default to the chip that serves hiring (People), and scope People results to the house's open roles where sensible. The same search rules as individuals.
-3. **House Profile tab and public house page** (`OrgScreen`). Bring them to the District look: hero artwork, slate, open roles, events, people credited, reviews of released films. Visitors and house members see different actions.
-4. **Project workspace** (`HouseProjectScreen`) and **public project page** (`WorkScreen`). Same card and section language; operational signals sit on the project they belong to.
-5. **Flows, restyled in the District look and checked end to end:**
-   - New project, share/announce, project details
-   - Add role, edit role, close role or mark filled
-   - Review interest: shortlist, message, decline. No fake hired or rejected status.
-   - Add person, issue credit, revise credit after a correction
-   - Association screen
-   - Publish event (free only)
-   - House setup and verification
-   - Switching identity between self and a house
+A likely District House Home, to confirm in your plan:
+
+1. Header: house avatar and name (tap to switch identity), notifications, New project. Same static top glow.
+2. **Needs you**: one compact list of what needs a decision now, most urgent first, across all projects. Hidden when empty. Use a pure, tested ranking function (`src/domain/houseQueue.ts` or similar).
+3. **Your projects**: the lead live project as a big hero card (artwork, stage label, one line of what is happening), then the other projects as a rail.
+4. **Open roles**: compact rows with interest count and closing date, See all.
+5. **People for your roles**: matched to the house's open roles, with the Available marker and the role each person fits.
+6. **Your events** and **Your released films** (score and review count), each only when there is something to show.
+7. End.
+
+Cold start (no projects yet): what a house can do first (set up the page, start a project, people worth knowing in its city), with no empty walls. Pending verification: a quiet card that says what is limited until it is verified.
+
+Discover while acting for a house: the same chip row, defaulting to **People**, with role-aware filters (for one of our open roles, available now, verified credits). Opportunities shows other houses' roles only as context, never as something to apply to.
+
+## What the District individual experience established (the visual language to reuse)
+
+- **Card anatomy:** a big 4:5 image with **one** label on it, then the title, one meta line, then one fact under a hairline (the thing that helps you decide). Text is single-line with ellipsis. Save or the main action sits top right.
+- **Compact rows:** 64 px image, title, meta, then the deciding fact (urgency first), with one action on the right.
+- **Page rules:** shelves each do a different job, nothing appears twice on a page, shelves hide when there is too little to show, an end instead of an endless feed.
+- **Discover:** search with Saved beside it, one chip row, scoped search with a "Search all" row, query carried across chips, filters kept per chip, chip switching adds no Back step, Home's "See all" opens Discover on a chip.
+- **Visual system:** app tokens only (they follow light and dark), District section header size (20 px), the Available marker on people photos, the static top glow, LivingBackground "cinematic" ambient.
+- **Taxonomy** (`src/data/taxonomy.ts`): domain → family → craft with neighbouring families. Use it for any craft grouping or matching; don't hard-code craft lists.
+- References: `src/screens/home/DistrictHome.tsx`, `src/screens/home/districtFeed.ts`, `src/domain/spotlight.ts` (+ test), `src/domain/contentTypes.ts`, `src/screens/discover/DiscoverScreen.tsx` (variant `district`), `src/styles/district.css`.
+
+## What to build (District only)
+
+Write the plan in `docs/DISTRICT_HOUSE.md` first: each house job, the screen that serves it, what changes from today, and what stays. Then build:
+
+1. **House Home** for District, designed from the jobs above.
+2. **Discover while acting for a house**, as above.
+3. **House Profile tab and public house page** (`OrgScreen`): hero artwork, announced slate, open roles, events, people credited, reviews of released films. Members see management actions; visitors see follow, roles and work.
+4. **Project workspace** (`HouseProjectScreen`) and **public project page** (`WorkScreen`): the project's needs on the project itself (roles, interest, crew, credits, announcement, release).
+5. **Every house flow, restyled and checked end to end:** new project; share or announce; project details; add, edit, close or mark a role filled; review interest (shortlist, message, decline, with no fake hired or rejected status); add person; issue credit; revise credit after a correction; association screen; publish event (free only); house setup and verification; switching identity.
 
 Where a flow's logic is already correct, restyle it; do not rewrite it.
 
