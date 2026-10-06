@@ -14,7 +14,7 @@ A second version of Home and Discover, built for comparison. Everything else in 
 2. Tiles: Events, Projects, People, Opportunities, Reviews. Each opens a full page (`browse` route: today's Discover list for that category, with a back button).
 3. In the spotlight: projects being made near you first, a centred carousel that moves every few seconds and stops when touched. The centre card plays a muted clip (never with Reduce Motion, Save-Data or low power); faces are accepted credits; "Looking for" lists open roles.
 4. New work in your craft: a mosaic of three posts, then "See more in Discover".
-5. Events near you: one featured event, then a short list.
+5. Events near you: a rail of poster cards (see below).
 6. Out this Friday: one quote card per film released this week (score plus its featured review), side by side when there are several. Hidden in a week with no releases.
 7. Continue where you left off: what you saved.
 8. Picked for you: shelves built from rules (your craft's crew free this month in your city, crews forming, projects in your language). A shelf shows only with two or more items.
@@ -37,12 +37,8 @@ Tile icons: `public/images/tiles/*.webp`. Spotlight clips: `public/video/<projec
 
 ## Top of Home
 
-Behind the header and tiles: the cinematic atmosphere every Home has, plus one backdrop being decided on Studio › Compare (`?dhbg=`):
+Behind the header and tiles: the cinematic atmosphere every Home has, plus the spotlight's current artwork blurred into a soft field of its colours. It crossfades as the spotlight moves, like District's banner-tinted header. (Chosen over a brand-green band and atmosphere-only; the drifting three-colour glow is removed.) Settings has a single Dark mode switch.
 
-| Option | What it is |
-| --- | --- |
-| `artwork` (default) | The spotlight's current artwork, blurred into a soft field of its colours; it crossfades as the spotlight moves, like District's banner-tinted header |
-| `brand` | A quiet band of the brand green fading into the page |
-| `plain` | Nothing extra, only the atmosphere |
+## Events near you
 
-The earlier drifting three-colour glow is removed. Settings has a single Dark mode switch (no Appearance page, no background experiment).
+A rail of poster cards, up to five, your city first. Each card: an image with the date on it (the event's film, else the host's current project, else the host's own work), the type (and city when it is not yours), title, venue, day and time, price, and the speakers (or "By" the host). See all opens the Events page.

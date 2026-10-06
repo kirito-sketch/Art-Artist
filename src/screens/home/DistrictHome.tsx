@@ -2,7 +2,7 @@ import { Bell, ChevronRight, MapPin, Play, Plus, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
-import type { Craft, Person } from '../../data/types';
+import type { Craft, IndustryEvent, Media, Person } from '../../data/types';
 import { isLive, type Work } from '../../data/works';
 import { outThisWeek } from '../reviews/ReviewsScreen';
 import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
@@ -11,7 +11,8 @@ import { creditedOn } from '../../domain/home/graph';
 import { discoverPosts, findOpportunity, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
-import { work, world } from '../../state/world';
+import { work, world, worksForOrg } from '../../state/world';
+import { priceLabel, typeLabel } from '../../domain/events';
 import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
 import { LivingBackground } from '../../ui/ambient/LivingBackground';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
@@ -21,8 +22,8 @@ import { SaveButton } from './OpportunityCard';
 
 /*
  * The District direction for Home (?home=district): where you are, what the app offers (tiles), then shelves,
- * each with its own shape so the page has a rhythm: a moving spotlight, a mosaic of new work, a featured
- * event with a list, one big quote, small pills, one banner, a grid, and an end. Shelves come from rules over
+ * each with its own shape so the page has a rhythm: a moving spotlight, a mosaic of new work, a rail of event
+ * posters, quote cards for the week's films, small pills, one banner, a grid, and an end. Shelves come from rules over
  * real data and hide when there is too little to show. Everything else in the app is unchanged.
  */
 
@@ -41,18 +42,6 @@ const DEPT: Partial<Record<Craft, { crafts: Craft[]; label: string }>> = {
 };
 const deptOf = (c: Craft) => DEPT[c] ?? { crafts: [c], label: CRAFTS.find((x) => x.id === c)?.label ?? 'People' };
 const first = (name: string) => name.split(' ')[0];
-/*
- * What sits behind the header and tiles, chosen on Studio › Compare while the direction is decided (?dhbg=):
- *   artwork   the spotlight's current artwork, blurred into a soft colour field that changes with it (default)
- *   brand     a quiet band of the brand green that fades into the page
- *   plain     nothing extra: only the cinematic atmosphere every Home has
- */
-type Backdrop = 'artwork' | 'brand' | 'plain';
-const BACKDROP: Backdrop = (() => {
-  const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('dhbg');
-  return v === 'brand' || v === 'plain' ? v : 'artwork';
-})();
-
 const CLIPS = new Set(['neela', 'kaaval', 'backwaters', 'monsoon', 'faultlines', 'neeliraat']);
 
 function motionOk() {
@@ -95,7 +84,7 @@ export function DistrictHome({ go }: { go: Go }) {
     ? visibleEvents(events, now, viewer.id, acting)
         .filter((e) => e.start >= now)
         .sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city) || a.start - b.start)
-        .slice(0, 3)
+        .slice(0, 5)
     : [];
 
   const week = outThisWeek(now);
@@ -152,8 +141,9 @@ export function DistrictHome({ go }: { go: Go }) {
     <>
     {atmosphere && <LivingBackground scrollRef={scrollRef} />}
     <div className={`screen canvas v-home dh${atmosphere ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
-      <div className={`dh-wash dh-wash--${BACKDROP}`}>
-        {BACKDROP === 'artwork' && spotlight.length > 0 && (
+      <div className="dh-wash">
+        {/* The spotlight's current artwork, blurred into a field of its colours; it changes with the spotlight. */}
+        {spotlight.length > 0 && (
           <span className="dh-art" aria-hidden>
             {spotlight.map((w, k) => (
               <span key={w.id} className={k === spot % spotlight.length ? 'on' : ''}>
@@ -162,7 +152,6 @@ export function DistrictHome({ go }: { go: Go }) {
             ))}
           </span>
         )}
-        {BACKDROP === 'brand' && <span className="dh-band" aria-hidden />}
         <header className="dh-head">
           <h1 className="sr-only">Home</h1>
           <MapPin size={20} className="dh-pin" aria-hidden />
@@ -226,47 +215,18 @@ export function DistrictHome({ go }: { go: Go }) {
       )}
 
       {upcoming.length > 0 && (
-        <section className="dh-sec dh-pad" aria-label="Events near you">
-          <h2 className="dh-h">Events near you</h2>
-          {(() => {
-            const e = upcoming[0];
-            const w = e.projectId ? work(e.projectId) : undefined;
-            return (
-              <div className="dh-evfeat">
-                <PressCard className="dh-evfeat-card" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={`${e.title}, ${new Date(e.start).toDateString()}`}>
-                  {w ? <Photo media={w.media} showPlay={false} className="dh-evfeat-img" /> : <span className="dh-evfeat-img dh-evfeat-plain" />}
-                  <DateBlock ms={e.start} big />
-                  <span className="dh-evfeat-t">
-                    <b>{e.title}</b>
-                    <span>
-                      {e.venue} · {timeOf(e.start)} · {e.price.kind === 'free' ? 'Free' : e.price.amount}
-                    </span>
-                  </span>
-                </PressCard>
-                <span className="dh-evfeat-save">
-                  <SaveButton id={e.id} kind="event" floating name={e.title} />
-                </span>
-              </div>
-            );
-          })()}
-          {upcoming.length > 1 && (
-            <div className="dh-evlist">
-              {upcoming.slice(1).map((e) => (
-                <div key={e.id} className="dh-evrow">
-                  <PressCard className="dh-evrow-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={e.title}>
-                    <DateBlock ms={e.start} />
-                    <span className="dh-evrow-t">
-                      <b>{e.title}</b>
-                      <span>
-                        {e.venue === 'Online' ? 'Online' : `${e.venue}, ${e.city}`} · {timeOf(e.start)} · {e.price.kind === 'free' ? 'Free' : e.price.amount}
-                      </span>
-                    </span>
-                  </PressCard>
-                  <SaveButton id={e.id} kind="event" name={e.title} />
-                </div>
-              ))}
-            </div>
-          )}
+        <section className="dh-sec" aria-label="Events near you">
+          <h2 className="dh-h dh-h--row dh-pad">
+            Events near you
+            <button className="dh-more" onClick={() => push({ name: 'browse', scope: 'events' })}>
+              See all
+            </button>
+          </h2>
+          <div className="dh-rail dh-evrail">
+            {upcoming.map((e) => (
+              <EventCard key={e.id} e={e} near={e.city === me.city} />
+            ))}
+          </div>
         </section>
       )}
 
@@ -356,13 +316,71 @@ export function DistrictHome({ go }: { go: Go }) {
 
 const timeOf = (ms: number) => new Date(ms).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
 
-function DateBlock({ ms, big }: { ms: number; big?: boolean }) {
+function DateBlock({ ms }: { ms: number }) {
   const d = new Date(ms);
   return (
-    <span className={`dh-date ${big ? 'dh-date--big' : ''}`} aria-hidden>
+    <span className="dh-date" aria-hidden>
       <b>{d.toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}</b>
       {d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase()}
     </span>
+  );
+}
+
+/** What an event looks like: its film, else the host's current project, else the host's own work. */
+function eventArt(e: IndustryEvent): Media | undefined {
+  const w = e.projectId ? work(e.projectId) : undefined;
+  if (w && w.media.id !== 'ph') return w.stills[0] ?? w.media;
+  const lead = worksForOrg(e.hostId).filter((x) => x.media.id !== 'ph').sort((a, b) => Number(isLive(b)) - Number(isLive(a)))[0];
+  if (lead) return lead.stills[0] ?? lead.media;
+  return (seed.portfolio[e.hostId] ?? []).find((m) => m.kind === 'image');
+}
+
+/** An event as a poster: its image with the date on it, then what, where, when and who. */
+function EventCard({ e, near }: { e: IndustryEvent; near: boolean }) {
+  const { push } = useStore();
+  const art = eventArt(e);
+  const host = party(e.hostId);
+  const people = (e.speakerIds ?? []).map((id) => party(id)).filter((p): p is NonNullable<typeof p> => !!p);
+  const day = new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' });
+  return (
+    <div className="dh-ev">
+      <PressCard className="dh-ev-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.98} aria-label={`${e.title}, ${new Date(e.start).toDateString()}, ${e.venue}`}>
+        <span className="dh-ev-media">
+          {art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}
+          <DateBlock ms={e.start} />
+        </span>
+        <span className="dh-ev-body">
+          <span className="dh-ev-kicker">
+            {typeLabel(e.type).split(' or ')[0]}
+            {near ? '' : ` · ${e.city}`}
+          </span>
+          <b>{e.title}</b>
+          <span className="dh-ev-where">{e.venue === 'Online' ? 'Online' : e.venue}</span>
+          <span className="dh-ev-foot">
+            <span className="dh-ev-when">
+              {day}, {timeOf(e.start)}
+            </span>
+            <span className={`dh-ev-price ${e.price.kind === 'free' ? 'is-free' : ''}`}>{priceLabel(e)}</span>
+          </span>
+          {people.length > 0 ? (
+            <span className="dh-ev-who">
+              <span className="dh-faces" aria-hidden>
+                {people.slice(0, 3).map((p) => (
+                  <Avatar key={p.id} party={p} size={20} />
+                ))}
+              </span>
+              {people.map((p) => first(p.name)).slice(0, 2).join(', ')}
+              {people.length > 2 ? ` +${people.length - 2}` : ''}
+            </span>
+          ) : (
+            host && <span className="dh-ev-who">By {host.name}</span>
+          )}
+        </span>
+      </PressCard>
+      <span className="dh-ev-save">
+        <SaveButton id={e.id} kind="event" floating name={e.title} />
+      </span>
+    </div>
   );
 }
 

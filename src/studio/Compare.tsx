@@ -14,17 +14,10 @@ const WHO: { id: Who; label: string }[] = [
   { id: 'tara', label: 'Tara Menon, actor' },
   { id: 'new', label: 'Someone who just signed up' },
 ];
-type Bg = 'artwork' | 'brand' | 'plain';
-const BG: { id: Bg; label: string }[] = [
-  { id: 'artwork', label: 'Top: spotlight artwork' },
-  { id: 'brand', label: 'Top: brand green' },
-  { id: 'plain', label: 'Top: atmosphere only' },
-];
 const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Current', district: 'New' };
 
-const src = (home: 'current' | 'district', who: Who, n: number, bg: Bg) => {
+const src = (home: 'current' | 'district', who: Who, n: number) => {
   const q = new URLSearchParams({ view: 'app', home, embed: '1', r: String(n) });
-  if (home === 'district') q.set('dhbg', bg);
   if (who === 'new') q.set('flow', 'new');
   else q.set('as', who);
   return `/?${q.toString()}`;
@@ -34,7 +27,7 @@ const src = (home: 'current' | 'district', who: Who, n: number, bg: Bg) => {
 const PW = 410;
 const PH = 864;
 
-function Phone({ home, who, n, onRestart, scale, bg }: { home: 'current' | 'district'; who: Who; n: number; onRestart: () => void; scale: number; bg: Bg }) {
+function Phone({ home, who, n, onRestart, scale }: { home: 'current' | 'district'; who: Who; n: number; onRestart: () => void; scale: number }) {
   return (
     <figure className="cmp-phone">
       <figcaption className="cmp-cap">
@@ -45,7 +38,7 @@ function Phone({ home, who, n, onRestart, scale, bg }: { home: 'current' | 'dist
       </figcaption>
       <div className="cmp-fit" style={{ width: PW * scale, height: PH * scale }}>
         <div className="cmp-frame" style={{ transform: `scale(${scale})` }}>
-          <iframe key={`${home}-${who}-${n}-${home === 'district' ? bg : ''}`} title={`${LABEL[home]} app`} src={src(home, who, n, bg)} />
+          <iframe key={`${home}-${who}-${n}`} title={`${LABEL[home]} app`} src={src(home, who, n)} />
         </div>
       </div>
     </figure>
@@ -56,7 +49,6 @@ export function Compare() {
   const narrow = () => typeof window !== 'undefined' && window.innerWidth < 860;
   const [show, setShow] = useState<Show>(narrow() ? 'district' : 'both');
   const [who, setWho] = useState<Who>('kiran');
-  const [bg, setBg] = useState<Bg>('artwork');
   const [n, setN] = useState({ current: 0, district: 0 });
   const [isNarrow, setNarrow] = useState(narrow());
   const fit = () => (typeof window === 'undefined' ? 1 : Math.min(1, (window.innerHeight - 210) / PH, (window.innerWidth - 32) / PW));
@@ -86,18 +78,6 @@ export function Compare() {
                 </button>
               ))}
           </div>
-          {view !== 'current' && (
-            <label className="cmp-who">
-              <span className="sr-only">New Home background</span>
-              <select value={bg} onChange={(e) => setBg(e.target.value as Bg)}>
-                {BG.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
           <label className="cmp-who">
             <span className="sr-only">Person</span>
             <select value={who} onChange={(e) => setWho(e.target.value as Who)}>
@@ -112,8 +92,8 @@ export function Compare() {
       </header>
 
       <div className={`cmp-stage ${view === 'both' ? 'cmp-stage--both' : ''}`}>
-        {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} scale={scale} bg={bg} />}
-        {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} scale={scale} bg={bg} />}
+        {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} scale={scale} />}
+        {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} scale={scale} />}
       </div>
 
       <p className="cmp-foot">In New, the clips in the spotlight are made from still images.</p>

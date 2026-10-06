@@ -89,19 +89,6 @@ html[data-theme='dark'] .dh-art {
   --art-strength: 0.6;
 }
 
-/* Brand: a quiet band of the brand green that fades into the page. */
-.dh-band {
-  position: absolute;
-  inset: 0 0 -40px;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--action) 22%, transparent), color-mix(in srgb, var(--action) 8%, transparent) 60%, transparent);
-}
-
-html[data-theme='dark'] .dh-band {
-  background: linear-gradient(180deg, color-mix(in srgb, #3f8f7c 30%, transparent), transparent);
-}
-
 .dh-head {
   display: flex;
   align-items: center;
@@ -450,22 +437,43 @@ html[data-theme='dark'] .dh-band {
   cursor: pointer;
 }
 
-/* Events: one featured, then a list */
-.dh-evfeat {
-  position: relative;
+/* Events: posters in a rail. The image carries the date; below it what, where, when, price and who. */
+.dh-evrail {
+  gap: 12px;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--gutter);
 }
 
-.dh-evfeat-card {
+.dh-ev {
   position: relative;
-  display: block;
+  flex: none;
+  width: min(72%, 268px);
+  scroll-snap-align: start;
+}
+
+.dh-ev-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
   border-radius: 18px;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
-  background: var(--dark, #111);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line), 0 6px 18px rgba(0, 0, 0, 0.06);
+  text-align: left;
 }
 
-.dh-evfeat-img,
-.dh-evfeat-img img {
+.dh-ev-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  background: var(--fill);
+}
+
+.dh-ev-media .photo,
+.dh-ev-media img,
+.dh-ev-plain {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -473,40 +481,97 @@ html[data-theme='dark'] .dh-band {
   object-fit: cover;
 }
 
-.dh-evfeat-plain {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--action) 70%, #000), #111);
+.dh-ev-plain {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--action) 55%, #000), #1b1a18);
 }
 
-.dh-evfeat-card::after {
-  content: '';
+.dh-ev-media .dh-date {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.72));
-}
-
-.dh-evfeat-t {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 12px;
+  left: 10px;
+  bottom: 10px;
   z-index: 1;
+}
+
+.dh-ev-body {
+  flex: 1;
   display: grid;
-  gap: 2px;
-  color: #fff;
+  align-content: start;
+  gap: 3px;
+  padding: 11px 13px 13px;
 }
 
-.dh-evfeat-t b {
+.dh-ev-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-ink, #a8641c);
+}
+
+.dh-ev-body b {
   font-family: var(--display);
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.dh-evfeat-t span {
+.dh-ev-where {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dh-ev-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.dh-ev-when {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dh-ev-price {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dh-ev-price.is-free {
+  background: var(--action-tint);
+  color: var(--action-ink, var(--action));
+}
+
+.dh-ev-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
   font-size: 12.5px;
-  opacity: 0.92;
+  color: var(--text-2);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dh-evfeat-save {
+.dh-ev-save {
   position: absolute;
   right: 8px;
   top: 8px;
@@ -520,72 +585,17 @@ html[data-theme='dark'] .dh-band {
   min-width: 44px;
   padding: 4px 8px;
   border-radius: 10px;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  background: #fff;
   font-size: 10px;
   font-weight: 700;
-  color: var(--accent-ink, #a8641c);
+  color: #a8641c;
   line-height: 1.15;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
 .dh-date b {
   font-size: 18px;
-  color: var(--text);
-}
-
-.dh-date--big {
-  position: absolute;
-  left: 10px;
-  top: 10px;
-  z-index: 1;
-  background: #fff;
-  box-shadow: none;
-}
-
-.dh-date--big b {
   color: #111;
-}
-
-.dh-evlist {
-  margin-top: 10px;
-  border-radius: 16px;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-  overflow: hidden;
-}
-
-.dh-evrow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 6px 0 0;
-}
-
-.dh-evrow + .dh-evrow {
-  border-top: 1px solid var(--hairline);
-}
-
-.dh-evrow-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-}
-
-.dh-evrow-t {
-  display: grid;
-  min-width: 0;
-}
-
-.dh-evrow-t b {
-  font-size: 14px;
-}
-
-.dh-evrow-t span {
-  font-size: 12.5px;
-  color: var(--text-2);
 }
 
 /* The industry quote: one big card */
@@ -1027,10 +1037,6 @@ html[data-theme='dark'] .dh-band {
   }
 }
 
-/* The save button's 44px touch area is positioned against its button; anchor it. */
-.dh-evrow .save {
-  position: relative;
-}
 
 /* Out this Friday: one quote card per film, side by side when there is more than one */
 .dh-h--row {
