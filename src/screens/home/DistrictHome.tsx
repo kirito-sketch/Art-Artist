@@ -70,7 +70,7 @@ export function DistrictHome({ go }: { go: Go }) {
   // The Spotlight: chosen once for the session; a save, follow or block chooses again.
   const network = [...workedWith(me.id)];
   const spotlit = spotlightFor(
-    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool, releases: week },
+    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool.filter(e => e.id !== seed.HOME_REQUEST_EVENT_ID), releases: week },
     { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
     [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
   );
@@ -100,7 +100,10 @@ export function DistrictHome({ go }: { go: Go }) {
   const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
   const eventPool = pool.filter((e) => !shown.has(`event:${e.id}`));
   const allEvents = pool.filter((e) => e.status === 'scheduled' && eventEndsAt(e) >= now).length;
-  const upcoming = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
+  const rankedEvents = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
+  // Keep one concrete request-to-attend example in the Home event shelf of this prototype.
+  const requestExample = eventPool.find(e => e.id === seed.HOME_REQUEST_EVENT_ID && e.status === 'scheduled' && !blocked.includes(e.hostId));
+  const upcoming = requestExample ? [requestExample, ...rankedEvents.filter(e => e.id !== requestExample.id && e.hostId !== requestExample.hostId)].slice(0, 3) : rankedEvents;
   const friday = week.filter((w) => !shown.has(`release:${w.id}`));
 
   const continueItems = saved
@@ -397,7 +400,7 @@ function homeEvents(pool: IndustryEvent[], me: Person, following: string[], inte
 /** Event shelf uses the same concise cover/category/details card as Discover and profiles. */
 function EventsA({ list }: { list: IndustryEvent[]; city: string }) {
   const { viewer } = useStore();
-  return <div className="dh-pad ev-list">{list.map(e => <EventTicket key={e.id} e={e} onOpen={() => markOpened(viewer.id, e.id)} />)}</div>;
+  return <div className="dh-pad ev-list">{list.map(e => <EventTicket key={e.id} e={e} reason={e.id === seed.HOME_REQUEST_EVENT_ID ? 'Private attendance requests' : undefined} onOpen={() => markOpened(viewer.id, e.id)} />)}</div>;
 }
 
 /**

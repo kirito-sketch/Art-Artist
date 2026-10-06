@@ -22,6 +22,7 @@ import { RoleRow } from '../discover/RoleRow';
 import { EventRow } from '../event/eventUnits';
 import { eventHomeCandidates } from '../../state/events';
 import { useFeatures } from '../../ui/features';
+import { HOME_REQUEST_EVENT_ID } from '../../data/seed';
 import { TEST_MODE } from '../../research-data/surface';
 import { outThisWeek, WeekFilm } from '../reviews/ReviewsScreen';
 
@@ -160,10 +161,11 @@ function ComingUp({ me }: { me: Person }) {
   const on = useFeatures().events;
   if (!on) return null;
   const rank = { high: 2, medium: 1, low: 0 } as const;
-  const best = eventHomeCandidates(events, me, following, Date.now())
+  const candidates = eventHomeCandidates(events, me, following, Date.now());
+  const best = candidates.find(c => c.objectId === HOME_REQUEST_EVENT_ID) ?? candidates
     .filter((c) => c.significance !== 'low')
     .sort((a, b) => rank[b.significance] - rank[a.significance] || b.relationship - a.relationship || b.place - a.place)[0];
-  return best ? <EventRow c={best} position={4} /> : null;
+  return best ? <EventRow c={best.objectId === HOME_REQUEST_EVENT_ID ? { ...best, reason: 'Private attendance requests' } : best} position={4} /> : null;
 }
 
 /**

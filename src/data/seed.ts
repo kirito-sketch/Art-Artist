@@ -583,6 +583,8 @@ export const projectUpdates: ProjectUpdate[] = [
  * only to prove the rules hide them: an unverified host, a cancelled meetup, a past screening and an
  * "audition" (auditions are roles, never events).
  */
+export const HOME_REQUEST_EVENT_ID = 'ev-konark-crew';
+
 export function seedEvents(now: number): IndustryEvent[] {
   const day = (d: number, h: number, m = 0) => {
     const t = new Date(now + d * 864e5);
@@ -591,7 +593,7 @@ export function seedEvents(now: number): IndustryEvent[] {
   };
   return [
     { id: 'ev-kaaval-premiere', type: 'screening', title: 'Kaaval · festival premiere', hostId: 'saffron', projectId: 'kaaval', speakerIds: ['kiran', 'rhea'], city: 'Mumbai', venue: 'PVR Juhu, Screen 2', start: day(6, 19, 30), price: { kind: 'free' }, summary: 'The premiere screening, followed by a conversation with the camera and colour team.', status: 'scheduled', reviewed: true, audience: 'everyone', publishedAt: day(-6, 10), interestedCount: 140 },
-    { id: 'ev-konark-crew', type: 'meetup', title: 'Camera crew evening', hostId: 'konark', city: 'Hyderabad', venue: 'Konark Pictures, Jubilee Hills', start: day(1, 18, 30), price: { kind: 'free' }, summary: 'An informal evening with the Neela Akasham camera team before the shoot moves to Araku.', status: 'scheduled', audience: ['cinematographer', 'camera', 'lighting'], publishedAt: day(-2, 12), interestedCount: 18 },
+    { id: 'ev-konark-crew', type: 'meetup', title: 'Camera crew evening', hostId: 'konark', city: 'Hyderabad', venue: 'Konark Pictures, Jubilee Hills', start: day(1, 18, 30), price: { kind: 'free' }, summary: 'An informal evening with the Neela Akasham camera team before the shoot moves to Araku. Request a place with your email and an optional note. Konark reviews each request before confirming attendance; your contact details stay private to the organiser.', capacity: 20, status: 'scheduled', audience: ['cinematographer', 'camera', 'lighting'], publishedAt: day(-2, 12), interestedCount: 18 },
     { id: 'ev-tara-screen-acting', type: 'workshop', title: 'Screen acting for working actors', hostId: 'tara', city: 'Mumbai', venue: 'Prithvi House, Juhu', start: day(10, 10, 0), price: { kind: 'free' }, summary: 'A day of scene work in front of the camera, for actors 18 and over with some screen experience. Request a place to join this session.', status: 'scheduled', reviewed: true, audience: ['actor'], publishedAt: day(-1, 9), interestedCount: 22 },
     { id: 'ev-backwaters-wip', type: 'screening', title: 'Backwaters · work-in-progress screening', hostId: 'tidewater', projectId: 'backwaters', speakerIds: ['meera'], city: 'Kochi', venue: 'Kavitha Theatre', start: day(12, 17, 0), price: { kind: 'free' }, summary: 'Forty minutes of the documentary in progress, with notes from the edit.', status: 'scheduled', audience: 'everyone', publishedAt: day(-4, 11), interestedCount: 31 },
     { id: 'ev-kochi-market', type: 'festival', title: 'Kochi Film Market', hostId: 'tidewater', city: 'Kochi', venue: 'Bolgatty Palace', start: day(20, 9, 30), end: day(22, 19, 0), price: { kind: 'free' }, summary: 'Three days of pitches, co-production meetings and screenings for Malayalam and Tamil projects.', status: 'scheduled', link: 'https://example.com/kfm', audience: ['director', 'writing', 'production'], publishedAt: day(-12, 10), interestedCount: 410, editorial: true },

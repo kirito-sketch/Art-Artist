@@ -73,3 +73,7 @@ This is a session-backed prototype: events, requests and new notifications do no
 ## Future paid architecture — inactive
 
 The type model and `EVENT_CAPABILITIES.paidEvents` retain future pricing/review states, and domain tests still cover that future policy. The switch stays false. Future work may add price, external ticket providers/payment, eligibility and review/approval, once operational ownership exists. Current V1 screens expose none of those capabilities or a paid moderation team.
+
+## Home attendance example
+
+Home features **Camera crew evening** by Konark Pictures with 20 places and the caption **Private attendance requests**. The example stays in District's event shelf, separate from Spotlight, and also appears in Current Home. Kiran starts with no attendance request and can try the email/note flow. Konark starts with two clearly fictitious pending requests from Sameer and Sana; their event contact addresses use example.com and appear only in organiser review. Hosts can accept these requests or a new request submitted during the session.
