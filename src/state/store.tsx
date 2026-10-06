@@ -525,6 +525,7 @@ function useStoreValue() {
     setPolicyUpdate,
     isNewPerson: newPeople.includes(viewer.id),
     intent,
+    onboardingIntents: profileOf(viewer.id).onboardingIntents ?? [intent],
     setIntent: (i: Intent) => setIntents((m) => ({ ...m, [viewer.id]: i })),
     /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
     createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {

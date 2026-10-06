@@ -21,6 +21,7 @@ import { MediaPicker } from '../screens/create/PostComposer';
 import { research } from '../research-data/client';
 import { TEST_MODE } from '../research-data/surface';
 import { INTENTS, type Intent } from '../domain/relevance';
+import { MAX_ONBOARDING_INTENTS, needsAvailability, toggleOnboardingIntent } from '../domain/onboardingIntents';
 import { CITY_LANGUAGES, craftProfile, LANGUAGES } from '../data/profileSchema';
 import { type ProfileExtra } from '../state/profile';
 import { MobileVerify } from '../ui/MobileVerify';
@@ -64,11 +65,14 @@ export function EntryFlow() {
   // kept when you go Back, and can be changed or cleared.
   const [primary, setPrimary] = useState<Craft | null>(invite ? 'production' : null);
   const [intent, setIntent] = useState<Intent | null>(invite ? 'hire' : null);
+  const district = !TEST_MODE && getFeatures().home === 'district';
+  const [selectedIntents, setSelectedIntents] = useState<Intent[]>(invite ? ['hire'] : []);
+  const hasIntent = district ? selectedIntents.length > 0 : !!intent;
   const [city, setCity] = useState('');
   const [avail, setAvail] = useState<'now' | 'from'>('now');
   const [availFrom, setAvailFrom] = useState('');
   const [personId, setPersonId] = useState<string | null>(null);
-  const asksAvailability = intent === 'work' || intent === 'collaborate';
+  const asksAvailability = district ? needsAvailability(selectedIntents) : intent === 'work' || intent === 'collaborate';
   // Approved direction (docs/REVIEW_EVENTS_PROFILE.md §4): the rest is recommended and skippable, and all of it
   // lands in the same profile fields Edit Profile uses.
   const [phone, setPhone] = useState<{ number: string; verified: boolean } | null>(null);
@@ -153,11 +157,12 @@ export function EntryFlow() {
     const availability: Availability = asksAvailability ? { open: true, from: avail === 'from' && availFrom ? fmtDay(availFrom) : 'Now', scope: city.trim() } : { open: false, from: 'Now', scope: city.trim() };
     const words = craftProfile(primary!).work;
     const extra: Partial<ProfileExtra> = {
+      ...(district ? { onboardingIntents: selectedIntents } : {}),
       phone: phone ?? undefined,
       reel: words.reel && validLink(reelUrl) ? { url: reelUrl.trim(), title: words.reel } : undefined,
       workLinks: validLink(link) ? [{ id: 'w-onboard', label: words.links, url: link.trim() }] : [],
     };
-    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: intent ?? undefined, extra });
+    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
     setPersonId(id);
     if (invite) return go('invite');
     endEntry();
@@ -300,11 +305,13 @@ export function EntryFlow() {
           {step === 'now' && (
             <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={back}>
               {TEST_MODE && <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>}
-              <div className="intent-list" role="radiogroup" aria-label="What are you looking to do right now?" onKeyDown={(e) => rovingKeys(e)}>
+              {district && <p className="meta" id="intent-help" aria-live="polite">{selectedIntents.length === MAX_ONBOARDING_INTENTS ? '3 selected. Deselect one to change.' : 'Choose up to 3'}</p>}
+              <div className={`intent-list ${district ? 'intent-list--multi' : ''}`} role={district ? 'group' : 'radiogroup'} aria-label="What are you looking to do right now?" aria-describedby={district ? 'intent-help' : undefined} onKeyDown={district ? undefined : (e) => rovingKeys(e)}>
                 {INTENTS.map((it, i) => (
-                  <button key={it.id} role="radio" aria-checked={intent === it.id} tabIndex={rovingIndex(intent === it.id, i, !!intent)} className={`intent-option ${intent === it.id ? 'is-on' : ''}`} onClick={() => setIntent(it.id)}>
-                    <span className="intent-option-label">{it.label}</span>
+                  <button key={it.id} role={district ? 'checkbox' : 'radio'} aria-checked={district ? selectedIntents.includes(it.id) : intent === it.id} aria-disabled={district && selectedIntents.length === MAX_ONBOARDING_INTENTS && it.id !== 'explore' && !selectedIntents.includes(it.id) ? true : undefined} tabIndex={district ? 0 : rovingIndex(intent === it.id, i, !!intent)} className={`intent-option ${(district ? selectedIntents.includes(it.id) : intent === it.id) ? 'is-on' : ''}`} onClick={() => district ? setSelectedIntents((goals) => toggleOnboardingIntent(goals, it.id)) : setIntent(it.id)}>
+                    <span className="intent-option-label">{district && it.id === 'collaborate' ? 'Join a collaboration' : it.label}</span>
                     <span className="meta">{it.hint}</span>
+                    {district && selectedIntents.includes(it.id) && <Check size={18} className="intent-check" aria-hidden />}
                   </button>
                 ))}
               </div>
@@ -346,10 +353,10 @@ export function EntryFlow() {
                 </>
               ) : (
                 <>
-                  <Button block size="l" disabled={!intent} aria-describedby="now-missing" onClick={() => go('where')}>
+                  <Button block size="l" disabled={!hasIntent} aria-describedby="now-missing" onClick={() => go('where')}>
                     Continue
                   </Button>
-                  <Missing id="now-missing" items={[!intent && 'what brings you here']} />
+                  <Missing id="now-missing" items={[!hasIntent && 'what brings you here']} />
                 </>
               )}
             </Onboard>

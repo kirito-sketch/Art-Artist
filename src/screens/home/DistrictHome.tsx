@@ -459,7 +459,7 @@ function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
 
 
 /**
- * Centred carousel: moves on its own, the centre card plays its clip; touching it stops the movement. Every card has
+ * Grid-aligned carousel: the active card plays its clip; touching or focusing it stops automatic movement. Every card has
  * the same anatomy whatever it is: a big image with one label on it, then the title, one meta line and one fact.
  */
 function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f: number | ((x: number) => number)) => void }) {
@@ -467,30 +467,49 @@ function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f:
   const held = useRef(false);
   const low = useLowPower();
   const animate = motionOk() && !low;
-  const wrap = useRef<HTMLDivElement>(null);
-  const [w, setW] = useState(360);
+  const track = useRef<HTMLDivElement>(null);
+  const itemKeys = items.map((c) => c.key).join('|');
+  const activeIndex = useRef(i);
+  activeIndex.current = i;
+  const select = (index: number) => {
+    const el = track.current;
+    const first = el?.firstElementChild as HTMLElement | null;
+    const card = el?.children[index] as HTMLElement | undefined;
+    if (el && first && card) el.scrollTo({ left: card.offsetLeft - first.offsetLeft, behavior: animate ? 'smooth' : 'instant' });
+    setI(index);
+  };
   useEffect(() => {
-    const el = wrap.current;
+    const el = track.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setW(el.clientWidth));
+    const ro = new ResizeObserver(() => {
+      const first = el.firstElementChild as HTMLElement | null;
+      const card = el.children[activeIndex.current] as HTMLElement | undefined;
+      if (first && card) el.scrollTo({ left: card.offsetLeft - first.offsetLeft, behavior: 'instant' });
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [itemKeys]);
   useEffect(() => {
     if (!animate || items.length < 2) return;
-    const t = window.setInterval(() => !held.current && document.visibilityState === 'visible' && setI((x) => (x + 1) % items.length), 4200);
+    const t = window.setInterval(() => !held.current && document.visibilityState === 'visible' && select((activeIndex.current + 1) % items.length), 4200);
     return () => window.clearInterval(t);
   }, [animate, items.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  const CARD = Math.max(220, Math.min(280, w - 80));
-  const GAP = 12;
   return (
-    <div className="dh-car" ref={wrap} onPointerDown={() => (held.current = true)}>
-      <div className="dh-track" style={{ transform: `translateX(${(w - CARD) / 2 - i * (CARD + GAP)}px)` }}>
+    <div className="dh-car" onPointerDown={() => (held.current = true)} onWheel={() => (held.current = true)} onFocusCapture={() => (held.current = true)}>
+      <div className="dh-track" ref={track} onScroll={(e) => {
+        const el = e.currentTarget;
+        const first = el.firstElementChild as HTMLElement | null;
+        const second = el.children[1] as HTMLElement | undefined;
+        if (first && second) {
+          const index = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollLeft / (second.offsetLeft - first.offsetLeft))));
+          if (index !== activeIndex.current) setI(index);
+        }
+      }}>
         {items.map((c, k) => {
           const active = k === i;
           return (
-            <div key={c.key} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`} style={{ width: CARD }} aria-hidden={!active}>
-              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : setI(k))} scale={0.985} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`} tabIndex={active ? 0 : -1}>
+            <div key={c.key} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`}>
+              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : select(k))} scale={0.985} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`}>
                 <span className="dh-card-media">
                   {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-ev-plain" />}
                   {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
@@ -527,9 +546,9 @@ function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f:
           );
         })}
       </div>
-      <div className="dh-dots" role="tablist" aria-label="Spotlight">
+      <div className="dh-dots" role="group" aria-label="Spotlight">
         {items.map((c, k) => (
-          <button key={c.key} role="tab" aria-selected={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => ((held.current = true), setI(k))} />
+          <button key={c.key} aria-pressed={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => ((held.current = true), select(k))} />
         ))}
       </div>
     </div>
@@ -610,3 +629,4 @@ function NearCard({ p }: { p: Person }) {
     </div>
   );
 }
+

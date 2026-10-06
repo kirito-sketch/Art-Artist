@@ -14,7 +14,7 @@ Rebuilt to docs/DISTRICT_FIXES.md. Each shelf does a different job, and nothing 
 
 1. Where you are: city, craft and languages, notifications, over the static top glow.
 2. Tiles: Events, Projects, People, Opportunities, Reviews. Each opens Discover on that chip. There are no separate category pages any more.
-3. In the spotlight: up to five time-sensitive things this week, of mixed kinds (roles, projects, new work from people you know, events, films out this week). Never people. Rules in `src/domain/spotlight.ts` (tested), data in `src/screens/home/districtFeed.ts`. Every card has the same anatomy: a big 4:5 image with one label on it ("Crew forming · needs a DoP", "New work · Vikram Sen", "Event · Sat, Hyderabad", "Out this week · ★ 4.1", "Role · closes tomorrow"), then the title, one meta line, and one fact under a hairline (pay and dates, who is on it, price and host, a line from a review). Carousel behaviour is unchanged: it moves on its own, stops when touched, and the centre card plays its clip when motion is allowed.
+3. In the spotlight: up to five time-sensitive things this week, of mixed kinds (roles, projects, new work from people you know, events, films out this week). Never people. Rules in `src/domain/spotlight.ts` (tested), data in `src/screens/home/districtFeed.ts`. Every card has the same anatomy: a big 4:5 image with one label on it ("Crew forming · needs a DoP", "New work · Vikram Sen", "Event · Sat, Hyderabad", "Out this week · ★ 4.1", "Role · closes tomorrow"), then the title, one meta line, and one fact under a hairline (pay and dates, who is on it, price and host, a line from a review). The first card aligns with the title at the 20 px Home gutter. Native horizontal scrolling snaps each card to that same inset, including the last card, with a 12 px gap and a peek of the next card. Pagination has 44 px tap targets; shelf Save hit areas stay anchored to their own buttons so they cannot cover the dots. Automatic advance stops after touch, wheel or keyboard focus. The active card plays its clip when motion is allowed.
 4. The completion prompt, when one is due.
 5. The shelf for why you're here: Find work → Opportunities for you; Find people → People for your project; Collaborate → Collaborations and roles. Three compact rows (64 px image, title, meta, then the fact that decides it: closing date, pay, city, or availability) and See all. Grow my network and Just exploring have no shelf: New work comes next anyway.
 6. New work: a mosaic of three posts, people you follow or worked with first, then your department, then everyone.
@@ -71,4 +71,11 @@ One large event and two rows, all visible, nothing moves. Chosen for the person 
 
 ## Settings
 
-Appearance is Light / Dark / System, inline in Settings (one tap each, no separate page). Switching opens the new theme as a circle from the button tapped. Under Reduce Motion it switches without the animation.
+Settings shows Appearance and its current value. It opens a focused page with full-width System, Light and Dark radio options, short descriptions and icons. Selection applies immediately through the existing theme system. System follows OS changes live; the stored choice resolves before the first paint. Both personal and house Settings open the same page. Current keeps its existing Appearance presentation.
+
+## Onboarding intents
+
+In District, “What brings you here?” allows one to three goals. Selected rows show a check and the existing green treatment. Continue requires at least one goal; selected goals remain when going Back. Just exploring is exclusive in both directions and stays available at the limit. “Join a collaboration” distinguishes joining others from finding people for your own project. Current and `/test` retain their single-choice flow.
+
+The full ordered ID array is stored privately in `ProfileExtra.onboardingIntents` and exposed by the store, in the same session state as the prototype profile. The first selected ID supplies the existing single-intent Home shelf; no ranking or Discover redesign is included. Availability is asked if any goal is work or collaboration. Selection rules are pure and unit-tested.
+

@@ -3,6 +3,7 @@ import type { Media, Person } from '../data/types';
 import { craftProfile, FIELDS, setsFor, skillCategoriesFor, type Experience, type Visibility } from '../data/profileSchema';
 import { world } from './world';
 import { TEST_MODE } from '../research-data/surface';
+import type { Intent } from '../domain/relevance';
 
 /*
  * The richer half of a person's profile (docs/REVIEW_EVENTS_PROFILE.md). One record per person, written by
@@ -33,6 +34,8 @@ export interface ProfileSkill {
 export type DetailValue = string | string[] | number | [number, number];
 
 export interface ProfileExtra {
+  /** Private onboarding goals, kept as IDs for future Home and Discover personalisation. */
+  onboardingIntents?: Intent[];
   /** For identity and matching only. Never shown, never shared automatically. */
   phone?: { number: string; verified: boolean };
   skills: ProfileSkill[];
@@ -184,3 +187,4 @@ export function writePacing(who: string, p: Pacing) {
     /* storage blocked: pacing lasts this session */
   }
 }
+
