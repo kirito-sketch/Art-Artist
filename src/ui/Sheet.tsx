@@ -37,8 +37,8 @@ export function Sheet({ open, onClose, title, label, children, footer, size = 'a
   };
 
   useEffect(() => {
-    // A replaced District house sheet can still be animating out below its successor.
-    if (className === 'dhouse-sheet') {
+    // A replaced District sheet can still be animating out below its successor.
+    if (className === 'dhouse-sheet' || className === 'ana-work-sheet') {
       const dialog = panel.current?.closest<HTMLElement>('.sheet-layer');
       if (dialog) {
         dialog.inert = !open;

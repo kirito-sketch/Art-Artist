@@ -12,6 +12,7 @@ import './styles/expression.css';
 import './styles/home-next.css';
 import './styles/district.css';
 import './styles/district-house.css';
+import './styles/showreel.css';
 import './styles/events.css';
 import './styles/reviews.css';
 import './styles/profile.css';

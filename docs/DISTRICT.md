@@ -86,3 +86,7 @@ District houses have their own Home: a compact Needs you list, equal-sized proje
 House profiles remain work first. Public project pages disclose only announced details and accepted credits. The workspace puts roles and private associations before secondary project details, and gives credits their own section. Announcement uses a public preview with expandable visibility details. Creation, roles, Interest review, association/credit flows, free events, setup, identity switching, Inbox and house Settings share the District spacing and surfaces.
 
 Current and /test retain their existing presentation. Interest, messaging, permission, role lifecycle and credit rules are unchanged. The handoff's shortlist language is intentionally not implemented: review retains New, In conversation, Not now and No longer interested. Waiting for credit acceptance and associations without credits stay as project statuses rather than Home tasks. Full plan and validation: `docs/DISTRICT_HOUSE.md`.
+
+## Showreel and work management
+
+District uses the source-independent Showreel, Portfolio and Featured work model in [SHOWREEL.md](SHOWREEL.md). Upload video prepares an explicitly private device preview until production infrastructure is connected. YouTube/Vimeo links use metadata and in-app players. Current and /test retain their prior editor and reel presentation. Spotlight changes from the accompanying brief are pending the missing District recording.

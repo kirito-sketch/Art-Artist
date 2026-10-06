@@ -1,7 +1,8 @@
+import { ShowreelManager, releaseUnusedShowreelPreviews } from '../screens/profile/Showreel';
 import { getFeatures } from '../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Lock, Mail, Users } from 'lucide-react';
-import { cloneElement, isValidElement, useEffect, useId, useState, type ReactElement, type ReactNode } from 'react';
+import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { focusInto, rovingIndex, rovingKeys } from '../ui/a11y';
 import { CRAFTS, headline } from '../data/crafts';
 import * as seed from '../data/seed';
@@ -23,7 +24,7 @@ import { TEST_MODE } from '../research-data/surface';
 import { INTENTS, type Intent } from '../domain/relevance';
 import { MAX_ONBOARDING_INTENTS, needsAvailability, toggleOnboardingIntent } from '../domain/onboardingIntents';
 import { CITY_LANGUAGES, craftProfile, LANGUAGES } from '../data/profileSchema';
-import { type ProfileExtra } from '../state/profile';
+import { type ProfileExtra, type Reel } from '../state/profile';
 import { MobileVerify } from '../ui/MobileVerify';
 
 /*
@@ -79,6 +80,10 @@ export function EntryFlow() {
   const [langs, setLangs] = useState<string[]>([]);
   const [travel, setTravel] = useState(false);
   const [reelUrl, setReelUrl] = useState('');
+  const [showreel, setShowreel] = useState<Reel | undefined>();
+  const [showreelDraft, setShowreelDraft] = useState<Reel | undefined>();
+  const previewUrls = useRef(new Set<string>());
+  useEffect(() => { const urls = previewUrls.current; return () => releaseUnusedShowreelPreviews(urls); }, []);
   const [work, setWork] = useState<Media[]>([]);
   const [link, setLink] = useState('');
 
@@ -159,7 +164,8 @@ export function EntryFlow() {
     const extra: Partial<ProfileExtra> = {
       ...(district ? { onboardingIntents: selectedIntents } : {}),
       phone: phone ?? undefined,
-      reel: words.reel && validLink(reelUrl) ? { url: reelUrl.trim(), title: words.reel } : undefined,
+      reel: district ? showreel : words.reel && validLink(reelUrl) ? { url: reelUrl.trim(), title: words.reel } : undefined,
+      ...(district ? { reelDraft: showreelDraft, featuredWork: validLink(link) ? [{ id: 'w-onboard', kind: 'external' as const, title: 'Selected work', url: link.trim() }] : [] } : {}),
       workLinks: validLink(link) ? [{ id: 'w-onboard', label: words.links, url: link.trim() }] : [],
     };
     const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
@@ -432,10 +438,10 @@ export function EntryFlow() {
           )}
 
           {step === 'work' && primary && (
-            <Onboard step={stepIndex} total={steps.length} image="moodboard" title="Add your work" onBack={back} onSkip={finishProfile} skipLabel="Skip">
-              <AddWork craft={primary} reelUrl={reelUrl} setReelUrl={setReelUrl} work={work} setWork={setWork} link={link} setLink={setLink} />
+            <Onboard className={district ? 'ana-show-work' : undefined} step={stepIndex} total={steps.length} image="moodboard" title={district ? 'Show your work' : 'Add your work'} onBack={back} onSkip={finishProfile} skipLabel={district ? 'Skip for now' : 'Skip'}>
+              {district ? <DistrictAddWork previewUrls={previewUrls.current} craft={primary} reel={showreel} draft={showreelDraft} setReel={setShowreel} setDraft={setShowreelDraft} work={work} setWork={setWork} link={link} setLink={setLink} /> : <AddWork craft={primary} reelUrl={reelUrl} setReelUrl={setReelUrl} work={work} setWork={setWork} link={link} setLink={setLink} />}
               <Button block size="l" onClick={finishProfile}>
-                {reelUrl || work.length || link ? 'Finish' : 'Show me Art and Artist'}
+                {showreel || showreelDraft || reelUrl || work.length || link ? 'Finish' : 'Show me Art and Artist'}
               </Button>
             </Onboard>
           )}
@@ -638,9 +644,24 @@ function AddWork({ craft, reelUrl, setReelUrl, work, setWork, link, setLink }: {
   );
 }
 
-function Onboard({ step, total, image, title, onBack, onSkip, skipLabel = 'Skip', children }: { step: number; total: number; image: string; title: string; onBack: () => void; onSkip?: () => void; skipLabel?: string; children: ReactNode }) {
+/** Source choices appear only after Add showreel. No profession must add video. */
+function DistrictAddWork({ craft, reel, draft, setReel, setDraft, work, setWork, link, setLink, previewUrls }: { previewUrls: Set<string>; craft: Craft; reel?: Reel; draft?: Reel; setReel: (r?: Reel) => void; setDraft: (r?: Reel) => void; work: Media[]; setWork: (m: Media[]) => void; link: string; setLink: (s: string) => void }) {
+  const words = craftProfile(craft).work;
+  const [images, setImages] = useState(false);
+  const [workLink, setWorkLink] = useState(false);
+  return <div className="ana-onboard-work">
+    <p className="meta">Add something that helps people understand what you do. Everything here is optional.</p>
+    {words.reel ? <ShowreelManager previewUrls={previewUrls} value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /> : <details className="ana-optional-reel"><summary>Showreel (optional)</summary><ShowreelManager previewUrls={previewUrls} value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></details>}
+    {words.images && <><div className="ob-work-grid">{work.map((m) => <Photo key={m.id} media={m} showPlay={false} className="ob-work-thumb" />)}</div><Button variant="secondary" onClick={() => setImages(true)}>Add portfolio images</Button></>}
+    <Button variant="secondary" onClick={() => setWorkLink(true)}>{link ? 'Edit work link' : 'Add work link'}</Button>
+    <Sheet className="ana-work-sheet" open={workLink} onClose={() => setWorkLink(false)} title="Work link"><div className="stack"><Field label="A project, sample or selected work"><input className="field" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" aria-label="Work link" /></Field><Button block onClick={() => setWorkLink(false)} disabled={!!link && !validLink(link)}>Done</Button></div></Sheet>
+    <Sheet className="ana-work-sheet" open={images} onClose={() => setImages(false)} title="Portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { setWork([...work, ...ms.filter((m) => m.kind === 'image' && !work.some((old) => old.id === m.id))]); setImages(false); }} /></Sheet>
+  </div>;
+}
+
+function Onboard({ step, total, image, title, onBack, onSkip, skipLabel = 'Skip', children, className }: { className?: string; step: number; total: number; image: string; title: string; onBack: () => void; onSkip?: () => void; skipLabel?: string; children: ReactNode }) {
   return (
-    <div className="ob">
+    <div className={`ob${className ? ` ${className}` : ''}`}>
       <div className="ob-top">
         <Photo media={art(image)} className="ob-art" showPlay={false} />
         <div className="ob-nav">

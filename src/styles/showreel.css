@@ -1,0 +1,31 @@
+/* District work surfaces share Ana's existing media card and typography. */
+.ana-work-section { display: grid; gap: 14px; margin-bottom: 32px; }
+.ana-work-section h2 { font-size: 21px; letter-spacing: -0.025em; }
+.ana-showreel { width: 100%; min-width: 0; }
+.ana-reel-cover { display: block; width: 100%; padding: 0; text-align: left; aspect-ratio: 16 / 9; }
+.ana-reel-cover > .photo, .ana-reel-cover > .reel-blank { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ana-reel-player { aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #111; }
+.ana-reel-player > iframe, .ana-reel-player > video { display: block; width: 100%; height: 100%; border: 0; object-fit: contain; }
+.ana-reel-player-actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding-top: 8px; }
+.ana-reel-draft { padding-top: 10px; }
+.ana-reel-pending { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--hairline); border-radius: 18px; background: var(--tint); }
+.ana-reel-editor .inline-note { margin: 0; border-radius: 16px; background: var(--tint); padding: 14px; }
+.ana-reel-editor { gap: 18px; }
+.ana-optional-reel { padding: 14px; margin-bottom: 28px; border: 1px solid var(--hairline); border-radius: 16px; }
+.ana-optional-reel summary { min-height: 36px; cursor: pointer; }
+.ana-optional-reel[open] summary { margin-bottom: 12px; }
+.ana-featured-work { display: grid; gap: 10px; }
+.ana-featured-item { display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 12px; background: var(--raised); border: 1px solid var(--hairline); border-radius: 16px; text-align: left; }
+.ana-featured-item > .photo { width: 64px; height: 80px; flex: none; border-radius: 10px; }
+.ana-featured-item > span, .ana-work-edit-title { display: grid; gap: 4px; min-width: 0; }
+.ana-featured-item .item-title { overflow-wrap: anywhere; }
+.ana-work-edit-row { display: grid; gap: 8px; border: 1px solid var(--hairline); padding: 14px; border-radius: 16px; }
+.ana-work-row-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.ana-work-editor .ep-add-tile { aspect-ratio: 1; border-radius: 10px; }
+.ana-onboard-work { display: grid; gap: 20px; }
+.ana-showreel progress { width: 100%; accent-color: var(--action-ink); }
+
+.ana-reel-source { display: grid; gap: 4px; }
+
+/* Keep the expanded Skip target inside its pill, away from Back. */
+.ana-show-work .ob-skip { position: relative; }

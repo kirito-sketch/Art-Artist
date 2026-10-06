@@ -1,3 +1,5 @@
+import { useFeatures } from '../../ui/features';
+import { ShowreelMedia } from './Showreel';
 import { ExternalLink, Play } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
@@ -20,9 +22,11 @@ export function useViewerKind(personId: string): Viewer {
 const show = (f: FieldDef, v: DetailValue): string => (f.type === 'range' && Array.isArray(v) ? `${v[0]}–${v[1]}` : f.type === 'number' ? `${v} ${f.unit ?? ''}`.trim() : Array.isArray(v) ? v.join(', ') : String(v));
 
 /** The reel: a link out (Ana doesn't host video in v1), with its cover. */
-export function ReelCard({ person }: { person: Person }) {
+export function ReelCard({ person, active = true }: { person: Person; active?: boolean }) {
+  const district = useFeatures().home === 'district';
   const x = profileOf(person.id);
   if (!x.reel) return null;
+  if (district) return <section className="section section--flush"><SectionHeader title="Showreel" /><ShowreelMedia reel={x.reel} active={active} /></section>;
   const host = x.reel.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
   return (
     <section className="section section--flush">
@@ -105,8 +109,9 @@ export function ProfileDetails({ person }: { person: Person }) {
 }
 
 export function WorkLinks({ person }: { person: Person }) {
+  const district = useFeatures().home === 'district';
   const x = profileOf(person.id);
-  const links = [...x.workLinks, ...x.links];
+  const links = [...(district ? [] : x.workLinks), ...x.links];
   if (!links.length) return null;
   return (
     <section className="section section--flush">

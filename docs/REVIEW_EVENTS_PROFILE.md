@@ -141,6 +141,8 @@ Onboarding, completion prompts and Edit Profile all update the **same fields** (
 
 ## 7. Showreels, portfolio and media
 
+**District update, 6 October 2026:** [SHOWREEL.md](SHOWREEL.md) supersedes this section’s link-only source model, work information architecture and onboarding asset input for District. Current and /test retain this original presentation. Native production upload is still unavailable; District now offers an honest private device preview and a separate Showreel object.
+
 **v1 sources, given the current architecture** (no video hosting):
 
 | Kind | v1 | Why |
@@ -302,3 +304,4 @@ Later: casting filters, production search tools, missed-search prompts, matching
 - **Completion:** sign in as Tara. Home asks her to verify her mobile, and her profile shows "Ways to be found".
 - **Visibility:** view Tara's profile as Kiran (playing age and accents only), then as Konark (height, build, hair and eyes too).
 - **Events:** District Home as Kiran. The Kaaval premiere leads (he's credited on it), then one Konark event (not three), then another house.
+

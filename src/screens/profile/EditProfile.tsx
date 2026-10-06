@@ -1,3 +1,5 @@
+import { useFeatures } from '../../ui/features';
+import { WorkPortfolioPage } from './WorkPortfolio';
 import { ArrowDown, ArrowUp, Camera, Check, ChevronLeft, Eye, Plus, Trash2, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
@@ -24,13 +26,14 @@ const ABOUT_MAX = 400;
 const list = (xs: string[], n = 3) => (xs.length ? xs.slice(0, n).join(', ') + (xs.length > n ? ` +${xs.length - n}` : '') : '');
 
 export function EditProfile({ section }: { section?: EditSection }) {
+  const district = useFeatures().home === 'district';
   if (!section) return <Overview />;
   if (section === 'identity') return <IdentityPage />;
   if (section === 'crafts') return <CraftsPage />;
   if (section.startsWith('details:')) return <DetailsPage setId={section.slice(8)} />;
   if (section === 'skills') return <SkillsPage />;
   if (section === 'languages') return <LanguagesPage />;
-  if (section === 'portfolio') return <PortfolioPage />;
+  if (section === 'portfolio') return district ? <WorkPortfolioPage /> : <PortfolioPage />;
   if (section === 'work') return <WorkPage />;
   if (section === 'about') return <AboutPage />;
   if (section === 'availability') return <AvailabilityPage />;

@@ -1,3 +1,5 @@
+import { useFeatures } from '../../ui/features';
+import { FeaturedWorkSection } from './WorkPortfolio';
 import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
@@ -81,7 +83,8 @@ function useNameFit(name: string) {
 
 export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?: boolean; active?: boolean }) {
   const { isSaved, toggleSave } = useStore();
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events } = useStore();
+  const district = useFeatures().home === 'district';
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events, stack } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -370,13 +373,13 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </section>
 
-        <ReelCard person={p} />
+        <ReelCard person={p} active={isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile'} />
 
         <ProfileReviewsSection id={p.id} />
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title={craftProfile(p.craft).work.images ?? 'Portfolio'} />
+            <SectionHeader title={district ? 'Portfolio' : craftProfile(p.craft).work.images ?? 'Portfolio'} />
             <div className="bento">
               {stills.map((m, i) => (
                 <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
@@ -387,7 +390,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
 
-        <WorkLinks person={p} />
+        <>{district && <FeaturedWorkSection personId={p.id} />}<WorkLinks person={p} /></>
 
         <ProfileDetails person={p} />
 
