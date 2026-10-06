@@ -1,20 +1,14 @@
-# Living Background (experiment)
+# Living Background
 
-Four directions for a living atmosphere behind Art and Artist. They are built as one reusable component and shown **on Home only**, **off by default**, so the direction can be chosen before anything spreads app-wide. This document does not rank them.
+**Decision:** Cinematic atmosphere (formerly direction B) is the background behind Home, in both versions (current Home and the District direction). It is always on in the normal app, never on `/test`, `/research` or the internal pages (`useAtmosphere()` follows `isThemedSurface()`). The setting "Background (experiment)" and directions A, C and D are removed. The rest of this document is the original exploration, kept for the record.
 
 - Component: `src/ui/ambient/LivingBackground.tsx`
-- State and device checks: `src/ui/ambient/ambient.ts`
+- Device checks (low power, reduced motion): `src/ui/ambient/ambient.ts`
 - Styles: `src/styles/ambient.css`
 
-## How to switch
+## Theme switch
 
-| Where | How |
-|---|---|
-| In the app | Settings › Appearance › **Background (experiment)**: Off, A · Ambient light, B · Cinematic atmosphere, C · Depth field, D · Silk light |
-| By link | add `?ambient=a`, `?ambient=b`, `?ambient=c`, `?ambient=d` or `?ambient=off` to any app URL (it is remembered on the device) |
-| Theme | Settings › Appearance › System / Light / Dark. Every variant has its own Light and Dark values |
-
-The choice is stored in `localStorage['aa-ambient']`. It never applies on `/test`, `/research` or the internal pages: `useAmbientVariant()` returns `off` wherever `isThemedSurface()` is false.
+Changing the theme opens the new theme as a circle from the control that was used (View Transitions API, `src/ui/theme.ts`), in both versions. Without View Transitions support, or with Reduce Motion, it falls back to the short crossfade (or none). The current version keeps Settings › Appearance (System, Light, Dark); the District version has a single **Dark mode** switch in Settings.
 
 ## 1. Audit: where atmosphere helps and where it distracts
 

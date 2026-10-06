@@ -14,7 +14,7 @@ import { shared, stagger } from '../../ui/motion';
 import { Button, FollowButton, IconButton, PressCard, SectionHeader, Skeleton, Verified } from '../../ui/primitives';
 import { Logo } from '../../ui/Logo';
 import { LivingBackground } from '../../ui/ambient/LivingBackground';
-import { useAmbientVariant } from '../../ui/ambient/ambient';
+import { useAtmosphere } from '../../ui/ambient/ambient';
 import { NetworkRow } from './NetworkActivity';
 import { FeaturedCard } from './OpportunityCard';
 import { FirstStep, Resolve, useWorldForming } from './FirstHome';
@@ -37,9 +37,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
   // First session: a person just out of onboarding (or the "New user" test state). No network yet.
   const first = !loading && (store.isNewPerson || scenario.newUser);
   const forming = useWorldForming(first);
-  // Living background experiment (Settings › Appearance › Background): Home only, off by default.
-  const ambient = useAmbientVariant();
-  const ambientOn = ambient !== 'off';
+  // Cinematic atmosphere behind Home (docs/LIVING_BACKGROUND.md).
+  const ambientOn = useAtmosphere();
 
   const publishingId = store.publishing?.id;
   useEffect(() => {
@@ -88,7 +87,7 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
 
   return (
     <>
-      {ambientOn && <LivingBackground variant={ambient as Exclude<typeof ambient, 'off'>} scrollRef={scrollRef} />}
+      {ambientOn && <LivingBackground scrollRef={scrollRef} />}
       <div className={`screen screen--hero canvas v-home${ambientOn ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
         {header('home-header--inline')}
 

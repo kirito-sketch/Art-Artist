@@ -34,3 +34,15 @@ The real review system (docs/REVIEWS.md): Out this Friday, Top rated, and Recent
 ## Media
 
 Tile icons: `public/images/tiles/*.webp`. Spotlight clips: `public/video/<project>.{webm,mp4}`, made from the projects' still images (there is no real footage yet).
+
+## Top of Home
+
+Behind the header and tiles: the cinematic atmosphere every Home has, plus one backdrop being decided on Studio › Compare (`?dhbg=`):
+
+| Option | What it is |
+| --- | --- |
+| `artwork` (default) | The spotlight's current artwork, blurred into a soft field of its colours; it crossfades as the spotlight moves, like District's banner-tinted header |
+| `brand` | A quiet band of the brand green fading into the page |
+| `plain` | Nothing extra, only the atmosphere |
+
+The earlier drifting three-colour glow is removed. Settings has a single Dark mode switch (no Appearance page, no background experiment).

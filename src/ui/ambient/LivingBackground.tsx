@@ -1,23 +1,24 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { useLowPower, type AmbientVariant } from './ambient';
+import { useLowPower } from './ambient';
 
 /*
- * Art and Artist living background (experiment, docs/LIVING_BACKGROUND.md). A layer behind a screen's
- * content, never inside the scroller, so it costs nothing per scrolled pixel:
+ * Cinematic atmosphere (docs/LIVING_BACKGROUND.md): a warm key light, a cool bounce, fine grain and a soft
+ * vignette behind Home in both versions. A layer behind a screen's content, never inside the scroller, so it
+ * costs nothing per scrolled pixel:
  *
  *  - idle motion is CSS keyframes on transform and opacity only (the compositor runs them, no JavaScript,
  *    no repaint). Each light has its own path and a duration that shares no small factor with the others
- *    (53s, 79s, 107s for A), so the combined image does not visibly repeat;
+ *    (61s and 83s), so the combined image does not visibly repeat;
  *  - the lights are radial gradients drawn small and scaled up (they are soft, so nothing is lost), so their
  *    GPU textures stay small;
  *  - scroll response is one transform per frame on one wrapper (requestAnimationFrame, passive listener):
- *    the atmosphere moves at a small fraction of the content (12%; depth layers 4 to 16%);
+ *    the atmosphere moves at a small fraction of the content (10%);
  *  - large imagery on screen lowers the atmosphere (opacity), so photography always reads first;
  *  - Reduce Motion or low power: the same composition, still. The tab being inactive pauses it.
  *
  * `tint` is the hook for contextual colour later (a project's key artwork, a profile's work); not used yet.
  */
-export function LivingBackground({ variant, scrollRef, tint }: { variant: Exclude<AmbientVariant, 'off'>; scrollRef: RefObject<HTMLElement | null>; tint?: string }) {
+export function LivingBackground({ scrollRef, tint }: { scrollRef: RefObject<HTMLElement | null>; tint?: string }) {
   const root = useRef<HTMLDivElement>(null);
   const low = useLowPower();
 
@@ -68,50 +69,16 @@ export function LivingBackground({ variant, scrollRef, tint }: { variant: Exclud
       io.disconnect();
       mo.disconnect();
     };
-  }, [scrollRef, low, variant]);
+  }, [scrollRef, low]);
 
   return (
-    <div ref={root} className={`ambient ambient--${variant}${low ? ' is-still' : ''}`} aria-hidden style={tint ? ({ '--ambient-tint': tint } as React.CSSProperties) : undefined}>
-      {variant === 'a' && (
-        <div className="ambient-depth" data-depth="0.12">
-          <span className="ambient-light ambient-light--1" />
-          <span className="ambient-light ambient-light--2" />
-          <span className="ambient-light ambient-light--3" />
-        </div>
-      )}
-      {variant === 'b' && (
-        <>
-          <div className="ambient-depth" data-depth="0.1">
-            <span className="ambient-light ambient-light--key" />
-            <span className="ambient-light ambient-light--bounce" />
-          </div>
-          <span className="ambient-grain" style={{ backgroundImage: `url(${grain()})` }} />
-          <span className="ambient-vignette" />
-        </>
-      )}
-      {variant === 'c' && (
-        <>
-          <div className="ambient-depth" data-depth="0.04">
-            <span className="ambient-plane ambient-plane--far" />
-          </div>
-          <div className="ambient-depth" data-depth="0.09">
-            <span className="ambient-plane ambient-plane--mid" />
-          </div>
-          <div className="ambient-depth" data-depth="0.16">
-            <span className="ambient-plane ambient-plane--near" />
-          </div>
-        </>
-      )}
-      {variant === 'd' && (
-        <div className="ambient-depth ambient-depth--silk" data-depth="0.35">
-          <div className="ambient-silk">
-            <span className="ambient-fold ambient-fold--1" />
-            <span className="ambient-fold ambient-fold--2" />
-            <span className="ambient-fold ambient-fold--3" />
-            <span className="ambient-fold ambient-fold--4" />
-          </div>
-        </div>
-      )}
+    <div ref={root} className={`ambient ambient--b${low ? ' is-still' : ''}`} aria-hidden style={tint ? ({ '--ambient-tint': tint } as React.CSSProperties) : undefined}>
+      <div className="ambient-depth" data-depth="0.1">
+        <span className="ambient-light ambient-light--key" />
+        <span className="ambient-light ambient-light--bounce" />
+      </div>
+      <span className="ambient-grain" style={{ backgroundImage: `url(${grain()})` }} />
+      <span className="ambient-vignette" />
     </div>
   );
 }

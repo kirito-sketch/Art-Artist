@@ -1,10 +1,10 @@
-import { Bell, Building2, Check, ChevronLeft, CircleHelp, Info, Palette, Shield, UserRound } from 'lucide-react';
+import { Bell, Building2, Check, ChevronLeft, CircleHelp, Info, Moon, Palette, Shield, UserRound } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
 import { usePref } from '../../state/settingsPrefs';
-import { setAppearance, useAppearance, type Appearance } from '../../ui/theme';
-import { setAmbientVariant, useAmbientVariant, type AmbientVariant } from '../../ui/ambient/ambient';
+import { originOf, setAppearance, useAppearance, useTheme, type Appearance } from '../../ui/theme';
+import { useFeatures } from '../../ui/features';
 import { ANA_PROTOTYPE_VERSION } from '../../version';
 import { Avatar, Button, IconButton, Row, Toggle, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
@@ -62,6 +62,19 @@ function Switch({ id, label, sub, initial }: { id: string; label: string; sub?: 
 }
 
 /** A row on the index that opens a group's page: icon, label, the current value when it helps, chevron. */
+/** Appearance: in the District version a single Dark mode switch; in the current version the System, Light, Dark page. */
+function AppearanceRow() {
+  const appearance = useAppearance();
+  const theme = useTheme();
+  const district = useFeatures().home === 'district';
+  if (!district) return <NavRow icon={<Palette size={19} />} label="Appearance" value={APPEARANCE.find((a) => a.id === appearance)!.label} page="appearance" />;
+  return (
+    <Row icon={<span className="settings-icon"><Moon size={19} /></span>} label="Dark mode" chevron={false} value={<span onClick={(e) => {
+      setAppearance(theme === 'dark' ? 'light' : 'dark', originOf(e.currentTarget));
+    }}><Toggle on={theme === 'dark'} onChange={() => undefined} label="Dark mode" /></span>} />
+  );
+}
+
 function NavRow({ icon, label, value, page }: { icon: ReactNode; label: string; value?: string; page: SettingsPage }) {
   const { push } = useStore();
   return <Row icon={<span className="settings-icon">{icon}</span>} label={label} value={value} onPress={() => push({ name: 'settings', page })} />;
@@ -90,7 +103,6 @@ export function SettingsScreen({ page }: { page?: SettingsPage }) {
 /** The index: groups of pages, then Sign out. Nothing is changed here, everything is one tap away. */
 function Personal() {
   const { memberships, startEntry } = useStore();
-  const appearance = useAppearance();
   const [signOut, setSignOut] = useState(false);
   return (
     <div className="settings settings--index">
@@ -100,7 +112,7 @@ function Personal() {
       </Group>
 
       <Group title="Preferences">
-        <NavRow icon={<Palette size={19} />} label="Appearance" value={APPEARANCE.find((a) => a.id === appearance)!.label} page="appearance" />
+        <AppearanceRow />
         <NavRow icon={<Bell size={19} />} label="Notifications" page="notifications" />
       </Group>
 
@@ -265,24 +277,15 @@ function PersonalPage({ page }: { page: SettingsPage }) {
   );
 }
 
-const AMBIENT: { id: AmbientVariant; label: string; sub: string }[] = [
-  { id: 'off', label: 'Off', sub: 'The current background.' },
-  { id: 'a', label: 'A · Ambient light', sub: 'Soft light moving slowly behind Home.' },
-  { id: 'b', label: 'B · Cinematic atmosphere', sub: 'Light, a fine texture and a gentle vignette.' },
-  { id: 'c', label: 'C · Depth field', sub: 'Quiet layers that move at different depths as you scroll.' },
-  { id: 'd', label: 'D · Silk light', sub: 'A wash of colour at the top, with slow folds of light.' },
-];
-
 /** System, Light or Dark. Applies at once, no Save; stored on this device. */
 function AppearancePage() {
   const appearance = useAppearance();
-  const ambient = useAmbientVariant();
   return (
     <div className="settings">
       <section className="settings-group">
         <div className="group picker settings-radio" role="radiogroup" aria-label="Appearance">
           {APPEARANCE.map((a) => (
-            <button key={a.id} role="radio" aria-checked={appearance === a.id} className={`picker-row ${appearance === a.id ? 'is-on' : ''}`} onClick={() => setAppearance(a.id)}>
+            <button key={a.id} role="radio" aria-checked={appearance === a.id} className={`picker-row ${appearance === a.id ? 'is-on' : ''}`} onClick={(e) => setAppearance(a.id, originOf(e.currentTarget))}>
               <span className="settings-label">
                 <span>{a.label}</span>
                 <span className="meta">{a.sub}</span>
@@ -291,22 +294,6 @@ function AppearancePage() {
             </button>
           ))}
         </div>
-      </section>
-      {/* Temporary, for choosing a direction (docs/LIVING_BACKGROUND.md). Applies to Home only. */}
-      <section className="settings-group">
-        <h2 className="settings-h">Background (experiment)</h2>
-        <div className="group picker settings-radio" role="radiogroup" aria-label="Background (experiment)">
-          {AMBIENT.map((a) => (
-            <button key={a.id} role="radio" aria-checked={ambient === a.id} className={`picker-row ${ambient === a.id ? 'is-on' : ''}`} onClick={() => setAmbientVariant(a.id)}>
-              <span className="settings-label">
-                <span>{a.label}</span>
-                <span className="meta">{a.sub}</span>
-              </span>
-              {ambient === a.id && <Check size={18} strokeWidth={2.4} aria-hidden />}
-            </button>
-          ))}
-        </div>
-        <p className="meta settings-note">Shown on Home only while we compare the three directions.</p>
       </section>
     </div>
   );
@@ -326,7 +313,6 @@ const MEMBERS: Record<string, { name: string; role: string; credits: boolean; yo
 
 function House({ id }: { id: string }) {
   const { push, canIssue } = useStore();
-  const appearance = useAppearance();
   const o = org(id);
   const members = (MEMBERS[id] ?? []).map((m) => (m.you ? { ...m, credits: canIssue } : m));
   return (
@@ -368,7 +354,7 @@ function House({ id }: { id: string }) {
 
       {/* A setting of this phone, not of the house: the same page as from personal settings. */}
       <Group title="This device">
-        <NavRow icon={<Palette size={19} />} label="Appearance" value={APPEARANCE.find((a) => a.id === appearance)!.label} page="appearance" />
+        <AppearanceRow />
       </Group>
     </div>
   );

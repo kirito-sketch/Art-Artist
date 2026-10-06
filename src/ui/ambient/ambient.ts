@@ -2,45 +2,10 @@ import { useSyncExternalStore } from 'react';
 import { isThemedSurface } from '../themeCore';
 
 /*
- * The living background experiment (docs/LIVING_BACKGROUND.md). Three directions, compared on Home only:
- *   a: Ambient light   b: Cinematic atmosphere   c: Depth field   d: Silk light
- * Off by default. Chosen in Settings › Appearance › Background (experiment), or with ?ambient=a|b|c|d|off,
- * and stored on this device. Never on /test, /research or the internal pages.
+ * Cinematic atmosphere is the one background, behind Home in both versions. It belongs to the normal app
+ * only: never on /test, /research or the internal pages.
  */
-export type AmbientVariant = 'off' | 'a' | 'b' | 'c' | 'd';
-const VARIANTS: AmbientVariant[] = ['off', 'a', 'b', 'c', 'd'];
-const KEY = 'aa-ambient';
-
-const read = (): AmbientVariant => {
-  try {
-    const q = new URLSearchParams(location.search).get('ambient');
-    if (q && VARIANTS.includes(q as AmbientVariant)) {
-      localStorage.setItem(KEY, q);
-      return q as AmbientVariant;
-    }
-    const v = localStorage.getItem(KEY);
-    return VARIANTS.includes(v as AmbientVariant) ? (v as AmbientVariant) : 'off';
-  } catch {
-    return 'off';
-  }
-};
-
-let variant: AmbientVariant = typeof window === 'undefined' ? 'off' : read();
-const listeners = new Set<() => void>();
-const subscribe = (l: () => void) => (listeners.add(l), () => listeners.delete(l));
-
-export function setAmbientVariant(v: AmbientVariant) {
-  variant = v;
-  try {
-    localStorage.setItem(KEY, v);
-  } catch {
-    /* storage blocked: applies for this session */
-  }
-  listeners.forEach((l) => l());
-}
-
-/** The variant in use here: always 'off' outside the normal app. */
-export const useAmbientVariant = () => useSyncExternalStore(subscribe, () => (isThemedSurface() ? variant : 'off'), () => 'off' as AmbientVariant);
+export const useAtmosphere = () => isThemedSurface();
 
 /* ------------------------------------------------------------ device state */
 

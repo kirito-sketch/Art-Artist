@@ -181,3 +181,17 @@ html[data-theme='dark'] .phone[data-look='minimal'] .toast {
   color: var(--text);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 244, 230, 0.1);
 }
+
+/* The theme switch: the new theme opens as a circle from the control (src/ui/theme.ts). The old picture
+   stays still underneath; only the new one is clipped. */
+html.theme-reveal::view-transition-old(root),
+html.theme-reveal::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html.theme-reveal::view-transition-old(root) {
+  z-index: 1;
+}
+html.theme-reveal::view-transition-new(root) {
+  z-index: 2;
+}

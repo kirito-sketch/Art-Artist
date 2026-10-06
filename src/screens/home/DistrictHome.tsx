@@ -12,7 +12,8 @@ import { discoverPosts, findOpportunity, org, party, person } from '../../state/
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world } from '../../state/world';
-import { useLowPower } from '../../ui/ambient/ambient';
+import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
+import { LivingBackground } from '../../ui/ambient/LivingBackground';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { useFeatures } from '../../ui/features';
 import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable } from '../../ui/primitives';
@@ -40,6 +41,18 @@ const DEPT: Partial<Record<Craft, { crafts: Craft[]; label: string }>> = {
 };
 const deptOf = (c: Craft) => DEPT[c] ?? { crafts: [c], label: CRAFTS.find((x) => x.id === c)?.label ?? 'People' };
 const first = (name: string) => name.split(' ')[0];
+/*
+ * What sits behind the header and tiles, chosen on Studio › Compare while the direction is decided (?dhbg=):
+ *   artwork   the spotlight's current artwork, blurred into a soft colour field that changes with it (default)
+ *   brand     a quiet band of the brand green that fades into the page
+ *   plain     nothing extra: only the cinematic atmosphere every Home has
+ */
+type Backdrop = 'artwork' | 'brand' | 'plain';
+const BACKDROP: Backdrop = (() => {
+  const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('dhbg');
+  return v === 'brand' || v === 'plain' ? v : 'artwork';
+})();
+
 const CLIPS = new Set(['neela', 'kaaval', 'backwaters', 'monsoon', 'faultlines', 'neeliraat']);
 
 function motionOk() {
@@ -123,6 +136,10 @@ export function DistrictHome({ go }: { go: Go }) {
 
   const near = seed.people.filter((p) => p.id !== me.id && dept.crafts.includes(p.craft) && p.city === me.city && p.visibility !== 'private' && p.visibility !== 'removed').slice(0, 4);
 
+  const [spot, setSpot] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const atmosphere = useAtmosphere();
+
   const tiles: { key: string; label: string; icon: string; open: () => void; wide?: boolean }[] = [
     ...(features.events ? [{ key: 'events', label: 'Events', icon: 'events', open: () => push({ name: 'browse', scope: 'events' }) }] : []),
     { key: 'projects', label: 'Projects', icon: 'projects', open: () => push({ name: 'browse', scope: 'projects' }) },
@@ -132,14 +149,20 @@ export function DistrictHome({ go }: { go: Go }) {
   ];
 
   return (
-    <div className="screen canvas v-home dh" data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
-      <div className="dh-wash">
-        {/* A slow-moving wash of colour behind the header and tiles, like District's. Decorative. */}
-        <span className="dh-glow" aria-hidden>
-          <i />
-          <i />
-          <i />
-        </span>
+    <>
+    {atmosphere && <LivingBackground scrollRef={scrollRef} />}
+    <div className={`screen canvas v-home dh${atmosphere ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
+      <div className={`dh-wash dh-wash--${BACKDROP}`}>
+        {BACKDROP === 'artwork' && spotlight.length > 0 && (
+          <span className="dh-art" aria-hidden>
+            {spotlight.map((w, k) => (
+              <span key={w.id} className={k === spot % spotlight.length ? 'on' : ''}>
+                <Photo media={w.stills[0] ?? w.media} showPlay={false} />
+              </span>
+            ))}
+          </span>
+        )}
+        {BACKDROP === 'brand' && <span className="dh-band" aria-hidden />}
         <header className="dh-head">
           <h1 className="sr-only">Home</h1>
           <MapPin size={20} className="dh-pin" aria-hidden />
@@ -168,7 +191,7 @@ export function DistrictHome({ go }: { go: Go }) {
       {spotlight.length > 0 && (
         <section className="dh-sec" aria-label="In the spotlight">
           <h2 className="dh-h">In the spotlight</h2>
-          <Spotlight items={spotlight} rolesOf={rolesOf} meId={me.id} />
+          <Spotlight items={spotlight} rolesOf={rolesOf} meId={me.id} i={spot} setI={setSpot} />
         </section>
       )}
 
@@ -327,6 +350,7 @@ export function DistrictHome({ go }: { go: Go }) {
         </div>
       </section>
     </div>
+    </>
   );
 }
 
@@ -343,9 +367,8 @@ function DateBlock({ ms, big }: { ms: number; big?: boolean }) {
 }
 
 /** Centred carousel: moves on its own, the centre card plays its clip; touching it stops the movement. */
-function Spotlight({ items, rolesOf, meId }: { items: Work[]; rolesOf: (w: Work) => { role: string }[]; meId: string }) {
+function Spotlight({ items, rolesOf, meId, i, setI }: { items: Work[]; rolesOf: (w: Work) => { role: string }[]; meId: string; i: number; setI: (f: number | ((x: number) => number)) => void }) {
   const { push } = useStore();
-  const [i, setI] = useState(0);
   const held = useRef(false);
   const low = useLowPower();
   const animate = motionOk() && !low;

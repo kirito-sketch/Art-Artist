@@ -31,12 +31,35 @@ let fadeTimer = 0;
 
 export const resolveTheme = (a: Appearance = appearance): Theme => (a === 'system' ? (dark?.matches ? 'dark' : 'light') : a);
 
-function apply(animate: boolean) {
+/** Where the change was asked for (the control's centre, in page pixels): the new theme grows out of it. */
+export type Origin = { x: number; y: number };
+type VT = { ready: Promise<void>; finished: Promise<void> };
+
+function apply(animate: boolean, origin?: Origin) {
   if (!enabled) return;
   const root = document.documentElement;
   const next = resolveTheme();
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[next]);
   if (root.dataset.theme === next) return;
+  const start = (document as unknown as { startViewTransition?: (cb: () => void) => VT }).startViewTransition;
+  if (animate && origin && start && !reduced?.matches) {
+    // A circle of the new theme opens from the control and covers the screen (like District's switch).
+    root.classList.add('theme-reveal');
+    const t = start.call(document, () => {
+      root.dataset.theme = next;
+    });
+    const r = Math.hypot(Math.max(origin.x, innerWidth - origin.x), Math.max(origin.y, innerHeight - origin.y));
+    t.ready
+      .then(() =>
+        root.animate(
+          { clipPath: [`circle(0px at ${origin.x}px ${origin.y}px)`, `circle(${r}px at ${origin.x}px ${origin.y}px)`] },
+          { duration: 620, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', pseudoElement: '::view-transition-new(root)' } as KeyframeAnimationOptions,
+        ),
+      )
+      .catch(() => undefined);
+    t.finished.finally(() => root.classList.remove('theme-reveal'));
+    return;
+  }
   if (animate && !reduced?.matches) {
     root.classList.add('theme-fade');
     window.clearTimeout(fadeTimer);
@@ -56,16 +79,22 @@ export function enableTheme() {
   });
 }
 
-export function setAppearance(a: Appearance) {
+export function setAppearance(a: Appearance, origin?: Origin) {
   appearance = a;
   try {
     localStorage.setItem(APPEARANCE_KEY, a);
   } catch {
     /* storage blocked: the choice still applies for this session */
   }
-  apply(true);
+  apply(true, origin);
   emit();
 }
+
+/** The centre of the control that was used, for the reveal. */
+export const originOf = (el: Element): Origin => {
+  const b = el.getBoundingClientRect();
+  return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+};
 
 const subscribe = (l: () => void) => (listeners.add(l), () => listeners.delete(l));
 export const useAppearance = () => useSyncExternalStore(subscribe, () => appearance, () => 'system' as Appearance);

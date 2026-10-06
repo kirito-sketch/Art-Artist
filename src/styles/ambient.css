@@ -1,8 +1,8 @@
 /*
- * Living background experiment (src/ui/ambient/LivingBackground.tsx, docs/LIVING_BACKGROUND.md).
- * Home only, off by default. Every moving property is transform or opacity.
+ * Cinematic atmosphere behind Home in both versions (src/ui/ambient/LivingBackground.tsx,
+ * docs/LIVING_BACKGROUND.md). Every moving property is transform or opacity.
  *
- * Each variant defines its colours as custom properties per theme. Light: illumination on a paper surface
+ * Colours are custom properties per theme. Light: illumination on a paper surface
  * (a little brighter, a little cooler, barely any colour). Dark: a neutral charcoal with soft warm
  * illumination and a restrained trace of the brand green.
  */
@@ -43,8 +43,7 @@
 
 /* A light: a soft radial gradient drawn at a modest size and scaled up (soft gradients lose nothing),
    so its GPU texture stays small. Its resting transform is also the Reduce Motion pose. */
-.phone .ambient-light,
-.phone .ambient-plane {
+.phone .ambient-light {
   position: absolute;
   display: block;
   border-radius: 50%;
@@ -52,41 +51,6 @@
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-direction: alternate;
-}
-
-/* ============================================================ A: Ambient light */
-.phone .ambient--a {
-  --a1: rgba(255, 253, 248, 1); /* daylight on paper */
-  --a2: rgba(192, 205, 219, 0.62); /* cool skylight shade */
-  --a3: rgba(39, 92, 80, 0.09); /* a trace of the brand green */
-}
-.phone .ambient--a .ambient-light {
-  width: 46%;
-  aspect-ratio: 1;
-}
-.phone .ambient--a .ambient-light--1 {
-  left: 2%;
-  top: 4%;
-  background: radial-gradient(closest-side, var(--a1), transparent);
-  transform: translate3d(-12%, -8%, 0) scale(2.5);
-  animation-name: ambient-drift-1;
-  animation-duration: 53s;
-}
-.phone .ambient--a .ambient-light--2 {
-  right: 0;
-  top: 34%;
-  background: radial-gradient(closest-side, var(--a2), transparent);
-  transform: translate3d(8%, 4%, 0) scale(2.3);
-  animation-name: ambient-drift-2;
-  animation-duration: 79s;
-}
-.phone .ambient--a .ambient-light--3 {
-  left: 20%;
-  top: 70%;
-  background: radial-gradient(closest-side, var(--a3), transparent);
-  transform: translate3d(-4%, 12%, 0) scale(2.6);
-  animation-name: ambient-drift-3;
-  animation-duration: 107s;
 }
 
 /* ============================================================ B: Cinematic atmosphere */
@@ -131,136 +95,13 @@
   background: radial-gradient(ellipse 90% 75% at 50% 38%, transparent 55%, var(--b-vignette) 100%);
 }
 
-/* ============================================================ C: Depth field */
-.phone .ambient--c {
-  --c-far: rgba(255, 255, 255, 0.9);
-  --c-mid: rgba(214, 199, 176, 0.7);
-  --c-near: rgba(188, 209, 202, 0.66);
-}
-.phone .ambient--c .ambient-plane--far {
-  left: -30%;
-  top: 6%;
-  width: 160%;
-  height: 34%;
-  background: radial-gradient(closest-side, var(--c-far), transparent);
-  transform: translate3d(0, 0, 0) rotate(-8deg);
-  animation-name: ambient-plane-1;
-  animation-duration: 97s;
-}
-.phone .ambient--c .ambient-plane--mid {
-  left: -20%;
-  top: 38%;
-  width: 140%;
-  height: 30%;
-  background: radial-gradient(closest-side, var(--c-mid), transparent);
-  transform: translate3d(0, 0, 0) rotate(6deg);
-  animation-name: ambient-plane-2;
-  animation-duration: 127s;
-}
-.phone .ambient--c .ambient-plane--near {
-  left: -25%;
-  top: 74%;
-  width: 150%;
-  height: 32%;
-  background: radial-gradient(closest-side, var(--c-near), transparent);
-  transform: translate3d(0, 0, 0) rotate(-4deg);
-  animation-name: ambient-plane-3;
-  animation-duration: 151s;
-}
-
-/* ============================================================ D: Silk light
- * A blue-hour wash anchored to the top of the screen, crossed by slow folds of light like silk,
- * falling away into the ground by mid-screen. Bolder than A to C: colour you see at once, not only feel.
- * The folds are wide rotated bands of soft linear gradient (ridge, sheen, trough), moved on transform only. */
-.phone .ambient--d {
-  --d-wash: rgba(70, 92, 170, 0.17); /* blue hour: a cool mist on paper */
-  --d-wash-mid: rgba(70, 92, 170, 0.06);
-  --d-ridge: rgba(255, 255, 255, 0.75);
-  --d-sheen: rgba(255, 255, 255, 0.95);
-  --d-trough: rgba(60, 80, 150, 0.12);
-}
-/* The wash stays at full strength over imagery: it lives above the content, not behind photographs. */
-.phone .ambient--d > * {
-  opacity: 1;
-}
-.phone .ambient--d .ambient-depth--silk {
-  inset: 0 0 auto 0;
-  height: 72%;
-}
-.phone .ambient--d .ambient-silk {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: linear-gradient(to bottom, var(--d-wash) 0%, var(--d-wash-mid) 50%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 100%);
-}
-.phone .ambient--d .ambient-fold {
-  position: absolute;
-  left: -60%;
-  width: 220%;
-  height: 44%;
-  display: block;
-  background: linear-gradient(180deg, transparent 0%, var(--d-trough) 22%, transparent 38%, var(--d-ridge) 50%, var(--d-sheen) 53.5%, var(--d-ridge) 57%, transparent 72%);
-  will-change: transform;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-}
-.phone .ambient--d .ambient-fold--1 {
-  top: -10%;
-  transform: translate3d(0, 0, 0) rotate(-24deg);
-  animation-name: ambient-fold-1;
-  animation-duration: 19s;
-}
-.phone .ambient--d .ambient-fold--2 {
-  top: 8%;
-  opacity: 0.75;
-  transform: translate3d(0, 0, 0) rotate(-13deg);
-  animation-name: ambient-fold-2;
-  animation-duration: 26s;
-}
-.phone .ambient--d .ambient-fold--3 {
-  top: 22%;
-  opacity: 0.55;
-  transform: translate3d(0, 0, 0) rotate(-31deg);
-  animation-name: ambient-fold-3;
-  animation-duration: 33s;
-}
-.phone .ambient--d .ambient-fold--4 {
-  top: -4%;
-  opacity: 0.4;
-  transform: translate3d(0, 0, 0) rotate(14deg);
-  animation-name: ambient-fold-4;
-  animation-duration: 41s;
-}
-
 /* ============================================================ Dark */
-html[data-theme='dark'] .phone[data-look='minimal'] .ambient--a {
-  --a1: rgba(255, 196, 140, 0.17);
-  --a2: rgba(47, 117, 101, 0.28);
-  --a3: rgba(120, 142, 176, 0.14);
-}
 html[data-theme='dark'] .phone[data-look='minimal'] .ambient--b {
   --b-key: rgba(255, 204, 156, 0.18);
   --b-bounce: rgba(47, 117, 101, 0.22);
   --b-grain: 0.045;
   --b-vignette: rgba(0, 0, 0, 0.6);
 }
-html[data-theme='dark'] .phone[data-look='minimal'] .ambient--c {
-  --c-far: rgba(255, 236, 214, 0.12);
-  --c-mid: rgba(47, 117, 101, 0.26);
-  --c-near: rgba(150, 170, 205, 0.12);
-}
-
-html[data-theme='dark'] .phone[data-look='minimal'] .ambient--d {
-  --d-wash: rgba(58, 72, 150, 0.74); /* blue hour: deep indigo into charcoal */
-  --d-wash-mid: rgba(40, 50, 105, 0.32);
-  --d-ridge: rgba(140, 160, 235, 0.32);
-  --d-sheen: rgba(225, 232, 255, 0.26);
-  --d-trough: rgba(8, 10, 28, 0.4);
-}
-
 /* ============================================================ Paths
  * Small displacements (a few percent of a light's size) and small scale changes. With different durations
  * and alternate direction, the combination does not repeat on any timescale a person would notice. */
@@ -276,47 +117,6 @@ html[data-theme='dark'] .phone[data-look='minimal'] .ambient--d {
   75% { transform: translate3d(6%, -16%, 0) scale(2.35); }
   100% { transform: translate3d(-8%, 10%, 0) scale(2.6); }
 }
-@keyframes ambient-drift-3 {
-  0% { transform: translate3d(-4%, 12%, 0) scale(2.6); }
-  35% { transform: translate3d(16%, -4%, 0) scale(2.4); }
-  70% { transform: translate3d(-10%, -12%, 0) scale(2.75); }
-  100% { transform: translate3d(6%, 8%, 0) scale(2.5); }
-}
-@keyframes ambient-plane-1 {
-  0% { transform: translate3d(0, 0, 0) rotate(-8deg); }
-  50% { transform: translate3d(6%, 8%, 0) rotate(-6deg); }
-  100% { transform: translate3d(-4%, 4%, 0) rotate(-9deg); }
-}
-@keyframes ambient-plane-2 {
-  0% { transform: translate3d(0, 0, 0) rotate(6deg); }
-  50% { transform: translate3d(-6%, -6%, 0) rotate(8deg); }
-  100% { transform: translate3d(4%, 6%, 0) rotate(5deg); }
-}
-@keyframes ambient-plane-3 {
-  0% { transform: translate3d(0, 0, 0) rotate(-4deg); }
-  50% { transform: translate3d(4%, -8%, 0) rotate(-2deg); }
-  100% { transform: translate3d(-6%, 4%, 0) rotate(-5deg); }
-}
-@keyframes ambient-fold-1 {
-  0% { transform: translate3d(0, 0, 0) rotate(-24deg); }
-  50% { transform: translate3d(9%, 12%, 0) rotate(-19deg) scale(1.08); }
-  100% { transform: translate3d(-6%, 5%, 0) rotate(-27deg) scale(1.02); }
-}
-@keyframes ambient-fold-2 {
-  0% { transform: translate3d(0, 0, 0) rotate(-13deg); }
-  50% { transform: translate3d(-10%, -8%, 0) rotate(-17deg) scale(1.1); }
-  100% { transform: translate3d(7%, 10%, 0) rotate(-9deg); }
-}
-@keyframes ambient-fold-3 {
-  0% { transform: translate3d(0, 0, 0) rotate(-31deg); }
-  50% { transform: translate3d(8%, -12%, 0) rotate(-26deg) scale(1.06); }
-  100% { transform: translate3d(-8%, 6%, 0) rotate(-34deg) scale(1.12); }
-}
-@keyframes ambient-fold-4 {
-  0% { transform: translate3d(0, 0, 0) rotate(14deg); }
-  50% { transform: translate3d(-7%, 10%, 0) rotate(10deg) scale(1.08); }
-  100% { transform: translate3d(9%, -4%, 0) rotate(18deg); }
-}
 @keyframes ambient-grain {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-18px, 12px, 0); }
@@ -329,9 +129,7 @@ html[data-theme='dark'] .phone[data-look='minimal'] .ambient--d {
   animation-play-state: paused;
 }
 .phone .ambient.is-still .ambient-light,
-.phone .ambient.is-still .ambient-plane,
-.phone .ambient.is-still .ambient-grain,
-.phone .ambient.is-still .ambient-fold {
+.phone .ambient.is-still .ambient-grain {
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
