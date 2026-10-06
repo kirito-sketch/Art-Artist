@@ -1,4 +1,4 @@
-import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Play, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
@@ -18,6 +18,9 @@ import { useHeroParallax } from '../../ui/useHeroParallax';
 import { EventsSection } from '../event/eventUnits';
 import { eventsOfHost, speakingAt } from '../../state/events';
 import { ProfileReviewsSection } from '../reviews/ReviewsScreen';
+import { ProfileDetails, ReelCard, WaysToBeFound, WorkLinks } from './profileUnits';
+import { profileOf } from '../../state/profile';
+import { craftProfile } from '../../data/profileSchema';
 
 /**
  * Two kinds of evidence, never mixed: verified credits (issued by a production and accepted by the
@@ -78,7 +81,7 @@ function useNameFit(name: string) {
 
 export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?: boolean; active?: boolean }) {
   const { isSaved, toggleSave } = useStore();
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, userPortfolio, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -143,15 +146,15 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
   const d = derive(p);
   const credits = d.credits;
-  const work = own ? [...userPortfolio, ...d.work] : d.work;
-  const reel = work.find((m) => m.kind === 'video');
-  const stills = work.filter((m) => m !== reel);
+  const work = d.work;
+  const reel = profileOf(id).reel;
+  const stills = work;
   const bento = bentoLayout(stills.length);
   const posts = [...userPosts.filter((x) => x.authorId === id), ...seed.posts.filter((x) => x.authorId === id)];
   const collabs = seed.opportunities.filter((o) => o.authorId === id);
   const from = own ? (availability.open ? availability.from : null) : p.availableFrom ?? null;
   const isFollowing = following.includes(id);
-  const backdrop = reel ?? work[0] ?? d.credits[0]?.media;
+  const backdrop = reel?.cover ?? work[0] ?? d.credits[0]?.media;
   // The hero is the person's work; the person themself is the portrait in the identity block below
   // (Person, Craft, Work, Credibility). With no work yet a neutral Art and Artist illustration stands in (the
   // photo would only repeat the portrait), never a broken image.
@@ -275,6 +278,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </div>
 
+        {own && <WaysToBeFound person={p} />}
+
         {/* Private to you, one quiet line: what you saved and what you sent. */}
         {own && (
           <div className="pid-private">
@@ -365,29 +370,13 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </section>
 
-        {reel && (
-          <section className="section section--flush">
-            <SectionHeader title="Showreel" />
-            <Pressable className="reel" onClick={() => push({ name: 'media', items: [reel], index: 0 })} scale={0.985}>
-              <Photo media={reel} showPlay={false} />
-              <span className="reel-play" aria-hidden>
-                <Play size={20} fill="currentColor" strokeWidth={0} />
-              </span>
-              <span className="reel-caption">
-                <span className="item-title">{reel.caption ?? 'Showreel'}</span>
-                <span className="reel-sub">
-                  {p.role} · {reel.duration}
-                </span>
-              </span>
-            </Pressable>
-          </section>
-        )}
+        <ReelCard person={p} />
 
         <ProfileReviewsSection id={p.id} />
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title="Portfolio" />
+            <SectionHeader title={craftProfile(p.craft).work.images ?? 'Portfolio'} />
             <div className="bento">
               {stills.map((m, i) => (
                 <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
@@ -397,6 +386,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </div>
           </section>
         )}
+
+        <WorkLinks person={p} />
+
+        <ProfileDetails person={p} />
 
         {(d.about || p.gear) && (
           <section className="section section--flush">

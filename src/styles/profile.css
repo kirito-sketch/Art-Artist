@@ -1,0 +1,412 @@
+/* =================================================================== Profile: onboarding additions, Edit Profile
+ * sections, portfolio management, completion (docs/REVIEW_EVENTS_PROFILE.md). Tokens only, so dark mode follows. */
+
+/* Onboarding */
+.ob-phone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ob-phone-cc {
+  flex: none;
+  min-height: 50px;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  border-radius: var(--r-m);
+  background: var(--grouped);
+  font-weight: 600;
+}
+
+.ob-verified {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--r-m);
+  background: var(--action-tint);
+  color: var(--action-ink, var(--action));
+}
+
+.ob-verified span {
+  flex: 1;
+  color: var(--text);
+}
+
+.ob-toggle-row,
+.ep-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.ob-work-grid,
+.ep-images {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ob-work-thumb,
+.ob-work-add {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ob-work-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ob-work-add,
+.ep-add-tile {
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--line);
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+/* Edit Profile overview */
+.ep-overview {
+  padding: 8px var(--gutter) 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ep-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ep-head-t {
+  display: grid;
+  min-width: 0;
+}
+
+.ep-head-t b {
+  font-family: var(--display);
+  font-size: 20px;
+}
+
+.ep-row {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ep-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.ep-value.is-empty {
+  color: var(--action-ink, var(--action));
+  font-weight: 600;
+}
+
+/* Section pages */
+.ep-page {
+  padding: 4px var(--gutter) 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ep-field {
+  display: grid;
+  gap: 8px;
+}
+
+.ep-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ep-vis {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.ep-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ep-range .field {
+  width: 96px;
+}
+
+.ep-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* Skills */
+.ep-skill {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.ep-skill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ep-skill-head b {
+  font-size: 15px;
+}
+
+.ep-suggest {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Portfolio */
+.ep-reel {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.ep-reel-cover {
+  position: relative;
+  flex: none;
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--fill);
+}
+
+.ep-reel-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ep-reel-t {
+  flex: 1;
+  display: grid;
+  min-width: 0;
+}
+
+.ep-reel-t span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ep-img {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--fill);
+}
+
+.ep-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ep-img-cover {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ep-img-btn {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.ep-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ep-link-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Completion: Home card and the private checklist */
+.ways {
+  display: grid;
+  gap: 4px;
+  padding: 14px 14px 8px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.ways-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ways-head b {
+  font-size: 15px;
+}
+
+.ways ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ways li + li {
+  border-top: 1px solid var(--line);
+}
+
+.ways-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ways-item span:not(.ways-dot) {
+  flex: 1;
+}
+
+.ways-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--action);
+  flex: none;
+}
+
+/* Profile display */
+.pf-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pf-skill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.pf-skill small {
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.pf-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.pf-details dt {
+  color: var(--text-2);
+}
+
+.pf-details dd {
+  margin: 0;
+}
+
+.pf-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-reel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  font-weight: 600;
+  color: var(--action-ink, var(--action));
+}
+
+.pend-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.pend-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ep-img .photo,
+.ep-reel-cover .photo,
+.reel .reel-blank {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

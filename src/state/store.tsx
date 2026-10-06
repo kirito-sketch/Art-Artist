@@ -14,7 +14,7 @@ const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 
 // A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { party } from './selectors';
-import { profileOf, type ProfileExtra } from './profile';
+import { phoneTaken, profileOf, type ProfileExtra } from './profile';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
 import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
@@ -28,7 +28,7 @@ export type Route =
   | { name: 'profile'; id: string }
   | { name: 'conversation'; id: string }
   | { name: 'network' }
-  | { name: 'editProfile' }
+  | { name: 'editProfile'; section?: import('../screens/profile/EditProfile').EditSection }
   | { name: 'project'; id: string }
   | { name: 'work'; id: string; from?: 'card' }
   | { name: 'settings'; page?: import('../screens/settings/Settings').SettingsPage }
@@ -175,7 +175,6 @@ function useStoreValue() {
   const [notifications, setNotifications] = useState<Notification[]>(seed.notifications[START]);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userCollabs, setUserCollabs] = useState<Opportunity[]>([]);
-  const [userPortfolio, setUserPortfolio] = useState<Media[]>([]);
   const [publishing, setPublishing] = useState<Publishing | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Prototype comparison: Home opens on full-bleed slides or on a row of large cards. */
@@ -236,7 +235,6 @@ function useStoreValue() {
     setInterestsSent({});
     setUserPosts([]);
     setUserCollabs([]);
-    setUserPortfolio([]);
     setStack([]);
     setSheet(null);
     setTabState('home');
@@ -459,7 +457,8 @@ function useStoreValue() {
         { id, kind: 'post', label: draft.media.length ? `Posting ${draft.media.length} ${draft.media.length === 1 ? 'item' : 'items'}` : 'Posting', progress: 0, state: 'uploading', thumb: draft.media[0] },
         () => {
           setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, likes: 0, comments: 0 }, ...ps]);
-          if (draft.addToPortfolio) setUserPortfolio((pf) => [...draft.media, ...pf]);
+          // One portfolio: what Edit Profile shows and orders (docs/REVIEW_EVENTS_PROFILE.md §7).
+          if (draft.addToPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image'), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
           showToast({ text: draft.addToPortfolio ? 'Posted and added to your portfolio' : 'Posted', tone: 'success' });
         },
       );
@@ -650,13 +649,20 @@ function useStoreValue() {
       Object.assign(profileOf(viewer.id), extra);
       setProfileVersion((v) => v + 1);
     },
-    verifyPhone: (number: string) => {
+    /** `check` only checks the number is free (onboarding: there is no account yet; it's saved with the profile). */
+    verifyPhone: (number: string, check = false) => {
+      if (check) return phoneTaken(number, '') ? ('taken' as const) : ('ok' as const);
       const r = act.verifyPhone(actor, number);
       if (r === 'ok') (setProfileVersion((v) => v + 1), bump());
       return r;
     },
     confirmPendingRecord: (id: string) => {
-      if (act.confirmPendingRecord(actor, id)) (bump(), setProfileVersion((v) => v + 1));
+      const a = world.associations.find((r) => r.id === id);
+      if (!act.confirmPendingRecord(actor, id)) return;
+      bump();
+      setProfileVersion((v) => v + 1);
+      const p = a && wproject(a.projectId);
+      showToast({ text: p ? `You're on ${p.workingTitle}. It's under Projects you're on.` : 'Confirmed', tone: 'success' });
     },
     declinePendingRecord: (id: string) => {
       if (act.declinePendingRecord(actor, id)) (bump(), setProfileVersion((v) => v + 1));
@@ -785,9 +791,12 @@ function useStoreValue() {
     markNotificationsRead,
     userPosts,
     userCollabs,
-    userPortfolio,
     /** Adds work straight to the signed-in person's portfolio (Edit profile → Showreel and portfolio). */
-    addToPortfolio: (ms: Media[]) => setUserPortfolio((pf) => [...ms.filter((m) => !pf.some((x) => x.id === m.id)), ...pf]),
+    addToPortfolio: (ms: Media[]) => {
+      const pf = seed.portfolio[viewer.id] ?? [];
+      seed.portfolio[viewer.id] = [...ms.filter((m) => m.kind === 'image' && !pf.some((x) => x.id === m.id)), ...pf];
+      setProfileVersion((v) => v + 1);
+    },
     publishing,
     publishPost,
     publishCollab,

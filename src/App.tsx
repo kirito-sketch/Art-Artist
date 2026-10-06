@@ -104,7 +104,7 @@ function RouteView({ r }: { r: Route }) {
     case 'network':
       return <NetworkScreen />;
     case 'editProfile':
-      return <EditProfile />;
+      return <EditProfile section={r.section} />;
     case 'project':
       return <HouseProjectScreen id={r.id} />;
     case 'work':

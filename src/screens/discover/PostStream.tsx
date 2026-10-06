@@ -46,6 +46,12 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
   );
 }
 
+/** A video in the feed: tap plays and pauses. */
+function StreamVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  return <video ref={ref} src={src} playsInline muted loop onClick={() => (ref.current?.paused ? ref.current.play() : ref.current?.pause())} />;
+}
+
 function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
   const { push } = useStore();
   const author = party(post.authorId)!;
@@ -72,10 +78,12 @@ function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
       {post.media.length > 0 ? (
         <motion.div className="stream-media" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
           <div className="stream-media-track" onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
+            {/* The feed is the expanded view: images are part of the post and swipe in place. No lightbox
+                (docs/REVIEW_EVENTS_PROFILE.md §12). */}
             {post.media.map((m, i) => (
-              <Pressable key={m.id + i} className="stream-media-item" onClick={() => push({ name: 'media', items: post.media, index: i, what: 'Photo', from: `in ${author.name}'s post` })} scale={0.99} aria-label={mediaName(m, i, post.media.length, 'Photo', `in ${author.name}'s post`)}>
-                <Photo media={m} />
-              </Pressable>
+              <div key={m.id + i} className="stream-media-item" role="img" aria-label={mediaName(m, i, post.media.length, 'Photo', `in ${author.name}'s post`)}>
+                {m.kind === 'video' && /\.(mp4|webm)$/.test(m.src) ? <StreamVideo src={m.src} /> : <Photo media={m} showPlay={false} />}
+              </div>
             ))}
           </div>
           {many && (

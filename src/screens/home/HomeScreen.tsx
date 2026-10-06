@@ -117,8 +117,8 @@ export function HomeScreen({ goDiscover }: { goDiscover: (scope?: string, craft?
                   sections[id]
                 )}
                 {id === 'forYou' && !first && <OutThisFriday />}
-                {/* One reason to come back, after real content, never above it. */}
-                {stage !== 'established' && i === 2 && <FirstStep />}
+                {/* One next step, after the first section, never above real content (docs/REVIEW_EVENTS_PROFILE.md §10). */}
+                {(TEST_MODE ? stage !== 'established' && i === 2 : i === 0) && <FirstStep />}
                 {/* One event at most, after the core professional modules (docs/EVENTS.md). */}
                 {i === Math.min(3, order.length - 2) && <ComingUp me={me} />}
               </Fragment>

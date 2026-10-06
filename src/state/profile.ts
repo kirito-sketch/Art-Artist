@@ -2,6 +2,7 @@ import * as seed from '../data/seed';
 import type { Media, Person } from '../data/types';
 import { craftProfile, FIELDS, setsFor, skillCategoriesFor, type Experience, type Visibility } from '../data/profileSchema';
 import { world } from './world';
+import { TEST_MODE } from '../research-data/surface';
 
 /*
  * The richer half of a person's profile (docs/REVIEW_EVENTS_PROFILE.md). One record per person, written by
@@ -165,7 +166,10 @@ export function later(p: Pacing, step: Step, now: number): Pacing {
 export const engaged = (p: Pacing): Pacing => ({ ...p, laterStreak: 0 });
 
 const PACE_KEY = (who: string) => `aa-pacing:${who}`;
+// On /test every participant is new, so nothing is stored (as with learned lessons).
+const memPacing: Record<string, Pacing> = {};
 export function readPacing(who: string): Pacing {
+  if (TEST_MODE) return memPacing[who] ?? emptyPacing();
   try {
     return { ...emptyPacing(), ...JSON.parse(localStorage.getItem(PACE_KEY(who)) ?? '{}') };
   } catch {
@@ -173,6 +177,7 @@ export function readPacing(who: string): Pacing {
   }
 }
 export function writePacing(who: string, p: Pacing) {
+  if (TEST_MODE) return void (memPacing[who] = p);
   try {
     localStorage.setItem(PACE_KEY(who), JSON.stringify(p));
   } catch {

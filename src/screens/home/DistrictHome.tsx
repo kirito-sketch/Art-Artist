@@ -21,6 +21,7 @@ import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { useFeatures } from '../../ui/features';
 import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
 import { SaveButton } from './OpportunityCard';
+import { FirstStep } from './FirstHome';
 
 /*
  * The District direction for Home (?home=district): where you are, what the app offers (tiles), then shelves,
@@ -185,6 +186,10 @@ export function DistrictHome({ go }: { go: Go }) {
           <Spotlight items={spotlight} rolesOf={rolesOf} meId={me.id} i={spot} setI={setSpot} />
         </section>
       )}
+
+      <div className="dh-pad">
+        <FirstStep />
+      </div>
 
       {posts.length === 3 && (
         <section className="dh-sec dh-pad" aria-label={`New work in ${craftLabel.toLowerCase()}`}>

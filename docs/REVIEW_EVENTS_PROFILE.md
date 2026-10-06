@@ -279,6 +279,8 @@ Later: casting filters, production search tools, missed-search prompts, matching
 | People not on Ana (CONSOLIDATION §7 and §8: linking was "future, not built") | Phone verification makes linking possible | Built exactly as §7 defines it: a confirmation step, never automatic, one number per person, a "Not me" option. The linked record becomes a normal association. Credits follow the unchanged credit rules |
 | Credits are issued by productions and accepted by the person | No change. A record found by phone is an association, not a credit | Preserved |
 | Collaboration Interest, messaging, role lifecycle, house permissions | Phone verification is not added as a gate | Preserved |
+| Participant Test Mode (`/test`) is a running research study built around the earlier onboarding and Home prompt | Changing them would change the study mid-run | `/test` keeps its two-screen onboarding (About you; What brings you here + city) and its original Home step (portfolio → availability → bio, at the same position). Everything else in this document applies to the app |
+| Current Home shows at most one event (docs/EVENTS.md, M5) | Direction A's three events are a District Home section | Current Home keeps its single event unit; District Home uses Direction A and `domain/eventRank.ts`. If current Home later adopts the events section, it uses the same rule |
 
 ## 16. Screens and components
 
@@ -288,8 +290,15 @@ Later: casting filters, production search tools, missed-search prompts, matching
 | Section header | `ui/primitives.tsx` (`SectionHeader`), `screens/home/DistrictHome.tsx`, `screens/home/HomeNext.tsx`, CSS |
 | Profile data | `data/types.ts`, `data/profileSchema.ts`, `state/profile.ts` (+ tests), seed |
 | Onboarding | `entry/Entry.tsx`, `state/store.tsx` (`createPerson`) |
-| Edit Profile | `screens/profile/EditProfile.tsx` and the section pages in `screens/profile/editSections.tsx` |
-| Completion and checklist | `screens/home/FirstHome.tsx`, `screens/profile/ProfileScreen.tsx` |
-| Phone linking | `state/profile.ts`, `domain/actions.ts` (`linkPendingByPhone`), the Contact & privacy page |
+| Edit Profile | `screens/profile/EditProfile.tsx` (overview and section pages), `ui/MobileVerify.tsx` (shared with onboarding) |
+| Completion and checklist | `screens/home/FirstHome.tsx`, `screens/profile/profileUnits.tsx` (Ways to be found, reel, details, skills, links) |
+| Phone linking | `state/profile.ts`, `domain/actions.ts` (`verifyPhone`, `confirmPendingRecord`, `declinePendingRecord`), the Contact & privacy page and the Home card |
 | Profile display | `screens/profile/ProfileScreen.tsx` (skills, details by visibility, reel link, links) |
 | Discover media | `screens/discover/PostStream.tsx`, `screens/home/PostCard.tsx` |
+
+## 17. How to see it in the prototype
+
+- **Onboarding:** Studio › onboarding. On "Your mobile number", enter **98480 22334** and use the test code. Konark Pictures added that number to Neela Akasham, so Home then asks "Is this you?" and Contact & privacy confirms it.
+- **Completion:** sign in as Tara. Home asks her to verify her mobile, and her profile shows "Ways to be found".
+- **Visibility:** view Tara's profile as Kiran (playing age and accents only), then as Konark (height, build, hair and eyes too).
+- **Events:** District Home as Kiran. The Kaaval premiere leads (he's credited on it), then one Konark event (not three), then another house.

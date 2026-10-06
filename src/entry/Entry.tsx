@@ -19,15 +19,20 @@ import { Sheet } from '../ui/Sheet';
 import { DateField, fmtDay } from '../ui/fields';
 import { MediaPicker } from '../screens/create/PostComposer';
 import { research } from '../research-data/client';
+import { TEST_MODE } from '../research-data/surface';
 import { INTENTS, type Intent } from '../domain/relevance';
+import { CITY_LANGUAGES, craftProfile, LANGUAGES } from '../data/profileSchema';
+import { type ProfileExtra } from '../state/profile';
+import { MobileVerify } from '../ui/MobileVerify';
 
 /*
  * How someone enters Art and Artist. One splash (only as long as loading), one entry screen, then account,
  * consent, a short onboarding, and (for an invited person) the organisation invitation.
- * Apple, Google and email are the ways in. Phone is verification and linking only, never a login.
+ * Apple, Google and email are the ways in. Phone is verification and linking only, never a login, and it is
+ * skippable (docs/REVIEW_EVENTS_PROFILE.md §5).
  */
 
-type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'consent' | 'verify' | 'you' | 'now' | 'invite' | 'inviteTip';
+type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'consent' | 'verify' | 'you' | 'mobile' | 'now' | 'where' | 'work' | 'invite' | 'inviteTip';
 
 /** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
@@ -64,6 +69,14 @@ export function EntryFlow() {
   const [availFrom, setAvailFrom] = useState('');
   const [personId, setPersonId] = useState<string | null>(null);
   const asksAvailability = intent === 'work' || intent === 'collaborate';
+  // Approved direction (docs/REVIEW_EVENTS_PROFILE.md §4): the rest is recommended and skippable, and all of it
+  // lands in the same profile fields Edit Profile uses.
+  const [phone, setPhone] = useState<{ number: string; verified: boolean } | null>(null);
+  const [langs, setLangs] = useState<string[]>([]);
+  const [travel, setTravel] = useState(false);
+  const [reelUrl, setReelUrl] = useState('');
+  const [work, setWork] = useState<Media[]>([]);
+  const [link, setLink] = useState('');
 
   // Splash: the mark draws itself once (about 1.2s), then the next screen follows as soon as its first
   // image is ready. A slow load holds the finished mark still (no replay); capped so it never hangs.
@@ -138,7 +151,13 @@ export function EntryFlow() {
   const finishProfile = () => {
     const role = headline(primary!);
     const availability: Availability = asksAvailability ? { open: true, from: avail === 'from' && availFrom ? fmtDay(availFrom) : 'Now', scope: city.trim() } : { open: false, from: 'Now', scope: city.trim() };
-    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel: false, languages: [], availability, work: [], email, intent: intent ?? undefined });
+    const words = craftProfile(primary!).work;
+    const extra: Partial<ProfileExtra> = {
+      phone: phone ?? undefined,
+      reel: words.reel && validLink(reelUrl) ? { url: reelUrl.trim(), title: words.reel } : undefined,
+      workLinks: validLink(link) ? [{ id: 'w-onboard', label: words.links, url: link.trim() }] : [],
+    };
+    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: intent ?? undefined, extra });
     setPersonId(id);
     if (invite) return go('invite');
     endEntry();
@@ -148,10 +167,11 @@ export function EntryFlow() {
     if (getFeatures().home !== 'next') showToast({ text: `Welcome to Art and Artist, ${name.split(' ')[0]}` });
   };
 
-  const steps: Step[] = ['you', 'now'];
+  // The /test study keeps the onboarding it was designed with (two screens); see docs/REVIEW_EVENTS_PROFILE.md §15.
+  const steps: Step[] = TEST_MODE ? ['you', 'now'] : invite ? ['you', 'mobile', 'where'] : ['you', 'mobile', 'now', 'where', 'work'];
   const stepIndex = steps.indexOf(step);
 
-  const overImage = ['intro', 'entry', 'you', 'now', 'invite', 'inviteTip'].includes(step);
+  const overImage = ['intro', 'entry', 'you', 'mobile', 'now', 'where', 'work', 'invite', 'inviteTip'].includes(step);
   return (
     <div className="entry">
       <div className="entry-status">
@@ -251,7 +271,7 @@ export function EntryFlow() {
               <Field label="Your name">
                 <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoComplete="name" autoFocus />
               </Field>
-              <p className="meta">The name you work under. Productions credit you by it. Photo is optional.</p>
+              {TEST_MODE && <p className="meta">The name you work under. Productions credit you by it. Photo is optional.</p>}
               <p className="field-label">Your main craft</p>
               <div className="craft-grid" role="radiogroup" aria-label="Your main craft" onKeyDown={(e) => rovingKeys(e)}>
                 {CRAFTS.map((c, i) => (
@@ -260,17 +280,26 @@ export function EntryFlow() {
                   </button>
                 ))}
               </div>
-              <p className="meta">Do more than one thing? Add other crafts from your profile later.</p>
-              <Button block size="l" disabled={!name.trim() || !primary} aria-describedby="you-missing" onClick={() => go('now')}>
+              {TEST_MODE && <p className="meta">Do more than one thing? Add other crafts from your profile later.</p>}
+              <Button block size="l" disabled={!name.trim() || !primary} aria-describedby="you-missing" onClick={() => go(TEST_MODE ? 'now' : 'mobile')}>
                 Continue
               </Button>
               <Missing id="you-missing" items={[!name.trim() && 'your name', !primary && 'your main craft']} />
             </Onboard>
           )}
 
+          {step === 'mobile' && (
+            <Onboard step={stepIndex} total={steps.length} image="file" title="Your mobile number" onBack={back} onSkip={() => go(invite ? 'where' : 'now')} skipLabel="Skip for now">
+              <MobileVerify value={phone} onChange={setPhone} checkOnly />
+              <Button block size="l" disabled={!phone?.verified} onClick={() => go(invite ? 'where' : 'now')}>
+                Continue
+              </Button>
+            </Onboard>
+          )}
+
           {step === 'now' && (
             <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={back}>
-              <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>
+              {TEST_MODE && <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>}
               <div className="intent-list" role="radiogroup" aria-label="What are you looking to do right now?" onKeyDown={(e) => rovingKeys(e)}>
                 {INTENTS.map((it, i) => (
                   <button key={it.id} role="radio" aria-checked={intent === it.id} tabIndex={rovingIndex(intent === it.id, i, !!intent)} className={`intent-option ${intent === it.id ? 'is-on' : ''}`} onClick={() => setIntent(it.id)}>
@@ -279,15 +308,86 @@ export function EntryFlow() {
                   </button>
                 ))}
               </div>
+              {TEST_MODE ? (
+                <>
+                  <Field label="Where are you based?">
+                    <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" autoComplete="address-level2" />
+                  </Field>
+                  <div className="chips chips--tight">
+                    {CITIES.map((c) => (
+                      <button key={c} className={`chip ${city === c ? 'is-on' : ''}`} onClick={() => setCity(city === c ? '' : c)} aria-pressed={city === c}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  {asksAvailability && (
+                    <>
+                      <p className="field-label">When can you start?</p>
+                      <div className="seg" role="radiogroup" aria-label="When can you start?" onKeyDown={(e) => rovingKeys(e)}>
+                        {(
+                          [
+                            ['now', 'Now'],
+                            ['from', 'From a date'],
+                          ] as const
+                        ).map(([k, l]) => (
+                          <button key={k} role="radio" aria-checked={avail === k} tabIndex={avail === k ? 0 : -1} className={avail === k ? 'is-on' : ''} onClick={() => (setAvail(k), k === 'now' && setAvailFrom(''))}>
+                            {l}
+                          </button>
+                        ))}
+                      </div>
+                      {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Available from" placeholder="Choose a start date" />}
+                    </>
+                  )}
+                  <Button block size="l" disabled={!intent || !city.trim()} aria-describedby="now-missing" onClick={finishProfile}>
+                    Show me what matters
+                  </Button>
+                  <Missing id="now-missing" items={[!intent && 'what brings you here', !city.trim() && 'where you are based']} />
+                  <p className="meta ob-later">Your work, other crafts, languages and a bio can be added from your profile whenever you like.</p>
+                </>
+              ) : (
+                <>
+                  <Button block size="l" disabled={!intent} aria-describedby="now-missing" onClick={() => go('where')}>
+                    Continue
+                  </Button>
+                  <Missing id="now-missing" items={[!intent && 'what brings you here']} />
+                </>
+              )}
+            </Onboard>
+          )}
+
+          {step === 'where' && (
+            <Onboard step={stepIndex} total={steps.length} image="valley" title="Where you work" onBack={back}>
               <Field label="Where are you based?">
                 <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" autoComplete="address-level2" />
               </Field>
               <div className="chips chips--tight">
                 {CITIES.map((c) => (
-                  <button key={c} className={`chip ${city === c ? 'is-on' : ''}`} onClick={() => setCity(city === c ? '' : c)} aria-pressed={city === c}>
+                  <button
+                    key={c}
+                    className={`chip ${city === c ? 'is-on' : ''}`}
+                    onClick={() => {
+                      const next = city === c ? '' : c;
+                      setCity(next);
+                      // One tap: the languages people there usually work in, until the person chooses their own.
+                      if (next && !langs.length) setLangs(CITY_LANGUAGES[next] ?? []);
+                    }}
+                    aria-pressed={city === c}
+                  >
                     {c}
                   </button>
                 ))}
+              </div>
+              <p className="field-label">Languages you work in</p>
+              <div className="chips chips--tight" role="group" aria-label="Languages you work in">
+                {LANGUAGES.slice(0, 9).map((l) => (
+                  <button key={l} className={`chip ${langs.includes(l) ? 'is-on' : ''}`} aria-pressed={langs.includes(l)} onClick={() => setLangs((x) => (x.includes(l) ? x.filter((y) => y !== l) : [...x, l]))}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <div className="ob-toggle-row">
+                <span id="ob-travel">Open to travel for work</span>
+                <Toggle on={travel} onChange={setTravel} label="Open to travel for work" />
               </div>
               {asksAvailability && (
                 <>
@@ -317,11 +417,19 @@ export function EntryFlow() {
                   {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Available from" placeholder="Choose a start date" />}
                 </>
               )}
-              <Button block size="l" disabled={!intent || !city.trim()} aria-describedby="now-missing" onClick={finishProfile}>
-                {invite ? 'Continue' : 'Show me what matters'}
+              <Button block size="l" disabled={!city.trim()} aria-describedby="where-missing" onClick={() => (invite ? finishProfile() : go('work'))}>
+                Continue
               </Button>
-              <Missing id="now-missing" items={[!intent && 'what brings you here', !city.trim() && 'where you are based']} />
-              <p className="meta ob-later">Your work, other crafts, languages and a bio can be added from your profile whenever you like.</p>
+              <Missing id="where-missing" items={[!city.trim() && 'where you are based']} />
+            </Onboard>
+          )}
+
+          {step === 'work' && primary && (
+            <Onboard step={stepIndex} total={steps.length} image="moodboard" title="Add your work" onBack={back} onSkip={finishProfile} skipLabel="Skip">
+              <AddWork craft={primary} reelUrl={reelUrl} setReelUrl={setReelUrl} work={work} setWork={setWork} link={link} setLink={setLink} />
+              <Button block size="l" onClick={finishProfile}>
+                {reelUrl || work.length || link ? 'Finish' : 'Show me Art and Artist'}
+              </Button>
             </Onboard>
           )}
 
@@ -478,6 +586,48 @@ function Missing({ id, items }: { id: string; items: (string | false)[] }) {
     <p className="meta missing-hint" id={id}>
       To continue, add {list}.
     </p>
+  );
+}
+
+const validLink = (s: string) => /^https?:\/\/\S+\.\S+/.test(s.trim());
+
+/** Onboarding's optional "Add your work", worded for the craft. Lands in the same portfolio Edit Profile manages. */
+function AddWork({ craft, reelUrl, setReelUrl, work, setWork, link, setLink }: { craft: Craft; reelUrl: string; setReelUrl: (s: string) => void; work: Media[]; setWork: (m: Media[]) => void; link: string; setLink: (s: string) => void }) {
+  const words = craftProfile(craft).work;
+  const [picker, setPicker] = useState(false);
+  return (
+    <>
+      {words.reel && (
+        <Field label={`${words.reel} link`} hint="YouTube, Vimeo or Google Drive">
+          <input className="field" type="url" inputMode="url" value={reelUrl} onChange={(e) => setReelUrl(e.target.value)} placeholder="https://vimeo.com/…" />
+        </Field>
+      )}
+      {words.images && (
+        <div>
+          <p className="field-label">{words.images}</p>
+          <div className="ob-work-grid">
+            {work.map((m) => (
+              <Photo key={m.id} media={m} showPlay={false} className="ob-work-thumb" />
+            ))}
+            <button className="ob-work-add" onClick={() => setPicker(true)} aria-label={`Add ${words.images.toLowerCase()}`}>
+              <Camera size={20} aria-hidden />
+            </button>
+          </div>
+        </div>
+      )}
+      <Field label={`${words.links} (a link)`}>
+        <input className="field" type="url" inputMode="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" />
+      </Field>
+      <Sheet open={picker} onClose={() => setPicker(false)} title={words.images ?? 'Add images'} size="tall">
+        <MediaPicker
+          selected={[]}
+          onDone={(ms: Media[]) => {
+            setPicker(false);
+            setWork([...work, ...ms.filter((m) => m.kind === 'image' && !work.some((x) => x.id === m.id))]);
+          }}
+        />
+      </Sheet>
+    </>
   );
 }
 
