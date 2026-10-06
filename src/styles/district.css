@@ -53,57 +53,54 @@
 }
 
 /*
- * Spotlight ambient (docs/DISTRICT.md, Top of Home). Soft atmospheric light behind the main spotlight card:
- * one broad warm radial, one quieter cool radial for depth, eased stops so there is no band or edge, and a
- * blur over both. Static. Separate tokens per theme: light is a barely-there warmth on the page; dark carries a
- * little more colour, still low in saturation.
+ * Top ambient (docs/DISTRICT.md, Top of Home): soft light at the top of the page behind the header, fading
+ * out through the first row of tiles, like District's. One broad radial from just above the top edge, a quieter
+ * offset one for depth, eased stops and a blur, so there's no band or edge. Static. Separate tokens per theme:
+ * light is a faint warmth on the page; dark carries more colour, still low in saturation. Ana's palette, not
+ * District's purple: warm accent in light, deep brand green in dark.
  */
 .dh {
-  --spotlight-ambient: #e0a15f; /* Ana's warm accent, toward paper */
-  --spotlight-ambient-strength: 22%;
-  --spotlight-ambient-2: #8fb3a6; /* a hint of Ana green, desaturated */
-  --spotlight-ambient-2-strength: 6%;
+  --home-ambient: #e9a25a;
+  --home-ambient-strength: 28%;
+  --home-ambient-2: #7fae9e;
+  --home-ambient-2-strength: 14%;
 }
 
 html[data-theme='dark'] .dh {
-  --spotlight-ambient: #b9733c;
-  --spotlight-ambient-strength: 19%;
-  --spotlight-ambient-2: #2f6b5c;
-  --spotlight-ambient-2-strength: 10%;
+  --home-ambient: #2f7a66;
+  --home-ambient-strength: 52%;
+  --home-ambient-2: #a8662f;
+  --home-ambient-2-strength: 16%;
 }
 
-.dh-spot {
-  position: relative;
-  isolation: isolate;
-}
-
-.dh-spot-amb {
+.dh-top-amb {
   position: absolute;
   z-index: -1;
   left: 0;
   right: 0;
-  top: -16px;
-  bottom: -90px;
+  /* Starts above the page so the blur never thins the top edge, where the light is strongest. */
+  top: -60px;
+  height: 300px;
   pointer-events: none;
-  --a: var(--spotlight-ambient-strength);
-  --b: var(--spotlight-ambient-2-strength);
+  --a: var(--home-ambient-strength);
+  --b: var(--home-ambient-2-strength);
   background:
     radial-gradient(
-      ellipse 78% 60% at 50% 50%,
-      color-mix(in srgb, var(--spotlight-ambient) var(--a), transparent) 0%,
-      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.82), transparent) 22%,
-      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.52), transparent) 44%,
-      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.24), transparent) 66%,
-      color-mix(in srgb, var(--spotlight-ambient) calc(var(--a) * 0.07), transparent) 86%,
+      ellipse 100% 55% at 42% 20%,
+      color-mix(in srgb, var(--home-ambient) var(--a), transparent) 0%,
+      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.8), transparent) 20%,
+      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.5), transparent) 42%,
+      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.22), transparent) 64%,
+      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.06), transparent) 84%,
       transparent 100%
     ),
     radial-gradient(
-      ellipse 56% 44% at 60% 62%,
-      color-mix(in srgb, var(--spotlight-ambient-2) var(--b), transparent) 0%,
-      color-mix(in srgb, var(--spotlight-ambient-2) calc(var(--b) * 0.5), transparent) 45%,
+      ellipse 50% 34% at 82% 20%,
+      color-mix(in srgb, var(--home-ambient-2) var(--b), transparent) 0%,
+      color-mix(in srgb, var(--home-ambient-2) calc(var(--b) * 0.45), transparent) 50%,
       transparent 100%
     );
-  filter: blur(28px);
+  filter: blur(24px);
 }
 
 .dh-head {

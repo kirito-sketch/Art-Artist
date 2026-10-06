@@ -37,18 +37,18 @@ Tile icons: `public/images/tiles/*.webp`. Spotlight clips: `public/video/<projec
 
 ## Top of Home
 
-Behind the header and tiles: only the cinematic atmosphere every Home has.
+At the top of the page there's a static ambient glow (`.dh-top-amb`), like District's. It's strongest behind the location header and has faded out by the middle of the first row of tiles. Below that, the page is Ana's normal background. It never moves.
 
-Behind "In the spotlight": a static ambient glow centred on the main card (`.dh-spot-amb`). It's one broad warm radial plus a quieter, desaturated green one, with eased stops and a 28 px blur, so there's no band or edge. It never moves and never touches the cards.
+How it's built: one broad radial from just above the top edge, plus a smaller offset one for depth. Eased stops and a 24 px blur mean there's no band or edge. The layer starts 60 px above the page so the blur doesn't thin the top, where the light is strongest.
 
-Theme tokens on `.dh`:
+It uses Ana's palette, not District's purple. Theme tokens on `.dh`:
 
 | Token | Light | Dark |
 | --- | --- | --- |
-| `--spotlight-ambient` | #e0a15f at 22% | #b9733c at 19% |
-| `--spotlight-ambient-2` | #8fb3a6 at 6% | #2f6b5c at 10% |
+| `--home-ambient` | warm accent #e9a25a at 28% | deep brand green #2f7a66 at 52% |
+| `--home-ambient-2` | muted green #7fae9e at 14% | warm #a8662f at 16% |
 
-Measured on the background around the card: light adds about 2–3% warmth, fading to under 1% at the page edges. Dark lifts the area just below the card by about 11 levels and fades to about 1 at the edges. It replaced the blurred, crossfading spotlight artwork, which read as a coloured section in light mode.
+Measured against the same frame without it, at the top centre: light is about 15% warm tint, fading to under 1% by 140 px down. Dark lifts the top by up to about 44 levels in green and has faded out by the same point. The spotlight section has no glow of its own.
 
 ## Events (Direction A)
 
