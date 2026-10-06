@@ -1,4 +1,4 @@
-import { Bell, MapPin, Play, Plus, Check } from 'lucide-react';
+import { Bell, MapPin, Play, Pause, Plus, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
@@ -25,6 +25,8 @@ import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHe
 import { SaveButton } from './OpportunityCard';
 import { FirstStep } from './FirstHome';
 import { spotCard, spotlightFor, type SpotCard } from './districtFeed';
+import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
+import { Sheet } from '../../ui/Sheet';
 
 /*
  * The District version of Home (docs/DISTRICT.md, docs/DISTRICT_FIXES.md): where you are, what the app offers
@@ -131,6 +133,7 @@ export function DistrictHome({ go }: { go: Go }) {
   }, [me.id, me.city, me.craft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [spot, setSpot] = useState(0);
+  const [spotlightAll, setSpotlightAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const atmosphere = useAtmosphere();
 
@@ -176,8 +179,16 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {cards.length > 0 && (
         <section className="dh-sec" aria-label="In the spotlight">
-          <SectionHeader title="In the spotlight" className="dh-pad" />
+          <SectionHeader title="In the spotlight" action="See all" onAction={() => setSpotlightAll(true)} className="dh-pad" />
           <Spotlight items={cards} i={Math.min(spot, cards.length - 1)} setI={setSpot} />
+          <Sheet open={spotlightAll} onClose={() => setSpotlightAll(false)} title="In the spotlight">
+            <div className="dh-spot-list">
+              {cards.map((card) => <button key={card.key} onClick={() => { setSpotlightAll(false); push(card.open); }}>
+                <Photo media={card.media} showPlay={false} />
+                <span><small>{card.kicker}</small><b>{card.title}</b><small>{card.meta}</small></span>
+              </button>)}
+            </div>
+          </Sheet>
         </section>
       )}
 
@@ -464,52 +475,17 @@ function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
  */
 function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f: number | ((x: number) => number)) => void }) {
   const { push } = useStore();
-  const held = useRef(false);
   const low = useLowPower();
-  const animate = motionOk() && !low;
-  const track = useRef<HTMLDivElement>(null);
-  const itemKeys = items.map((c) => c.key).join('|');
-  const activeIndex = useRef(i);
-  activeIndex.current = i;
-  const select = (index: number) => {
-    const el = track.current;
-    const first = el?.firstElementChild as HTMLElement | null;
-    const card = el?.children[index] as HTMLElement | undefined;
-    if (el && first && card) el.scrollTo({ left: card.offsetLeft - first.offsetLeft, behavior: animate ? 'smooth' : 'instant' });
-    setI(index);
-  };
-  useEffect(() => {
-    const el = track.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      const first = el.firstElementChild as HTMLElement | null;
-      const card = el.children[activeIndex.current] as HTMLElement | undefined;
-      if (first && card) el.scrollTo({ left: card.offsetLeft - first.offsetLeft, behavior: 'instant' });
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [itemKeys]);
-  useEffect(() => {
-    if (!animate || items.length < 2) return;
-    const t = window.setInterval(() => !held.current && document.visibilityState === 'visible' && select((activeIndex.current + 1) % items.length), 4200);
-    return () => window.clearInterval(t);
-  }, [animate, items.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { track, physical, canAnimate: animate, paused, togglePaused, select } = useSpotlightCarousel(items.map((c) => c.key).join('|'), items.length, i, low, setI);
+  const repeated = items.length > 1 ? [...items, ...items, ...items] : items;
   return (
-    <div className="dh-car" onPointerDown={() => (held.current = true)} onWheel={() => (held.current = true)} onFocusCapture={() => (held.current = true)}>
-      <div className="dh-track" ref={track} onScroll={(e) => {
-        const el = e.currentTarget;
-        const first = el.firstElementChild as HTMLElement | null;
-        const second = el.children[1] as HTMLElement | undefined;
-        if (first && second) {
-          const index = Math.max(0, Math.min(items.length - 1, Math.round(el.scrollLeft / (second.offsetLeft - first.offsetLeft))));
-          if (index !== activeIndex.current) setI(index);
-        }
-      }}>
-        {items.map((c, k) => {
-          const active = k === i;
+    <div className="dh-car" role="region" aria-roledescription="carousel" aria-label="In the spotlight">
+      <div className="dh-track" ref={track} tabIndex={0} aria-label="Spotlight cards. Use left and right arrow keys to browse.">
+        {repeated.map((c, k) => {
+          const active = k === physical;
           return (
-            <div key={c.key} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`}>
-              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : select(k))} scale={0.985} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`}>
+            <div key={`${k}:${c.key}`} role="group" aria-roledescription="slide" aria-label={`${k % items.length + 1} of ${items.length}`} aria-hidden={!active} {...(!active ? { inert: '' } : {})} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`}>
+              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : select(k % items.length))} scale={1} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`}>
                 <span className="dh-card-media">
                   {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-ev-plain" />}
                   {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
@@ -547,8 +523,9 @@ function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f:
         })}
       </div>
       <div className="dh-dots" role="group" aria-label="Spotlight">
+        {items.length > 1 && animate && <button className="dh-car-pause" onClick={togglePaused} aria-label={paused ? 'Play Spotlight' : 'Pause Spotlight'}>{paused ? <Play size={14} /> : <Pause size={14} />}</button>}
         {items.map((c, k) => (
-          <button key={c.key} aria-pressed={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => ((held.current = true), select(k))} />
+          <button key={c.key} aria-pressed={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => select(k)} />
         ))}
       </div>
     </div>

@@ -348,48 +348,38 @@ html[data-theme='dark'] .dh {
   color: var(--on-action, #fff);
 }
 
-/* Spotlight starts on the page grid, with a right peek and native snapping. */
-.dh-car {
-  overflow: hidden;
-}
-
-/* Keep shelf Save hit areas on their buttons, clear of the carousel controls. */
-.dh .save:not(.save--floating) {
-  position: relative;
-}
-
+/* A centred card with symmetric neighbours. Three runs support seamless native swiping. */
+.dh-car { overflow: hidden; }
+.dh .save:not(.save--floating) { position: relative; }
 .dh-track {
+  position: relative;
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 0 var(--gutter);
-  scroll-padding-inline: var(--gutter);
+  padding-inline: max(40px, calc((100% - 280px) / 2));
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
 }
-
-.dh-track::-webkit-scrollbar {
-  display: none;
-}
-
-.dh-track::after {
-  content: '';
-  flex: 0 0 max(0px, calc(100% - min(280px, 100% - 40px) - 12px));
-}
-
+.dh-track::-webkit-scrollbar { display: none; }
+.dh-track.is-stepping { scroll-snap-type: none; }
 .dh-card {
   position: relative;
   flex: none;
-  width: min(280px, calc(100% - 40px));
-  scroll-snap-align: start;
-  opacity: 0.55;
-  transition: opacity 0.6s;
-}
-
-.dh-card.is-active {
+  width: var(--spot-width, 280px);
+  scroll-snap-align: center;
   opacity: 1;
 }
+.dh-car-pause { color: var(--text-2); }
+.dh-spot-list { display: grid; gap: 8px; }
+.dh-spot-list > button { display: flex; align-items: center; gap: 12px; padding: 10px; border: 0; border-radius: 14px; background: var(--surface); color: var(--text); text-align: left; }
+.dh-spot-list .photo { width: 64px; height: 80px; flex: none; border-radius: 8px; overflow: hidden; }
+.dh-spot-list .photo img { width: 100%; height: 100%; object-fit: cover; }
+.dh-spot-list > button > span { display: grid; gap: 4px; min-width: 0; }
+.dh-spot-list small { color: var(--text-2); }
+
+.dh-dots .dh-car-pause::before { display: none; }
 
 .dh-card-main {
   display: block;
