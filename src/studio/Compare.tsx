@@ -23,7 +23,11 @@ const src = (home: 'current' | 'district', who: Who, n: number) => {
   return `/?${q.toString()}`;
 };
 
-function Phone({ home, who, n, onRestart }: { home: 'current' | 'district'; who: Who; n: number; onRestart: () => void }) {
+// The phone is always a real 390 × 844 screen with a 10 px bezel; it is scaled as a whole to fit the window.
+const PW = 410;
+const PH = 864;
+
+function Phone({ home, who, n, onRestart, scale }: { home: 'current' | 'district'; who: Who; n: number; onRestart: () => void; scale: number }) {
   return (
     <figure className="cmp-phone">
       <figcaption className="cmp-cap">
@@ -32,8 +36,10 @@ function Phone({ home, who, n, onRestart }: { home: 'current' | 'district'; who:
           <RotateCcw size={14} aria-hidden /> Restart
         </button>
       </figcaption>
-      <div className="cmp-frame">
-        <iframe key={`${home}-${who}-${n}`} title={`${LABEL[home]} app`} src={src(home, who, n)} />
+      <div className="cmp-fit" style={{ width: PW * scale, height: PH * scale }}>
+        <div className="cmp-frame" style={{ transform: `scale(${scale})` }}>
+          <iframe key={`${home}-${who}-${n}`} title={`${LABEL[home]} app`} src={src(home, who, n)} />
+        </div>
       </div>
     </figure>
   );
@@ -45,9 +51,11 @@ export function Compare() {
   const [who, setWho] = useState<Who>('kiran');
   const [n, setN] = useState({ current: 0, district: 0 });
   const [isNarrow, setNarrow] = useState(narrow());
+  const fit = () => (typeof window === 'undefined' ? 1 : Math.min(1, (window.innerHeight - 210) / PH, (window.innerWidth - 32) / PW));
+  const [scale, setScale] = useState(fit());
   useEffect(() => {
     document.title = 'Compare · Art and Artist Studio';
-    const r = () => setNarrow(narrow());
+    const r = () => (setNarrow(narrow()), setScale(fit()));
     window.addEventListener('resize', r);
     return () => window.removeEventListener('resize', r);
   }, []);
@@ -84,8 +92,8 @@ export function Compare() {
       </header>
 
       <div className={`cmp-stage ${view === 'both' ? 'cmp-stage--both' : ''}`}>
-        {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} />}
-        {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} />}
+        {(view === 'both' || view === 'current') && <Phone home="current" who={who} n={n.current} onRestart={() => restart('current')} scale={scale} />}
+        {(view === 'both' || view === 'district') && <Phone home="district" who={who} n={n.district} onRestart={() => restart('district')} scale={scale} />}
       </div>
 
       <p className="cmp-foot">In New, the clips in the spotlight are made from still images.</p>

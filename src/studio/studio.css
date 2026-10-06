@@ -368,10 +368,18 @@ body:has(.st) {
   font-size: 13px;
   cursor: pointer;
 }
+.cmp-fit {
+  position: relative;
+  flex: none;
+}
 .cmp-frame {
-  width: 390px;
-  height: min(844px, calc(100vh - 150px));
-  min-height: 600px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 410px;
+  height: 864px;
+  box-sizing: border-box;
+  transform-origin: 0 0;
   border-radius: 46px;
   border: 10px solid #151413;
   overflow: hidden;
@@ -390,14 +398,4 @@ body:has(.st) {
   color: var(--st-ink-2);
   margin: 0;
 }
-@media (max-width: 520px) {
-  .cmp-frame {
-    width: 100%;
-    max-width: 390px;
-    border-width: 6px;
-    border-radius: 34px;
-  }
-  .cmp-phone {
-    width: 100%;
-  }
-}
+
