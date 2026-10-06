@@ -511,25 +511,23 @@
 
 /* ============================================================ structure */
 
-.section-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--text);
-}
-
-.section-link svg {
-  color: var(--text-3);
-  transition: transform 0.2s var(--ease-out);
-}
-
-.section-link:active svg {
-  transform: translateX(3px);
+.section-all {
+  flex: none;
+  min-height: 44px;
+  margin: -10px -4px -10px 0;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--action-ink, var(--action));
+  cursor: pointer;
 }
 
 .section-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;

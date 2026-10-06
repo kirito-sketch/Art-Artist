@@ -251,4 +251,12 @@ export interface IndustryEvent {
   reviewed?: boolean;
   /** Set when the host changes the date, time or place after people marked interest. */
   changed?: string;
+  /** Who it's for: crafts, or everyone (the default). Used to rank Home's events, never to hide an event. */
+  audience?: Craft[] | 'everyone';
+  /** When it was published (epoch ms). */
+  publishedAt?: number;
+  /** People who marked Interested (a count; who they are stays private to them). */
+  interestedCount?: number;
+  /** Chosen by the curation team (at most one per city per week). Never sold. */
+  editorial?: boolean;
 }

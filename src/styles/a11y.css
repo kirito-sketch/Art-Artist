@@ -170,7 +170,7 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   translate: -50% -50%;
 }
 
-.phone :is(.btn--s, .btn--m, .chip, .intent-chip, .section-link, .link, .toggle, .ob-skip, .intro-skip, .row-select)::after {
+.phone :is(.btn--s, .btn--m, .chip, .intent-chip, .section-all, .link, .toggle, .ob-skip, .intro-skip, .row-select)::after {
   content: '';
   position: absolute;
   left: 0;
@@ -180,7 +180,7 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   translate: 0 -50%;
 }
 
-:where(.phone) :where(.btn--s, .btn--m, .chip, .intent-chip, .section-link, .link, .toggle, .row-select, .convo-send, .search-clear, .post-more) {
+:where(.phone) :where(.btn--s, .btn--m, .chip, .intent-chip, .section-all, .link, .toggle, .row-select, .convo-send, .search-clear, .post-more) {
   position: relative; /* anchor for the hit area; any rule that positions them otherwise still wins */
 }
 
@@ -298,7 +298,4 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   --label: calc(11.5px * var(--type-scale, 1));
 }
 
-/* Section titles are buttons: when larger text wraps them, they stay left-aligned like the design. */
-.phone .section-link {
-  text-align: left;
-}
+

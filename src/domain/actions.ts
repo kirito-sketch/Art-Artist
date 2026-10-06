@@ -1,6 +1,7 @@
 import * as seed from '../data/seed';
 import type { Opportunity } from '../data/types';
 import { party, person } from '../state/selectors';
+import { normalisePhone, phoneTaken, profileOf, validPhone } from '../state/profile';
 import { canReview, MAX_TEXT, reviewsOpen, validStars, type Review } from './reviews';
 import { world, wid, publicName, creditedOn, project as wproject, type Amendment, type Association, type Format, type HouseProject, type Thread } from '../state/world';
 
@@ -366,4 +367,42 @@ export function toggleHelpful(actor: Actor, id: string) {
   const r = world.reviews.find((x) => x.id === id);
   if (!r || r.personId === actor.viewerId) return;
   r.helpful = r.helpful.includes(actor.viewerId) ? r.helpful.filter((x) => x !== actor.viewerId) : [...r.helpful, actor.viewerId];
+}
+
+/* ------------------------------------------------------------ phone and records added by phone */
+
+/**
+ * Verify a mobile number for this account (the code step happens in the screen). One number belongs to one
+ * person (EC-AUTH-015): a number verified elsewhere is refused. Identity only: nothing is shared with anyone.
+ */
+export function verifyPhone(actor: Actor, number: string): 'ok' | 'invalid' | 'taken' {
+  if (!validPhone(number)) return 'invalid';
+  if (phoneTaken(number, actor.viewerId)) return 'taken';
+  profileOf(actor.viewerId).phone = { number: normalisePhone(number), verified: true };
+  return 'ok';
+}
+
+/**
+ * The person confirms a project record a production created against their verified number
+ * (docs/CONSOLIDATION.md §7): it becomes a normal association. Never automatic, never by name. Credits then
+ * follow the unchanged credit rules.
+ */
+export function confirmPendingRecord(actor: Actor, associationId: string) {
+  const x = profileOf(actor.viewerId);
+  const a = world.associations.find((r) => r.id === associationId);
+  if (!a?.pending || a.personId || !x.phone?.verified || normalisePhone(a.pending.phone) !== x.phone.number) return false;
+  a.personId = actor.viewerId;
+  delete a.pending;
+  const p = wproject(a.projectId)!;
+  if (p.houseId) world.notifications.unshift({ id: wid('wn'), forId: p.houseId, kind: 'credit', actorId: actor.viewerId, text: `${person(actor.viewerId).name} confirmed they're on ${p.workingTitle} as ${a.workingRole}`, time: 'now', unread: true, route: { name: 'hproject', id: p.id } });
+  return true;
+}
+
+/** "Not me": the record stays private to the house and no further invites go to this number (EC-PEND-002). */
+export function declinePendingRecord(actor: Actor, associationId: string) {
+  const x = profileOf(actor.viewerId);
+  const a = world.associations.find((r) => r.id === associationId);
+  if (!a?.pending || !x.phone?.verified || normalisePhone(a.pending.phone) !== x.phone.number) return false;
+  a.pending.notMe = true;
+  return true;
 }

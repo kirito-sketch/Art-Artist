@@ -7,18 +7,19 @@ import { isLive, type Work } from '../../data/works';
 import { outThisWeek } from '../reviews/ReviewsScreen';
 import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
 import { blockedBy, discoverableProjects } from '../../domain/discovery';
-import { creditedOn } from '../../domain/home/graph';
+import { creditedOn, workedWith } from '../../domain/home/graph';
 import { discoverPosts, findOpportunity, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world, worksForOrg } from '../../state/world';
 import { priceLabel, typeLabel } from '../../domain/events';
-import { EventTicket } from '../event/eventUnits';
+import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
+import { markOpened, markShown, readSeen } from '../../state/eventSeen';
 import { useAtmosphere, useLowPower } from '../../ui/ambient/ambient';
 import { LivingBackground } from '../../ui/ambient/LivingBackground';
 import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { useFeatures } from '../../ui/features';
-import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable } from '../../ui/primitives';
+import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
 import { SaveButton } from './OpportunityCard';
 
 /*
@@ -81,12 +82,10 @@ export function DistrictHome({ go }: { go: Go }) {
   }, [viewer, following, userPosts, me.id, dept.crafts]);
 
   const now = Date.now();
-  const upcoming = features.events
-    ? visibleEvents(events, now, viewer.id, acting)
-        .filter((e) => e.start >= now)
-        .sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city) || a.start - b.start)
-        .slice(0, 5)
-    : [];
+  // Home's three events: chosen for this person (docs/REVIEW_EVENTS_PROFILE.md §2), fixed for the session.
+  const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
+  const allEvents = features.events ? visibleEvents(events, now, viewer.id, acting).filter((e) => e.status === 'scheduled' && (e.end ?? e.start) >= now).length : 0;
+  const upcoming = features.events ? homeEvents(visibleEvents(events, now, viewer.id, acting), me, following, interestedIds, blockedBy(me.id), now) : [];
 
   const week = outThisWeek(now);
 
@@ -124,7 +123,9 @@ export function DistrictHome({ go }: { go: Go }) {
     .filter((c) => c.n >= 2)
     .sort((a, b) => b.n - a.n);
 
-  const near = seed.people.filter((p) => p.id !== me.id && dept.crafts.includes(p.craft) && p.city === me.city && p.visibility !== 'private' && p.visibility !== 'removed').slice(0, 4);
+  const nearPool = seed.people.filter((p) => p.id !== me.id && dept.crafts.includes(p.craft) && p.city === me.city && p.visibility !== 'private' && p.visibility !== 'removed');
+  const near = nearPool.slice(0, 4);
+  const nearAll = nearPool.length;
 
   const [spot, setSpot] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -180,14 +181,14 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {spotlight.length > 0 && (
         <section className="dh-sec" aria-label="In the spotlight">
-          <h2 className="dh-h">In the spotlight</h2>
+          <SectionHeader title="In the spotlight" className="dh-pad" action={projects.length > spotlight.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'projects' })} />
           <Spotlight items={spotlight} rolesOf={rolesOf} meId={me.id} i={spot} setI={setSpot} />
         </section>
       )}
 
       {posts.length === 3 && (
         <section className="dh-sec dh-pad" aria-label={`New work in ${craftLabel.toLowerCase()}`}>
-          <h2 className="dh-h">New work in {craftLabel.toLowerCase() || 'your craft'}</h2>
+          <SectionHeader title={`New work in ${craftLabel.toLowerCase() || 'your craft'}`} action="See all" onAction={go.discover} />
           <div className="dh-mosaic">
             {posts.map((p, i) => {
               const a = party(p.authorId);
@@ -209,32 +210,19 @@ export function DistrictHome({ go }: { go: Go }) {
               );
             })}
           </div>
-          <button className="dh-more" onClick={go.discover}>
-            See more in Discover <ChevronRight size={15} aria-hidden />
-          </button>
         </section>
       )}
 
       {upcoming.length > 0 && (
-        <section className="dh-sec" aria-label="Events near you">
-          <h2 className="dh-h dh-h--row dh-pad">
-            Events near you
-            <button className="dh-more" onClick={() => push({ name: 'browse', scope: 'events' })}>
-              See all
-            </button>
-          </h2>
-          <Events list={upcoming.slice(0, 3)} city={me.city} />
+        <section className="dh-sec" aria-label={eventsTitle(upcoming, me.city)}>
+          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action={allEvents > upcoming.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'events' })} />
+          <EventsA list={upcoming} city={me.city} />
         </section>
       )}
 
       {week.length > 0 && (
         <section className="dh-sec" aria-label="Out this Friday">
-          <h2 className="dh-h dh-h--row dh-pad">
-            Out this Friday
-            <button className="dh-more" onClick={() => push({ name: 'reviews' })}>
-              See all
-            </button>
-          </h2>
+          <SectionHeader title="Out this Friday" className="dh-pad" action="See all" onAction={() => push({ name: 'reviews' })} />
           <div className={week.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
             {week.map((w) => (
               <Quote key={w.id} w={w} onOpen={() => push({ name: 'work', id: w.id })} />
@@ -245,7 +233,7 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {continueItems.length > 0 && (
         <section className="dh-sec" aria-label="Continue where you left off">
-          <h2 className="dh-h dh-pad">Continue where you left off</h2>
+          <SectionHeader title="Continue where you left off" className="dh-pad" />
           <div className="dh-rail dh-pills">
             {continueItems.map((c) => (
               <PressCard key={c.key} className="dh-pill" onPress={c.open} scale={0.97} aria-label={c.label}>
@@ -259,7 +247,7 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {collections.length > 0 && (
         <section className="dh-sec dh-pad" aria-label="Picked for you">
-          <h2 className="dh-h">Picked for you</h2>
+          <SectionHeader title="Picked for you" />
           <PressCard className="dh-banner" onPress={collections[0].open} scale={0.985} aria-label={`${collections[0].title}, ${collections[0].meta}`}>
             <span className="dh-banner-t">
               <span>{collections[0].kicker}</span>
@@ -287,7 +275,7 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {near.length >= 2 && (
         <section className="dh-sec dh-pad" aria-label={`${dept.label} near you`}>
-          <h2 className="dh-h">{dept.label} near you</h2>
+          <SectionHeader title={`${dept.label} near you`} action={nearAll > near.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'people' })} />
           <div className="dh-grid">
             {near.map((p) => (
               <NearCard key={p.id} p={p} />
@@ -332,27 +320,41 @@ function eventArt(e: IndustryEvent): Media | undefined {
   return (seed.portfolio[e.hostId] ?? []).find((m) => m.kind === 'image');
 }
 
-// TEMP: layout options for Events near you, shown to choose one (?dhev=a|b|c|d).
-const EV = (typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('dhev')) ?? 'a';
-
 const where = (e: IndustryEvent, city: string) => (e.venue === 'Online' ? 'Online' : e.city === city ? e.venue : `${e.venue}, ${e.city}`);
 const whenOf = (e: IndustryEvent) => `${new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' })}, ${timeOf(e.start)}`;
 const fullDate = (e: IndustryEvent) => new Date(e.start).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
 
-function Events({ list, city }: { list: IndustryEvent[]; city: string }) {
-  if (EV === 'b') return <EventsB list={list} city={city} />;
-  if (EV === 'c') return <EventsC list={list} city={city} />;
-  if (EV === 'd') return <EventsD list={list} city={city} />;
-  return <EventsA list={list} city={city} />;
+// One choice per person per day; a change that matters (Interested, a block) recalculates. Never while on screen.
+const chosen = new Map<string, IndustryEvent[]>();
+function homeEvents(pool: IndustryEvent[], me: Person, following: string[], interested: string[], blocked: string[], now: number) {
+  const key = [me.id, me.city, me.craft, new Date(now).toDateString(), interested.join(), blocked.join()].join('|');
+  const hit = chosen.get(key);
+  if (hit) return hit;
+  const list = rankHomeEvents(pool, {
+    now,
+    city: me.city,
+    craft: me.craft,
+    crafts: me.crafts,
+    openToTravel: me.openToTravel,
+    creditedFilms: world.credits.filter((c) => c.personId === me.id && c.status === 'accepted').map((c) => c.projectId),
+    network: [...workedWith(me.id), ...following],
+    followedHouses: following.filter((id) => party(id)?.kind === 'org'),
+    interested,
+    blocked,
+    seen: readSeen(me.id),
+  });
+  chosen.set(key, list);
+  if (list[0]) markShown(me.id, list[0].id);
+  return list;
 }
 
 /** The big card: image with title, place and time over it, date on it, save in the corner. */
 function Hero({ e, city }: { e: IndustryEvent; city: string }) {
-  const { push } = useStore();
+  const { push, viewer } = useStore();
   const art = eventArt(e);
   return (
     <div className="dh-evhero">
-      <PressCard className="dh-evhero-card" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
+      <PressCard className="dh-evhero-card" onPress={() => (markOpened(viewer.id, e.id), push({ name: 'event', id: e.id }))} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
         {art ? <Photo media={art} showPlay={false} className="dh-evhero-img" /> : <span className="dh-evhero-img dh-ev-plain" />}
         <DateBlock ms={e.start} />
         <span className="dh-evhero-t">
@@ -371,7 +373,7 @@ function Hero({ e, city }: { e: IndustryEvent; city: string }) {
   );
 }
 
-/* A: the big card, then a clean list with small pictures. */
+/** Direction A: one large event and two rows, all visible, nothing moves (docs/REVIEW_EVENTS_PROFILE.md §1). */
 function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
   const { push } = useStore();
   return (
@@ -405,108 +407,6 @@ function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
   );
 }
 
-/* B: the big card, then each other event as its own smaller card with the date on its picture. */
-function EventsB({ list, city }: { list: IndustryEvent[]; city: string }) {
-  const { push } = useStore();
-  return (
-    <div className="dh-pad dh-evb">
-      <Hero e={list[0]} city={city} />
-      {list.slice(1).map((e) => {
-        const art = eventArt(e);
-        return (
-          <div key={e.id} className="dh-evb-card">
-            <PressCard className="dh-evb-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={e.title}>
-              <span className="dh-evb-img">
-                {art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}
-                <DateBlock ms={e.start} />
-              </span>
-              <span className="dh-evb-t">
-                <span className="dh-ev-kicker">{typeLabel(e.type).split(' or ')[0]}</span>
-                <b>{e.title}</b>
-                <span>{where(e, city)}</span>
-                <span className="dh-evb-foot">
-                  {whenOf(e)} <i className={e.price.kind === 'free' ? 'is-free' : ''}>{priceLabel(e)}</i>
-                </span>
-              </span>
-            </PressCard>
-            <span className="dh-evb-save">
-              <SaveButton id={e.id} kind="event" name={e.title} />
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* C: one big card with the next ones stacked behind it; swipe or tap the dots to bring the next forward. */
-function EventsC({ list, city }: { list: IndustryEvent[]; city: string }) {
-  const [i, setI] = useState(0);
-  const x0 = useRef<number | null>(null);
-  const go = (d: number) => setI((v) => (v + d + list.length) % list.length);
-  return (
-    <div className="dh-pad">
-      <div
-        className={`dh-evstack ${list.length > 1 ? 'has-more' : ''} ${list.length > 2 ? 'has-more-2' : ''}`}
-        onPointerDown={(ev) => (x0.current = ev.clientX)}
-        onPointerUp={(ev) => {
-          if (x0.current === null) return;
-          const dx = ev.clientX - x0.current;
-          x0.current = null;
-          if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
-        }}
-      >
-        <div key={list[i].id} className="dh-evstack-top">
-          <Hero e={list[i]} city={city} />
-        </div>
-      </div>
-      {list.length > 1 && (
-        <div className="dh-evstack-dots" role="tablist" aria-label="Events">
-          {list.map((e, k) => (
-            <button key={e.id} role="tab" aria-selected={k === i} aria-label={e.title} className={k === i ? 'on' : ''} onClick={() => setI(k)} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* D: the big card as a ticket (picture above a perforation, details on the stub), then the app's ticket rows. */
-function EventsD({ list, city }: { list: IndustryEvent[]; city: string }) {
-  const { push } = useStore();
-  const e = list[0];
-  const art = eventArt(e);
-  const d = new Date(e.start);
-  return (
-    <div className="dh-pad dh-evd">
-      <div className="dh-evd-ticket">
-        <PressCard className="dh-evd-main" onPress={() => push({ name: 'event', id: e.id })} scale={0.985} aria-label={`${e.title}, ${fullDate(e)}`}>
-          <span className="dh-evd-img">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-ev-plain" />}</span>
-          <span className="dh-evd-stub">
-            <span className="dh-evd-date">
-              <b>{d.toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}</b>
-              {d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase()}
-            </span>
-            <span className="dh-evd-t">
-              <span className="dh-ev-kicker">{typeLabel(e.type).split(' or ')[0]}</span>
-              <b>{e.title}</b>
-              <span>
-                {where(e, city)} · {whenOf(e)}
-              </span>
-            </span>
-            <i className={`dh-evd-price ${e.price.kind === 'free' ? 'is-free' : ''}`}>{priceLabel(e)}</i>
-          </span>
-        </PressCard>
-        <span className="dh-ev-save">
-          <SaveButton id={e.id} kind="event" floating name={e.title} />
-        </span>
-      </div>
-      {list.slice(1).map((x) => (
-        <EventTicket key={x.id} e={x} />
-      ))}
-    </div>
-  );
-}
 
 /** Centred carousel: moves on its own, the centre card plays its clip; touching it stops the movement. */
 function Spotlight({ items, rolesOf, meId, i, setI }: { items: Work[]; rolesOf: (w: Work) => { role: string }[]; meId: string; i: number; setI: (f: number | ((x: number) => number)) => void }) {

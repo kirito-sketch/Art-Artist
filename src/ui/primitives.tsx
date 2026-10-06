@@ -242,17 +242,18 @@ export function Verified({ size = 15, label = 'Verified' }: { size?: number; lab
 
 /* --------------------------------------------------------------- Layout */
 
-/** Section title. When the section has more to show, the title itself is the link, with a chevron. */
-export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
+/**
+ * Section header, the same everywhere (docs/REVIEW_EVENTS_PROFILE.md §3): title on the left, "See all" on the
+ * right when there is more to see. "See all" always navigates to the complete list. The title is never a link.
+ */
+export function SectionHeader({ title, action, onAction, className = '' }: { title: string; action?: string; onAction?: () => void; className?: string }) {
   return (
-    <div className="section-head">
-      {action && onAction ? (
-        <button className="section-link" onClick={onAction} aria-label={`${title}, ${action.toLowerCase()}`}>
-          <h2>{title}</h2>
-          <ChevronRight size={22} strokeWidth={2.6} />
+    <div className={`section-head ${className}`}>
+      <h2>{title}</h2>
+      {action && onAction && (
+        <button className="section-all" onClick={onAction} aria-label={`See all: ${title}`}>
+          See all
         </button>
-      ) : (
-        <h2>{title}</h2>
       )}
     </div>
   );

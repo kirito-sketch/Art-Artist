@@ -226,7 +226,7 @@ function Unit({ c, position, lead, goDiscover }: { c: Candidate; position: numbe
       const people = (c.data?.people as { id: string; reason: string }[]).map((p) => ({ p: person(p.id), reason: p.reason })).filter((x) => x.p);
       return (
         <section className="hn-unit v-section" aria-label="People worth knowing" onClickCapture={opened}>
-          <SectionHeader title="People worth knowing" action="See more" onAction={() => goDiscover('people')} />
+          <SectionHeader title="People worth knowing" action="See all" onAction={() => goDiscover('people')} />
           <div className="portrait-rail hn-people">
             {people.map(({ p, reason }) => (
               <PortraitCard key={p.id} person={p} context={reason} onPress={() => push({ name: 'profile', id: p.id })} action={<FollowButton primary on={following.includes(p.id)} onToggle={() => toggleFollow(p.id)} name={p.name} block />} />

@@ -14,6 +14,7 @@ const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 
 // A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { party } from './selectors';
+import { profileOf, type ProfileExtra } from './profile';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
 import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
@@ -528,8 +529,9 @@ function useStoreValue() {
     intent,
     setIntent: (i: Intent) => setIntents((m) => ({ ...m, [viewer.id]: i })),
     /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
-    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent }) => {
+    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {
       const id = `you-${Date.now().toString(36)}`;
+      Object.assign(profileOf(id), d.extra ?? {});
       const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, visibility: 'public', identityVerified: false };
       seed.people.push(p);
       seed.parties[id] = p;
@@ -641,6 +643,24 @@ function useStoreValue() {
     },
     profileVersion,
     bumpProfile: () => setProfileVersion((v) => v + 1),
+    /** One save for every profile field, from onboarding, prompts and Edit Profile alike. */
+    saveProfile: (person: Partial<Person>, extra: Partial<ProfileExtra> = {}) => {
+      const me = seed.people.find((p) => p.id === viewer.id);
+      if (me) Object.assign(me, person);
+      Object.assign(profileOf(viewer.id), extra);
+      setProfileVersion((v) => v + 1);
+    },
+    verifyPhone: (number: string) => {
+      const r = act.verifyPhone(actor, number);
+      if (r === 'ok') (setProfileVersion((v) => v + 1), bump());
+      return r;
+    },
+    confirmPendingRecord: (id: string) => {
+      if (act.confirmPendingRecord(actor, id)) (bump(), setProfileVersion((v) => v + 1));
+    },
+    declinePendingRecord: (id: string) => {
+      if (act.declinePendingRecord(actor, id)) (bump(), setProfileVersion((v) => v + 1));
+    },
     markNotificationsReadWhere: (ids: string[]) => {
       world.notifications.forEach((n) => ids.includes(n.id) && (n.unread = false));
       bump();

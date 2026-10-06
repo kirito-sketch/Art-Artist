@@ -50,7 +50,8 @@ export interface Association {
   projectId: string;
   /** A real Art and Artist person, or a private placeholder for someone not on Art and Artist (never a profile). */
   personId?: string;
-  pending?: { name: string; phone: string };
+  /** notMe: the person at that number said it isn't them; no more invites (EC-PEND-002). */
+  pending?: { name: string; phone: string; notMe?: boolean };
   workingRole: string;
   dept: string;
   fromRoleId?: string;
@@ -258,6 +259,9 @@ Object.entries(SEED_REVIEWS).forEach(([pid, list]) => {
   if (!rel) return;
   list.forEach((r, k) => world.reviews.push({ id: `rv-${pid}-${k}`, projectId: pid, personId: r.personId, stars: r.stars, text: r.text, spoiler: r.spoiler, at: Math.min(Date.now() - 36e5, releaseAt(rel) + r.h * 36e5), helpful: r.helpful ?? [] }));
 });
+
+/* Someone not on Art and Artist yet, added by phone (docs/CONSOLIDATION.md §7). Joining with this verified number offers the match. */
+world.associations.push({ id: 'a-neela-pending-ravi', projectId: 'neela', pending: { name: 'Ravi Kumar', phone: '98480 22334' }, workingRole: 'Assistant Director', dept: 'Direction', status: 'added' });
 
 /* Roles that belong to the houses you can act for move onto their projects. Other houses' roles stay as plain listings. */
 const ROLE_PROJECT: Record<string, string> = { 'o-neela-dop': 'neela', 'o-neela-journalist': 'neela', 'o-backwaters': 'backwaters' };

@@ -35,3 +35,13 @@ export const craftDef = (id: string) => CRAFTS.find((c) => c.id === id);
 
 /** Headline shown on the profile: primary craft plus specialisation. */
 export const headline = (primary: string, specialisation?: string) => [craftDef(primary)?.person ?? primary, specialisation?.trim()].filter(Boolean).join(' · ');
+
+/** Crafts that work side by side (a cinematographer's crew is camera and lighting too). Used for matching, never shown. */
+const FAMILIES: Craft[][] = [
+  ['cinematographer', 'camera', 'lighting'],
+  ['editor', 'colourist', 'vfx'],
+  ['director', 'writing'],
+  ['sound', 'music'],
+  ['production-design', 'costume', 'makeup'],
+];
+export const relatedCrafts = (c: Craft): Craft[] => (FAMILIES.find((f) => f.includes(c)) ?? [c]).filter((x) => x !== c);
