@@ -5,7 +5,7 @@ import { isOutThisWeek, sortReviews, topRated, type ReviewSort } from '../../dom
 import { org, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { publicWorks, reviewsBy, reviewsOf, work, world } from '../../state/world';
-import { Button, Chip, IconButton, Photo, PressCard, SectionHeader } from '../../ui/primitives';
+import { Button, Chip, EmptyState, IconButton, Photo, PressCard, SectionHeader } from '../../ui/primitives';
 import { featuredFor, RatingSummary, ReviewCard, ScoreLine } from './reviewUnits';
 
 const maker = (w: Work) => (w.orgIds[0] ? org(w.orgIds[0]).name : w.format);
@@ -50,16 +50,25 @@ export function WeekFilm({ w, big }: { w: Work; big?: boolean }) {
   );
 }
 
-/** Reviews (District tile): the week's films, the best rated, and what people said lately. */
+/** Reviews: the week's films, the best rated, and what people said lately. */
 export function ReviewsScreen() {
-  const { push, worldVersion } = useStore();
-  void worldVersion;
-  const week = outThisWeek();
-  const top = topRated(publicWorks(), reviewsOf).filter((w) => !week.some((x) => x.id === w.id));
-  const recent = [...world.reviews].filter((r) => r.text && work(r.projectId)).sort((a, b) => b.at - a.at).slice(0, 8);
   return (
     <div className="screen canvas rv">
       <Top title="Reviews" />
+      <ReviewsBody />
+    </div>
+  );
+}
+
+/** The Reviews page's content, also District Discover's Reviews chip. A search narrows it to matching films. */
+export function ReviewsBody({ q = '' }: { q?: string }) {
+  const { push, worldVersion } = useStore();
+  void worldVersion;
+  const match = (w: Work) => !q || `${w.title} ${maker(w)}`.toLowerCase().includes(q);
+  const week = outThisWeek().filter(match);
+  const top = topRated(publicWorks(), reviewsOf).filter((w) => match(w) && !week.some((x) => x.id === w.id));
+  const recent = [...world.reviews].filter((r) => r.text && work(r.projectId) && match(work(r.projectId)!)).sort((a, b) => b.at - a.at).slice(0, 8);
+  return (
       <div className="rv-page">
         {week.length > 0 && (
           <section className="section section--flush">
@@ -112,8 +121,8 @@ export function ReviewsScreen() {
             </div>
           </section>
         )}
+        {q && !week.length && !top.length && !recent.length && <EmptyState title="No films match" />}
       </div>
-    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 # District version: what to fix before it becomes the app
 
-Status: **proposal for approval.** It builds on docs/REVIEW_HOME_DISCOVER.md and assumes the District version is the direction. The District look stays: tiles, spotlight carousel, glow, varied shelves, Direction A events, Out this Friday. What changes is how it works.
+Status: **approved and built** in the District version only (the current version is unchanged). See "What was built" at the end. It builds on docs/REVIEW_HOME_DISCOVER.md and assumes the District version is the direction. The District look stays: tiles, spotlight carousel, glow, varied shelves, Direction A events, Out this Friday. What changes is how it works.
 
 ## The problems, and the fix for each
 
@@ -72,3 +72,23 @@ Change in length: **Picked for you is removed and one intent section is added**,
 ## Not changing
 
 The District look, the motion (the spotlight is the page's one moving element), Direction A events, Out this Friday, the glow, the theme options, the profile system, events V1, and every frozen rule.
+
+## What was built
+
+| # | Fix | Where |
+| --- | --- | --- |
+| 1, 2, 9 | Chip row, Posts default; tiles and See all open Discover on a chip; scoped search with "Search all"; query carries over; no Back step for chips; the `browse` route and its pages are removed | `DiscoverScreen` (variant `district`), `App.tsx`, `domain/contentTypes.ts` |
+| 3, 4 | Intent shelf after the Spotlight and the completion prompt | `IntentShelf` in `DistrictHome.tsx` |
+| 5 | Spotlight rules, ranking and variety, one card per city for everyone, optional national pin, one label per card, fixed for the session, removed from the shelves below | `domain/spotlight.ts` (+ tests), `screens/home/districtFeed.ts` |
+| 6 | Picked for you removed; Available marker on People near you | `DistrictHome.tsx` |
+| 7 | New work: people you know, then your department, then everyone | `DistrictHome.tsx` |
+| 8 | People near you: department, then neighbouring departments | `DistrictHome.tsx`, `data/taxonomy.ts` |
+| 10 | Taxonomy as data; content-type registry | `data/taxonomy.ts`, `domain/contentTypes.ts` |
+
+Notes and conflicts:
+
+- **Acting for a house.** Home while acting for a house is the shared production Home (`ProductionHome`) in both versions, and it already leads with open roles and interest received. So "Your open roles" is that Home, not a new District shelf. No frozen rule is affected.
+- **Grow my network** has no intent shelf (the plan named four intents). New work is next on the page for it, as for Just exploring.
+- **National pin** is supported (`SPOTLIGHT_PIN` in `districtFeed.ts`) and unset in the prototype.
+- **"Just changed stage"** reads the seeded project updates (a stage change in the last 72 hours). A project far from you is there for its stage change and says "Now shooting"; one crewing in your city says "Crew forming · needs a …".
+- **Recalculation.** The Spotlight is cached per person per day and recalculated after a save, follow or block, never while it's on screen. The prototype has no "release out this week" pin from the team; releases compete like any other card.

@@ -6,6 +6,7 @@ import { TabBar } from './nav/TabBar';
 import { CollabComposer } from './screens/create/CollabComposer';
 import { PostComposer } from './screens/create/PostComposer';
 import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
+import { DISCOVER_CHIP_DEFAULT, type DiscoverChip } from './domain/contentTypes';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { HomeNext } from './screens/home/HomeNext';
 import { DistrictHome } from './screens/home/DistrictHome';
@@ -93,8 +94,6 @@ function RouteView({ r }: { r: Route }) {
       return <PostStream ids={r.ids} index={r.index} />;
     case 'saved':
       return <SavedScreen />;
-    case 'browse':
-      return <BrowseScreen scope={r.scope} />;
     case 'reviews':
       return <ReviewsScreen />;
     case 'filmReviews':
@@ -202,11 +201,6 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
 // On /test it stays on People, so the Home comparison changes one thing only (like Events).
 const DISCOVER_DEFAULT: Scope = TEST_MODE ? 'people' : 'posts';
 
-/** One Discover category on its own page (District Home's tiles): today's list, with a back button and no tabs. */
-function BrowseScreen({ scope }: { scope: Exclude<Scope, 'posts'> }) {
-  const [s, setS] = useState<Scope>(scope);
-  return <DiscoverScreen scope={s} setScope={setS} variant="browse" />;
-}
 
 const TAB_TITLE: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Inbox', profile: 'Profile' };
 
@@ -214,6 +208,12 @@ function Phone({ app = false }: { app?: boolean }) {
   const store = useStore();
   const { tab, setTab, stack, viewer } = store;
   const [discoverScope, setDiscoverScope] = useState<Scope>(DISCOVER_DEFAULT);
+  // District Discover's chip: Home's tiles and "See all" open it on a chip; switching chips adds no Back step.
+  const [districtChip, setDistrictChip] = useState<DiscoverChip>(DISCOVER_CHIP_DEFAULT);
+  const openDistrict = (c?: DiscoverChip) => {
+    setDistrictChip(c ?? DISCOVER_CHIP_DEFAULT);
+    setTab('discover');
+  };
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
   const [postFocus, setPostFocus] = useState<{ craft: string | null; n: number }>({ craft: null, n: 0 });
   const features = useFeatures();
@@ -350,10 +350,10 @@ function Phone({ app = false }: { app?: boolean }) {
               // Identity switch: the home world fades up anew so the change of context is felt, not just read.
               // (Keyed remount, no exit layer: an exiting copy of the old home must never linger under the new one.)
               <motion.div key={store.acting} className="identity-layer" initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: dur.ui, ease: ease.out }}>
-                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ discover: () => setTab('discover') }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
+                {store.acting !== 'self' ? <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ discover: openDistrict }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && (features.home === 'district' && store.acting === 'self' ? <DiscoverScreen scope="posts" setScope={() => undefined} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={setDiscoverScope} postFocus={postFocus} />)}
+            {t === 'discover' && (features.home === 'district' && store.acting === 'self' ? <DiscoverScreen scope={districtChip} setScope={setDistrictChip} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={(s) => setDiscoverScope(s as Scope)} postFocus={postFocus} />)}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>

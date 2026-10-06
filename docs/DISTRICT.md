@@ -10,26 +10,40 @@ A second version of Home and Discover, built for comparison. Everything else in 
 
 ## Home (`src/screens/home/DistrictHome.tsx`)
 
-1. Where you are: city, craft and languages, notifications, over a slow-moving wash of colour (still with Reduce Motion).
-2. Tiles: Events, Projects, People, Opportunities, Reviews. Each opens a full page (`browse` route: today's Discover list for that category, with a back button).
-3. In the spotlight: projects being made near you first, a centred carousel that moves every few seconds and stops when touched. The centre card plays a muted clip (never with Reduce Motion, Save-Data or low power); faces are accepted credits; "Looking for" lists open roles.
-4. New work in your craft: a mosaic of three posts, then "See more in Discover".
-5. Events: Direction A (see below).
-6. Out this Friday: one quote card per film released this week (score plus its featured review), side by side when there are several. Hidden in a week with no releases.
-7. Continue where you left off: what you saved.
-8. Picked for you: shelves built from rules (your craft's crew free this month in your city, crews forming, projects in your language). A shelf shows only with two or more items.
-9. Near you: people in your craft's crew, in your city.
-10. "You're up to date." with the tiles as links.
+Rebuilt to docs/DISTRICT_FIXES.md. Each shelf does a different job, and nothing appears twice: anything in the Spotlight is left out of the shelves below it.
+
+1. Where you are: city, craft and languages, notifications, over the static top glow.
+2. Tiles: Events, Projects, People, Opportunities, Reviews. Each opens Discover on that chip. There are no separate category pages any more.
+3. In the spotlight: up to five time-sensitive things this week, of mixed kinds (roles, projects, new work from people you know, events, films out this week). Never people. Rules in `src/domain/spotlight.ts` (tested), data in `src/screens/home/districtFeed.ts`. Every card has the same anatomy: a big 4:5 image with one label on it ("Crew forming · needs a DoP", "New work · Vikram Sen", "Event · Sat, Hyderabad", "Out this week · ★ 4.1", "Role · closes tomorrow"), then the title, one meta line, and one fact under a hairline (pay and dates, who is on it, price and host, a line from a review). Carousel behaviour is unchanged: it moves on its own, stops when touched, and the centre card plays its clip when motion is allowed.
+4. The completion prompt, when one is due.
+5. The shelf for why you're here: Find work → Opportunities for you; Find people → People for your project; Collaborate → Collaborations and roles. Three compact rows (64 px image, title, meta, then the fact that decides it: closing date, pay, city, or availability) and See all. Grow my network and Just exploring have no shelf: New work comes next anyway.
+6. New work: a mosaic of three posts, people you follow or worked with first, then your department, then everyone.
+7. Events: Direction A (see below), minus any event already in the Spotlight.
+8. Out this Friday: one quote card per film released this week, minus any already in the Spotlight.
+9. People near you: your department first, then the departments you work beside (from the taxonomy), available people first. "Available" is a marker on the photo.
+10. Continue where you left off: what you saved.
+11. "You're up to date." with the tiles as links.
+
+Picked for you is gone: "Available" is a marker in People near you, crews forming are in the Spotlight and the intent shelf, and the language shelf was dropped.
 
 No task strip, no "Your people", no explanatory copy.
 
 ## Discover (`DiscoverScreen` variant `district`)
 
-A search bar with Saved beside it, and the grid of work. Searching covers people, projects and roles; "See all" opens the category page.
+A search bar with Saved beside it, then one chip row: Posts · People · Opportunities · Projects · Events · Reviews (`src/domain/contentTypes.ts`). Posts is the default.
+
+- Home's tiles and every "See all" open Discover on a chip. Switching chips adds nothing to Back.
+- Searching on Posts looks through everything (people, houses, projects, roles, events). On any other chip it looks through that kind, with a first row "Search all of Art and Artist for '…'". The search text carries over when you switch chips.
+- Filters are kept per chip while the app is open.
+- The Reviews chip is the Reviews page's content (Out this Friday, Top rated, Recent reviews), narrowed to matching films when you search.
+
+## Taxonomy (`src/data/taxonomy.ts`)
+
+Domain → family → craft, as data. Families know which families sit next to them. `relatedCrafts` (matching, both versions, unchanged in result) and District's department shelves read from it.
 
 ## Reviews (`src/screens/reviews/ReviewsScreen.tsx`)
 
-The real review system (docs/REVIEWS.md): Out this Friday, Top rated, and Recent reviews. The same page is the "See all" from the current Home's Out this Friday section.
+The real review system (docs/REVIEWS.md): Out this Friday, Top rated, and Recent reviews. The same page is the "See all" from the current Home's Out this Friday section. In District it is also the Reviews chip in Discover.
 
 ## Media
 

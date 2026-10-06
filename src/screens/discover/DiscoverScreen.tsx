@@ -3,7 +3,7 @@ import { isOutThisWeek, reviewsOpen, stats, topRated } from '../../domain/review
 import { reviewsOf } from '../../state/world';
 import { ScoreLine } from '../reviews/reviewUnits';
 import { PostGrid } from './PostGrid';
-import { BadgeCheck, Bookmark, CalendarDays, ChevronLeft, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { BadgeCheck, Bookmark, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
@@ -21,10 +21,10 @@ import { EVENT_TYPES, typeLabel } from '../../domain/events';
 import type { EventType } from '../../data/types';
 import { visibleEvents } from '../../state/events';
 import { useFeatures } from '../../ui/features';
+import { CONTENT_TYPES, chipDef, type DiscoverChip } from '../../domain/contentTypes';
+import { ReviewsBody } from '../reviews/ReviewsScreen';
 
-export type Scope = 'roles' | 'people' | 'projects' | 'posts' | 'events';
-export type BrowseScope = Exclude<Scope, 'posts'>;
-const SCOPE_TITLE: Record<Scope, string> = { roles: 'Opportunities', people: 'People', projects: 'Projects', posts: 'Discover', events: 'Events' };
+export type Scope = Exclude<DiscoverChip, 'reviews'>;
 
 /** Events by when: this week means the next seven days, never a calendar promise. */
 const WHENS = [
@@ -183,11 +183,19 @@ const STAGES: { id: ProjectStage; label: string }[] = [
 ];
 
 /**
- * variant 'district' (?home=district): Discover is a search bar, Saved beside it, and the grid of work.
- * variant 'browse': one category on its own page (opened from a Home tile), with a back button and no tabs.
+ * variant 'district' (?home=district, docs/DISTRICT_FIXES.md): a search bar with Saved beside it, then one chip row
+ * (Posts · People · Opportunities · Projects · Events · Reviews). Home's tiles and "See all" open it on a chip.
+ * Searching on Posts looks through everything; on another chip it looks through that kind, with a row to widen it.
  */
-export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: { scope: Scope; setScope: (s: Scope) => void; postFocus?: { craft: string | null; n: number }; variant?: 'district' | 'browse'; focus?: number }) {
-  const { viewer, following, userPosts, userCollabs, blocked, push, pop, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
+export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: { scope: DiscoverChip; setScope: (s: DiscoverChip) => void; postFocus?: { craft: string | null; n: number }; variant?: 'district'; focus?: number }) {
+  const { viewer, following, userPosts, userCollabs, blocked, push, roleStatus, scenario, attempt, worldVersion, events, acting } = useStore();
+  const district = variant === 'district';
+  /** District: "Search all" on a chip other than Posts. Choosing a chip goes back to that chip's own results. */
+  const [searchAll, setSearchAll] = useState(false);
+  const pickChip = (c: DiscoverChip) => {
+    setSearchAll(false);
+    setScope(c);
+  };
   const features = useFeatures();
   // Events are behind a switch: without it, a stored 'events' scope falls back to People.
   useEffect(() => {
@@ -265,7 +273,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
   const allHouses = searchableHouses(blocked).filter((o) => (q ? `${o.name} ${o.city} ${o.about}`.toLowerCase().includes(q) : true));
   const houses = q ? allHouses : [];
   const shownHouses = allHouses.filter((o) => (pf.near ? o.city === me.city : true));
-  const grouped = !!q && !narrowed;
+  const grouped = !!q && (district ? scope === 'posts' || searchAll : !narrowed);
   const [announce, setAnnounce] = useState('');
   useEffect(() => {
     if (!q) return setAnnounce('');
@@ -285,7 +293,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(runSearch, [q]);
   const seeAll = (sc: Scope) => {
-    if (variant === 'district') return push({ name: 'browse', scope: sc as BrowseScope });
+    if (district) return pickChip(sc);
     setScope(sc);
     setNarrowed(true);
   };
@@ -308,25 +316,15 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
 
   return (
     <motion.div className="screen canvas v-discover" data-scroll="discover" layoutScroll>
-      {variant === 'browse' ? (
-        <header className="topbar topbar--nav browse-top">
-          <IconButton label="Back" onClick={pop}>
-            <ChevronLeft size={26} />
-          </IconButton>
-          <h1 className="topbar-title">{SCOPE_TITLE[scope]}</h1>
-          <span className="icon-btn-spacer" aria-hidden />
-        </header>
-      ) : (
-        <div className="title-block title-block--top">
-          <h1 className="large-title">Discover</h1>
-        </div>
-      )}
+      <div className="title-block title-block--top">
+        <h1 className="large-title">Discover</h1>
+      </div>
 
       <div className={`search-wrap ${variant === 'district' ? 'search-wrap--saved' : ''}`}>
         <div className="search-row">
         <label className="search">
           <Search size={18} />
-          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={variant === 'district' ? 'Search people, projects, events' : scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search people, projects and roles'} enterKeyHint="search" aria-label="Search" />
+          <input id="discover-search" value={query} onChange={(e) => { setQuery(e.target.value); if (!e.target.value) setNarrowed(false); }} placeholder={district ? chipDef(scope).search : scope === 'people' ? 'Search people and production houses' : scope === 'roles' ? 'Search roles, casting and collaborations' : scope === 'projects' ? 'Search projects and productions' : scope === 'events' ? 'Search events' : 'Search people, projects and roles'} enterKeyHint="search" aria-label="Search" />
           <AnimatePresence>
             {query && (
               <motion.button className="search-clear" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} onClick={() => { setQuery(''); setNarrowed(false); }} aria-label="Clear search">
@@ -335,15 +333,24 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
             )}
           </AnimatePresence>
         </label>
-        {variant === 'district' && (
+        {district && (
           <IconButton label="Saved" className="search-saved" onClick={() => push({ name: 'saved' })}>
             <Bookmark size={22} aria-hidden />
           </IconButton>
         )}
         </div>
+        {district && (
+          <div className="dchips" role="tablist" aria-label="Show">
+            {CONTENT_TYPES.filter((t) => !t.flag || features[t.flag]).map((t) => (
+              <button key={t.chip} role="tab" aria-selected={scope === t.chip && !(searchAll && q)} className={`chip dchip ${scope === t.chip && !(searchAll && q) ? 'is-on' : ''}`} onClick={() => pickChip(t.chip)}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
         {!grouped && !variant && <Tabs
           id="discover"
-          value={scope}
+          value={scope as Scope}
           onChange={setScope}
           options={[
             { value: 'posts', label: 'Posts', icon: <Newspaper size={22} /> },
@@ -436,13 +443,33 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
               </div>
             </section>
           )}
-          {!houses.length && !people.length && !projects.length && !shownRoles.length && (
+          {district && allEvents.length > 0 && (
+            <section className="section">
+              <SectionHeader title="Events" action={allEvents.length > 3 ? 'See all' : undefined} onAction={() => seeAll('events')} />
+              <div className="ev-list ev-list--discover">
+                {allEvents.slice(0, 3).map((e) => (
+                  <EventTicket key={e.id} e={e} />
+                ))}
+              </div>
+            </section>
+          )}
+          {!houses.length && !people.length && !projects.length && !shownRoles.length && !(district && allEvents.length) && (
             <EmptyState title={`Nothing for "${query}"`} body="Try a name, a craft like colourist, a city or a film title." />
           )}
         </div>
       ) : (
       <AnimatePresence mode="wait">
         <motion.div key={scope} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.16 }}>
+          {district && q && (
+            <button className="search-all" onClick={() => setSearchAll(true)}>
+              <Search size={17} aria-hidden />
+              <span>
+                Search all of Art and Artist for <b>“{query.trim()}”</b>
+              </span>
+              <ChevronRight size={17} aria-hidden />
+            </button>
+          )}
+          {scope === 'reviews' && <ReviewsBody q={q} />}
           {scope === 'roles' && (
             <>
               <FilterBar label="Opportunity filters">
@@ -545,11 +572,9 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus }: {
 
           {scope === 'posts' && (
             <>
-              {variant !== 'district' && (
-                <FilterBar label="Post filters">
-                  <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
-                </FilterBar>
-              )}
+              <FilterBar label="Post filters">
+                <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
+              </FilterBar>
               {posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
             </>
           )}

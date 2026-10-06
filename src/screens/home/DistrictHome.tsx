@@ -1,14 +1,16 @@
-import { Bell, ChevronRight, MapPin, Play, Plus, Check } from 'lucide-react';
+import { Bell, MapPin, Play, Plus, Check } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
-import type { Craft, IndustryEvent, Media, Person } from '../../data/types';
+import { familyOf, nearCrafts } from '../../data/taxonomy';
+import type { IndustryEvent, Media, Opportunity, Person } from '../../data/types';
 import { isLive, type Work } from '../../data/works';
 import { outThisWeek } from '../reviews/ReviewsScreen';
 import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
-import { blockedBy, discoverableProjects } from '../../domain/discovery';
-import { creditedOn, workedWith } from '../../domain/home/graph';
-import { discoverPosts, findOpportunity, org, party, person } from '../../state/selectors';
+import { blockedBy, discoverableProjects, discoverableRoles, searchablePeople } from '../../domain/discovery';
+import { workedWith } from '../../domain/home/graph';
+import type { DiscoverChip } from '../../domain/contentTypes';
+import { discoverPosts, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
 import { work, world, worksForOrg } from '../../state/world';
@@ -22,28 +24,18 @@ import { useFeatures } from '../../ui/features';
 import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
 import { SaveButton } from './OpportunityCard';
 import { FirstStep } from './FirstHome';
+import { spotCard, spotlightFor, type SpotCard } from './districtFeed';
 
 /*
- * The District direction for Home (?home=district): where you are, what the app offers (tiles), then shelves,
- * each with its own shape so the page has a rhythm: a moving spotlight, a mosaic of new work, a rail of event
- * posters, quote cards for the week's films, small pills, one banner, a grid, and an end. Shelves come from rules over
- * real data and hide when there is too little to show. Everything else in the app is unchanged.
+ * The District version of Home (docs/DISTRICT.md, docs/DISTRICT_FIXES.md): where you are, what the app offers
+ * (tiles, each opening Discover on its chip), then shelves that each do a different job: the Spotlight (the few
+ * time-sensitive things this week, of mixed kinds), the shelf for why you're here, new work from people you know
+ * first, events, the week's films, people near you, and an end. Nothing appears twice: anything in the Spotlight
+ * is left out of the shelves below it.
  */
 
-type Go = { discover: () => void };
+type Go = { discover: (chip?: DiscoverChip) => void };
 
-/** Crafts that work side by side: a cinematographer's crew is camera and lighting too. */
-const DEPT: Partial<Record<Craft, { crafts: Craft[]; label: string }>> = {
-  cinematographer: { crafts: ['cinematographer', 'camera', 'lighting'], label: 'Camera crew' },
-  camera: { crafts: ['cinematographer', 'camera', 'lighting'], label: 'Camera crew' },
-  lighting: { crafts: ['cinematographer', 'camera', 'lighting'], label: 'Camera crew' },
-  editor: { crafts: ['editor', 'colourist'], label: 'Editors and colourists' },
-  colourist: { crafts: ['editor', 'colourist'], label: 'Editors and colourists' },
-  director: { crafts: ['director', 'writing'], label: 'Directors and writers' },
-  writing: { crafts: ['director', 'writing'], label: 'Directors and writers' },
-  actor: { crafts: ['actor'], label: 'Actors' },
-};
-const deptOf = (c: Craft) => DEPT[c] ?? { crafts: [c], label: CRAFTS.find((x) => x.id === c)?.label ?? 'People' };
 const first = (name: string) => name.split(' ')[0];
 const CLIPS = new Set(['neela', 'kaaval', 'backwaters', 'monsoon', 'faultlines', 'neeliraat']);
 
@@ -55,47 +47,65 @@ function motionOk() {
 
 export function DistrictHome({ go }: { go: Go }) {
   const store = useStore();
-  const { viewer, push, notifications, openSheet, events, following, userPosts, saved, userCollabs, roleStatus, acting, reloadKey } = store;
+  const { viewer, push, notifications, openSheet, events, following, userPosts, saved, userCollabs, roleStatus, acting, reloadKey, intent } = store;
   const features = useFeatures();
   const me = person(viewer.id);
   const unread = notifications.filter((n) => n.unread).length;
-  const dept = deptOf(me.craft);
+  const family = familyOf(me.craft);
   const craftLabel = CRAFTS.find((c) => c.id === me.craft)?.label ?? '';
-
-  const projects = useMemo(() => discoverableProjects(blockedBy(me.id)).filter((w) => w.media.id !== 'ph' && !w.ownerId), [me.id]);
-  const rolesOf = (w: Work) =>
-    [...seed.opportunities.filter((o) => o.project === w.title), ...world.roles.filter((r) => r.projectId === w.id && r.visibility === 'open')].filter((o) => !roleStatus[o.id]);
-  const houseCity = (w: Work) => (w.orgIds[0] ? org(w.orgIds[0]).city : '');
-
-  // Spotlight: projects being made near you first, then elsewhere, then recent releases.
-  const spotlight = useMemo(
-    () =>
-      [...projects]
-        .sort((a, b) => Number(isLive(b)) - Number(isLive(a)) || Number(houseCity(b) === me.city) - Number(houseCity(a) === me.city) || Number(b.year) - Number(a.year))
-        .slice(0, 5),
-    [projects, me.city], // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  const posts = useMemo(() => {
-    const all = discoverPosts(viewer, following, userPosts).filter((p) => p.media.length && p.authorId !== me.id);
-    const mine = all.filter((p) => dept.crafts.includes((party(p.authorId) as Person | undefined)?.craft as Craft));
-    return (mine.length >= 3 ? mine : all).slice(0, 3);
-  }, [viewer, following, userPosts, me.id, dept.crafts]);
-
+  const myCrafts = [me.craft, ...(me.crafts ?? [])];
+  const blocked = blockedBy(me.id);
   const now = Date.now();
-  // Home's three events: chosen for this person (docs/REVIEW_EVENTS_PROFILE.md §2), fixed for the session.
-  const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
-  const allEvents = features.events ? visibleEvents(events, now, viewer.id, acting).filter((e) => e.status === 'scheduled' && (e.end ?? e.start) >= now).length : 0;
-  const upcoming = features.events ? homeEvents(visibleEvents(events, now, viewer.id, acting), me, following, interestedIds, blockedBy(me.id), now) : [];
 
+  const projects = useMemo(() => discoverableProjects(blocked).filter((w) => w.media.id !== 'ph' && !w.ownerId), [me.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const roles = discoverableRoles(me.id, userCollabs).filter((o) => !roleStatus[o.id] && !world.roleStatus[o.id]);
+  const rolesOf = (w: Work) => roles.filter((o) => ('projectId' in o && (o as { projectId?: string }).projectId === w.id) || o.project === w.title);
+  const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => p.media.length && p.authorId !== me.id);
+  const pool = features.events ? visibleEvents(events, now, viewer.id, acting) : [];
   const week = outThisWeek(now);
+
+  // The Spotlight: chosen once for the session; a save, follow or block chooses again.
+  const network = [...workedWith(me.id)];
+  const spotlit = spotlightFor(
+    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool, releases: week },
+    { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
+    [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
+  );
+  const shown = new Set(spotlit.map((x) => x.key));
+  const quote = (id: string) => {
+    const f = featuredFor(id);
+    return f?.text ? { text: f.text, by: person(f.personId).name } : undefined;
+  };
+  const cards = spotlit
+    .map((it) => spotCard(it, { roles, posts: allPosts, events: pool, meId: me.id, city: me.city, quote }))
+    .filter((c): c is SpotCard => !!c)
+    .map((c) => (c.media || c.key.split(':')[0] !== 'event' ? c : { ...c, media: eventArt(pool.find((e) => `event:${e.id}` === c.key)!) }));
+
+  // New work: people you follow or worked with first, then your department, then everyone.
+  const posts = useMemo(() => {
+    const known = new Set([...network, ...following]);
+    const tier = (authorId: string) => (known.has(authorId) ? 0 : family.crafts.includes((party(authorId) as Person | undefined)?.craft as never) ? 1 : 2);
+    return allPosts
+      .filter((p) => !shown.has(`post:${p.id}`))
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => tier(a.p.authorId) - tier(b.p.authorId) || a.i - b.i)
+      .map((x) => x.p)
+      .slice(0, 3);
+  }, [allPosts.length, following.join(), spotlit]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Home's three events: chosen for this person (docs/REVIEW_EVENTS_PROFILE.md §2), fixed for the session, minus the Spotlight's.
+  const interestedIds = saved.filter((x) => x.kind === 'event').map((x) => x.id);
+  const eventPool = pool.filter((e) => !shown.has(`event:${e.id}`));
+  const allEvents = pool.filter((e) => e.status === 'scheduled' && (e.end ?? e.start) >= now).length;
+  const upcoming = features.events ? homeEvents(eventPool, me, following, interestedIds, blocked, now) : [];
+  const friday = week.filter((w) => !shown.has(`release:${w.id}`));
 
   const continueItems = saved
     .slice()
     .reverse()
     .map((s) => {
       if (s.kind === 'role') {
-        const o = findOpportunity(s.id, userCollabs);
+        const o = roles.find((x) => x.id === s.id) ?? seed.opportunities.find((x) => x.id === s.id);
         return o && { key: `r-${o.id}`, img: o.media, label: `${o.role} · ${o.project}`, round: false, open: () => push({ name: 'opportunity', id: o.id }) };
       }
       if (s.kind === 'project') {
@@ -109,35 +119,27 @@ export function DistrictHome({ go }: { go: Go }) {
       return null;
     })
     .filter(Boolean)
-    .slice(0, 6) as { key: string; img?: import('../../data/types').Media; party?: ReturnType<typeof party>; label: string; round: boolean; open: () => void }[];
+    .slice(0, 6) as { key: string; img?: Media; party?: ReturnType<typeof party>; label: string; round: boolean; open: () => void }[];
 
-  // Picked for you: shelves built from rules (craft, city, language), shown only when there is enough in them.
-  const free = seed.people.filter((p) => p.id !== me.id && dept.crafts.includes(p.craft) && p.city === me.city && p.availableFrom);
-  const forming = projects.filter((w) => isLive(w) && rolesOf(w).length > 0);
-  const lang = (me.languages ?? []).find((l) => projects.some((w) => isLive(w) && w.format.includes(l)));
-  const inLang = lang ? projects.filter((w) => isLive(w) && w.format.includes(lang)) : [];
-  const collections = [
-    { key: 'free', kicker: 'Free this month', title: `${dept.label} free this month`, meta: `${free.length} people · ${me.city}`, n: free.length, faces: free.map((p) => p.id), open: () => push({ name: 'browse', scope: 'people' }) },
-    { key: 'forming', kicker: 'Open roles', title: 'Crews forming', meta: `${forming.length} projects`, n: forming.length, faces: forming.flatMap((w) => creditedOn(w.id)).slice(0, 4), open: () => push({ name: 'browse', scope: 'roles' }) },
-    { key: 'lang', kicker: 'In production', title: `${lang ?? ''} projects in the making`, meta: `${inLang.length} projects`, n: inLang.length, faces: inLang.flatMap((w) => creditedOn(w.id)).slice(0, 4), open: () => push({ name: 'browse', scope: 'projects' }) },
-  ]
-    .filter((c) => c.n >= 2)
-    .sort((a, b) => b.n - a.n);
-
-  const nearPool = seed.people.filter((p) => p.id !== me.id && dept.crafts.includes(p.craft) && p.city === me.city && p.visibility !== 'private' && p.visibility !== 'removed');
-  const near = nearPool.slice(0, 4);
-  const nearAll = nearPool.length;
+  // People near you: your department first, then the departments you work beside; available people first in each.
+  const near = useMemo(() => {
+    const close = nearCrafts(me.craft);
+    const tier = (p: Person) => (family.crafts.includes(p.craft) || myCrafts.includes(p.craft) ? 0 : close.includes(p.craft) ? 1 : 2);
+    return searchablePeople(me.id, blocked)
+      .filter((p) => p.city === me.city && tier(p) < 2)
+      .sort((a, b) => tier(a) - tier(b) || Number(!!b.availableFrom) - Number(!!a.availableFrom));
+  }, [me.id, me.city, me.craft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [spot, setSpot] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const atmosphere = useAtmosphere();
 
   const tiles: { key: string; label: string; icon: string; open: () => void; wide?: boolean }[] = [
-    ...(features.events ? [{ key: 'events', label: 'Events', icon: 'events', open: () => push({ name: 'browse', scope: 'events' }) }] : []),
-    { key: 'projects', label: 'Projects', icon: 'projects', open: () => push({ name: 'browse', scope: 'projects' }) },
-    { key: 'people', label: 'People', icon: 'people', open: () => push({ name: 'browse', scope: 'people' }) },
-    { key: 'roles', label: 'Opportunities', icon: 'crews', open: () => push({ name: 'browse', scope: 'roles' }), wide: true },
-    { key: 'reviews', label: 'Reviews', icon: 'reviews', open: () => push({ name: 'reviews' }), wide: true },
+    ...(features.events ? [{ key: 'events', label: 'Events', icon: 'events', open: () => go.discover('events') }] : []),
+    { key: 'projects', label: 'Projects', icon: 'projects', open: () => go.discover('projects') },
+    { key: 'people', label: 'People', icon: 'people', open: () => go.discover('people') },
+    { key: 'roles', label: 'Opportunities', icon: 'crews', open: () => go.discover('roles'), wide: true },
+    { key: 'reviews', label: 'Reviews', icon: 'reviews', open: () => go.discover('reviews'), wide: true },
   ];
 
   return (
@@ -172,10 +174,10 @@ export function DistrictHome({ go }: { go: Go }) {
         </nav>
       </div>
 
-      {spotlight.length > 0 && (
+      {cards.length > 0 && (
         <section className="dh-sec" aria-label="In the spotlight">
-          <SectionHeader title="In the spotlight" className="dh-pad" action={projects.length > spotlight.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'projects' })} />
-          <Spotlight items={spotlight} rolesOf={rolesOf} meId={me.id} i={spot} setI={setSpot} />
+          <SectionHeader title="In the spotlight" className="dh-pad" />
+          <Spotlight items={cards} i={Math.min(spot, cards.length - 1)} setI={setSpot} />
         </section>
       )}
 
@@ -183,9 +185,11 @@ export function DistrictHome({ go }: { go: Go }) {
         <FirstStep />
       </div>
 
+      <IntentShelf intent={intent} me={me} roles={roles.filter((o) => !shown.has(`role:${o.id}`) && o.authorId !== me.id)} blocked={blocked} go={go} />
+
       {posts.length === 3 && (
-        <section className="dh-sec dh-pad" aria-label={`New work in ${craftLabel.toLowerCase()}`}>
-          <SectionHeader title={`New work in ${craftLabel.toLowerCase() || 'your craft'}`} action="See all" onAction={go.discover} />
+        <section className="dh-sec dh-pad" aria-label="New work">
+          <SectionHeader title="New work" action="See all" onAction={() => go.discover('posts')} />
           <div className="dh-mosaic">
             {posts.map((p, i) => {
               const a = party(p.authorId);
@@ -212,17 +216,28 @@ export function DistrictHome({ go }: { go: Go }) {
 
       {upcoming.length > 0 && (
         <section className="dh-sec" aria-label={eventsTitle(upcoming, me.city)}>
-          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action={allEvents > upcoming.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'events' })} />
+          <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action={allEvents > upcoming.length ? 'See all' : undefined} onAction={() => go.discover('events')} />
           <EventsA list={upcoming} city={me.city} />
         </section>
       )}
 
-      {week.length > 0 && (
+      {friday.length > 0 && (
         <section className="dh-sec" aria-label="Out this Friday">
-          <SectionHeader title="Out this Friday" className="dh-pad" action="See all" onAction={() => push({ name: 'reviews' })} />
-          <div className={week.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
-            {week.map((w) => (
+          <SectionHeader title="Out this Friday" className="dh-pad" action="See all" onAction={() => go.discover('reviews')} />
+          <div className={friday.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
+            {friday.map((w) => (
               <Quote key={w.id} w={w} onOpen={() => push({ name: 'work', id: w.id })} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {near.length >= 2 && (
+        <section className="dh-sec dh-pad" aria-label="People near you">
+          <SectionHeader title="People near you" action={near.length > 4 ? 'See all' : undefined} onAction={() => go.discover('people')} />
+          <div className="dh-grid">
+            {near.slice(0, 4).map((p) => (
+              <NearCard key={p.id} p={p} />
             ))}
           </div>
         </section>
@@ -242,45 +257,6 @@ export function DistrictHome({ go }: { go: Go }) {
         </section>
       )}
 
-      {collections.length > 0 && (
-        <section className="dh-sec dh-pad" aria-label="Picked for you">
-          <SectionHeader title="Picked for you" />
-          <PressCard className="dh-banner" onPress={collections[0].open} scale={0.985} aria-label={`${collections[0].title}, ${collections[0].meta}`}>
-            <span className="dh-banner-t">
-              <span>{collections[0].kicker}</span>
-              <strong>{collections[0].title}</strong>
-              <em>{collections[0].meta}</em>
-            </span>
-            <span className="dh-banner-faces" aria-hidden>
-              {collections[0].faces.slice(0, 4).map((id) => party(id) && <Avatar key={id} party={party(id)!} size={46} />)}
-            </span>
-          </PressCard>
-          {collections.length > 1 && (
-            <div className="dh-links">
-              {collections.slice(1).map((c) => (
-                <button key={c.key} className="dh-link" onClick={c.open}>
-                  <span>{c.title}</span>
-                  <i>
-                    {c.n} <ChevronRight size={14} aria-hidden />
-                  </i>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {near.length >= 2 && (
-        <section className="dh-sec dh-pad" aria-label={`${dept.label} near you`}>
-          <SectionHeader title={`${dept.label} near you`} action={nearAll > near.length ? 'See all' : undefined} onAction={() => push({ name: 'browse', scope: 'people' })} />
-          <div className="dh-grid">
-            {near.map((p) => (
-              <NearCard key={p.id} p={p} />
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className="dh-end" aria-labelledby="dh-end-title">
         <h2 id="dh-end-title">You're up to date.</h2>
         <div className="dh-end-chips">
@@ -294,6 +270,82 @@ export function DistrictHome({ go }: { go: Go }) {
     </div>
     </>
   );
+}
+
+const closes = (n?: number) => (n === undefined ? '' : n <= 0 ? 'Closes today' : n === 1 ? 'Closes tomorrow' : `Closes in ${n} days`);
+
+/**
+ * The shelf that follows why you're here: Find work → Opportunities for you; Find people → People for your project;
+ * Collaborate → Collaborations and roles. Grow my network and Just exploring have none: New work comes next anyway.
+ */
+function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: Person; roles: Opportunity[]; blocked: string[]; go: Go }) {
+  const { push } = useStore();
+  const mine = [me.craft, ...(me.crafts ?? [])];
+  const related = mine.flatMap((c) => familyOf(c).crafts);
+  const fit = (o: Opportunity) => (o.forCrafts.some((c) => mine.includes(c)) ? 0 : o.forCrafts.some((c) => related.includes(c)) ? 1 : 2);
+  const byFit = (a: Opportunity, b: Opportunity) => fit(a) - fit(b) || Number(!a.city.includes(me.city)) - Number(!b.city.includes(me.city)) || (a.closesInDays ?? 99) - (b.closesInDays ?? 99);
+
+  if (intent === 'work' || intent === 'collaborate') {
+    const list = (intent === 'collaborate' ? [...roles].sort((a, b) => Number(b.kind === 'collab') - Number(a.kind === 'collab') || byFit(a, b)) : roles.filter((o) => fit(o) < 2 && o.kind !== 'collab').sort(byFit)).slice(0, 3);
+    if (!list.length) return null;
+    const title = intent === 'collaborate' ? 'Collaborations and roles' : 'Opportunities for you';
+    return (
+      <section className="dh-sec dh-pad" aria-label={title}>
+        <SectionHeader title={title} action="See all" onAction={() => go.discover('roles')} />
+        <div className="dh-ilist">
+          {list.map((o) => (
+            <div key={o.id} className="dh-irow">
+              <PressCard className="dh-irow-main" onPress={() => push({ name: 'opportunity', id: o.id })} scale={0.985} aria-label={`${o.role}, ${o.project}`}>
+                <span className="dh-irow-img">
+                  <Photo media={o.media} showPlay={false} />
+                </span>
+                <span className="dh-irow-t">
+                  <b>{o.role}</b>
+                  <span>
+                    {o.project} · {o.orgId ? org(o.orgId).name : o.authorId ? person(o.authorId).name : ''}
+                  </span>
+                  <span className="dh-irow-fact">{[closes(o.closesInDays), o.kind === 'collab' ? 'Collaboration' : o.paid ? 'Paid' : 'Unpaid', o.city.split(/,| & /)[0]].filter(Boolean).join(' · ')}</span>
+                </span>
+              </PressCard>
+              <SaveButton id={o.id} kind="role" name={`${o.role}, ${o.project}`} />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (intent === 'hire') {
+    const list = searchablePeople(me.id, blocked)
+      .filter((p) => p.availableFrom)
+      .sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city) || (b.years ?? 0) - (a.years ?? 0))
+      .slice(0, 3);
+    if (!list.length) return null;
+    return (
+      <section className="dh-sec dh-pad" aria-label="People for your project">
+        <SectionHeader title="People for your project" action="See all" onAction={() => go.discover('people')} />
+        <div className="dh-ilist">
+          {list.map((p) => (
+            <div key={p.id} className="dh-irow">
+              <PressCard className="dh-irow-main" onPress={() => push({ name: 'profile', id: p.id })} scale={0.985} aria-label={`${p.name}, ${p.role}`}>
+                <span className="dh-irow-img dh-irow-img--round">
+                  <PersonPhoto party={p} />
+                </span>
+                <span className="dh-irow-t">
+                  <b>{p.name}</b>
+                  <span>
+                    {p.role} · {p.city}
+                  </span>
+                  <span className="dh-irow-fact dh-irow-fact--ok">Available from {p.availableFrom}</span>
+                </span>
+              </PressCard>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+  return null;
 }
 
 const timeOf = (ms: number) => new Date(ms).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
@@ -325,7 +377,7 @@ const fullDate = (e: IndustryEvent) => new Date(e.start).toLocaleDateString('en-
 // One choice per person per day; a change that matters (Interested, a block) recalculates. Never while on screen.
 const chosen = new Map<string, IndustryEvent[]>();
 function homeEvents(pool: IndustryEvent[], me: Person, following: string[], interested: string[], blocked: string[], now: number) {
-  const key = [me.id, me.city, me.craft, new Date(now).toDateString(), interested.join(), blocked.join()].join('|');
+  const key = [me.id, me.city, me.craft, new Date(now).toDateString(), interested.join(), blocked.join(), pool.map((e) => e.id).join()].join('|');
   const hit = chosen.get(key);
   if (hit) return hit;
   const list = rankHomeEvents(pool, {
@@ -406,8 +458,11 @@ function EventsA({ list, city }: { list: IndustryEvent[]; city: string }) {
 }
 
 
-/** Centred carousel: moves on its own, the centre card plays its clip; touching it stops the movement. */
-function Spotlight({ items, rolesOf, meId, i, setI }: { items: Work[]; rolesOf: (w: Work) => { role: string }[]; meId: string; i: number; setI: (f: number | ((x: number) => number)) => void }) {
+/**
+ * Centred carousel: moves on its own, the centre card plays its clip; touching it stops the movement. Every card has
+ * the same anatomy whatever it is: a big image with one label on it, then the title, one meta line and one fact.
+ */
+function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f: number | ((x: number) => number)) => void }) {
   const { push } = useStore();
   const held = useRef(false);
   const low = useLowPower();
@@ -423,62 +478,58 @@ function Spotlight({ items, rolesOf, meId, i, setI }: { items: Work[]; rolesOf: 
   }, []);
   useEffect(() => {
     if (!animate || items.length < 2) return;
-    const t = window.setInterval(() => !held.current && document.visibilityState === 'visible' && setI((x) => (x + 1) % items.length), 3800);
+    const t = window.setInterval(() => !held.current && document.visibilityState === 'visible' && setI((x) => (x + 1) % items.length), 4200);
     return () => window.clearInterval(t);
-  }, [animate, items.length]);
-  const CARD = Math.min(248, w - 96);
+  }, [animate, items.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const CARD = Math.max(220, Math.min(280, w - 80));
   const GAP = 12;
   return (
     <div className="dh-car" ref={wrap} onPointerDown={() => (held.current = true)}>
       <div className="dh-track" style={{ transform: `translateX(${(w - CARD) / 2 - i * (CARD + GAP)}px)` }}>
-        {items.map((p, k) => {
-          const faces = creditedOn(p.id).filter((x) => x !== meId);
-          const roles = [...new Set(rolesOf(p).map((r) => r.role))];
-          const house = p.orgIds[0] ? org(p.orgIds[0]) : undefined;
-          const badge = isLive(p) ? (roles.length ? 'Crew forming' : p.stage === 'Shooting' ? 'Shooting now' : p.stage) : `Released ${p.year}`;
+        {items.map((c, k) => {
           const active = k === i;
           return (
-            <div key={p.id} className={`dh-card ${active ? 'is-active' : ''}`} style={{ width: CARD }} aria-hidden={!active}>
-              <PressCard className="dh-card-main" onPress={() => (active ? push({ name: 'work', id: p.id }) : setI(k))} scale={0.985} aria-label={`${p.title}, ${house?.name ?? ''}`} tabIndex={active ? 0 : -1}>
+            <div key={c.key} className={`dh-card dh-card--${c.key.split(':')[0]} ${active ? 'is-active' : ''}`} style={{ width: CARD }} aria-hidden={!active}>
+              <PressCard className="dh-card-main" onPress={() => (active ? push(c.open) : setI(k))} scale={0.985} aria-label={`${c.kicker}. ${c.title}. ${c.meta}`} tabIndex={active ? 0 : -1}>
                 <span className="dh-card-media">
-                  <Photo media={p.stills[0] ?? p.media} showPlay={false} />
-                  {animate && active && CLIPS.has(p.id) && <Clip id={p.id} />}
-                  <span className="dh-badge">{badge}</span>
+                  {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-ev-plain" />}
+                  {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
+                  <span className="dh-card-shade" aria-hidden />
+                  <span className="dh-badge">{c.kicker}</span>
                 </span>
                 <span className="dh-card-body">
-                  <b>{p.title}</b>
-                  <span>
-                    {house?.name ?? p.format.split(' · ')[0]} · {p.format.split(' · ')[1] ?? p.format}
-                  </span>
-                  {faces.length > 0 && (
+                  <b>{c.title}</b>
+                  <span>{c.meta}</span>
+                  {c.faces && c.faces.length > 0 ? (
                     <span className="dh-who">
                       <span className="dh-faces" aria-hidden>
-                        {faces.slice(0, 3).map((f) => party(f) && <Avatar key={f} party={party(f)!} size={20} />)}
+                        {c.faces.slice(0, 3).map((f) => party(f) && <Avatar key={f} party={party(f)!} size={20} />)}
                       </span>
-                      {faces
+                      {c.faces
                         .slice(0, 2)
                         .map((f) => first(person(f).name))
                         .join(', ')}
-                      {faces.length > 2 ? ` +${faces.length - 2}` : ''}
+                      {c.faces.length > 2 ? ` +${c.faces.length - 2}` : ''}
                     </span>
-                  )}
-                  {isLive(p) && roles.length > 0 && (
-                    <span className="dh-look">
-                      Looking for <b>{roles.slice(0, 2).join(', ')}{roles.length > 2 ? ` +${roles.length - 2}` : ''}</b>
+                  ) : c.fact ? (
+                    <span className="dh-fact">{c.fact}</span>
+                  ) : (
+                    <span className="dh-fact" aria-hidden>
+                      &nbsp;
                     </span>
                   )}
                 </span>
               </PressCard>
               <span className="dh-card-save">
-                <SaveButton id={p.id} kind="project" floating name={p.title} />
+                <SaveButton id={c.save.id} kind={c.save.kind} floating name={c.title} />
               </span>
             </div>
           );
         })}
       </div>
       <div className="dh-dots" role="tablist" aria-label="Spotlight">
-        {items.map((p, k) => (
-          <button key={p.id} role="tab" aria-selected={k === i} aria-label={p.title} className={k === i ? 'on' : ''} onClick={() => ((held.current = true), setI(k))} />
+        {items.map((c, k) => (
+          <button key={c.key} role="tab" aria-selected={k === i} aria-label={c.title} className={k === i ? 'on' : ''} onClick={() => ((held.current = true), setI(k))} />
         ))}
       </div>
     </div>
@@ -542,6 +593,7 @@ function NearCard({ p }: { p: Person }) {
       <PressCard className="dh-near-main" onPress={() => push({ name: 'profile', id: p.id })} scale={0.98} aria-label={`${p.name}, ${p.role}`}>
         <span className="dh-near-img">
           <PersonPhoto party={p} />
+          {p.availableFrom && <span className="dh-avail">Available</span>}
         </span>
         <span className="dh-near-t">
           <b>{p.name}</b>
@@ -549,7 +601,7 @@ function NearCard({ p }: { p: Person }) {
             {p.role}
             {p.years ? ` · ${p.years} yrs` : ''}
           </span>
-          {p.availableFrom ? <span className="dh-free">Free from {p.availableFrom}</span> : <span>{p.city}</span>}
+          {p.availableFrom ? <span className="dh-free">From {p.availableFrom}</span> : <span>{p.city}</span>}
         </span>
       </PressCard>
       <button className={`dh-follow ${on ? 'is-on' : ''}`} aria-label={on ? `Following ${p.name}` : `Follow ${p.name}`} aria-pressed={on} onClick={() => toggleFollow(p.id)}>

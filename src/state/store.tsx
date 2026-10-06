@@ -43,7 +43,6 @@ export type Route =
   | { name: 'media'; items: Media[]; index: number; what?: string; from?: string }
   | { name: 'posts'; ids: string[]; index: number }
   | { name: 'saved' }
-  | { name: 'browse'; scope: 'roles' | 'people' | 'projects' | 'events' }
   | { name: 'reviews' }
   | { name: 'filmReviews'; id: string }
   | { name: 'personReviews'; id: string }

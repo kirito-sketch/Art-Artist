@@ -1,4 +1,5 @@
 import type { Craft } from './types';
+import { familyMates } from './taxonomy';
 
 /**
  * The structured craft list used at onboarding, search and matching. Short on purpose: grouped tiles,
@@ -37,11 +38,4 @@ export const craftDef = (id: string) => CRAFTS.find((c) => c.id === id);
 export const headline = (primary: string, specialisation?: string) => [craftDef(primary)?.person ?? primary, specialisation?.trim()].filter(Boolean).join(' · ');
 
 /** Crafts that work side by side (a cinematographer's crew is camera and lighting too). Used for matching, never shown. */
-const FAMILIES: Craft[][] = [
-  ['cinematographer', 'camera', 'lighting'],
-  ['editor', 'colourist', 'vfx'],
-  ['director', 'writing'],
-  ['sound', 'music'],
-  ['production-design', 'costume', 'makeup'],
-];
-export const relatedCrafts = (c: Craft): Craft[] => (FAMILIES.find((f) => f.includes(c)) ?? [c]).filter((x) => x !== c);
+export const relatedCrafts = (c: Craft): Craft[] => familyMates(c);
