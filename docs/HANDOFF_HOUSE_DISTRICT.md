@@ -13,7 +13,7 @@ The app has two versions of Home and Discover, chosen by a feature switch:
 - **Current** (`?home=current`, the default): the old version. **Do not change it.**
 - **District** (`?home=district`): the new version that stakeholders are moving to.
 
-Everything for an **individual** in the District version has been redesigned: Home, Discover, Spotlight, profile and onboarding. But when someone **acts for a production house** (the "acting" identity: `store.acting !== 'self'`), the app still shows the old house screens in both versions. **Your job is to bring the production house screens and flows into the District version**, so a house user gets the same design language, structure and quality as an individual in District. Change them **only when `features.home === 'district'`**. The current version's house screens must stay exactly as they are.
+Everything for an **individual** in the District version has been redesigned: Home, Discover, Spotlight, profile and onboarding. But when someone **acts for a production house** (the "acting" identity: `store.acting !== 'self'`), the app still shows the old house screens in both versions. **Your job is to bring the production house screens and flows into the District version**, so a house user gets the same design language and quality as an individual in District, with screens built around what a house needs (see "Houses are not individuals" below). Change them **only when `features.home === 'district'`**. The current version's house screens must stay exactly as they are.
 
 Before writing code, read the repo docs listed below. Then write a short plan in `docs/DISTRICT_HOUSE.md` (problems, proposed screen by screen, what stays) and implement it.
 
