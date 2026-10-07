@@ -1,5 +1,5 @@
 import { eligibleFeaturedProjects } from '../../domain/featuredWork';
-import { resolveProfileCover } from '../../domain/profileCover';
+import { profileCoverPosition, resolveProfileCover } from '../../domain/profileCover';
 import { ShowreelMedia } from './Showreel';
 import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
@@ -8,7 +8,7 @@ import { FeaturedWorkSection } from './WorkPortfolio';
 import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -174,7 +174,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const heroSrc = backdrop?.src ?? 'images/brand/entry/camera.jpg';
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };
 
-  const selectedCover = resolveProfileCover(profileOf(id).profileCover, work, eligibleFeaturedProjects(id), reel);
+  const coverChoice = profileOf(id).profileCover;
+  const portrait: Media | undefined = p.photo ? { id: `portrait-${id}`, kind: 'image', src: p.photo } : undefined;
+  const selectedCover = resolveProfileCover(coverChoice, work, eligibleFeaturedProjects(id), reel, portrait);
   const scrollToWork = () => {
     const el = scrollRef.current;
     const sheet = el?.querySelector<HTMLElement>('.psheet');
@@ -187,9 +189,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
         <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
-      <div className="phero" data-hero>
+      <div className="phero" data-hero style={district ? { '--profile-position': profileCoverPosition(coverChoice) } as CSSProperties : undefined}>
         <div className="ohero-parallax" data-hero-photo>
-          {district ? selectedCover.media ? <Photo media={selectedCover.media} className="phero-photo" alt="Featured professional work" showPlay={false} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
+          {district ? selectedCover.media ? <Photo key={selectedCover.media.src} media={selectedCover.media} className="phero-photo" alt={`Featured image of ${p.name}`} showPlay={false} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
         </div>
         <div className="phero-dim" data-hero-dim aria-hidden />
         <div className="phero-bar">
@@ -201,7 +203,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
           <span className="flex" />
           {/* V30: people can be saved, privately, like anything else worth coming back to (a shortlist). */}
-          {!own && (
+          {!own && !district && (
             <IconButton label={`Save ${p.name}`} aria-pressed={isSaved('person', id)} className={`icon-btn--float ${isSaved('person', id) ? 'is-saved' : ''}`} onClick={() => toggleSave(id, 'person')}>
               <Bookmark size={18} fill={isSaved('person', id) ? 'currentColor' : 'none'} />
             </IconButton>
@@ -215,9 +217,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         </div>
         {district && <div className="profile-intro">
           <header className="pid">
-          <span className="pid-avatar">
-            <Avatar party={p} size={96} />
-          </span>
           {own && isTab && memberships.length > 0 ? (
             <button ref={nameRef as RefObject<HTMLButtonElement>} className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
               {p.name}
@@ -268,9 +267,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </>
           )}
         </div>
-          {own && <button className="profile-cover-manage" onClick={() => push({ name: 'editProfile', section: 'portfolio' })}>Change profile cover</button>}
-          <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>
         </div>}
+        {district && <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>}
       </div>
 
       <div className="psheet">

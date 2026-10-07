@@ -1,8 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveProfileCover } from './profileCover';
+import { profileCoverPosition, resolveProfileCover } from './profileCover';
 import type { Media } from '../data/types';
 const image: Media = { id: 'frame', kind: 'image', src: '/frame.jpg' };
+test('automatic and explicitly chosen portraits use the full featured image', () => {
+  const portrait: Media = { id: 'portrait', kind: 'image', src: '/portrait.jpg' };
+  assert.equal(resolveProfileCover(undefined, [image], [], undefined, portrait).media, portrait);
+  assert.equal(resolveProfileCover({ kind: 'portrait' }, [image], [], undefined, portrait).media, portrait);
+  assert.equal(resolveProfileCover({ kind: 'portfolio', mediaId: image.id }, [image], [], undefined, portrait).media, image);
+});
+test('focal positions preserve a chosen crop and constrain invalid persisted coordinates', () => {
+  assert.equal(profileCoverPosition({ kind: 'portrait', focal: { x: 30, y: 20 } }), '30% 20%');
+  assert.equal(profileCoverPosition({ kind: 'portrait', focal: { x: -5, y: 110 } }), '0% 100%');
+  assert.equal(profileCoverPosition({ kind: 'portrait', focal: { x: NaN, y: Infinity } }), '50% 35%');
+});
 test('profile cover uses chosen portfolio image without changing work order', () => {
   assert.deepEqual(resolveProfileCover({ kind: 'portfolio', mediaId: 'frame' }, [image], []), { media: image, showreel: false });
 });

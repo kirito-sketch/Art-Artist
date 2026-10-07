@@ -43,6 +43,7 @@ export function EditProfile({ section }: { section?: EditSection }) {
 /* ------------------------------------------------------------ overview */
 
 function Overview() {
+  const district = useFeatures().home === 'district';
   const { viewer, pop, push, availability, profileVersion } = useStore();
   void profileVersion;
   const me = person(viewer.id);
@@ -86,6 +87,7 @@ function Overview() {
           <R label="Languages" value={v(list(me.languages ?? []))} section={('languages')} />
         </div>
         <div className="group">
+          {district && <R label="Profile image & crop" value={v(x.profileCover ? 'Image selected' : 'Automatic')} section="portfolio" />}
           <R label={portfolioLabel(me.craft)} value={v(workCount)} section={('portfolio')} />
           <R label="Work" value={v('Credits and projects', '')} section={('work')} />
           <R label="About" value={v(seed.about[viewer.id] ? 'Bio added' : '')} section={('about')} />

@@ -818,11 +818,12 @@ function ShareSheet({ label }: { label: string }) {
 /* ---------------------------------------------------------- More / Report / Block */
 
 function MoreSheet({ id }: { id: string }) {
-  const { openSheet, blocked, unblock, closeSheet, showToast } = useStore();
+  const { openSheet, blocked, unblock, closeSheet, showToast, isSaved, toggleSave } = useStore();
   const p = party(id)!;
   const isBlocked = blocked.includes(id);
   return (
     <div className="group">
+      {p.kind === 'person' && <Row icon={<Bookmark size={22} />} label={isSaved('person', id) ? 'Remove from saved' : `Save ${p.name}`} onPress={() => { toggleSave(id, 'person'); closeSheet(); }} />}
       <Row icon={<Flag size={22} />} label={`Report ${p.name}`} onPress={() => openSheet({ name: 'report', subject: p.name, partyId: id })} />
       {isBlocked ? (
         <Row

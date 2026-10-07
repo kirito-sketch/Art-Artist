@@ -4,15 +4,15 @@ The New Home direction now uses an immersive Individual Profile. Production Hous
 
 ## First viewport
 
-Professional work fills the usable viewport above the bottom navigation. Identity, portrait, primary craft, city/languages, actual public accepted-credit count and existing years-active data sit over a readability gradient. Follow stays primary and Message secondary for other people. Owners have Edit profile and Change profile cover. Share, personal Save and Settings/overflow retain their existing handlers. There is no live presence indicator.
+The selected portrait or featured work fills the first viewport with cover cropping. There is no separate avatar. Name, primary craft, city/languages, actual public accepted-credit count and existing years-active data are centred in the lower-middle over a restrained readability gradient. Follow stays primary and Message secondary for other people. Owners have a compact Edit profile action. Top controls are Back when relevant, Share and Settings/More; personal Save is available in More. There is no live presence indicator. Explore work is a quiet affordance above the bottom navigation.
 
 The hero uses the actual phone viewport and safe-area tokens, not Compare frame dimensions. It naturally scrolls away. A compact name/header appears after most of the hero has left view. The rounded surface below uses the current light/dark theme. Showreel, portfolio, featured work, credits and posts precede deeper professional details and private owner management.
 
 ## Cover selection
 
-Edit profile → Portfolio & showreel → Profile cover stores `ProfileExtra.profileCover`, a reference to automatic professional work, a portfolio media ID, an eligible public project ID, or the published showreel. The resolver checks eligibility again when rendering. Removed/private projects cannot supply cover art. Choosing artwork never adds or claims a credit. External work links remain links rather than fabricated thumbnails.
+Edit profile → Profile image & crop opens the existing Portfolio & showreel editor. Profile cover stores `ProfileExtra.profileCover`, a reference to automatic selection, the profile portrait, a portfolio media ID, an eligible public project ID, or the published showreel. Horizontal and vertical focus controls store a bounded focal position on that reference and preview the crop. The resolver checks eligibility again when rendering. Removed/private projects cannot supply cover art. Choosing artwork never adds or claims a credit. External work links remain links rather than fabricated thumbnails.
 
-Automatic selection uses a portfolio image, eligible project artwork, then a public showreel poster. With no work, a designed Ana typographic/graphic fallback appears. The profile portrait is never stretched into a background.
+Automatic selection uses the existing profile portrait, then a portfolio image, eligible project artwork, or a public showreel poster. Explicit featured work overrides this order. With no image, a designed Ana typographic/graphic fallback appears. Images use cover cropping and focal positioning without stretching.
 
 A showreel cover is a static poster. A valid playable reel provides Play showreel, opening the existing player only after a tap. Invalid legacy demo URLs remain unavailable rather than pretending to play. Private native-upload drafts never appear in the public hero.
 
