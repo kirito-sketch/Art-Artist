@@ -22,6 +22,7 @@ import './styles/view-modes.css';
 import './styles/refine.css';
 import './styles/theme-dark.css';
 import './styles/ambient.css';
+import './styles/profile-immersive.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';

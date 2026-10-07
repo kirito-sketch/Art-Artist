@@ -4,8 +4,8 @@
  *   app:       only the product, filling the viewport (real device, safe areas, Add to Home Screen).
  *
  * Choice order: installed Home Screen app → app (always); ?view=app|prototype (applied and
- * remembered); the remembered choice (localStorage aa_view_mode); otherwise phone-sized screens → app,
- * larger → prototype. /test and /research never read this.
+ * used only for that explicit launch); otherwise app on all viewport sizes. Old stored prototype
+ * choices no longer affect ordinary launches. /test and /research never read this.
  */
 import { Eye, X } from 'lucide-react';
 import { useState } from 'react';
@@ -37,13 +37,7 @@ export function initialViewMode(): ViewMode {
     window.history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : '') + window.location.hash);
     return fromUrl;
   }
-  try {
-    const stored = localStorage.getItem(KEY);
-    if (valid(stored)) return stored;
-  } catch {
-    /* ignore */
-  }
-  return window.matchMedia?.('(max-width: 600px)').matches ? 'app' : 'prototype';
+  return 'app';
 }
 
 /** Add to Home Screen support, only for the normal app (never on /test or /research). */

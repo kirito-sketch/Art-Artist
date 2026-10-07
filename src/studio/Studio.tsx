@@ -63,7 +63,7 @@ export function Studio() {
 
       <Section id="compare" title="Compare">
         <div className="st-list">
-          <Item href="/studio/compare" title="New Home and Legacy Home, side by side" hint="The product's Home and Discover, and the earlier ones kept for comparison. Show one or both." />
+          <Item href="/studio/compare" title="New Home and Legacy Home" hint="New Home is the product default. Keep Legacy Home for regression comparison." />
         </div>
       </Section>
 
@@ -79,7 +79,7 @@ export function Studio() {
         </div>
         <div className="st-row-links">
           <span className="st-item-hint">Home:</span>
-          <a href={appLink({ as: 'kiran' })}>New Home</a>
+          <a href={appLink({ as: 'kiran' })}>New Home (default)</a>
           <a href={appLink({ as: 'kiran', home: 'legacy' })}>Legacy Home</a>
           <span className="st-item-hint">· View:</span>
           <a href={appLink({ view: 'app' })}>App mode (full screen)</a>

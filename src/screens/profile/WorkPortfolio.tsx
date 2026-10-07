@@ -5,7 +5,8 @@ import { craftProfile } from '../../data/profileSchema';
 import type { Media } from '../../data/types';
 import { eligibleFeaturedProjects, featuredWorkOf, safeWorkUrl } from '../../domain/featuredWork';
 import { publicName, project } from '../../state/world';
-import { profileOf, type FeaturedWork, type Reel } from '../../state/profile';
+import { profileOf, type FeaturedWork, type ProfileCover, type Reel } from '../../state/profile';
+import { ProfileCoverPicker } from './ProfileCoverPicker';
 import { person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { Button, IconButton, Photo, Row, SectionHeader } from '../../ui/primitives';
@@ -33,6 +34,7 @@ export function WorkPortfolioPage() {
   const { viewer, pop, saveProfile, showToast } = useStore();
   const me = person(viewer.id); const x = profileOf(viewer.id); const words = craftProfile(me.craft).work;
   const [reel, setReel] = useState<Reel | undefined>(x.reel);
+  const [profileCover, setProfileCover] = useState<ProfileCover | undefined>(x.profileCover);
   const [draft, setDraft] = useState<Reel | undefined>(x.reelDraft);
   const [images, setImages] = useState<Media[]>([...(seed.portfolio[viewer.id] ?? [])]);
   const [featured, setFeatured] = useState<FeaturedWork[]>(featuredWorkOf(viewer.id));
@@ -42,7 +44,7 @@ export function WorkPortfolioPage() {
   const [external, setExternal] = useState<{ id: string; title: string; url: string } | null>(null);
   const [discard, setDiscard] = useState(false);
   const initialFeatured = featuredWorkOf(viewer.id);
-  const dirty = JSON.stringify([reel, draft, images.map((m) => m.id), featured]) !== JSON.stringify([x.reel, x.reelDraft, (seed.portfolio[viewer.id] ?? []).map((m) => m.id), initialFeatured]);
+  const dirty = JSON.stringify([reel, draft, images.map((m) => m.id), featured, profileCover]) !== JSON.stringify([x.reel, x.reelDraft, (seed.portfolio[viewer.id] ?? []).map((m) => m.id), initialFeatured, x.profileCover]);
   const eligible = eligibleFeaturedProjects(viewer.id);
   const featuredSection = <section className="ana-work-section"><h2>Featured work</h2><p className="meta">Selected projects, credits or external work. Featuring a project never creates a credit.</p>
     <div className="ana-featured-work">{featured.map((item, index) => {
@@ -61,10 +63,11 @@ export function WorkPortfolioPage() {
       if (x.reelDraft?.url?.startsWith('blob:') && x.reelDraft.url !== draft?.url) URL.revokeObjectURL(x.reelDraft.url);
       seed.portfolio[viewer.id] = images;
       const ids = new Set(eligible.map((p) => p.id));
-      saveProfile({}, { reel, reelDraft: draft, featuredWork: featured.filter((f) => f.kind === 'project' ? ids.has(f.projectId) : !!safeWorkUrl(f.url)) });
+      saveProfile({}, { reel, reelDraft: draft, profileCover, featuredWork: featured.filter((f) => f.kind === 'project' ? ids.has(f.projectId) : !!safeWorkUrl(f.url)) });
       pop(); showToast({ text: 'Work saved' });
     }}>Save</Button></header>
     <div className="composer-body ep-page">
+      <ProfileCoverPicker personId={viewer.id} value={profileCover} onChange={setProfileCover} images={images} reel={reel} />
       {!words.reel && !words.images && featuredSection}
       {words.reel ? <section className="ana-work-section"><h2>Showreel</h2><p className="meta">One primary professional video. Optional.</p><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></section> : <details className="ana-optional-reel"><summary>Showreel (optional)</summary><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></details>}
       {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}

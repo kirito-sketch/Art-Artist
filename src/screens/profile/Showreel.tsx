@@ -7,13 +7,13 @@ import { Sheet } from '../../ui/Sheet';
 import { previewVideo } from '../../ui/showreelPreview';
 import { MediaPicker } from '../create/PostComposer';
 
-export function ShowreelMedia({ reel, privateDraft = false, active = true }: { reel: Reel; privateDraft?: boolean; active?: boolean }) {
-  const [playing, setPlaying] = useState(false);
+export function ShowreelMedia({ reel, privateDraft = false, active = true, startPlaying = false }: { reel: Reel; privateDraft?: boolean; active?: boolean; startPlaying?: boolean }) {
+  const [playing, setPlaying] = useState(startPlaying);
   const [failed, setFailed] = useState(false);
   const native = reel.source?.kind === 'native';
   const ready = !native || reel.source?.kind === 'native' && reel.source.status === 'ready';
   const embed = videoEmbed(reel.source, reel.url);
-  useEffect(() => { setPlaying(false); setFailed(false); }, [reel.url]);
+  useEffect(() => { setPlaying(startPlaying); setFailed(false); }, [reel.url, startPlaying]);
   useEffect(() => { if (!active) setPlaying(false); }, [active]);
   useEffect(() => {
     const hide = () => { if (document.hidden) setPlaying(false); };

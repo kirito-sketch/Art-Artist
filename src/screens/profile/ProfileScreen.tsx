@@ -1,9 +1,14 @@
+import { eligibleFeaturedProjects } from '../../domain/featuredWork';
+import { resolveProfileCover } from '../../domain/profileCover';
+import { ShowreelMedia } from './Showreel';
+import { Sheet } from '../../ui/Sheet';
+import { Play } from 'lucide-react';
 import { useFeatures } from '../../ui/features';
 import { FeaturedWorkSection } from './WorkPortfolio';
 import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -91,6 +96,11 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   // Scroll depth is written straight to the hero's layers (src/ui/useHeroParallax.ts): no re-render per scroll event.
   const [overHero, setOverHero] = useState(true);
   const heroScroll = useHeroParallax(setOverHero);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const attachScroll = useCallback((el: HTMLDivElement | null) => { scrollRef.current = el; heroScroll(el); }, [heroScroll]);
+  const [reelOpen, setReelOpen] = useState(false);
+  const profileActive = isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile';
+  useEffect(() => { if (!profileActive) setReelOpen(false); }, [profileActive]);
   const nameRef = useNameFit(p?.name ?? '');
   // Explain once: read when this page opens (so the line stays for this visit), then remember it once it was shown.
   // The Profile tab stays mounted behind the others, so it counts only while it is the tab in view.
@@ -164,11 +174,22 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const heroSrc = backdrop?.src ?? 'images/brand/entry/camera.jpg';
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };
 
+  const selectedCover = resolveProfileCover(profileOf(id).profileCover, work, eligibleFeaturedProjects(id), reel);
+  const scrollToWork = () => {
+    const el = scrollRef.current;
+    const sheet = el?.querySelector<HTMLElement>('.psheet');
+    if (el && sheet) el.scrollTo({ top: sheet.offsetTop - 64, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  };
+
   return (
-    <div ref={heroScroll} className="screen screen--hero canvas v-profile" data-scroll={isTab ? 'profile' : undefined}>
+    <div ref={attachScroll} className={`screen screen--hero canvas v-profile${district ? ' v-profile--immersive' : ''}`} data-scroll={isTab ? 'profile' : undefined}>
+      {district && <div className="profile-compact-slot"><header className="profile-compact" aria-hidden={overHero} {...(overHero ? { inert: '' } as Record<string, string> : {})}>
+        {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
+        <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
+      </header></div>}
       <div className="phero" data-hero>
         <div className="ohero-parallax" data-hero-photo>
-          <Photo media={hero} className="phero-photo" alt={p.name} />
+          {district ? selectedCover.media ? <Photo media={selectedCover.media} className="phero-photo" alt="Featured professional work" showPlay={false} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
         </div>
         <div className="phero-dim" data-hero-dim aria-hidden />
         <div className="phero-bar">
@@ -192,12 +213,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
           </IconButton>
         </div>
-      </div>
-
-      <div className="psheet">
-        {/* Identity first: Person, Role, Location, Credibility, then Availability, then Actions, then Work.
-            The role is said once, under the name (no craft eyebrow above it saying the same thing). */}
-        <header className="pid">
+        {district && <div className="profile-intro">
+          <header className="pid">
           <span className="pid-avatar">
             <Avatar party={p} size={96} />
           </span>
@@ -228,6 +245,151 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </span>
           </p>
         </header>
+          {selectedCover.showreel && <button className="profile-play" onClick={() => setReelOpen(true)}><Play size={16} fill="currentColor" /> Play showreel</button>}
+          <div className="profile-actions">
+          {own ? (
+            <Button block variant="secondary" onClick={() => push({ name: 'editProfile' })}>
+              Edit profile
+            </Button>
+          ) : (
+            <>
+              {/* V30: Follow is the primary action (build a network gradually); Message is secondary. Whether someone can be messaged is a separate rule. */}
+              <FollowButton block size="m" primary on={isFollowing} onToggle={() => toggleFollow(id)} name={p.name} />
+              <Button
+                block
+                variant="secondary"
+                onClick={() => {
+                  const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+                  cid && push({ name: 'conversation', id: cid });
+                }}
+              >
+                {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
+              </Button>
+            </>
+          )}
+        </div>
+          {own && <button className="profile-cover-manage" onClick={() => push({ name: 'editProfile', section: 'portfolio' })}>Change profile cover</button>}
+          <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>
+        </div>}
+      </div>
+
+      <div className="psheet">
+        {/* Identity first: Person, Role, Location, Credibility, then Availability, then Actions, then Work.
+            The role is said once, under the name (no craft eyebrow above it saying the same thing). */}
+        {!district && <>        <header className="pid">
+          <span className="pid-avatar">
+            <Avatar party={p} size={96} />
+          </span>
+          {own && isTab && memberships.length > 0 ? (
+            <button ref={nameRef as RefObject<HTMLButtonElement>} className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
+              {p.name}
+              {p.identityVerified && <Verified size={22} label="Identity verified" />}
+              <ChevronDown size={20} />
+            </button>
+          ) : (
+            <h1 ref={nameRef as RefObject<HTMLHeadingElement>} className="large-title display-title display-title--name" {...displayTitle(p.name)}>
+              {p.name}
+              {p.identityVerified && <Verified size={22} label="Identity verified" />}
+            </h1>
+          )}
+          <p className="pid-role" lang={scriptLang(p.role)}>
+            {p.role}
+          </p>
+          <p className="pid-place">
+            {p.city}
+            {p.languages?.length ? ` · ${p.languages.join(', ')}` : ''}
+          </p>
+          <p className="pid-stats">
+            <Verified size={13} label="Verified credits" />
+            <span>
+              {credits.length} verified {credits.length === 1 ? 'credit' : 'credits'}
+              {p.years ? ` · ${p.years} years active` : ''}
+            </span>
+          </p>
+        </header></>}
+
+        <ReelCard person={p} active={isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile'} />
+
+
+        {stills.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title={district ? 'Portfolio' : craftProfile(p.craft).work.images ?? 'Portfolio'} />
+            <div className="bento">
+              {stills.map((m, i) => (
+                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
+                  <Photo media={m} />
+                </Pressable>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <>{district && <FeaturedWorkSection personId={p.id} />}<WorkLinks person={p} /></>
+
+
+        <section className="section section--flush">
+          <SectionHeader title="Verified credits" />
+          {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them.
+              Explain once (docs/TEXT_LOAD.md): the line shows on the first profile a person opens; after that only
+              "How credits work" stays, with the full explanation on request. */}
+          <div className="meta evidence-note">
+            {!creditsKnown && (
+              <span>
+                <Verified size={12} /> Issued by productions, confirmed by {own ? 'you' : p.name.split(' ')[0]}.
+              </span>
+            )}
+            <HowItWorks label="How credits work">
+              Only a production can issue a credit. {own ? 'You accept' : `${p.name.split(' ')[0]} accepts`} or {own ? 'correct' : 'corrects'} it before it appears here, so no one can add their own credits.
+            </HowItWorks>
+          </div>
+          {credits.length ? (
+            <div className="rail credit-rail">
+              {credits.map((c) => (
+                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={`${c.title}, ${c.role}, ${org(c.orgId).name}`}>
+                  <span className="rail-poster-wrap">
+                    <Photo media={c.media} className="rail-poster" showPlay={false} />
+                    {justAccepted === c.id && <CreditSeal />}
+                  </span>
+                  <p className="item-title">{c.title}</p>
+                  <p className="meta">{c.role}</p>
+                  <p className="meta rail-issuer">
+                    <span className="rail-issuer-name">{org(c.orgId).name}</span> <Verified size={12} />
+                  </p>
+                </Pressable>
+              ))}
+            </div>
+          ) : (
+            <p className="meta">{own ? 'No verified credits yet. When a production credits you, you confirm it here.' : 'No verified credits yet.'}</p>
+          )}
+        </section>
+
+
+        {posts.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Posts" />
+            <div className="list list--flush">
+              {posts.map((x) => (
+                <PostCard key={x.id} post={x} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <ProfileReviewsSection id={p.id} />
+
+        <ProfileDetails person={p} />
+
+        {(d.about || p.gear) && (
+          <section className="section section--flush">
+            <SectionHeader title="About" />
+            {d.about && <p className="body">{d.about}</p>}
+            {p.gear && (
+              <ul className="facts facts--tight facts--after">
+                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
+              </ul>
+            )}
+          </section>
+        )}
 
         {/* Availability: one quiet row under credibility. Your own is editable; someone else's shows only when open. */}
         {own ? (
@@ -256,7 +418,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )
         )}
 
-        <div className="profile-actions">
+        {!district && <>        <div className="profile-actions">
           {own ? (
             <Button block variant="secondary" onClick={() => push({ name: 'editProfile' })}>
               Edit profile
@@ -277,7 +439,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               </Button>
             </>
           )}
-        </div>
+        </div></>}
 
         {own && <WaysToBeFound person={p} />}
 
@@ -332,75 +494,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               </div>
             ))}
             <p className="meta pending-credit-note">Only credits you accept appear on your profile.</p>
-          </section>
-        )}
-
-        <section className="section section--flush">
-          <SectionHeader title="Verified credits" />
-          {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them.
-              Explain once (docs/TEXT_LOAD.md): the line shows on the first profile a person opens; after that only
-              "How credits work" stays, with the full explanation on request. */}
-          <div className="meta evidence-note">
-            {!creditsKnown && (
-              <span>
-                <Verified size={12} /> Issued by productions, confirmed by {own ? 'you' : p.name.split(' ')[0]}.
-              </span>
-            )}
-            <HowItWorks label="How credits work">
-              Only a production can issue a credit. {own ? 'You accept' : `${p.name.split(' ')[0]} accepts`} or {own ? 'correct' : 'corrects'} it before it appears here, so no one can add their own credits.
-            </HowItWorks>
-          </div>
-          {credits.length ? (
-            <div className="rail credit-rail">
-              {credits.map((c) => (
-                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={`${c.title}, ${c.role}, ${org(c.orgId).name}`}>
-                  <span className="rail-poster-wrap">
-                    <Photo media={c.media} className="rail-poster" showPlay={false} />
-                    {justAccepted === c.id && <CreditSeal />}
-                  </span>
-                  <p className="item-title">{c.title}</p>
-                  <p className="meta">{c.role}</p>
-                  <p className="meta rail-issuer">
-                    <span className="rail-issuer-name">{org(c.orgId).name}</span> <Verified size={12} />
-                  </p>
-                </Pressable>
-              ))}
-            </div>
-          ) : (
-            <p className="meta">{own ? 'No verified credits yet. When a production credits you, you confirm it here.' : 'No verified credits yet.'}</p>
-          )}
-        </section>
-
-        <ReelCard person={p} active={isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile'} />
-
-        <ProfileReviewsSection id={p.id} />
-
-        {stills.length > 0 && (
-          <section className="section section--flush">
-            <SectionHeader title={district ? 'Portfolio' : craftProfile(p.craft).work.images ?? 'Portfolio'} />
-            <div className="bento">
-              {stills.map((m, i) => (
-                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
-                  <Photo media={m} />
-                </Pressable>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <>{district && <FeaturedWorkSection personId={p.id} />}<WorkLinks person={p} /></>
-
-        <ProfileDetails person={p} />
-
-        {(d.about || p.gear) && (
-          <section className="section section--flush">
-            <SectionHeader title="About" />
-            {d.about && <p className="body">{d.about}</p>}
-            {p.gear && (
-              <ul className="facts facts--tight facts--after">
-                <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
-              </ul>
-            )}
           </section>
         )}
 
@@ -490,17 +583,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
 
-        {posts.length > 0 && (
-          <section className="section section--flush">
-            <SectionHeader title="Posts" />
-            <div className="list list--flush">
-              {posts.map((x) => (
-                <PostCard key={x.id} post={x} />
-              ))}
-            </div>
-          </section>
-        )}
+
       </div>
+      {district && <Sheet open={reelOpen} onClose={() => setReelOpen(false)} title="Showreel">{reelOpen && reel && <ShowreelMedia reel={reel} active={profileActive} startPlaying />}</Sheet>}
     </div>
   );
 }

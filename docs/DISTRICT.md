@@ -1,21 +1,16 @@
 # District direction (Home and Discover)
 
-A second version of Home and Discover, built for comparison. Production-house pages and connected flows also have a District presentation; their records and product rules are shared with Current.
-
-The District version is now the product's Home and Discover everywhere: a normal launch on a phone or desktop, the preview and test deployments, and every route except `/test`. There is no version selector.
+The product default for Home and Discover, including normal app launches, previews, phones and participant tests. Both Individual and Production House use the District direction; records and product rules remain shared with Legacy Home. Old stored Home or prototype-view choices do not override a normal launch.
 
 | How | Effect |
 | --- | --- |
-| (nothing) | The New Home and Discover. This is the default |
-| `?home=legacy` (or `?home=current`) | The Legacy Home and Discover, for this page load only. Debug and regression use |
-| `?home=next` | An earlier experiment, kept for the record |
-| `/studio/compare` | New Home and Legacy Home as two live apps: show one, or both side by side, as any persona. New comes first |
+| Normal launch | New Home automatically, in the standalone app presentation |
+| `?home=district` | Explicit New Home override (not needed normally) |
+| `?home=legacy` or `?home=current` | Explicit Legacy Home comparison for this URL only |
+| `/studio/compare` | New Home (default) and Legacy Home: show one or both, as either identity |
+| `/test` | New Home and Events, including resumed sessions; `?arm=current` is an explicit research override |
 
-The Home choice is never stored. A Compare or debug visit cannot change what the next normal launch shows (an earlier build stored it; that stored value is now ignored). Events are still remembered per device (`?events=off`).
-
-`/test` is the research study, not a deployment: it keeps the Legacy Home (or its assigned arm) and Events off, so its comparison is unchanged.
-
-Production houses: the New Home applies to the individual identity. While acting for a house, Home, Discover and the house flows are the same screens in both versions; see docs/HANDOFF_HOUSE_DISTRICT.md.
+Theme is independent of Home selection. Light, Dark and System also apply to `/test`. Normal navigation and detail returns share the same version setting; no Compare wrapper is required.
 
 ## Home (`src/screens/home/DistrictHome.tsx`)
 
@@ -52,7 +47,7 @@ Domain → family → craft, as data. Families know which families sit next to t
 
 ## Reviews (`src/screens/reviews/ReviewsScreen.tsx`)
 
-The real review system (docs/REVIEWS.md): Out this Friday, Top rated, and Recent reviews. The same page is the "See all" from the Legacy Home's Out this Friday section. In District it is also the Reviews chip in Discover.
+The real review system (docs/REVIEWS.md): Out this Friday, Top rated, and Recent reviews. The same page is the "See all" from the current Home's Out this Friday section. In District it is also the Reviews chip in Discover.
 
 ## Media
 

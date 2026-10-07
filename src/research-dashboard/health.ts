@@ -153,8 +153,8 @@ export function computeHealth(d: StudyData, events: HealthEvent[], now = Date.no
 }
 
 // ------------------------------------------------------------------------------- Home comparison
-export type HomeArm = 'current' | 'next' | 'unassigned';
-export const HOME_ARM_LABEL: Record<HomeArm, string> = { current: "Today's Home", next: 'New Home', unassigned: 'Not assigned (older build)' };
+export type HomeArm = 'current' | 'next' | 'district' | 'unassigned';
+export const HOME_ARM_LABEL: Record<HomeArm, string> = { current: 'Legacy Home', next: 'Archived Home experiment', district: 'New Home (default)', unassigned: 'Not assigned (older build)' };
 
 /** Which Home each session saw, from session_started (docs/HOME.md). Sessions from before the split are unassigned. */
 export function homeArms(events: HealthEvent[]): Map<string, HomeArm> {
@@ -162,7 +162,7 @@ export function homeArms(events: HealthEvent[]): Map<string, HomeArm> {
   for (const e of events) {
     if (e.event_name !== 'session_started') continue;
     const v = e.metadata?.homeVariant;
-    out.set(e.session_id, v === 'next' || v === 'current' ? v : 'unassigned');
+    out.set(e.session_id, v === 'next' || v === 'current' || v === 'district' ? v : 'unassigned');
   }
   return out;
 }
@@ -181,7 +181,7 @@ export type ArmRow = {
 export function compareHome(d: StudyData, events: HealthEvent[], now = Date.now()): ArmRow[] {
   const arms = homeArms(events);
   const armOf = (sid: string): HomeArm => arms.get(sid) ?? 'unassigned';
-  const present = (['current', 'next', 'unassigned'] as HomeArm[]).filter((a) => d.sessions.some((s) => armOf(s.id) === a));
+  const present = (['district', 'current', 'next', 'unassigned'] as HomeArm[]).filter((a) => d.sessions.some((s) => armOf(s.id) === a));
   return present.map((arm) => {
     const ids = new Set(d.sessions.filter((s) => armOf(s.id) === arm).map((s) => s.id));
     const sub: StudyData = { tasks: d.tasks, sessions: d.sessions.filter((s) => ids.has(s.id)), attempts: d.attempts.filter((a) => ids.has(a.session_id)), feedback: d.feedback.filter((f) => ids.has(f.session_id)) };

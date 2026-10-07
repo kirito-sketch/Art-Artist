@@ -23,6 +23,7 @@ export interface Reel {
 }
 
 export type FeaturedWork = { id: string; kind: 'project'; projectId: string } | { id: string; kind: 'external'; title: string; url: string };
+export type ProfileCover = { kind: 'auto' } | { kind: 'portfolio'; mediaId: string } | { kind: 'project'; projectId: string } | { kind: 'showreel' };
 
 export interface WorkLink {
   id: string;
@@ -58,6 +59,8 @@ export interface ProfileExtra {
   /** Private device preview, never published or sent to research storage. */
   reelDraft?: Reel;
   featuredWork?: FeaturedWork[];
+  /** Reference to professional work; never grants access or creates a credit. */
+  profileCover?: ProfileCover;
   workLinks: WorkLink[];
 }
 
@@ -195,4 +198,3 @@ export function writePacing(who: string, p: Pacing) {
     /* storage blocked: pacing lasts this session */
   }
 }
-

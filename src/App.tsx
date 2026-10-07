@@ -420,6 +420,7 @@ function Phone({ app = false }: { app?: boolean }) {
 }
 
 export default function App() {
+  useEffect(() => { if (TEST_MODE) enableTheme(); }, []);
   // The index.html launch splash belongs to the normal app; any other surface releases it at once.
   useEffect(() => {
     if (!document.querySelector('.app-shell')) document.getElementById('aa-boot')?.remove();
@@ -523,7 +524,7 @@ function NormalApp() {
       <BackToStudio />
       <LaunchSplash enabled={standalone} onPhase={setLaunch} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}
-      {!standalone && !EMBED && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
+      {!standalone && !EMBED && mode === 'prototype' && <FloatingViewSwitch mode={mode} onChange={choose} className="vm-float--narrow-only" />}
     </StoreProvider>
   );
 }
