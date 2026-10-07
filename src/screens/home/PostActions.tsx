@@ -29,7 +29,7 @@ export function PostActions({ post }: { post: Post }) {
     openSheet({ name: 'share', label, url: url.href });
   };
   return <div className="ana-post-actions">
-    <motion.button whileTap={{ scale: .92 }} transition={spring.press} onClick={toggleLike} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}`}>
+    <motion.button whileTap={{ scale: 1.06 }} transition={spring.press} onClick={toggleLike} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}`}>
       <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
       {post.likes + Number(liked) > 0 && <span className="ana-post-likes" aria-hidden="true">{post.likes + Number(liked)}</span>}
     </motion.button>
