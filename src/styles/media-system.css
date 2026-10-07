@@ -11,7 +11,6 @@
 .photo[data-media-surface] { background: var(--surface-2); }
 .phero .photo[data-media-surface] { background: transparent; }
 .photo[data-media-fit="contain"] img { object-position: center !important; }
-.ana-post-inspect { display: block; min-height: 44px; margin: 0 3px; font-size: 12px; }
 .post-grid--bento .media-bento { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
 .post-grid--bento .media-bento .post-tile { min-height: 0; border-radius: 16px; align-self: start; }
 .media-bento .post-tile[data-span="2"] { grid-column: 1 / -1; }

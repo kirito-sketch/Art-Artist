@@ -34,6 +34,17 @@ test('carousel frame does not change with active slide; mixed slides fit by defa
     assert.equal(postFrame(slides,mode),frame);
   }
 });
+test('genuine vertical video keeps its native frame without changing image limits', () => {
+  const video: Media = { ...image(9 / 16), kind: 'video', src: 'video/vertical.mp4' };
+  assert.equal(postFrame([video]), 9 / 16);
+  assert.equal(postFrame([{ ...video, width: 400, height: 500 }]), 4 / 5);
+  assert.equal(postFrame([image(9 / 16)]), 3 / 4);
+  assert.equal(postFrame([{ ...video, src: 'poster.jpg' }]), 3 / 4);
+  assert.equal(postFrame([video, image(16 / 9)]), 9 / 16);
+  assert.equal(postFrame([image(16 / 9), video]), 16 / 9);
+  assert.equal(postFrame([video], 'square'), 1);
+  assert.equal(mediaPresentation(video, 'post', postFrame([video])).fit, 'cover');
+});
 test('source-aware Bento favours wide and tall tiles; art and unknown geometry are preserved', () => {
   assert.equal(bentoTile(image(16/9)).shape,'wide');
   assert.equal(bentoTile(image(3/4,'portrait')).shape,'tall');

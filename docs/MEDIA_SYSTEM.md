@@ -1,5 +1,7 @@
 # Ana media audit and presentation system
 
+Post-specific correction: see [Post sizing and demo content](POST_MEDIA_DEMO.md). Posts now have no View original CTA; the seeds demonstrate mixed heights, and genuine native vertical video can retain up to 9:16. The original inspection results below describe the initial migration, before this correction.
+
 Audit baseline: `0cac4cf` (before this migration). This change concerns media only; Credit authority, Interest, Follow, Messaging, privacy, ownership and free-only Events stay unchanged.
 
 ## A. Original media and existing architecture
@@ -43,7 +45,7 @@ Needs infrastructure later: durable upload/object storage; server thumbnail/resi
 - Keep `Photo`, extend it with `surface`, `frameRatio`, priority and source/fallback-aware presentation resolution.
 - `Media.src` remains the original source of truth. `Media.poster` is a generated or delivered video preview, never the video replacement.
 - `Media.presentations[surface]` holds independent fit/focal metadata. It is cloned by `withFraming`; source objects are not edited in place.
-- `Post.presentation` chooses the shared carousel frame. Within .75–1.91, Original preserves natural ratio. Outside that range the preview is bounded and defaults to Fit; full original remains inspectable. Slides of different ratios Fit by default, rather than silently losing composition.
+- `Post.presentation` chooses the shared carousel frame. Image ratios within .75–1.91 retain natural proportions; outside that range the frame is bounded and defaults to Fit. Playable video can retain up to 9:16. Slides of different ratios Fit by default. Framing is a creator-side decision; the Post viewer has no alternate-original CTA.
 - `mediaPresentation.ts` is the typed destination policy; `mediaLayout.ts` retains legacy source classification and normalized focal handling. Measured delivered seed dimensions live in `mediaGeometry.ts`.
 - Posters/artwork default to Fit across public previews. Actual missing-poster fallback is classified by the delivered fallback, centrally.
 - `ProfileHeroMedia` retains its specialist responsive protected-region algorithm, requests the shared policy, and uses hero-only focal metadata. There is no claim that every subject can fit; editor warns about impossible regions. Artwork preserves composition and does not claim subject protection.

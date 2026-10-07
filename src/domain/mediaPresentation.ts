@@ -29,7 +29,11 @@ export function presentationRatio(media: Media | undefined, surface: MediaSurfac
   return preset.ratio ?? Math.max(preset.min ?? .1, Math.min(preset.max ?? 10, ratio));
 }
 export function postFrame(media: Media[], choice: PostPresentation = 'original') {
-  return choice === 'original' ? presentationRatio(media[0], 'post') : POST_FRAMES[choice];
+  if (choice !== 'original') return POST_FRAMES[choice];
+  // Image Posts stay bounded at 3:4. A genuine vertical player can retain up to 9:16.
+  // Only the first item chooses the frame, so a carousel never jumps between slides.
+  if (media[0] && isPlayableVideo(media[0])) return Math.max(9 / 16, Math.min(1.91, mediaRatio(media[0])));
+  return presentationRatio(media[0], 'post');
 }
 export function mediaPresentation(media: Media, surface: MediaSurface = 'preview', frameRatio?: number) {
   const preset = MEDIA_PRESETS[surface];

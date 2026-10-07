@@ -663,10 +663,25 @@ export const posts: Post[] = [
     text: 'Last light on the Rushikonda set. Grateful for a crew that moves this fast when the sun does not wait.',
     media: [m('rushikonda')],
   },
+  // Demo media rhythm uses delivered originals, never manufactured portrait crops.
   {
-    id: 'p2', authorId: 'sameer', time: '3d', likes: 58, comments: 21,
-    text: 'Lens test notes: the Cooke S4s held up much better than expected under sodium vapour. Posting the chart tomorrow for anyone prepping night exteriors in Old City.',
-    media: [],
+    id: 'p-sameer-portrait', authorId: 'sameer', time: '2d', likes: 34, comments: 3,
+    text: 'A portrait between lighting setups. Thanks to the crew for making time before the next shot.',
+    media: [{ id: 'post-sameer-portrait', kind: 'image', src: 'images/people/sameer.jpg', width: 480, height: 600, contentType: 'portrait', alt: 'Portrait of Sameer Ali wearing glasses' }],
+  },
+  {
+    id: 'p-ishaan-square', authorId: 'ishaan', time: '3d', likes: 28, comments: 2,
+    text: 'A new portrait for the studio journal.',
+    presentation: 'square',
+    media: [{ id: 'post-ishaan-square', kind: 'image', src: 'images/people/ishaan.jpg', width: 480, height: 600, contentType: 'portrait', alt: 'Portrait of Ishaan Bose outdoors', presentations: { post: { fit: 'cover', focal: { x: 50, y: 20 } } } }],
+  },
+  {
+    id: 'p5', authorId: 'vikram', time: '6d', likes: 143, comments: 9, project: 'Monsoon Letters',
+    text: 'Second unit on the river. We waited three hours for this fog and it gave us eleven minutes.',
+    media: [
+      { id: 'post-vikram-river', kind: 'image', src: 'images/people/vikram.jpg', width: 400, height: 500, contentType: 'portrait', alt: 'Vikram Sen working on a wooden boat' },
+      m('backwaters'), m('paperboats'),
+    ],
   },
   {
     id: 'p3', authorId: 'ishaan', time: '4d', likes: 212, comments: 17, project: 'Fault Lines · Season 2',
@@ -674,14 +689,24 @@ export const posts: Post[] = [
     media: [m('set-1'), m('set-2')],
   },
   {
+    id: 'p-vikram-video', authorId: 'vikram', time: '6d', likes: 36, comments: 2,
+    text: 'A short camera study from the valley. Prototype demo clip.',
+    media: [{ id: 'post-vikram-video', kind: 'video', src: 'video/neela.mp4', width: 400, height: 500, duration: '0:06', poster: 'images/posts/vikram-video-poster.jpg', contentType: 'photo', alt: 'Camera overlooking a mountain valley' }],
+  },
+  {
+    id: 'p-tara-portrait', authorId: 'tara', time: '1w', likes: 52, comments: 4,
+    text: 'A quiet moment between takes.',
+    media: [{ id: 'post-tara-portrait', kind: 'image', src: 'images/people/tara.jpg', width: 400, height: 500, contentType: 'portrait', alt: 'Side profile of Tara Menon on a production set' }],
+  },
+  {
+    id: 'p2', authorId: 'sameer', time: '3d', likes: 58, comments: 21,
+    text: 'Lens test notes: the Cooke S4s held up much better than expected under sodium vapour. Posting the chart tomorrow for anyone prepping night exteriors in Old City.',
+    media: [],
+  },
+  {
     id: 'p4', authorId: 'zoya', time: '5d', likes: 87, comments: 6,
     text: 'Cut this in one night for a friend. Forty seconds, zero sleep.',
     media: [m('zoya-v', { kind: 'video', duration: '0:40' })],
-  },
-  {
-    id: 'p5', authorId: 'vikram', time: '6d', likes: 143, comments: 9, project: 'Monsoon Letters',
-    text: 'Second unit on the river. We waited three hours for this fog and it gave us eleven minutes.',
-    media: [m('pf-2'), m('backwaters'), m('paperboats')],
   },
   {
     id: 'p6', authorId: 'rhea', time: '1w', likes: 96, comments: 14,

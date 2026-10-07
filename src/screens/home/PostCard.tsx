@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { scriptLang } from '../../ui/compose';
 import { mediaName } from '../../ui/a11y';
 import { postActionPlacement } from '../../domain/postActionPlacement';
-import { mediaRatio, mediaType } from '../../domain/mediaLayout';
 import { isPlayableVideo, mediaPresentation, postFrame } from '../../domain/mediaPresentation';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -51,7 +50,6 @@ export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolea
   const current = post.media[page];
   const policy = current ? mediaPresentation(current, 'post', ratio) : undefined;
   const actionPlacement = postActionPlacement(current ? { ...current, ...geometry[current.id], focal: policy?.focal } : undefined, frame, video, policy?.fit);
-  const inspect = post.media.some(m => Math.abs(mediaRatio(m) - ratio) > .02 || mediaType(m) === 'artwork' || mediaPresentation(m, 'post', ratio).fit === 'contain' || isPlayableVideo(m));
   const identity = <Pressable className="ana-post-author" onClick={() => push(author.kind === 'org' ? { name: 'org', id: author.id } : { name: 'profile', id: author.id })} scale={0.98} aria-label={`View ${author.name}'s profile`}>
     <Avatar party={author} size={32} />
     <span><strong>{author.name}</strong><small>{author.kind === 'person' ? author.role : 'Production house'} · {post.time === 'now' ? 'Just now' : post.time}</small></span>
@@ -74,7 +72,6 @@ export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolea
       {long && !expanded && <button className="link ana-post-expand" onClick={() => setExpanded(true)} aria-label={`Read more of ${author.name}'s post`}>More</button>}
     </div>}
     {work ? <Pressable className="ana-post-context" onClick={() => push({ name: 'work', id: work.id })} scale={.98}><small>Project</small><strong>{work.title}</strong></Pressable> : post.project ? <p className="ana-post-context"><small>Project</small><strong>{post.project}</strong></p> : null}
-    {inspect && <button className="link ana-post-inspect" onClick={() => push({ name: 'media', items: post.media, index: page, what: 'Original media', from: `by ${author.name}` })}>View original{post.media.length > 1 ? ` · ${page + 1} of ${post.media.length}` : ''}</button>}
     {!hasMedia && <PostActions post={post} />}
   </article>;
 }
