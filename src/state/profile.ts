@@ -23,7 +23,7 @@ export interface Reel {
 }
 
 export type FeaturedWork = { id: string; kind: 'project'; projectId: string } | { id: string; kind: 'external'; title: string; url: string };
-export type ProfileCover = ({ kind: 'auto' } | { kind: 'portrait' } | { kind: 'portfolio'; mediaId: string } | { kind: 'project'; projectId: string } | { kind: 'showreel' }) & { focal?: { x: number; y: number } };
+export type ProfileCover = ({ kind: 'auto' } | { kind: 'portrait' } | { kind: 'portfolio'; mediaId: string } | { kind: 'project'; projectId: string } | { kind: 'showreel' }) & { focal?: { x: number; y: number }; framing?: 'safe' | 'immersive'; identityRegion?: 'lower' | 'centre-lower' | 'glass' };
 
 export interface WorkLink {
   id: string;

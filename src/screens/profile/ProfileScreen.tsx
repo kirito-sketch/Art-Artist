@@ -1,5 +1,7 @@
+import { ProfileHeroMedia } from './ProfileHeroMedia';
 import { eligibleFeaturedProjects } from '../../domain/featuredWork';
 import { profileCoverPosition, resolveProfileCover } from '../../domain/profileCover';
+import { mediaRatio, mediaType, mediaPosition } from '../../domain/mediaLayout';
 import { ShowreelMedia } from './Showreel';
 import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
@@ -175,8 +177,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };
 
   const coverChoice = profileOf(id).profileCover;
-  const portrait: Media | undefined = p.photo ? { id: `portrait-${id}`, kind: 'image', src: p.photo } : undefined;
+  const portrait: Media | undefined = p.photo ? { id: `portrait-${id}`, kind: 'image', src: p.photo, contentType: 'portrait', width: 480, height: 600 } : undefined;
   const selectedCover = resolveProfileCover(coverChoice, work, eligibleFeaturedProjects(id), reel, portrait);
+  const safeFraming = coverChoice?.framing !== 'immersive';
+  const identityRegion = coverChoice?.identityRegion ?? 'lower';
   const scrollToWork = () => {
     const el = scrollRef.current;
     const sheet = el?.querySelector<HTMLElement>('.psheet');
@@ -189,9 +193,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
         <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
-      <div className={`phero${district && d.about ? ' phero--about' : ''}`} data-hero style={district ? { '--profile-position': profileCoverPosition(coverChoice) } as CSSProperties : undefined}>
+      <div className={`phero${district && safeFraming ? ' phero--safe' : ''} phero--identity-${identityRegion}`} data-hero style={district ? { '--profile-position': profileCoverPosition(coverChoice, selectedCover.media), '--profile-fit': selectedCover.media && mediaType(selectedCover.media) === 'portrait' && mediaRatio(selectedCover.media) >= .7 ? 'cover' : 'contain' } as CSSProperties : undefined}>
         <div className="ohero-parallax" data-hero-photo>
-          {district ? selectedCover.media ? <Photo key={selectedCover.media.src} media={selectedCover.media} className="phero-photo" alt={`Featured image of ${p.name}`} showPlay={false} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
+          {district ? selectedCover.media ? <ProfileHeroMedia key={selectedCover.media.src} media={selectedCover.media} focal={coverChoice?.focal ?? selectedCover.media.focal} safe={safeFraming} className="phero-photo" alt={`Featured image of ${p.name}`} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
         </div>
         <div className="phero-dim" data-hero-dim aria-hidden />
         <div className="phero-bar">
@@ -267,15 +271,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </>
           )}
         </div>
-          {d.about && <section className="profile-about-glass" aria-label={`About ${p.name}`}>
-            <h2>About</h2>
-            <p lang={scriptLang(d.about)}>{d.about}</p>
-            <button onClick={() => {
-              const el = scrollRef.current;
-              const about = el?.querySelector<HTMLElement>('[data-profile-about]');
-              if (el && about) el.scrollTo({ top: el.scrollTop + about.getBoundingClientRect().top - el.getBoundingClientRect().top - 72, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-            }}>Read full bio <ChevronDown size={14} /></button>
-          </section>}
         </div>}
         {district && <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>}
       </div>
@@ -320,10 +315,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
         {stills.length > 0 && (
           <section className="section section--flush">
-            <SectionHeader title={district ? 'Portfolio' : craftProfile(p.craft).work.images ?? 'Portfolio'} />
-            <div className="bento">
-              {stills.map((m, i) => (
-                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
+            <SectionHeader title={district ? 'Selected work' : craftProfile(p.craft).work.images ?? 'Portfolio'} action={district && stills.length > 4 ? 'See all' : undefined} onAction={() => push({ name: 'media', items: stills, index: 0, what: 'Portfolio image', from: `by ${p.name}` })} />
+            <div className={district ? `profile-work-grid profile-work-grid--${Math.min(stills.length, 2)}` : 'bento'}>
+              {(district ? stills.slice(0, 4) : stills).map((m, i) => (
+                <Pressable key={m.id + i} className={district ? 'profile-work-tile' : 'bento-tile'} style={district ? { aspectRatio: Math.max(.65, Math.min(2.4, mediaRatio(m))), '--media-fit': mediaType(m) === 'artwork' ? 'contain' : 'cover', '--media-position': mediaPosition(m) } as CSSProperties : undefined} data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
                   <Photo media={m} />
                 </Pressable>
               ))}
@@ -362,6 +357,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
                   <p className="meta rail-issuer">
                     <span className="rail-issuer-name">{org(c.orgId).name}</span> <Verified size={12} />
                   </p>
+                  {district && <p className="profile-credit-status"><Verified size={12} /> Production-confirmed credit</p>}
                 </Pressable>
               ))}
             </div>
@@ -384,7 +380,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
         <ProfileReviewsSection id={p.id} />
 
-        <ProfileDetails person={p} />
 
         {(d.about || p.gear) && (
           <section className="section section--flush" data-profile-about>
@@ -397,6 +392,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             )}
           </section>
         )}
+
+        <ProfileDetails person={p} />
 
         {/* Availability: one quiet row under credibility. Your own is editable; someone else's shows only when open. */}
         {own ? (

@@ -9,6 +9,10 @@ export interface Media {
   fallback?: string;
   duration?: string;
   caption?: string;
+  width?: number;
+  height?: number;
+  contentType?: 'photo' | 'portrait' | 'artwork';
+  focal?: { x: number; y: number };
 }
 
 export type Craft =

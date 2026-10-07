@@ -16,12 +16,25 @@
 .phone .v-profile--immersive .phero-bar { z-index: 3; gap: 6px; }
 .phone .v-profile--immersive .phero-bar .icon-btn { background: rgba(10,28,23,.48); color: #fff; box-shadow: none; }
 .profile-intro { position: absolute; top: 52%; left: 24px; right: 24px; z-index: 2; color: #fff; text-align: center; }
-.phone .phero--about .profile-intro { top: 34%; }
-.profile-about-glass { margin: 16px auto 0; max-width: 344px; padding: 14px 20px 4px; border-radius: 26px; border: 1px solid rgba(255,255,255,.18); background: rgba(16,38,34,.66); backdrop-filter: blur(16px) saturate(1.12); -webkit-backdrop-filter: blur(16px) saturate(1.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.09); color: #fff; }
-.profile-about-glass h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #e4ece6; }
-.profile-about-glass p { margin: 0; font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
-.profile-about-glass button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 4px 12px; border: 0; background: none; color: #fff; font: inherit; font-size: 11px; cursor: pointer; }
-.profile-about-glass button:focus-visible { outline: 2px solid #fff; border-radius: 12px; }
+.phone .v-profile--immersive .phero--safe .ohero-parallax { transform: none !important; }
+.phone .v-profile--immersive .phero--safe .phero-photo { height: calc(100% - 410px); background: transparent; mask-image: linear-gradient(#000 calc(100% - 70px), transparent); }
+.phone .v-profile--immersive .phero--safe .phero-photo img { object-fit: var(--profile-fit, contain); }
+.phone .v-profile--immersive .phero--safe::after { background: linear-gradient(180deg, transparent 32%, rgba(8,26,24,.08) 44%, #173e35 60%, #173e35 86%, var(--surface)); }
+.phone .v-profile--immersive .phero--identity-lower .profile-intro { top: auto; bottom: calc(var(--tabbar-clearance) + 68px); }
+.phone .v-profile--immersive .phero--identity-centre-lower .profile-intro { top: 50%; }
+.phone .v-profile--immersive .phero--identity-glass .profile-intro { top: auto; bottom: calc(var(--tabbar-clearance) + 68px); padding: 16px; border: 1px solid #ffffff30; border-radius: 26px; background: rgba(10,30,25,.8); backdrop-filter: blur(12px); }
+.phone .v-profile--immersive .psheet { margin-top: -30px; padding-top: 32px; border-top: 1px solid var(--line); }
+.profile-work-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; align-items: start; }
+.profile-work-grid--1 { grid-template-columns: minmax(0,1fr); }
+.profile-work-tile { position: relative; overflow: hidden; border-radius: 16px; background: var(--fill); }
+.profile-work-tile .photo { width: 100%; height: 100%; }
+.profile-work-tile img { object-fit: var(--media-fit,cover); object-position: var(--media-position,center); }
+.phone .v-profile--immersive .credit-rail { display: grid; gap: 12px; overflow: visible; }
+.phone .v-profile--immersive .credit-rail .rail-item { width: auto; display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 5px 14px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.phone .v-profile--immersive .credit-rail .rail-poster-wrap { grid-row: 1 / span 4; width: 72px; height: 108px; }
+.phone .v-profile--immersive .credit-rail .rail-poster { width: 72px; height: 108px; }
+.phone .v-profile--immersive .credit-rail p { margin: 0; white-space: normal; }
+.profile-credit-status { display: flex; align-items: center; gap: 5px; color: var(--text-2); font-size: 11px; }
 .phone .v-profile--immersive .pid { align-items: center; text-align: center; gap: 6px; margin: 0; }
 .phone .v-profile--immersive .pid .large-title { color: #fff; font-size: clamp(30px, 8.7vw, 38px) !important; line-height: 1.06; letter-spacing: -.035em; font-weight: 700; }
 .phone .v-profile--immersive .pid .verified { color: #bbddcb; flex-shrink: 0; }
@@ -50,6 +63,20 @@
 .profile-cover-preview { aspect-ratio: 9 / 16; max-width: 180px; width: 100%; margin-inline: auto; border-radius: 16px; overflow: hidden; background: linear-gradient(140deg,#39725e,#183d33); color: #f1ecdf; }
 .profile-cover-preview .photo { width: 100%; height: 100%; }
 .profile-cover-preview img { object-position: var(--profile-position, 50% 35%); }
+.profile-framing-preview { position: relative; color: #fff; background: #173e35; }
+.profile-framing-preview > .photo { height: 52%; background: transparent; }
+.profile-framing-preview > .photo img { object-fit: var(--profile-fit, contain); }
+.profile-framing-preview--immersive > .photo { height: 100%; }
+.profile-framing-preview--immersive > .photo img { object-fit: cover; }
+.profile-framing-preview::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg,transparent 32%,#173e350a 43%,#173e35aa 60%,#173e35ee); }
+.framing-nav { position: absolute; z-index: 1; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; font-size: 12px; }
+.framing-identity { position: absolute; z-index: 1; bottom: 45px; left: 12px; right: 12px; display: grid; gap: 5px; text-align: center; font-size: 9px; }
+.framing-identity strong { font-size: 14px; }
+.framing-identity small { font-size: 7px; }
+.framing-cta { padding: 8px 12px; border-radius: 20px; margin: 4px auto; background: #f4f0e8; color: #183c32; }
+.framing-scroll { position: absolute; z-index: 1; bottom: 20px; left: 0; right: 0; text-align: center; font-size: 7px; }
+.profile-framing-preview--centre-lower .framing-identity { top: 50%; bottom: auto; }
+.profile-framing-preview--glass .framing-identity { background: #0a1e19cc; border: 1px solid #ffffff30; border-radius: 16px; padding: 8px; }
 .profile-cover-preview > span { display: block; padding: 35px 24px; font-family: var(--display); font-size: 28px; }
 .profile-cover-picker fieldset { border: 0; padding: 0; margin: 12px 0 0; }
 .profile-cover-picker label { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; cursor: pointer; }
@@ -59,8 +86,7 @@
 .profile-cover-focus label { display: grid; gap: 8px; border: 0; padding: 0; }
 .profile-cover-focus input { width: 100%; min-height: 30px; }
 @media (max-height: 700px) {
-  .phone .v-profile--immersive .phero--about { min-height: 680px; }
-  .phone .phero--about .profile-intro { top: 20%; }
+  .phone .v-profile--immersive .phero--safe { min-height: 680px; }
   .profile-intro { top: 30%; }
   .phone .v-profile--immersive .pid .large-title { font-size: 30px !important; }
   .phone .v-profile--immersive .profile-actions { margin-top: 12px; }

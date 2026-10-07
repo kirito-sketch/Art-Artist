@@ -160,13 +160,13 @@ export function IconButton({ label, className = '', children, ...rest }: HTMLMot
  * Real image with a delivery fallback: tries `src`, then `fallback`, then a quiet placeholder.
  * Video media gets a play affordance and duration.
  */
-export function Photo({ media, className = '', alt = '', showPlay = true }: { media?: Media | null; className?: string; alt?: string; showPlay?: boolean }) {
+export function Photo({ media, className = '', alt = '', showPlay = true, onImageLoad, focal = media?.focal, imageFit }: { media?: Media | null; className?: string; alt?: string; showPlay?: boolean; onImageLoad?: (image: HTMLImageElement) => void; focal?: { x: number; y: number }; imageFit?: 'cover' | 'contain' }) {
   const [stage, setStage] = useState(0);
   const url = !media ? null : stage === 0 ? media.src : stage === 1 && media.fallback ? media.fallback : null;
   return (
     <div className={`photo ${className}`}>
       {url ? (
-        <img src={url} alt={alt} loading="lazy" draggable={false} onError={() => setStage((s) => (s === 0 && media?.fallback ? 1 : 2))} />
+        <img src={url} alt={alt} loading="lazy" draggable={false} style={{ objectFit: imageFit, ...(focal && Number.isFinite(focal.x) && Number.isFinite(focal.y) ? { objectPosition: `${Math.max(0, Math.min(100, focal.x))}% ${Math.max(0, Math.min(100, focal.y))}%` } : {}) }} onLoad={e => onImageLoad?.(e.currentTarget)} onError={() => setStage((s) => (s === 0 && media?.fallback ? 1 : 2))} />
       ) : (
         <span className="photo-missing" aria-label="Image unavailable">
           <ImageOff size={18} strokeWidth={1.6} />

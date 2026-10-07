@@ -1,6 +1,7 @@
 import type { Media } from '../data/types';
 import type { ProfileCover, Reel } from '../state/profile';
 import { videoEmbed } from './showreel';
+import { mediaPosition } from './mediaLayout';
 
 export type CoverProject = { id: string; artwork?: Media };
 /** Callers supply only public, eligible projects. Private reel drafts never enter this resolver. */
@@ -21,7 +22,8 @@ export function resolveProfileCover(choice: ProfileCover | undefined, images: Me
 }
 
 /** Stored percentages cannot put the focal point outside the image or inject invalid CSS. */
-export function profileCoverPosition(choice?: ProfileCover) {
+export function profileCoverPosition(choice?: ProfileCover, media?: Media) {
+  if (media) return mediaPosition(media, choice?.focal ?? media.focal);
   const percent = (value: number | undefined, fallback: number) => Number.isFinite(value) ? Math.max(0, Math.min(100, value!)) : fallback;
   return `${percent(choice?.focal?.x, 50)}% ${percent(choice?.focal?.y, choice?.kind === 'portrait' || !choice || choice.kind === 'auto' ? 35 : 50)}%`;
 }
