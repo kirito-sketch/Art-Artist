@@ -17,7 +17,7 @@ const START = TEST_MODE ? 'kiran' : RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran
 const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
 // A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
-import { party } from './selectors';
+import { discoverPosts, party } from './selectors';
 import { phoneTaken, profileOf, type ProfileExtra } from './profile';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
@@ -72,7 +72,7 @@ export type Sheet =
   | { name: 'reportCredit'; title: string; creditId?: string }
   | { name: 'activity' }
   | { name: 'identity' }
-  | { name: 'share'; label: string }
+  | { name: 'share'; label: string; url?: string }
   | { name: 'more'; id: string }
   | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event' | 'Review'; id: string } }
   | { name: 'review'; projectId: string }
@@ -162,7 +162,12 @@ function useStoreValue() {
   });
 
   const [tab, setTabState] = useState<Tab>(BOOT?.tab ?? 'home');
-  const [stack, setStack] = useState<Route[]>(BOOT?.stack ?? []);
+  const [stack, setStack] = useState<Route[]>(() => {
+    const postId = new URLSearchParams(location.search).get('post');
+    const posts = discoverPosts(viewer, DEFAULT_FOLLOWING, []);
+    const index = posts.findIndex(post => post.id === postId);
+    return index >= 0 ? [{ name: 'posts', ids: posts.map(post => post.id), index }] : BOOT?.stack ?? [];
+  });
   const [sheet, setSheet] = useState<Sheet | null>(BOOT?.sheet ?? null);
   const [toast, setToast] = useState<Toast | null>(null);
 

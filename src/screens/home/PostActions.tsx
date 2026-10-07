@@ -1,37 +1,41 @@
+import * as seed from '../../data/seed';
 import { motion } from 'framer-motion';
-import { Heart, MoreHorizontal, Send } from 'lucide-react';
-import { useState } from 'react';
+import { Bookmark, Heart, MoreHorizontal, Send } from 'lucide-react';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
 import { party } from '../../state/selectors';
 import { spring } from '../../ui/motion';
 import { IconButton } from '../../ui/primitives';
-import { SaveButton } from './OpportunityCard';
+import { usePostLike } from '../../state/postLikes';
 
-/*
- * The post action model (docs/SAVE_MODEL.md): every full post has Like, Share and Save in one row
- * directly under the work (the order people know from Instagram: like with its count, share as a paper
- * plane, save on the far right), and More in its header. No comments anywhere. The like count is the only
- * number and sits against the heart, so it never reads as belonging to Share.
- */
+/** Compact shared actions. Comments stay absent until Ana supports a comments experience. */
 export function PostActions({ post }: { post: Post }) {
-  const { openSheet } = useStore();
-  const [liked, setLiked] = useState(false);
+  const { openSheet, viewer, isSaved, toggleSave, showToast, dismissToast } = useStore();
+  const [liked, toggleLike] = usePostLike(viewer.id, post.id);
+  const saved = isSaved('post', post.id);
   const author = party(post.authorId);
-  return (
-    <div className="post-actions">
-      <motion.button className={`post-action post-action--like ${liked ? 'is-on' : ''}`} whileTap={{ scale: 0.8 }} transition={spring.press} onClick={() => setLiked((l) => !l)} aria-pressed={liked} aria-label={`Like post by ${author?.name ?? 'someone'}`}>
-        <Heart size={22} fill={liked ? 'currentColor' : 'none'} />
-        {post.likes + (liked ? 1 : 0) > 0 && <span className="post-action-count">{post.likes + (liked ? 1 : 0)}</span>}
-      </motion.button>
-      <motion.button className="post-action" whileTap={{ scale: 0.85 }} transition={spring.press} onClick={() => openSheet({ name: 'share', label: `Post by ${author?.name ?? 'someone'}` })} aria-label={`Share post by ${author?.name ?? 'someone'}`}>
-        <Send size={21} />
-      </motion.button>
-      <span className="post-action-save">
-        <SaveButton id={post.id} kind="post" name={`post by ${author?.name ?? 'someone'}`} />
-      </span>
-    </div>
-  );
+  const label = `Post by ${author?.name ?? 'someone'}`;
+  const share = async () => {
+    dismissToast();
+    const url = new URL(location.pathname, location.origin);
+    url.searchParams.set('post', post.id);
+    // Uploaded prototype posts are session-only; don't offer a link that cannot reopen them.
+    const persistent = seed.posts.some(p => p.id === post.id);
+    if (navigator.share && persistent) {
+      try { await navigator.share({ title: label, text: post.text, url: url.href }); return; }
+      catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
+    }
+    if (!persistent) { showToast({ text: 'This prototype post is only available in this session.' }); return; }
+    openSheet({ name: 'share', label, url: url.href });
+  };
+  return <div className="ana-post-actions">
+    <motion.button whileTap={{ scale: .92 }} transition={spring.press} onClick={toggleLike} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}`}>
+      <Heart size={20} fill={liked ? 'currentColor' : 'none'} />
+      {post.likes + Number(liked) > 0 && <span className="ana-post-likes" aria-hidden="true">{post.likes + Number(liked)}</span>}
+    </motion.button>
+    <motion.button whileTap={{ scale: .94 }} onClick={share} aria-label={`Share post by ${author?.name ?? 'someone'}`}><Send size={19} /></motion.button>
+    <motion.button whileTap={{ scale: .94 }} onClick={() => toggleSave(post.id, 'post')} aria-pressed={saved} aria-label={saved ? 'Remove post from saved' : 'Save post'}><Bookmark size={19} fill={saved ? 'currentColor' : 'none'} /></motion.button>
+  </div>;
 }
 
 /**
