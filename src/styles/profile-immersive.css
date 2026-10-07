@@ -9,7 +9,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(5,18,16,.12), transparent 25%, rgba(5,18,16,.05) 38%, rgba(5,18,16,.58) 58%, rgba(5,18,16,.66) 78%, rgba(5,18,16,.78) 100%);
+  background: radial-gradient(ellipse at 50% 68%, rgba(20,57,47,.32), transparent 62%), linear-gradient(180deg, rgba(8,21,20,.14), transparent 24%, rgba(8,21,20,.06) 36%, rgba(8,26,24,.62) 57%, rgba(7,23,22,.65) 78%, rgba(7,20,19,.8));
   pointer-events: none;
 }
 .phone .v-profile--immersive .phero-photo img { object-fit: cover; object-position: var(--profile-position, 50% 35%); }
@@ -22,9 +22,13 @@
 .phone .v-profile--immersive .pid-role { color: #fff; font-size: 17px; line-height: 1.3; }
 .phone .v-profile--immersive .pid-place { color: #e4ece6; font-size: 12px; line-height: 1.5; }
 .phone .v-profile--immersive .pid-stats { color: #e0e8e2; margin-top: 8px; font-size: 12px; gap: 6px; justify-content: center; }
-.phone .v-profile--immersive .profile-actions { margin: 20px auto 0; gap: 8px; flex-direction: column; align-items: center; max-width: 184px; }
-.phone .v-profile--immersive .profile-actions .btn { min-height: 42px; width: 100%; flex: none; font-size: 14px; }
-.phone .v-profile--immersive .profile-actions .btn--secondary { background: #f4f0e8; color: #183c32; border-color: transparent; }
+.phone .v-profile--immersive .profile-actions { margin: 20px auto 0; gap: 8px; flex-direction: row; align-items: center; max-width: 328px; padding: 6px; border: 1px solid rgba(255,255,255,.25); border-radius: 34px; background: rgba(239,245,241,.12); backdrop-filter: blur(12px) saturate(1.15); -webkit-backdrop-filter: blur(12px) saturate(1.15); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(5,18,16,.12); }
+.phone .v-profile--immersive .profile-actions--self { max-width: 184px; }
+.phone .v-profile--immersive .profile-actions .btn { min-height: 48px; min-width: 0; width: auto; flex: 1; font-size: 14px; }
+.phone .v-profile--immersive .profile-actions .btn--primary { background: #275c50; color: #fff; }
+.phone .v-profile--immersive .profile-actions .btn--selected { background: #e8f0e9; color: #183c32; box-shadow: inset 0 0 0 1px #acc4b4; }
+.phone .v-profile--immersive .profile-actions .btn--secondary { background: rgba(244,240,232,.94); color: #183c32; border-color: transparent; }
+.phone .v-profile--immersive .profile-actions .btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .profile-scroll-cue, .profile-play { font: inherit; cursor: pointer; color: #fff; background: none; border: 0; }
 .profile-scroll-cue { position: absolute; z-index: 3; bottom: calc(var(--tabbar-clearance) + 8px); left: 24px; right: 24px; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; color: #d4e2d9; font-size: 11px; letter-spacing: .04em; }
 .profile-play { position: absolute; bottom: calc(100% + 18px); left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; border: 1px solid #b9cabe; border-radius: 50px; padding: 10px 15px; font-size: 13px; }

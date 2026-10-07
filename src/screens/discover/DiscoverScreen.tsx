@@ -599,7 +599,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
               <FilterBar label="Post filters">
                 <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
               </FilterBar>
-              {posts.length ? <PostGrid posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
+              {posts.length ? <PostGrid posts={posts} bento onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
             </>
           )}
           {scope === 'events' && (
