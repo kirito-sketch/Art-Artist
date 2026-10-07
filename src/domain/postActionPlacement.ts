@@ -2,7 +2,7 @@ import type { Media } from '../data/types';
 import { mediaFit, mediaRatio, mediaType } from './mediaLayout';
 
 /** Project a declared focal point through the displayed crop; this is not subject/text detection. */
-export function postActionPlacement(media: Media | undefined, frame: { width: number; height: number }, video: boolean): { bottom: number; side: 'left' | 'right' } {
+export function postActionPlacement(media: Media | undefined, frame: { width: number; height: number }, video: boolean, fit?: 'cover' | 'contain'): { bottom: number; side: 'left' | 'right' } {
   const normal = video ? 80 : 12;
   const atRight = (bottom: number): { bottom: number; side: 'right' } => ({ bottom, side: 'right' });
   const candidates = [...new Set([normal, normal + 68, normal + 136, frame.height - 62])].filter(bottom => bottom >= normal && bottom + 62 <= frame.height);
@@ -10,7 +10,7 @@ export function postActionPlacement(media: Media | undefined, frame: { width: nu
   const safe = (n: number) => Number.isFinite(n) ? Math.max(0, Math.min(100, n)) / 100 : .5;
   const x = safe(media.focal.x), y = safe(media.focal.y);
   const ratio = mediaRatio(media), frameRatio = frame.width / frame.height;
-  const contain = mediaFit(media) === 'contain';
+  const contain = (fit ?? mediaFit(media)) === 'contain';
   const wide = contain ? ratio < frameRatio : ratio > frameRatio;
   const width = wide ? frame.height * ratio : frame.width;
   const height = wide ? frame.height : frame.width / ratio;

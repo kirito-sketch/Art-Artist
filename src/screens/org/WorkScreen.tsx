@@ -70,7 +70,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
           ) : (
             // Opened from a poster: the poster's still becomes this hero, so the project stays one object.
             <motion.div layoutId={fromCard ? shared.work(w.id) : undefined} className="whero-photo" transition={spring.push}>
-              <Photo media={w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />
+              <Photo surface="project-hero" media={w.media.presentations?.['project-hero'] ? w.media : w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />
             </motion.div>
           )}
         </div>
@@ -196,7 +196,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             <div className="grid-3">
               {w.stills.map((m, i) => (
                 <Pressable key={m.id} className="grid-item" onClick={() => push({ name: 'media', items: w.stills, index: i, what: 'Still', from: `from ${w.title}` })} scale={0.97} aria-label={mediaName(m, i, w.stills.length, 'Still', `from ${w.title}`)}>
-                  <Photo media={m} showPlay={false} />
+                  <Photo surface="project-card" media={m} showPlay={false} />
                 </Pressable>
               ))}
             </div>

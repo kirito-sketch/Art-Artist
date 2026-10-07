@@ -207,7 +207,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
           <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
             {/* Opened from a card: the card's artwork becomes this hero. Otherwise it simply appears. */}
             <motion.div layoutId={fromCard ? shared.role(o.id) : undefined} className="ohero-photo" transition={spring.push}>
-              <Photo media={o.media} className="ohero-photo" />
+              <Photo surface="project-hero" media={o.media} className="ohero-photo" />
             </motion.div>
           </div>
           <span className="ohero-labels">

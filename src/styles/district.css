@@ -388,7 +388,7 @@ html[data-theme='dark'] .dh {
 }
 .dh-card.is-active { --spot-scale: 1; }
 .dh-card-main { display: block; overflow: hidden; background: var(--surface); border-radius: 20px; }
-.dh-card-media { position: relative; display: block; aspect-ratio: 4 / 5; background: #18382f; }
+.dh-card-media { position: relative; display: block; aspect-ratio: var(--media-spotlight-ratio); background: #18382f; }
 .dh-card-media .photo, .dh-card-media img, .dh-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .dh-card-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.22), transparent 30%, rgba(0,0,0,.12) 48%, rgba(0,0,0,.86)); pointer-events: none; }
 .dh-spot-type { position: absolute; top: 16px; left: 16px; font-size: 10px; font-weight: 750; letter-spacing: .13em; color: #fff; text-shadow: 0 1px 8px #000; }
@@ -502,7 +502,7 @@ html[data-theme='dark'] .dh {
 .dh-events-rail::-webkit-scrollbar { display: none; }
 .dh-event-card { position: relative; flex: 0 0 min(285px, 78%); min-width: 0; scroll-snap-align: start; border-radius: 18px; overflow: hidden; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
 .dh-event-main { display: block; height: 100%; text-align: left; }
-.dh-event-image { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #18382f; }
+.dh-event-image { position: relative; display: block; aspect-ratio: var(--media-event-card-ratio); overflow: hidden; background: #18382f; }
 .dh-event-image .photo, .dh-event-image img { width: 100%; height: 100%; object-fit: cover; }
 .dh-event-copy { display: grid; gap: 5px; padding: 13px 15px 15px; }
 .dh-event-category { font-size: 10px; line-height: 1.3; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; color: var(--action-ink); }
@@ -1098,7 +1098,7 @@ html[data-theme='dark'] .dh {
 }
 
 .dh-evhero { position: relative; }
-.dh-evhero-card { position: relative; display: block; aspect-ratio: 4 / 3; border-radius: 20px; overflow: hidden; background: #111; }
+.dh-evhero-card { position: relative; display: block; aspect-ratio: var(--media-event-card-ratio); border-radius: 20px; overflow: hidden; background: #111; }
 .dh-evhero-img, .dh-evhero-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .dh-evhero-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.78)); }
 .dh-evhero-card .dh-date { position: absolute; left: 12px; top: 12px; z-index: 1; }

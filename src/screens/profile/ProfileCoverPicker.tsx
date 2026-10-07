@@ -1,3 +1,4 @@
+import { publicCreditsFor } from '../../domain/discovery';
 import { profilePortrait } from '../../domain/profilePortrait';
 import { ProfileHeroMedia } from './ProfileHeroMedia';
 import { useEffect, useRef, useState } from 'react';
@@ -48,7 +49,7 @@ export function ProfileCoverPicker({ personId, value, onChange, images, reel }: 
     <div ref={previewRef} style={{ aspectRatio }} className={`profile-cover-preview profile-framing-preview profile-framing-preview--${value?.identityRegion === 'centre-lower' ? 'centre-lower' : 'lower'}`}>
       {preview.media ? <ProfileHeroMedia key={preview.media.src} media={preview.media} focal={value?.focal ?? preview.media.focal} subjectHeight={value?.subjectHeight} safeBottom={safeBottom} showSubjectRegion onProtectionChange={setSubjectFits} /> : <span>Made of stories.<br />Defined by your work.</span>}
       <div className="framing-nav" aria-hidden>← <span>↗ ···</span></div>
-      <div className="framing-identity" aria-hidden><strong>{profile.name}</strong><span>{profile.role}</span><small>{profile.city} · {profile.languages?.join(', ')}</small><span className="framing-cta">Edit profile</span></div>
+      <div className="framing-identity" aria-hidden><strong>{profile.name}</strong><span>{profile.role}</span><small>{profile.city} · {profile.languages?.join(', ')}</small><small>{publicCreditsFor(personId).length} verified credits{profile.years ? ` · ${profile.years} years active` : ''}</small><span className="framing-cta">Edit profile</span></div>
       <small className="framing-scroll" aria-hidden>Explore work ↓</small>
     </div>
     {!subjectFits && <p className="meta" role="status">This subject region cannot fully fit above the identity at this screen size. Adjust the focus or region size, use the lower identity placement, or choose another image.</p>}

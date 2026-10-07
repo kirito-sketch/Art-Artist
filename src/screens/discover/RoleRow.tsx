@@ -9,7 +9,7 @@ export function RoleRow({ o, note }: { o: Opportunity; note?: string }) {
   const sent = useSentLabel(o);
   return (
     <PressCard className="rrow" onPress={() => push({ name: 'opportunity', id: o.id })} scale={0.985}>
-      <Photo media={o.media} className="rrow-thumb" showPlay={false} />
+      <Photo surface="search-thumbnail" media={o.media} className="rrow-thumb" showPlay={false} />
       <div className="rrow-text">
         <p className="item-title">{o.role}</p>
         <p className="meta meta--dark">

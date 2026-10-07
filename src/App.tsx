@@ -1,3 +1,4 @@
+import { isPlayableVideo } from './domain/mediaPresentation';
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -184,10 +185,10 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
           </span>
         )}
       </div>
-      <motion.div className="viewer-stage" drag dragSnapToOrigin dragElastic={0.5} onDragEnd={onDragEnd}>
+      <motion.div className="viewer-stage" drag={!isPlayableVideo(m)} dragSnapToOrigin dragElastic={0.5} onDragEnd={onDragEnd}>
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div key={m.id} className="viewer-media" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={spring.gentle}>
-            <Photo media={m} alt={m.caption ? '' : mediaName(m, i, items.length, what, from)} />
+            {isPlayableVideo(m) ? <video src={m.src} poster={m.poster} controls playsInline preload="metadata" aria-label={mediaName(m, i, items.length, what, from)} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Photo media={m} surface="original" alt={m.caption ? '' : mediaName(m, i, items.length, what, from)} />}
           </motion.div>
         </AnimatePresence>
       </motion.div>

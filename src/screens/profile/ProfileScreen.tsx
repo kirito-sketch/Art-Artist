@@ -5,7 +5,7 @@ import { profilePortrait } from '../../domain/profilePortrait';
 import { ProfileHeroMedia } from './ProfileHeroMedia';
 import { eligibleFeaturedProjects } from '../../domain/featuredWork';
 import { resolveProfileCover } from '../../domain/profileCover';
-import { mediaRatio, mediaType, mediaPosition } from '../../domain/mediaLayout';
+import { presentationRatio } from '../../domain/mediaPresentation';
 import { ShowreelMedia } from './Showreel';
 import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
@@ -317,8 +317,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             <SectionHeader title={district ? 'Selected work' : craftProfile(p.craft).work.images ?? 'Portfolio'} action={district && stills.length > 4 ? 'See all' : undefined} onAction={() => push({ name: 'media', items: stills, index: 0, what: 'Portfolio image', from: `by ${p.name}` })} />
             <div className={district ? `profile-work-grid profile-work-grid--${Math.min(stills.length, 2)}` : 'bento'}>
               {(district ? stills.slice(0, 4) : stills).map((m, i) => (
-                <Pressable key={m.id + i} className={district ? 'profile-work-tile' : 'bento-tile'} style={district ? { aspectRatio: Math.max(.65, Math.min(2.4, mediaRatio(m))), '--media-fit': mediaType(m) === 'artwork' ? 'contain' : 'cover', '--media-position': mediaPosition(m) } as CSSProperties : undefined} data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
-                  <Photo media={m} />
+                <Pressable key={m.id + i} className={district ? 'profile-work-tile' : 'bento-tile'} style={district ? { aspectRatio: presentationRatio(m, 'portfolio-thumbnail') } as CSSProperties : undefined} data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
+                  <Photo media={m} surface="portfolio-thumbnail" />
                 </Pressable>
               ))}
             </div>

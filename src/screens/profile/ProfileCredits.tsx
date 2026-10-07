@@ -1,7 +1,7 @@
 import { ChevronLeft } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { publicCreditsFor } from '../../domain/discovery';
-import { mediaFit, mediaPosition } from '../../domain/mediaLayout';
+
 import { org, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { project, publicName } from '../../state/world';
@@ -16,19 +16,13 @@ type PublicCredit = ReturnType<typeof profileCredits>[number];
 /** The same public credit card is used in the shelf and the complete history, regardless of ownership. */
 export function ProfileCreditCard({ credit }: { credit: PublicCredit }) {
   const { push, justAccepted } = useStore();
-  const [loadedSource, setLoadedSource] = useState('');
   const work = project(credit.projectId);
   if (!work) return null;
   const title = publicName(work);
   const issuer = work.houseId ? org(work.houseId) : undefined;
-  // An absent poster may resolve to its approved landscape still. Preserve real graphics,
-  // but do not keep poster letterboxing around that photographic fallback.
-  const artwork = work.artwork && loadedSource && work.artwork.fallback && new URL(work.artwork.fallback, document.baseURI).href === loadedSource && work.artwork.fallback !== work.artwork.src
-    ? { ...work.artwork, src: work.artwork.fallback, contentType: undefined }
-    : work.artwork;
   return <Pressable className={`profile-credit-card ${justAccepted === credit.id ? 'profile-credit-card--sealing' : ''}`} data-credit={credit.id} scale={.98} onClick={() => push({ name: 'work', id: credit.projectId })} aria-label={`${title}, ${credit.line}, ${issuer?.name ?? 'Production'}, production-confirmed`}>
-    <span className="profile-credit-image" style={artwork ? { '--credit-fit': mediaFit(artwork), '--credit-position': mediaPosition(artwork) } as import('react').CSSProperties : undefined}>
-      {work.artwork && artwork ? <Photo media={work.artwork} showPlay={false} alt={`${title} project artwork`} imageFit={mediaFit(artwork)} focal={work.artwork.focal} onImageLoad={image => setLoadedSource(image.src)} /> : <span className="profile-credit-art">{title}</span>}
+    <span className="profile-credit-image">
+      {work.artwork ? <Photo media={work.artwork} surface="credit-card" showPlay={false} alt={`${title} project artwork`} /> : <span className="profile-credit-art">{title}</span>}
       {justAccepted === credit.id && <CreditSeal />}
     </span>
     <span className="profile-credit-copy"><strong>{title}</strong><span>{credit.line}</span><span className="profile-credit-issuer">{issuer?.name ?? 'Production'}{issuer?.verified && <Verified size={12} label="Verified production house" />}</span><small><Verified size={12} /> Production-confirmed</small></span>

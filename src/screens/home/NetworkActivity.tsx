@@ -61,7 +61,7 @@ export function NetworkRow({ e, index = 0, quiet = false }: { e: NetworkEvent; i
           <p className="nrow-line">{sentence(e, o?.role, o?.city)}</p>
           <p className="meta">{e.time}</p>
         </div>
-        {thumb && !quiet && <Photo media={thumb} className="nrow-thumb" showPlay={false} />}
+        {thumb && !quiet && <Photo surface="search-thumbnail" media={thumb} className="nrow-thumb" showPlay={false} />}
       </PressCard>
     </motion.div>
   );

@@ -21,7 +21,7 @@ export function LegacyProfileCredits({ credits, person: p, own }: { credits: Cre
               {credits.map((c) => (
                 <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={`${c.title}, ${c.role}, ${org(c.orgId).name}`}>
                   <span className="rail-poster-wrap">
-                    <Photo media={c.media} className="rail-poster" showPlay={false} />
+                    <Photo surface="credit-card" media={c.media} className="rail-poster" showPlay={false} />
                     {justAccepted === c.id && <CreditSeal />}
                   </span>
                   <p className="item-title">{c.title}</p>

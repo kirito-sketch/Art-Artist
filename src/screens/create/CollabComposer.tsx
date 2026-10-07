@@ -88,7 +88,7 @@ export function CollabComposer({ intent = 'looking' }: { intent?: 'looking' | 'a
 
         <button className="cover" onClick={() => setPicker(true)} aria-label="Add cover">
           {cover ? (
-            <Photo media={cover} />
+            <Photo surface="project-card" media={cover} />
           ) : (
             <span className="cover-empty">
               <ImagePlus size={24} />

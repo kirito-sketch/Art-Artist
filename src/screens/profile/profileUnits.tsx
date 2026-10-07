@@ -33,7 +33,7 @@ export function ReelCard({ person, active = true }: { person: Person; active?: b
     <section className="section section--flush">
       <SectionHeader title={craftProfile(person.craft).work.reel ?? 'Showreel'} />
       <a className="reel" href={x.reel.url} target="_blank" rel="noopener noreferrer" aria-label={`${x.reel.title}, opens ${host}`}>
-        {x.reel.cover ? <Photo media={x.reel.cover} showPlay={false} /> : <span className="reel-blank" />}
+        {x.reel.cover ? <Photo surface="showreel" media={x.reel.cover} showPlay={false} /> : <span className="reel-blank" />}
         <span className="reel-play" aria-hidden>
           <Play size={20} fill="currentColor" strokeWidth={0} />
         </span>

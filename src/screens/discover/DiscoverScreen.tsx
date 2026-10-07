@@ -445,7 +445,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
               <div className="list list--flush">
                 {projects.slice(0, 3).map((w) => (
                   <PressCard key={w.id} className="rrow" onPress={() => push({ name: 'work', id: w.id })} scale={0.985}>
-                    <Photo media={w.media} className="rrow-thumb" showPlay={false} />
+                    <Photo surface="search-thumbnail" media={w.media} className="rrow-thumb" showPlay={false} />
                     <div className="rrow-text">
                       <p className="item-title">{w.title}</p>
                       <p className="meta">{w.format}</p>
@@ -578,7 +578,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
                   const hiring = hiringFor(w.title);
                   return (
                     <Pressable key={w.id} className="poster-item" onClick={() => push({ name: 'work', id: w.id })} scale={0.97}>
-                      <Photo media={w.media} className="poster" />
+                      <Photo surface="search-thumbnail" media={w.media} className="poster" />
                       <p className="item-title">{w.title}</p>
                       <p className="meta">
                         {w.ownerId ? person(w.ownerId).name : <>{org(w.orgIds[0]).name} <Verified size={12} /></>}

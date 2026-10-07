@@ -1,3 +1,4 @@
+import { sourceOnly } from '../domain/mediaPresentation';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
 import { RESEARCH } from '../research';
@@ -117,7 +118,7 @@ export interface Toast {
   action?: { label: string; run: () => void };
 }
 
-export type PostDraft = { text: string; media: Media[]; addToPortfolio: boolean };
+export type PostDraft = { text: string; media: Media[]; addToPortfolio: boolean; presentation?: import('../data/types').PostPresentation };
 
 const VIEWERS: Record<string, Viewer> = {
   kiran: { id: 'kiran', craft: 'cinematographer', firstName: 'Kiran' },
@@ -490,14 +491,14 @@ function useStoreValue() {
       runUpload(
         { id, kind: 'post', label: draft.media.length ? `Posting ${draft.media.length} ${draft.media.length === 1 ? 'item' : 'items'}` : 'Posting', progress: 0, state: 'uploading', thumb: draft.media[0] },
         () => {
-          setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, likes: 0, comments: 0 }, ...ps]);
+          setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, presentation: draft.presentation, likes: 0, comments: 0 }, ...ps]);
           // One portfolio: what Edit Profile shows and orders (docs/REVIEW_EVENTS_PROFILE.md §7).
-          if (draft.addToPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image'), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
+          if (draft.addToPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image').map(sourceOnly), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
           showToast({ text: draft.addToPortfolio ? 'Posted and added to your portfolio' : 'Posted', tone: 'success' });
         },
       );
     },
-    [runUpload, showToast, viewer.id],
+    [runUpload, showToast, viewer.id, acting],
   );
 
   const publishCollab = useCallback(
@@ -564,11 +565,11 @@ function useStoreValue() {
     onboardingIntents: profileOf(viewer.id).onboardingIntents ?? [intent],
     setIntent: (i: Intent) => setIntents((m) => ({ ...m, [viewer.id]: i })),
     /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
-    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {
+    createPerson: (d: { name: string; photo?: string; avatarFraming?: import('../data/types').MediaFraming; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {
       const id = `you-${Date.now().toString(36)}`;
       accountEmails[id] = d.email.trim();
       Object.assign(profileOf(id), d.extra ?? {});
-      const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, visibility: 'public', identityVerified: false };
+      const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, avatarFraming: d.avatarFraming, visibility: 'public', identityVerified: false };
       seed.people.push(p);
       seed.parties[id] = p;
       VIEWERS[id] = { id, craft: d.craft, firstName: d.name.split(' ')[0] };

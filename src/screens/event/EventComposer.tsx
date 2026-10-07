@@ -1,3 +1,4 @@
+import { MediaFramingEditor } from '../../ui/MediaFraming';
 import { CalendarDays, Check, Clock, ImagePlus, Link2, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 import type { Craft, EventType, IndustryEvent, Media } from '../../data/types';
@@ -318,11 +319,12 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
           />
           {err('summary') && <p className="field-error">{err('summary')}</p>}
         </div>
+        {cover && <MediaFramingEditor media={cover} surface="event-hero" onChange={setCover} title="Event cover framing" />}
         <div>
           <span className="field-label">Cover (optional)</span>
           {cover ? (
             <div className="ev-cover">
-              <Photo media={cover} showPlay={false} />
+              <Photo surface="event-hero" media={cover} showPlay={false} />
               <span className="ev-cover-actions">
                 <Button size="s" variant="secondary" onClick={() => setCoverPick(true)}>
                   Change

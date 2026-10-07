@@ -32,7 +32,7 @@ export function WeekFilm({ w, big }: { w: Work; big?: boolean }) {
   return (
     <PressCard className={`wk-film ${big ? 'wk-film--big' : ''}`} onPress={() => push({ name: 'work', id: w.id })} scale={0.985} aria-label={w.title}>
       <span className="wk-poster">
-        <Photo media={w.media} showPlay={false} />
+        <Photo surface="project-card" media={w.media} showPlay={false} />
       </span>
       <span className="wk-body">
         <span className="wk-title">{w.title}</span>
@@ -91,7 +91,7 @@ export function ReviewsBody({ q = '' }: { q?: string }) {
                       {i + 1}
                     </span>
                     <span className="rv-rank-poster">
-                      <Photo media={w.media} showPlay={false} />
+                      <Photo surface="project-card" media={w.media} showPlay={false} />
                     </span>
                     <span className="rv-rank-t">
                       <b>{w.title}</b>

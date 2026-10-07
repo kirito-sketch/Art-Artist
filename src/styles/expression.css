@@ -1180,31 +1180,6 @@
 
 /* The opened stream: one post after another, the work at full width. */
 .phone .post-grid--bento { display: flex; flex-direction: column; gap: 10px; margin-top: 0; padding-inline: 16px; }
-.post-bento-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; aspect-ratio: 1.15; }
-.post-bento-group .post-tile { aspect-ratio: auto; min-height: 0; border-radius: 16px; background: #122b27; }
-.post-bento-group .post-tile--note { background: var(--tint); }
-.post-bento-group--portrait-left > .post-tile { grid-column: 2; }
-.post-bento-group--portrait-right > .post-tile { grid-column: 1; }
-.post-bento-group--portrait-left[data-feature='0'] > :first-child,
-.post-bento-group--portrait-left[data-feature='1'] > :nth-child(2),
-.post-bento-group--portrait-left[data-feature='2'] > :nth-child(3) { grid-column: 1; grid-row: 1 / span 2; }
-.post-bento-group--portrait-right[data-feature='0'] > :first-child,
-.post-bento-group--portrait-right[data-feature='1'] > :nth-child(2),
-.post-bento-group--portrait-right[data-feature='2'] > :nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
-.post-bento-group--wide > :first-child { grid-column: span 2; }
-.post-bento-group--balanced > :last-child { grid-column: span 2; }
-.post-bento-group--portrait-pair { aspect-ratio: .8; grid-template-rows: 2.6fr 1fr; }
-.post-bento-group--portrait-pair > :last-child { grid-column: span 2; }
-.post-bento-group--count-2 { aspect-ratio: 1.4; grid-template-rows: minmax(0, 1fr); }
-.post-bento-group--count-2 > .post-tile { grid-column: auto; grid-row: auto; }
-.post-bento-group--count-1 { aspect-ratio: 1.5; grid-template-rows: minmax(0, 1fr); }
-.post-bento-group--count-1 > .post-tile { grid-column: 1 / -1; grid-row: 1; }
-/* Preserve all of the professional frame; no inferred face/subject crop. */
-.post-bento-group .post-tile-media { position: absolute; inset: 0; }
-.post-bento-group .post-tile-media .photo { width: 100%; height: 100%; }
-.post-bento-group .post-tile-media > .photo { background: transparent; }
-.post-bento-group .post-tile-media > .photo img { object-fit: var(--media-fit, cover); object-position: var(--media-position, center); }
-.post-bento-group .post-tile-mark { background: rgba(7,23,22,.75); border-radius: 8px; padding: 5px; filter: none; }
 
 .stream-bar {
   position: sticky;

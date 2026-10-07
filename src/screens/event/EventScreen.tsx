@@ -54,11 +54,10 @@ export function EventScreen({ id }: { id: string }) {
     <div className={`screen canvas ev-screen${district ? ' dhouse-page' : ''}`}>
       <div className={`ev-hero ${art ? '' : 'ev-hero--branded'}`}>
         {art ? (
-          <Photo media={art} className="ev-hero-photo" showPlay={false} />
+          <Photo surface="event-hero" media={art} className="ev-hero-photo" showPlay={false} />
         ) : (
           <span className="ev-hero-fallback" aria-hidden>
-            <CalendarDays size={40} strokeWidth={1.2} />
-            <span>Ana · Events</span>
+            <span>Ana · Events</span><b>Meet. Make.<br />Be inspired.</b>
           </span>
         )}
         <div className="phero-bar">

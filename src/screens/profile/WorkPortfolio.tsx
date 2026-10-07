@@ -1,3 +1,4 @@
+import { MediaFramingEditor } from '../../ui/MediaFraming';
 import { ArrowDown, ArrowUp, Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
@@ -24,7 +25,7 @@ export function FeaturedWorkSection({ personId }: { personId: string }) {
   if (!items.length) return null;
   return <section className="section section--flush"><SectionHeader title="Featured work" /><div className="ana-featured-work">
     {items.map((item) => item.kind === 'project' ? <button key={item.id} className="ana-featured-item" onClick={() => push({ name: 'work', id: item.projectId })}>
-      {project(item.projectId)?.artwork && <Photo media={project(item.projectId)!.artwork!} showPlay={false} />}<span><span className="item-title">{publicName(project(item.projectId)!)}</span><span className="meta">Ana project</span></span>
+      {project(item.projectId)?.artwork && <Photo surface="portfolio-thumbnail" media={project(item.projectId)!.artwork!} showPlay={false} />}<span><span className="item-title">{publicName(project(item.projectId)!)}</span><span className="meta">Ana project</span></span>
     </button> : <a key={item.id} className="ana-featured-item" href={item.url} target="_blank" rel="noopener noreferrer"><span><span className="item-title">{item.title || 'Selected work'}</span><span className="meta">External work <ExternalLink size={12} /></span></span></a>)}
   </div></section>;
 }
@@ -39,12 +40,13 @@ export function WorkPortfolioPage() {
   const [images, setImages] = useState<Media[]>([...(seed.portfolio[viewer.id] ?? [])]);
   const [featured, setFeatured] = useState<FeaturedWork[]>(featuredWorkOf(viewer.id));
   const [imagePicker, setImagePicker] = useState(false);
+  const [framingImage, setFramingImage] = useState<number | null>(null);
   const [imageMenu, setImageMenu] = useState<number | null>(null);
   const [workPicker, setWorkPicker] = useState(false);
   const [external, setExternal] = useState<{ id: string; title: string; url: string } | null>(null);
   const [discard, setDiscard] = useState(false);
   const initialFeatured = featuredWorkOf(viewer.id);
-  const dirty = JSON.stringify([reel, draft, images.map((m) => m.id), featured, profileCover]) !== JSON.stringify([x.reel, x.reelDraft, (seed.portfolio[viewer.id] ?? []).map((m) => m.id), initialFeatured, x.profileCover]);
+  const dirty = JSON.stringify([reel, draft, images, featured, profileCover]) !== JSON.stringify([x.reel, x.reelDraft, (seed.portfolio[viewer.id] ?? []), initialFeatured, x.profileCover]);
   const eligible = eligibleFeaturedProjects(viewer.id);
   const featuredSection = <section className="ana-work-section"><h2>Featured work</h2><p className="meta">Selected projects, credits or external work. Featuring a project never creates a credit.</p>
     <div className="ana-featured-work">{featured.map((item, index) => {
@@ -70,11 +72,12 @@ export function WorkPortfolioPage() {
       <ProfileCoverPicker personId={viewer.id} value={profileCover} onChange={setProfileCover} images={images} reel={reel} />
       {!words.reel && !words.images && featuredSection}
       {words.reel ? <section className="ana-work-section"><h2>Showreel</h2><p className="meta">One primary professional video. Optional.</p><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></section> : <details className="ana-optional-reel"><summary>Showreel (optional)</summary><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></details>}
-      {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}
+      {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo surface="portfolio-thumbnail" media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}
       {(words.reel || words.images) && featuredSection}
     </div>
     <Sheet className="ana-work-sheet" open={imagePicker} onClose={() => setImagePicker(false)} title="Add portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { setImages((old) => [...old, ...ms.filter((m) => m.kind === 'image' && !old.some((o) => o.id === m.id))]); setImagePicker(false); }} /></Sheet>
-    <Sheet className="ana-work-sheet" open={imageMenu !== null} onClose={() => setImageMenu(null)} title="Portfolio image">
+    <Sheet className="ana-work-sheet" open={framingImage !== null} onClose={() => setFramingImage(null)} title="Portfolio framing" size="tall">{framingImage !== null && images[framingImage] && <MediaFramingEditor media={images[framingImage]} surface="portfolio-thumbnail" onChange={next => setImages(old => old.map((m,i) => i === framingImage ? next : m))} />}<Button block onClick={() => setFramingImage(null)}>Done</Button></Sheet>
+    <Sheet className="ana-work-sheet" open={imageMenu !== null} onClose={() => setImageMenu(null)} title="Portfolio image"><Button variant="secondary" onClick={() => { setFramingImage(imageMenu); setImageMenu(null); }}>Adjust framing</Button>
       {imageMenu !== null && <div className="group">{imageMenu > 0 && <><Row icon={<Check size={18} />} label="Make cover" onPress={() => { setImages((old) => move(old, imageMenu, -imageMenu)); setImageMenu(null); }} /><Row icon={<ArrowUp size={18} />} label="Move earlier" onPress={() => { setImages((old) => move(old, imageMenu, -1)); setImageMenu(null); }} /></>}{imageMenu < images.length - 1 && <Row icon={<ArrowDown size={18} />} label="Move later" onPress={() => { setImages((old) => move(old, imageMenu, 1)); setImageMenu(null); }} />}<Row icon={<Trash2 size={18} />} label="Remove image" onPress={() => { setImages((old) => old.filter((_, i) => i !== imageMenu)); setImageMenu(null); }} /></div>}
     </Sheet>
     <Sheet className="ana-work-sheet" open={workPicker} onClose={() => setWorkPicker(false)} title="Add featured work" size="tall"><div className="stack"><Button variant="secondary" onClick={() => { setWorkPicker(false); setExternal({ id: crypto.randomUUID(), title: '', url: '' }); }}>Add external work link</Button><p className="field-label">Your public projects and accepted credits</p><div className="group">{eligible.filter((p) => !featured.some((f) => f.kind === 'project' && f.projectId === p.id)).map((p) => <Row key={p.id} label={publicName(p)} onPress={() => { setFeatured((old) => [...old, { id: crypto.randomUUID(), kind: 'project', projectId: p.id }]); setWorkPicker(false); }} />)}</div>{!eligible.length && <p className="meta">Shared independent projects and credits accepted on public projects appear here.</p>}</div></Sheet>

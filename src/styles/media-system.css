@@ -1,0 +1,22 @@
+.media-framing-preview { position: relative; overflow: hidden; border-radius: 16px; background: var(--surface-2); margin: 12px auto; width: min(100%, 340px); }
+.media-framing-preview.is-fill { touch-action: none; cursor: grab; }
+.media-framing-preview .photo { width: 100%; height: 100%; position: absolute; inset: 0; }
+.media-framing-preview img { width: 100%; height: 100%; }
+.media-framing-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.media-framing-controls button { min-height: 44px; min-width: 44px; }
+.media-framing-controls [aria-pressed="true"] { outline: 2px solid var(--action-ink); outline-offset: 2px; font-weight: 700; }
+.media-framing-focus { display: grid; gap: 12px; }
+.media-framing-focus label, .media-content-type { display: grid; gap: 6px; font-size: 12px; margin-block: 12px; }
+.media-framing-focus input, .media-content-type select { width: 100%; min-height: 44px; }
+.photo[data-media-surface] { background: var(--surface-2); }
+.phero .photo[data-media-surface] { background: transparent; }
+.photo[data-media-fit="contain"] img { object-position: center !important; }
+.ana-post-inspect { display: block; min-height: 44px; margin: 0 3px; font-size: 12px; }
+.post-grid--bento .media-bento { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.post-grid--bento .media-bento .post-tile { min-height: 0; border-radius: 16px; align-self: start; }
+.media-bento .post-tile[data-shape="wide"] { grid-column: 1 / -1; }
+.media-bento .post-tile-media, .media-bento .photo { position: absolute; inset: 0; height: 100%; width: 100%; }
+.media-bento .photo img { height: 100%; width: 100%; }
+.media-upload { margin-block: 12px; }
+.media-upload label { display: block; }
+.media-upload input { min-height: 44px; max-width: 100%; }

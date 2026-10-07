@@ -1,3 +1,4 @@
+import { MEDIA_PRESETS } from './domain/mediaPresentation';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/inter';
 import '@fontsource/noto-sans-telugu/400.css';
@@ -24,8 +25,11 @@ import './styles/theme-dark.css';
 import './styles/ambient.css';
 import './styles/profile-immersive.css';
 import './styles/post-media.css';
+import './styles/media-system.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';
+
+for (const [surface, policy] of Object.entries(MEDIA_PRESETS)) if (policy.ratio) document.documentElement.style.setProperty(`--media-${surface}-ratio`, String(policy.ratio));
 
 createRoot(document.getElementById('root')!).render(<App />);

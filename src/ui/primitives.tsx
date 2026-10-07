@@ -1,7 +1,9 @@
 import { AnimatePresence, motion, type HTMLMotionProps } from 'framer-motion';
 import { forwardRef, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { BadgeCheck, Check, ChevronRight, ImageOff, Play } from 'lucide-react';
-import type { Media, Party } from '../data/types';
+import type { Media, MediaSurface, Party } from '../data/types';
+import { mediaPosition } from '../domain/mediaLayout';
+import { deliveredMedia, mediaPresentation, MEDIA_PRESETS } from '../domain/mediaPresentation';
 import { spring } from './motion';
 import { rovingKeys } from './a11y';
 
@@ -160,26 +162,17 @@ export function IconButton({ label, className = '', children, ...rest }: HTMLMot
  * Real image with a delivery fallback: tries `src`, then `fallback`, then a quiet placeholder.
  * Video media gets a play affordance and duration.
  */
-export function Photo({ media, className = '', alt = '', showPlay = true, onImageLoad, focal = media?.focal, imageFit }: { media?: Media | null; className?: string; alt?: string; showPlay?: boolean; onImageLoad?: (image: HTMLImageElement) => void; focal?: { x: number; y: number }; imageFit?: 'cover' | 'contain' }) {
-  const [stage, setStage] = useState(0);
-  const url = !media ? null : stage === 0 ? media.src : stage === 1 && media.fallback ? media.fallback : null;
-  return (
-    <div className={`photo ${className}`}>
-      {url ? (
-        <img src={url} alt={alt} loading="lazy" draggable={false} style={{ objectFit: imageFit, ...(focal && Number.isFinite(focal.x) && Number.isFinite(focal.y) ? { objectPosition: `${Math.max(0, Math.min(100, focal.x))}% ${Math.max(0, Math.min(100, focal.y))}%` } : {}) }} onLoad={e => onImageLoad?.(e.currentTarget)} onError={() => setStage((s) => (s === 0 && media?.fallback ? 1 : 2))} />
-      ) : (
-        <span className="photo-missing" aria-label="Image unavailable">
-          <ImageOff size={18} strokeWidth={1.6} />
-        </span>
-      )}
-      {media?.kind === 'video' && showPlay && (
-        <span className="photo-play">
-          <Play size={12} fill="currentColor" strokeWidth={0} />
-          {media.duration}
-        </span>
-      )}
-    </div>
-  );
+export function Photo({ media, className = '', alt, showPlay = true, onImageLoad, focal, imageFit, surface = 'preview', frameRatio, priority = false }: { media?: Media | null; className?: string; alt?: string; showPlay?: boolean; onImageLoad?: (image: HTMLImageElement) => void; focal?: { x: number; y: number }; imageFit?: 'cover' | 'contain'; surface?: MediaSurface; frameRatio?: number; priority?: boolean }) {
+  const [failure, setFailure] = useState<{ source: string; stage: number }>();
+  const stage = failure && failure.source === media?.src ? failure.stage : 0;
+  const url = !media ? null : stage === 0 ? (media.kind === 'video' ? media.poster ?? media.src : media.src) : stage === 1 && media.fallback ? media.fallback : null;
+  const asset = media && url ? deliveredMedia(media, url) : media;
+  const policy = asset ? mediaPresentation(asset, surface, frameRatio) : undefined;
+  const deliveredOriginal = surface !== 'original' && media?.kind !== 'video' && url === media?.src;
+  return <div className={`photo ${className}`} data-media-surface={surface} data-media-fit={imageFit ?? policy?.fit}>
+    {url ? <img src={url} srcSet={deliveredOriginal && media?.variants?.length ? media.variants.map(v => `${v.src} ${v.width}w`).join(', ') : undefined} sizes={policy?.sizes} alt={alt ?? media?.alt ?? ''} loading={priority ? 'eager' : 'lazy'} decoding="async" fetchPriority={priority ? 'high' : 'auto'} draggable={false} style={{ objectFit: imageFit ?? policy?.fit, objectPosition: focal ? mediaPosition(asset ?? undefined, focal) : policy?.position }} onLoad={e => onImageLoad?.(e.currentTarget)} onError={() => setFailure({ source: media?.src ?? '', stage: stage === 0 && media?.fallback ? 1 : 2 })} /> : <span className="photo-missing" aria-label="Image unavailable"><ImageOff size={18} strokeWidth={1.6} /></span>}
+    {media?.kind === 'video' && showPlay && <span className="photo-play"><Play size={12} fill="currentColor" strokeWidth={0} />{media.duration}</span>}
+  </div>;
 }
 
 /* ---------------------------------------------------------------- Avatar */
@@ -215,7 +208,7 @@ export function PersonPhoto({ party, className = '' }: { party: Party; className
   const img = usePartyImage(party);
   return (
     <span className={`person-photo ${img.show ? '' : 'person-photo--initials'} ${className}`} aria-hidden>
-      {img.show ? <img src={img.src} alt="" onError={img.onError} draggable={false} /> : <span className="person-photo-initials">{initials(party.name)}</span>}
+      {img.show ? <img src={img.src} alt="" onError={img.onError} draggable={false} style={{ objectFit: party.kind === 'org' ? MEDIA_PRESETS.logo.fit : MEDIA_PRESETS.avatar.fit, objectPosition: party.kind === 'person' ? mediaPresentation({ id: party.id, kind: 'image', src: img.src!, contentType: 'portrait',  }, 'preview').position : 'center' }} /> : <span className="person-photo-initials">{initials(party.name)}</span>}
     </span>
   );
 }
@@ -226,7 +219,7 @@ export function Avatar({ party, size = 40 }: { party: Party; size?: number }) {
   const isOrg = party.kind === 'org';
   return (
     <span className={`avatar ${isOrg ? 'avatar--org' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden>
-      {img.show ? <img src={img.src} alt="" onError={img.onError} /> : size >= 24 ? initials(party.name) : null}
+      {img.show ? <img src={img.src} alt="" onError={img.onError} style={{ objectFit: isOrg ? MEDIA_PRESETS.logo.fit : MEDIA_PRESETS.avatar.fit, objectPosition: party.kind === 'person' ? mediaPresentation({ id: party.id, kind: 'image', src: img.src!, contentType: 'portrait', presentations: { avatar: party.avatarFraming } }, 'avatar').position : 'center' }} /> : size >= 24 ? initials(party.name) : null}
     </span>
   );
 }
