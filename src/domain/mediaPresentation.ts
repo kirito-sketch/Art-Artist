@@ -58,11 +58,3 @@ export function deliveredMedia(media: Media, src: string): Media {
 export function isPlayableVideo(media: Media) {
   return media.kind === 'video' && (/\.(mp4|webm|mov)(?:[?#]|$)/i.test(media.src) || /^(blob:|data:video\/)/.test(media.src));
 }
-
-/** Controlled tiles chosen before load from stored source geometry. Unknowns preserve composition. */
-export function bentoTile(media?: Media, index = 0, total = Infinity) {
-  const ratio = media ? mediaRatio(media) : 1;
-  const shape = ratio >= 1.65 ? 'wide' : ratio < .9 ? 'tall' : ratio >= 1.15 ? 'medium' : 'square';
-  const span = total === 1 || ((shape === 'wide' || shape === 'medium') && index % 3 === 0) ? 2 : 1;
-  return { shape, span, ratio: shape === 'wide' ? Math.min(1.91, ratio) : shape === 'tall' ? Math.max(.65, ratio) : shape === 'medium' ? 4 / 3 : 1 };
-}

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import type { Media } from '../data/types';
-import { bentoTile, deliveredMedia, MEDIA_PRESETS, mediaPresentation, postFrame, sourceOnly, withFraming } from './mediaPresentation';
+import { deliveredMedia, MEDIA_PRESETS, mediaPresentation, postFrame, sourceOnly, withFraming } from './mediaPresentation';
 const image = (ratio: number, contentType: Media['contentType'] = 'photo'): Media => ({ id: 'source', kind: 'image', src: 'original.jpg', width: ratio * 1000, height: 1000, contentType, focal: { x: 80,y: 20 } });
 const ratios = [4,16/9,3/2,4/3,1,4/5,3/4,.3,9/16];
 test('natural posts and bounded extremes preserve the source composition', () => {
@@ -45,14 +45,7 @@ test('genuine vertical video keeps its native frame without changing image limit
   assert.equal(postFrame([video], 'square'), 1);
   assert.equal(mediaPresentation(video, 'post', postFrame([video])).fit, 'cover');
 });
-test('source-aware Bento favours wide and tall tiles; art and unknown geometry are preserved', () => {
-  assert.equal(bentoTile(image(16/9)).shape,'wide');
-  assert.equal(bentoTile(image(3/4,'portrait')).shape,'tall');
-  assert.equal(bentoTile(image(1)).shape,'square');
-  assert.equal(bentoTile(image(4/3)).shape,'medium');
-  assert.deepEqual([0,1,2,3].map(i=>bentoTile(image(16/9),i,4).span),[2,1,1,2]);
-  assert.equal(bentoTile(image(3/4,'portrait'),0,4).span,1);
-  assert.equal(bentoTile(image(1),0,1).span,2);
+test('artwork and unknown geometry preserve composition on Bento and other previews', () => {
   const unknown: Media = { id:'unknown',kind:'image',src:'unknown.jpg' };
   for (const surface of ['discover-bento','post','portfolio-thumbnail','project-hero','event-card','credit-card','spotlight'] as const) assert.equal(mediaPresentation(unknown,surface).fit,'contain');
 });

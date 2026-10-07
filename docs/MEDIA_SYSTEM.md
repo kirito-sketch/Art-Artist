@@ -2,6 +2,8 @@
 
 Post-specific correction: see [Post sizing and demo content](POST_MEDIA_DEMO.md). Posts now have no View original CTA; the seeds demonstrate mixed heights, and genuine native vertical video can retain up to 9:16. The original inspection results below describe the initial migration, before this correction.
 
+Discover layout correction: see [Deterministic Bento groups](DISCOVER_BENTO.md). The previous independent source-ratio tiles and modulo column spans are retired; complete group rectangles now reserve all tile dimensions before load.
+
 Audit baseline: `0cac4cf` (before this migration). This change concerns media only; Credit authority, Interest, Follow, Messaging, privacy, ownership and free-only Events stay unchanged.
 
 ## A. Original media and existing architecture
@@ -51,7 +53,7 @@ Needs infrastructure later: durable upload/object storage; server thumbnail/resi
 - `ProfileHeroMedia` retains its specialist responsive protected-region algorithm, requests the shared policy, and uses hero-only focal metadata. There is no claim that every subject can fit; editor warns about impossible regions. Artwork preserves composition and does not claim subject protection.
 - Avatar metadata is `Person.avatarFraming`; hero selection never reads it. Logos use dedicated contain treatment.
 - `MediaFramingEditor` powers manual Post slide, Portfolio, Project, Event, Showreel and avatar framing; Post frame choices use everyday labels. Profile hero keeps its own overlay-aware editor and protected region.
-- Bento uses controlled tall/square/medium/wide tiles based on source ratio. Original Post presentation is not consulted. Unknown geometry preserves composition across ordinary previews (the dedicated hero uses its measured framing algorithm); source order and opening indexes remain intact. Landscape groups alternate a full-width visual with two smaller landscape previews; portraits remain tall, rather than being forced into that pattern. No blurred filler.
+- Bento chooses among four complete, source-aware three-item patterns, with explicit one/two/four-item leftovers. Original Post presentation is not consulted. Unknown geometry preserves composition across ordinary previews (the dedicated hero uses its measured framing algorithm); source order and opening indexes remain intact. Group containers reserve geometry and all columns close together. No blurred filler.
 
 **Original ≠ preview.** Changing Bento framing cannot alter Post, Profile, Portfolio or original media. Hero framing cannot alter Discover. Adding a framed Post image to Portfolio copies the source without the Post presentation metadata.
 

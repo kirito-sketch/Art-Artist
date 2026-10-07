@@ -11,9 +11,22 @@
 .photo[data-media-surface] { background: var(--surface-2); }
 .phero .photo[data-media-surface] { background: transparent; }
 .photo[data-media-fit="contain"] img { object-position: center !important; }
-.post-grid--bento .media-bento { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-.post-grid--bento .media-bento .post-tile { min-height: 0; border-radius: 16px; align-self: start; }
-.media-bento .post-tile[data-span="2"] { grid-column: 1 / -1; }
+/* Discover's scrolling screen owns the safe-area-aware navigation clearance. */
+.phone .post-grid--bento { padding-bottom: 0; }
+.post-grid--bento .media-bento { --bento-gap: 10px; display: flex; flex-direction: column; gap: var(--bento-gap); }
+.media-bento .bento-group { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: var(--bento-gap); }
+.bento-group[data-pattern="tall-left"] { grid-template-areas: 'a b' 'a c'; }
+.bento-group[data-pattern="tall-right"] { grid-template-areas: 'a b' 'c b'; }
+.bento-group[data-pattern="wide-top"] { grid-template-areas: 'a a' 'b c'; }
+.bento-group[data-pattern="wide-bottom"] { grid-template-areas: 'a b' 'c c'; }
+.bento-group[data-pattern="single"] { grid-template-areas: 'a'; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.bento-group[data-pattern="pair"] { grid-template-areas: 'a b'; grid-template-rows: minmax(0, 1fr); }
+.bento-group[data-pattern="quad"] { grid-template-areas: 'a b' 'c d'; }
+.bento-group > [data-slot="0"] { grid-area: a; }
+.bento-group > [data-slot="1"] { grid-area: b; }
+.bento-group > [data-slot="2"] { grid-area: c; }
+.bento-group > [data-slot="3"] { grid-area: d; }
+.post-grid--bento .media-bento .post-tile { min-height: 0; min-width: 0; aspect-ratio: auto; border-radius: 16px; align-self: stretch; }
 .media-bento .post-tile-media, .media-bento .photo { position: absolute; inset: 0; height: 100%; width: 100%; }
 .media-bento .photo img { height: 100%; width: 100%; }
 .media-upload { margin-block: 12px; }
