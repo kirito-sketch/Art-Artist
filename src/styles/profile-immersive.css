@@ -1,28 +1,17 @@
-/* Individual profiles only. Shared house styles and legacy presentation remain untouched. */
-.phone .v-profile--immersive .phero {
-  height: var(--phone-h, 100dvh);
-  min-height: 480px;
-  padding: 0;
-  background: #173e35;
-}
-.phone .v-profile--immersive .phero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 68%, rgba(20,57,47,.32), transparent 62%), linear-gradient(180deg, rgba(8,21,20,.14), transparent 24%, rgba(8,21,20,.06) 36%, rgba(8,26,24,.62) 57%, rgba(7,23,22,.65) 78%, rgba(7,20,19,.8));
-  pointer-events: none;
-}
-.phone .v-profile--immersive .phero-photo img { object-fit: cover; object-position: var(--profile-position, 50% 35%); }
+/* One image-led Individual hero for own and other profiles; the professional surface stays themed. */
+.phone .v-profile--immersive .phero { height: var(--phone-h, 100dvh); min-height: 480px; padding: 0; background: #171717; --identity-start: 52%; }
+.phone .v-profile--immersive .phero::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,.1), transparent 22%, transparent max(24%, calc(var(--identity-start) - 150px)), rgba(0,0,0,.5) var(--identity-start), rgba(0,0,0,.66) calc(var(--identity-start) + 45px), rgba(0,0,0,.73) 100%); }
+.phone .v-profile--immersive .ohero-parallax { transform: none !important; }
+.phone .v-profile--immersive .phero-dim { display: none; }
+.phone .v-profile--immersive .phero-photo { height: 100%; background: #171717; }
+.profile-hero-media .photo { width: 100%; height: 100%; }
+.profile-hero-media--close img { transform: scale(1.1); transform-origin: 50% 100%; }
+.phone .v-profile--immersive .phero-photo img { object-fit: cover; }
 .phone .v-profile--immersive .phero-bar { z-index: 3; gap: 6px; }
-.phone .v-profile--immersive .phero-bar .icon-btn { background: rgba(10,28,23,.48); color: #fff; box-shadow: none; }
-.profile-intro { position: absolute; top: 52%; left: 24px; right: 24px; z-index: 2; color: #fff; text-align: center; }
-.phone .v-profile--immersive .phero--safe .ohero-parallax { transform: none !important; }
-.phone .v-profile--immersive .phero--safe .phero-photo { height: calc(100% - 410px); background: transparent; mask-image: linear-gradient(#000 calc(100% - 70px), transparent); }
-.phone .v-profile--immersive .phero--safe .phero-photo img { object-fit: var(--profile-fit, contain); }
-.phone .v-profile--immersive .phero--safe::after { background: linear-gradient(180deg, transparent 32%, rgba(8,26,24,.08) 44%, #173e35 60%, #173e35 86%, var(--surface)); }
-.phone .v-profile--immersive .phero--identity-lower .profile-intro { top: auto; bottom: calc(var(--tabbar-clearance) + 68px); }
-.phone .v-profile--immersive .phero--identity-centre-lower .profile-intro { top: 50%; }
-.phone .v-profile--immersive .phero--identity-glass .profile-intro { top: auto; bottom: calc(var(--tabbar-clearance) + 68px); padding: 16px; border: 1px solid #ffffff30; border-radius: 26px; background: rgba(10,30,25,.8); backdrop-filter: blur(12px); }
+.phone .v-profile--immersive .phero-bar .icon-btn { background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.28); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; box-shadow: none; }
+.profile-intro { position: absolute; left: 24px; right: 24px; z-index: 2; color: #fff; text-align: center; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
+.phone .v-profile--immersive .profile-intro { top: auto; bottom: calc(var(--tabbar-clearance) + 20px); }
+.phone .v-profile--immersive .phero--identity-centre-lower .profile-intro { bottom: calc(var(--tabbar-clearance) + 50px); }
 .phone .v-profile--immersive .psheet { margin-top: -30px; padding-top: 32px; border-top: 1px solid var(--line); }
 .profile-work-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; align-items: start; }
 .profile-work-grid--1 { grid-template-columns: minmax(0,1fr); }
@@ -35,24 +24,24 @@
 .phone .v-profile--immersive .credit-rail .rail-poster { width: 72px; height: 108px; }
 .phone .v-profile--immersive .credit-rail p { margin: 0; white-space: normal; }
 .profile-credit-status { display: flex; align-items: center; gap: 5px; color: var(--text-2); font-size: 11px; }
-.phone .v-profile--immersive .pid { align-items: center; text-align: center; gap: 6px; margin: 0; }
+.phone .v-profile--immersive .pid { align-items: center; text-align: center; gap: 4px; margin: 0; }
 .phone .v-profile--immersive .pid .large-title { color: #fff; font-size: clamp(30px, 8.7vw, 38px) !important; line-height: 1.06; letter-spacing: -.035em; font-weight: 700; }
-.phone .v-profile--immersive .pid .verified { color: #bbddcb; flex-shrink: 0; }
+.phone .v-profile--immersive .pid .verified { color: #fff; flex-shrink: 0; }
 .phone .v-profile--immersive .pid-role { color: #fff; font-size: 17px; line-height: 1.3; }
-.phone .v-profile--immersive .pid-place { color: #e4ece6; font-size: 12px; line-height: 1.5; }
-.phone .v-profile--immersive .pid-stats { color: #e0e8e2; margin-top: 8px; font-size: 12px; gap: 6px; justify-content: center; }
-.phone .v-profile--immersive .profile-actions { margin: 20px auto 0; gap: 8px; flex-direction: row; align-items: center; max-width: 328px; padding: 6px; border: 1px solid rgba(255,255,255,.25); border-radius: 34px; background: rgba(239,245,241,.12); backdrop-filter: blur(12px) saturate(1.15); -webkit-backdrop-filter: blur(12px) saturate(1.15); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(5,18,16,.12); }
+.phone .v-profile--immersive .pid-place { color: #f6f6f6; font-size: 12px; line-height: 1.5; }
+.phone .v-profile--immersive .pid-stats { color: #f6f6f6; margin-top: 4px; font-size: 12px; gap: 6px; justify-content: center; }
+.phone .v-profile--immersive .profile-actions { margin: 12px auto 0; gap: 8px; flex-direction: row; align-items: center; max-width: 328px; padding: 6px; border: 1px solid rgba(255,255,255,.25); border-radius: 34px; background: rgba(255,255,255,.1); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(0,0,0,.12); }
 .phone .v-profile--immersive .profile-actions--self { max-width: 184px; }
 .phone .v-profile--immersive .profile-actions .btn { min-height: 48px; min-width: 0; width: auto; flex: 1; font-size: 14px; }
-.phone .v-profile--immersive .profile-actions .btn--primary { background: #275c50; color: #fff; }
-.phone .v-profile--immersive .profile-actions .btn--selected { background: #e8f0e9; color: #183c32; box-shadow: inset 0 0 0 1px #acc4b4; }
-.phone .v-profile--immersive .profile-actions .btn--secondary { background: rgba(244,240,232,.94); color: #183c32; border-color: transparent; }
+.phone .v-profile--immersive .profile-actions .btn--primary { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.4); font-weight: 650; }
+.phone .v-profile--immersive .profile-actions .btn--selected { background: rgba(255,255,255,.92); color: #17201d; border: 1px solid rgba(255,255,255,.7); box-shadow: none; }
+.phone .v-profile--immersive .profile-actions .btn--secondary { background: rgba(0,0,0,.16); color: #fff; border: 1px solid rgba(255,255,255,.35); }
 .phone .v-profile--immersive .profile-actions .btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .profile-scroll-cue, .profile-play { font: inherit; cursor: pointer; color: #fff; background: none; border: 0; }
-.profile-scroll-cue { position: absolute; z-index: 3; bottom: calc(var(--tabbar-clearance) + 8px); left: 24px; right: 24px; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; color: #d4e2d9; font-size: 11px; letter-spacing: .04em; }
-.profile-play { position: absolute; bottom: calc(100% + 18px); left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; border: 1px solid #b9cabe; border-radius: 50px; padding: 10px 15px; font-size: 13px; }
+.profile-scroll-cue { position: absolute; z-index: 3; bottom: calc(var(--tabbar-clearance) - 20px); left: 24px; right: 24px; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; color: #f3f3f3; font-size: 11px; letter-spacing: .04em; }
+.profile-play { position: absolute; bottom: calc(100% + 18px); left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; background: rgba(0,0,0,.3); backdrop-filter: blur(10px); border: 1px solid #ffffff50; border-radius: 50px; padding: 10px 15px; font-size: 13px; }
 .phone .v-profile--immersive .psheet { margin-top: -22px; padding-top: 25px; border-radius: 26px 26px 0 0; background: var(--surface); z-index: 3; min-height: 70vh; }
-.profile-art-fallback { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 85% 15%, #ba895b 0, transparent 45%), linear-gradient(145deg,#2d6453,#14382f 70%); color: #eee6d5; padding: 100px 26px; }
+.profile-art-fallback { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 85% 15%, #705b48 0, transparent 45%), linear-gradient(145deg,#393a3c,#17181a 70%); color: #eee6d5; padding: 100px 26px; }
 .profile-art-fallback > span { font-size: 9px; letter-spacing: .18em; }
 .profile-art-fallback b { display: block; margin-top: 35px; font-family: var(--display); font-size: 35px; line-height: 1.06; font-weight: 500; }
 .profile-art-fallback i { position: absolute; width: 430px; height: 430px; border: 1px solid #d8cdb54d; border-radius: 50%; top: 150px; left: 35%; box-shadow: 0 0 0 35px #d8cdb514, 0 0 0 70px #d8cdb50d; }
@@ -60,23 +49,23 @@
 .profile-compact { display: flex; align-items: center; gap: 8px; min-height: calc(var(--status-bar) + 52px); padding: var(--status-bar) 16px 4px; background: var(--surface); border-bottom: 1px solid var(--line); color: var(--text); }
 .profile-compact[aria-hidden='true'] { visibility: hidden; pointer-events: none; }
 .profile-compact > span { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.profile-cover-preview { aspect-ratio: 9 / 16; max-width: 180px; width: 100%; margin-inline: auto; border-radius: 16px; overflow: hidden; background: linear-gradient(140deg,#39725e,#183d33); color: #f1ecdf; }
+.profile-cover-preview { aspect-ratio: 9 / 16; max-width: 180px; width: 100%; margin-inline: auto; border-radius: 16px; overflow: hidden; background: #171717; color: #f1ecdf; }
 .profile-cover-preview .photo { width: 100%; height: 100%; }
 .profile-cover-preview img { object-position: var(--profile-position, 50% 35%); }
-.profile-framing-preview { position: relative; color: #fff; background: #173e35; }
-.profile-framing-preview > .photo { height: 52%; background: transparent; }
-.profile-framing-preview > .photo img { object-fit: var(--profile-fit, contain); }
+.profile-framing-preview { position: relative; color: #fff; background: #171717; }
+.profile-framing-preview > .profile-hero-media { width: 100%; height: 100%; }
+.profile-framing-preview > .photo { height: 100%; background: transparent; }
+.profile-framing-preview > .photo img { object-fit: cover; }
 .profile-framing-preview--immersive > .photo { height: 100%; }
 .profile-framing-preview--immersive > .photo img { object-fit: cover; }
-.profile-framing-preview::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg,transparent 32%,#173e350a 43%,#173e35aa 60%,#173e35ee); }
+.profile-framing-preview::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg,transparent 25%,rgba(0,0,0,.12) 40%,rgba(0,0,0,.6) 65%,rgba(0,0,0,.72)); }
 .framing-nav { position: absolute; z-index: 1; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; font-size: 12px; }
-.framing-identity { position: absolute; z-index: 1; bottom: 45px; left: 12px; right: 12px; display: grid; gap: 5px; text-align: center; font-size: 9px; }
-.framing-identity strong { font-size: 14px; }
+.framing-identity { position: absolute; z-index: 1; bottom: 14%; left: 12px; right: 12px; display: grid; gap: 5px; text-align: center; font-size: 9px; }
+.framing-identity strong { font-size: 17px; }
 .framing-identity small { font-size: 7px; }
-.framing-cta { padding: 8px 12px; border-radius: 20px; margin: 4px auto; background: #f4f0e8; color: #183c32; }
-.framing-scroll { position: absolute; z-index: 1; bottom: 20px; left: 0; right: 0; text-align: center; font-size: 7px; }
-.profile-framing-preview--centre-lower .framing-identity { top: 50%; bottom: auto; }
-.profile-framing-preview--glass .framing-identity { background: #0a1e19cc; border: 1px solid #ffffff30; border-radius: 16px; padding: 8px; }
+.framing-cta { padding: 8px 12px; border-radius: 20px; margin: 4px auto; background: rgba(255,255,255,.14); border: 1px solid #ffffff50; color: #fff; backdrop-filter: blur(8px); }
+.framing-scroll { position: absolute; z-index: 1; bottom: 9%; left: 0; right: 0; text-align: center; font-size: 7px; }
+.profile-framing-preview--centre-lower .framing-identity { bottom: 18%; }
 .profile-cover-preview > span { display: block; padding: 35px 24px; font-family: var(--display); font-size: 28px; }
 .profile-cover-picker fieldset { border: 0; padding: 0; margin: 12px 0 0; }
 .profile-cover-picker label { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; cursor: pointer; }
@@ -86,8 +75,15 @@
 .profile-cover-focus label { display: grid; gap: 8px; border: 0; padding: 0; }
 .profile-cover-focus input { width: 100%; min-height: 30px; }
 @media (max-height: 700px) {
-  .phone .v-profile--immersive .phero--safe { min-height: 680px; }
-  .profile-intro { top: 30%; }
-  .phone .v-profile--immersive .pid .large-title { font-size: 30px !important; }
+  .profile-framing-preview .framing-identity { bottom: 21%; }
+  .profile-framing-preview--centre-lower .framing-identity { bottom: 25%; }
+  .framing-scroll { bottom: 14%; }
+  .phone .v-profile--immersive .pid .large-title { font-size: 28px !important; }
+  .phone .v-profile--immersive .pid-role { font-size: 14px; }
+  .phone .v-profile--immersive .pid-place, .phone .v-profile--immersive .pid-stats { font-size: 11px; }
+  .phone .v-profile--immersive .pid { gap: 4px; }
+  .phone .v-profile--immersive .pid-stats { margin-top: 4px; }
   .phone .v-profile--immersive .profile-actions { margin-top: 12px; }
+  .phone .v-profile--immersive .profile-intro { bottom: calc(var(--tabbar-clearance) + 20px); left: 16px; right: 16px; }
+  .phone .v-profile--immersive .phero--identity-centre-lower .profile-intro { bottom: calc(var(--tabbar-clearance) + 40px); }
 }

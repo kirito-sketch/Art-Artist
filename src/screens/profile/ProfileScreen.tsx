@@ -1,6 +1,6 @@
 import { ProfileHeroMedia } from './ProfileHeroMedia';
 import { eligibleFeaturedProjects } from '../../domain/featuredWork';
-import { profileCoverPosition, resolveProfileCover } from '../../domain/profileCover';
+import { resolveProfileCover } from '../../domain/profileCover';
 import { mediaRatio, mediaType, mediaPosition } from '../../domain/mediaLayout';
 import { ShowreelMedia } from './Showreel';
 import { Sheet } from '../../ui/Sheet';
@@ -91,7 +91,7 @@ function useNameFit(name: string) {
 export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?: boolean; active?: boolean }) {
   const { isSaved, toggleSave } = useStore();
   const district = useFeatures().home === 'district';
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events, stack } = useStore();
+  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events, stack, profileVersion } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -108,6 +108,16 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   // The Profile tab stays mounted behind the others, so it counts only while it is the tab in view.
   const [creditsKnown] = useState(() => hasLearned(viewer.id, 'credits'));
   const showsCredits = active && !!p && (own || (p.visibility === 'public' && !cannotReach(id) && !blocked.includes(id)));
+  // Readability follows the actual identity block, including shorter phones and wrapped languages.
+  useLayoutEffect(() => {
+    const hero = scrollRef.current?.querySelector<HTMLElement>('.phero');
+    const intro = hero?.querySelector<HTMLElement>('.profile-intro');
+    if (!district || !hero || !intro) return;
+    const update = () => hero.style.setProperty('--identity-start', `${intro.offsetTop}px`);
+    const observer = new ResizeObserver(update);
+    observer.observe(hero); observer.observe(intro); update();
+    return () => observer.disconnect();
+  }, [id, district, showsCredits, profileVersion]);
   useEffect(() => {
     if (showsCredits) markLearned(viewer.id, 'credits');
   }, [showsCredits, viewer.id]);
@@ -179,8 +189,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const coverChoice = profileOf(id).profileCover;
   const portrait: Media | undefined = p.photo ? { id: `portrait-${id}`, kind: 'image', src: p.photo, contentType: 'portrait', width: 480, height: 600 } : undefined;
   const selectedCover = resolveProfileCover(coverChoice, work, eligibleFeaturedProjects(id), reel, portrait);
-  const safeFraming = coverChoice?.framing !== 'immersive';
-  const identityRegion = coverChoice?.identityRegion ?? 'lower';
+  const identityRegion = coverChoice?.identityRegion === 'centre-lower' ? 'centre-lower' : 'lower';
   const scrollToWork = () => {
     const el = scrollRef.current;
     const sheet = el?.querySelector<HTMLElement>('.psheet');
@@ -193,9 +202,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
         <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
-      <div className={`phero${district && safeFraming ? ' phero--safe' : ''} phero--identity-${identityRegion}`} data-hero style={district ? { '--profile-position': profileCoverPosition(coverChoice, selectedCover.media), '--profile-fit': selectedCover.media && mediaType(selectedCover.media) === 'portrait' && mediaRatio(selectedCover.media) >= .7 ? 'cover' : 'contain' } as CSSProperties : undefined}>
+      <div className={`phero phero--identity-${identityRegion}`} data-hero>
         <div className="ohero-parallax" data-hero-photo>
-          {district ? selectedCover.media ? <ProfileHeroMedia key={selectedCover.media.src} media={selectedCover.media} focal={coverChoice?.focal ?? selectedCover.media.focal} safe={safeFraming} className="phero-photo" alt={`Featured image of ${p.name}`} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
+          {district ? selectedCover.media ? <ProfileHeroMedia key={selectedCover.media.src} media={selectedCover.media} focal={coverChoice?.focal ?? selectedCover.media.focal} className="phero-photo" alt={`Featured image of ${p.name}`} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
         </div>
         <div className="phero-dim" data-hero-dim aria-hidden />
         <div className="phero-bar">
