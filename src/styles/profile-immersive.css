@@ -16,6 +16,12 @@
 .phone .v-profile--immersive .phero-bar { z-index: 3; gap: 6px; }
 .phone .v-profile--immersive .phero-bar .icon-btn { background: rgba(10,28,23,.48); color: #fff; box-shadow: none; }
 .profile-intro { position: absolute; top: 52%; left: 24px; right: 24px; z-index: 2; color: #fff; text-align: center; }
+.phone .phero--about .profile-intro { top: 34%; }
+.profile-about-glass { margin: 16px auto 0; max-width: 344px; padding: 14px 20px 4px; border-radius: 26px; border: 1px solid rgba(255,255,255,.18); background: rgba(16,38,34,.66); backdrop-filter: blur(16px) saturate(1.12); -webkit-backdrop-filter: blur(16px) saturate(1.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.09); color: #fff; }
+.profile-about-glass h2 { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #e4ece6; }
+.profile-about-glass p { margin: 0; font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+.profile-about-glass button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 4px 12px; border: 0; background: none; color: #fff; font: inherit; font-size: 11px; cursor: pointer; }
+.profile-about-glass button:focus-visible { outline: 2px solid #fff; border-radius: 12px; }
 .phone .v-profile--immersive .pid { align-items: center; text-align: center; gap: 6px; margin: 0; }
 .phone .v-profile--immersive .pid .large-title { color: #fff; font-size: clamp(30px, 8.7vw, 38px) !important; line-height: 1.06; letter-spacing: -.035em; font-weight: 700; }
 .phone .v-profile--immersive .pid .verified { color: #bbddcb; flex-shrink: 0; }
@@ -53,6 +59,8 @@
 .profile-cover-focus label { display: grid; gap: 8px; border: 0; padding: 0; }
 .profile-cover-focus input { width: 100%; min-height: 30px; }
 @media (max-height: 700px) {
+  .phone .v-profile--immersive .phero--about { min-height: 680px; }
+  .phone .phero--about .profile-intro { top: 20%; }
   .profile-intro { top: 30%; }
   .phone .v-profile--immersive .pid .large-title { font-size: 30px !important; }
   .phone .v-profile--immersive .profile-actions { margin-top: 12px; }

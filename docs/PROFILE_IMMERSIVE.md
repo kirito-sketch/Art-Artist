@@ -8,6 +8,8 @@ The selected portrait or featured work fills the first viewport with cover cropp
 
 The hero uses the actual phone viewport and safe-area tokens, not Compare frame dimensions. It naturally scrolls away. A compact name/header appears after most of the hero has left view. The rounded surface below uses the current light/dark theme. Showreel, portfolio, featured work, credits and posts precede deeper professional details and private owner management.
 
+When an existing bio is present, a centred rounded glass About panel follows the hero actions. It previews three lines of the actual bio and offers Read full bio, scrolling to the existing full About section. Profiles without a bio omit the panel. The same composition applies to self and other profiles. Phones shorter than 700px allow a 680px hero so the panel, actions and scroll affordance stay separated. No second portrait or public availability indicator is added.
+
 ## Cover selection
 
 Edit profile → Profile image & crop opens the existing Portfolio & showreel editor. Profile cover stores `ProfileExtra.profileCover`, a reference to automatic selection, the profile portrait, a portfolio media ID, an eligible public project ID, or the published showreel. Horizontal and vertical focus controls store a bounded focal position on that reference and preview the crop. The resolver checks eligibility again when rendering. Removed/private projects cannot supply cover art. Choosing artwork never adds or claims a credit. External work links remain links rather than fabricated thumbnails.

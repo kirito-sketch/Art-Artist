@@ -189,7 +189,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
         <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
-      <div className="phero" data-hero style={district ? { '--profile-position': profileCoverPosition(coverChoice) } as CSSProperties : undefined}>
+      <div className={`phero${district && d.about ? ' phero--about' : ''}`} data-hero style={district ? { '--profile-position': profileCoverPosition(coverChoice) } as CSSProperties : undefined}>
         <div className="ohero-parallax" data-hero-photo>
           {district ? selectedCover.media ? <Photo key={selectedCover.media.src} media={selectedCover.media} className="phero-photo" alt={`Featured image of ${p.name}`} showPlay={false} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
         </div>
@@ -267,6 +267,15 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </>
           )}
         </div>
+          {d.about && <section className="profile-about-glass" aria-label={`About ${p.name}`}>
+            <h2>About</h2>
+            <p lang={scriptLang(d.about)}>{d.about}</p>
+            <button onClick={() => {
+              const el = scrollRef.current;
+              const about = el?.querySelector<HTMLElement>('[data-profile-about]');
+              if (el && about) el.scrollTo({ top: el.scrollTop + about.getBoundingClientRect().top - el.getBoundingClientRect().top - 72, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+            }}>Read full bio <ChevronDown size={14} /></button>
+          </section>}
         </div>}
         {district && <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>}
       </div>
@@ -378,7 +387,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         <ProfileDetails person={p} />
 
         {(d.about || p.gear) && (
-          <section className="section section--flush">
+          <section className="section section--flush" data-profile-about>
             <SectionHeader title="About" />
             {d.about && <p className="body">{d.about}</p>}
             {p.gear && (
