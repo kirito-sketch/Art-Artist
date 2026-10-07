@@ -405,6 +405,10 @@ html[data-theme='dark'] .dh {
 .dh-spot-type { position: absolute; top: 16px; left: 16px; font-size: 10px; font-weight: 750; letter-spacing: .13em; color: #fff; text-shadow: 0 1px 8px #000; }
 .dh-card-caption { position: absolute; left: 18px; right: 18px; bottom: 20px; display: grid; gap: 6px; color: #fff; text-align: left; }
 .dh-card-caption b { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -.035em; line-height: 1.08; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
+@media (max-width: 350px) {
+  /* Keep long craft names readable inside the unchanged narrow Spotlight card. */
+  .dh-card-caption b { font-size: 22px; }
+}
 .dh-card-caption > span { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,.83); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dh-card-fact { display: flex; align-items: center; padding: 9px 14px; min-height: 48px; font-size: 11.5px; line-height: 1.35; color: var(--text-2); text-align: left; }
 .dh-card-save .save { width: 32px; height: 32px; min-width: 32px; min-height: 32px; background: rgba(0,0,0,.25) !important; color: #fff !important; box-shadow: none; border: 1px solid rgba(255,255,255,.18); }
