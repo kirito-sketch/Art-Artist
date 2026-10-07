@@ -56,8 +56,9 @@ export function isPlayableVideo(media: Media) {
 }
 
 /** Controlled tiles chosen before load from stored source geometry. Unknowns preserve composition. */
-export function bentoTile(media?: Media) {
+export function bentoTile(media?: Media, index = 0, total = Infinity) {
   const ratio = media ? mediaRatio(media) : 1;
   const shape = ratio >= 1.65 ? 'wide' : ratio < .9 ? 'tall' : ratio >= 1.15 ? 'medium' : 'square';
-  return { shape, ratio: shape === 'wide' ? Math.min(1.91, ratio) : shape === 'tall' ? Math.max(.65, ratio) : shape === 'medium' ? 4 / 3 : 1 };
+  const span = total === 1 || ((shape === 'wide' || shape === 'medium') && index % 3 === 0) ? 2 : 1;
+  return { shape, span, ratio: shape === 'wide' ? Math.min(1.91, ratio) : shape === 'tall' ? Math.max(.65, ratio) : shape === 'medium' ? 4 / 3 : 1 };
 }

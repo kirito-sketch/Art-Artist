@@ -49,7 +49,7 @@ Needs infrastructure later: durable upload/object storage; server thumbnail/resi
 - `ProfileHeroMedia` retains its specialist responsive protected-region algorithm, requests the shared policy, and uses hero-only focal metadata. There is no claim that every subject can fit; editor warns about impossible regions. Artwork preserves composition and does not claim subject protection.
 - Avatar metadata is `Person.avatarFraming`; hero selection never reads it. Logos use dedicated contain treatment.
 - `MediaFramingEditor` powers manual Post slide, Portfolio, Project, Event, Showreel and avatar framing; Post frame choices use everyday labels. Profile hero keeps its own overlay-aware editor and protected region.
-- Bento uses controlled tall/square/medium/wide tiles based on source ratio. Original Post presentation is not consulted. Unknown geometry preserves composition across ordinary previews (the dedicated hero uses its measured framing algorithm); source order and opening indexes remain intact. No blurred filler.
+- Bento uses controlled tall/square/medium/wide tiles based on source ratio. Original Post presentation is not consulted. Unknown geometry preserves composition across ordinary previews (the dedicated hero uses its measured framing algorithm); source order and opening indexes remain intact. Landscape groups alternate a full-width visual with two smaller landscape previews; portraits remain tall, rather than being forced into that pattern. No blurred filler.
 
 **Original ≠ preview.** Changing Bento framing cannot alter Post, Profile, Portfolio or original media. Hero framing cannot alter Discover. Adding a framed Post image to Portfolio copies the source without the Post presentation metadata.
 

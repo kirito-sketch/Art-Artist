@@ -14,7 +14,7 @@
 .ana-post-inspect { display: block; min-height: 44px; margin: 0 3px; font-size: 12px; }
 .post-grid--bento .media-bento { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
 .post-grid--bento .media-bento .post-tile { min-height: 0; border-radius: 16px; align-self: start; }
-.media-bento .post-tile[data-shape="wide"] { grid-column: 1 / -1; }
+.media-bento .post-tile[data-span="2"] { grid-column: 1 / -1; }
 .media-bento .post-tile-media, .media-bento .photo { position: absolute; inset: 0; height: 100%; width: 100%; }
 .media-bento .photo img { height: 100%; width: 100%; }
 .media-upload { margin-block: 12px; }

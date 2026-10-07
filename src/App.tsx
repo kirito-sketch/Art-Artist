@@ -164,6 +164,7 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
   const m = items[i];
   // Arrow keys move between items: swiping is never the only way (WCAG 2.5.7).
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.target instanceof HTMLVideoElement) return;
     if (e.key === 'ArrowRight' && i < items.length - 1) setI(i + 1);
     if (e.key === 'ArrowLeft' && i > 0) setI(i - 1);
   };
