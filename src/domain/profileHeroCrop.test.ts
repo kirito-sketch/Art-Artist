@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { profileHeroCrop } from './profileHeroCrop';
+import { profileHeroCrop, protectedHeroFrame } from './profileHeroCrop';
 
 test('wide work keeps left and right focal subjects inside a phone crop', () => {
   const image = { width: 1920, height: 800 }, viewport = { width: 393, height: 852 };
@@ -25,4 +25,22 @@ test('invalid dimensions and extreme focal positions cannot uncover image edges'
     const crop = profileHeroCrop({ width: 400, height: 1800 }, { width: 320, height: 568 }, focus);
     assert.ok([crop.x, crop.y].every(n => Number.isFinite(n) && n >= 0 && n <= 100));
   }
+});
+
+test('short-screen framing protects the declared eyes-to-mouth region without uncovering image edges', () => {
+  for (const [width, height, safeBottom] of [[320, 568, 281], [393, 852, 527], [430, 932, 600]]) {
+    const frame = protectedHeroFrame({ width: 480, height: 600 }, { width, height }, { x: 50, y: 53 }, safeBottom, 26)!;
+    assert.equal(frame.protected, true);
+    assert.ok(frame.y + frame.height * .4 >= Math.min(64, height * .1) - .5);
+    assert.ok(frame.y + frame.height * .66 <= safeBottom + .5);
+    assert.ok(frame.x <= 0 && frame.y <= 0);
+    assert.ok(frame.x + frame.width >= width && frame.y + frame.height >= height);
+  }
+});
+
+test('an impossible protected region stays bounded and honestly reports the limitation', () => {
+  const frame = protectedHeroFrame({ width: 500, height: 600 }, { width: 320, height: 568 }, { x: 50, y: 99 }, 200, 40)!;
+  assert.equal(frame.protected, false);
+  assert.ok(Number.isFinite(frame.y));
+  assert.ok(frame.y <= 0 && frame.y + frame.height >= 568);
 });

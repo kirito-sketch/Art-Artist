@@ -23,7 +23,7 @@ export interface Reel {
 }
 
 export type FeaturedWork = { id: string; kind: 'project'; projectId: string } | { id: string; kind: 'external'; title: string; url: string };
-export type ProfileCover = ({ kind: 'auto' } | { kind: 'portrait' } | { kind: 'portfolio'; mediaId: string } | { kind: 'project'; projectId: string } | { kind: 'showreel' }) & { focal?: { x: number; y: number }; framing?: 'safe' | 'immersive'; identityRegion?: 'lower' | 'centre-lower' | 'glass' };
+export type ProfileCover = ({ kind: 'auto' } | { kind: 'portrait' } | { kind: 'portfolio'; mediaId: string } | { kind: 'project'; projectId: string } | { kind: 'showreel' }) & { focal?: { x: number; y: number }; subjectHeight?: number; framing?: 'safe' | 'immersive'; identityRegion?: 'lower' | 'centre-lower' | 'glass' };
 
 export interface WorkLink {
   id: string;
@@ -40,6 +40,8 @@ export interface ProfileSkill {
 export type DetailValue = string | string[] | number | [number, number];
 
 export interface ProfileExtra {
+  /** One per-person professional preference record, shared by owner and public views. */
+  workPreferences?: { open: boolean; from: string; scope: string; travel?: boolean; configured?: boolean };
   /** Private onboarding goals, kept as IDs for future Home and Discover personalisation. */
   onboardingIntents?: Intent[];
   /** For identity and matching only. Never shown, never shared automatically. */

@@ -19,6 +19,7 @@ const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { discoverPosts, party } from './selectors';
 import { phoneTaken, profileOf, type ProfileExtra } from './profile';
+import { updateWorkPreferences, workPreferencesOf } from './workPreferences';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
 import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
@@ -30,6 +31,7 @@ export type Tab = 'home' | 'discover' | 'inbox' | 'profile';
 export type Route =
   | { name: 'opportunity'; id: string; from?: 'card' }
   | { name: 'profile'; id: string }
+  | { name: 'profileCredits'; id: string }
   | { name: 'conversation'; id: string }
   | { name: 'network' }
   | { name: 'editProfile'; section?: import('../screens/profile/EditProfile').EditSection }
@@ -128,12 +130,6 @@ const DEFAULT_INTENT: Record<string, Intent> = { kiran: 'work', tara: 'work', ad
 
 const DEFAULT_FOLLOWING = ['meera', 'arjun', 'rhea', 'vikram', 'devika', 'sameer', 'ishaan', 'nandini'];
 
-const DEFAULT_AVAILABILITY: Record<string, Availability> = {
-  kiran: { open: true, from: '3 Oct', scope: 'Hyderabad · will travel' },
-  tara: { open: true, from: 'Now', scope: 'Mumbai · self-tapes anywhere' },
-  aditi: { open: false, from: 'Now', scope: 'Hyderabad' },
-};
-
 let eventNoticeSequence = 0;
 function eventNotice(event: IndustryEvent, target: string, text: string, actorId: string, house = false) {
   world.notifications.unshift({ id: `en-${Date.now()}-${eventNoticeSequence++}`, kind: 'event', text, actorId, time: 'now', unread: true, route: { name: 'event', id: event.id }, ...(house ? { forId: target } : { toPersonId: target }) });
@@ -163,7 +159,10 @@ function useStoreValue() {
 
   const [tab, setTabState] = useState<Tab>(BOOT?.tab ?? 'home');
   const [stack, setStack] = useState<Route[]>(() => {
-    const postId = new URLSearchParams(location.search).get('post');
+    const query = new URLSearchParams(location.search);
+    const profileId = query.get('profile');
+    if (profileId) return [{ name: 'profile', id: profileId }];
+    const postId = query.get('post');
     const posts = discoverPosts(viewer, DEFAULT_FOLLOWING, []);
     const index = posts.findIndex(post => post.id === postId);
     return index >= 0 ? [{ name: 'posts', ids: posts.map(post => post.id), index }] : BOOT?.stack ?? [];
@@ -203,7 +202,7 @@ function useStoreValue() {
   const [canIssue, setCanIssue] = useState(BOOT?.canIssue ?? true);
   const [following, setFollowing] = useState<string[]>(BOOT?.flags?.newUser ? [] : DEFAULT_FOLLOWING);
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
-  const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY[START]);
+  const availability = workPreferencesOf(viewerId);
   const [conversations, setConversations] = useState<Conversation[]>(seed.conversations[START]);
   const [interestsReceived, setInterestsReceived] = useState<Interest[]>(RESEARCH ? [] : seed.interests[START_ACTING === 'self' ? START : START_ACTING] ?? []);
   const [notifications, setNotifications] = useState<Notification[]>(seed.notifications[START]);
@@ -261,7 +260,7 @@ function useStoreValue() {
     setToast(null);
     // A person created in onboarding follows nobody yet; seeded personas keep their demo network.
     setFollowing(id.startsWith('you-') ? [] : DEFAULT_FOLLOWING);
-    setAvailabilityState(DEFAULT_AVAILABILITY[id]);
+
     setConversations(seed.conversations[id]);
     setInterestsReceived(seed.interests[id]);
     setNotifications(seed.notifications[id]);
@@ -357,11 +356,12 @@ function useStoreValue() {
 
   const setAvailability = useCallback(
     (a: Availability, silent = false) => {
-      setAvailabilityState(a);
+      updateWorkPreferences(viewer.id, { ...workPreferencesOf(viewer.id), ...a });
+      setProfileVersion(v => v + 1);
       setReloadKey((k) => k + 1);
       if (!silent) showToast({ text: a.open ? 'Work preferences updated. For You is refreshing.' : 'Work preferences updated.', tone: 'success' });
     },
-    [showToast],
+    [showToast, viewer.id],
   );
 
   /**
@@ -509,12 +509,13 @@ function useStoreValue() {
         setUserCollabs((cs) => [collab, ...cs]);
         if (collab.collabIntent === 'available') {
           // Availability is one source of truth: the post updates the profile state.
-          setAvailabilityState({ open: true, from: collab.dates.split(' – ')[0] || 'Now', scope: collab.city });
+          updateWorkPreferences(collab.authorId ?? viewer.id, { ...workPreferencesOf(collab.authorId ?? viewer.id), open: true, from: collab.dates.split(' – ')[0] || 'Now', scope: collab.city });
+          setProfileVersion(v => v + 1);
         }
         showToast({ text: collab.collabIntent === 'available' ? 'You are now shown as available' : 'Collaboration is live', tone: 'success' });
       });
     },
-    [runUpload, showToast],
+    [runUpload, showToast, viewer.id],
   );
 
   const retryPublish = useCallback(() => {
@@ -571,7 +572,7 @@ function useStoreValue() {
       seed.people.push(p);
       seed.parties[id] = p;
       VIEWERS[id] = { id, craft: d.craft, firstName: d.name.split(' ')[0] };
-      DEFAULT_AVAILABILITY[id] = d.availability;
+      updateWorkPreferences(id, { ...d.availability, travel: d.travel });
       seed.conversations[id] = [];
       seed.interests[id] = [];
       seed.notifications[id] = [];
@@ -683,6 +684,7 @@ function useStoreValue() {
       const me = seed.people.find((p) => p.id === viewer.id);
       if (me) Object.assign(me, person);
       Object.assign(profileOf(viewer.id), extra);
+      if (person.openToTravel !== undefined) updateWorkPreferences(viewer.id, { ...workPreferencesOf(viewer.id), travel: person.openToTravel });
       setProfileVersion((v) => v + 1);
     },
     /** `check` only checks the number is free (onboarding: there is no account yet; it's saved with the profile). */

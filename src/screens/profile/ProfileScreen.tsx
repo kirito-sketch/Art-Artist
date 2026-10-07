@@ -1,3 +1,7 @@
+import { LegacyProfileCredits } from './LegacyProfileCredits';
+import { ProfileCreditsSection } from './ProfileCredits';
+import { workPreferencesOf } from '../../state/workPreferences';
+import { profilePortrait } from '../../domain/profilePortrait';
 import { ProfileHeroMedia } from './ProfileHeroMedia';
 import { eligibleFeaturedProjects } from '../../domain/featuredWork';
 import { resolveProfileCover } from '../../domain/profileCover';
@@ -7,7 +11,7 @@ import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
 import { useFeatures } from '../../ui/features';
 import { FeaturedWorkSection } from './WorkPortfolio';
-import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, ChevronRight, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
@@ -16,12 +20,10 @@ import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
-import { Avatar, Button, FollowButton, EmptyState, HowItWorks, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { PostCard } from '../home/PostCard';
 import { RoleRow } from '../discover/RoleRow';
 import { displayTitle, scriptLang } from '../../ui/compose';
-import { hasLearned, markLearned } from '../../ui/learned';
-import { CreditSeal } from '../../ui/CreditSeal';
 import { bentoLayout } from '../../ui/bento';
 import { useHeroParallax } from '../../ui/useHeroParallax';
 import { EventsSection } from '../event/eventUnits';
@@ -91,7 +93,7 @@ function useNameFit(name: string) {
 export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?: boolean; active?: boolean }) {
   const { isSaved, toggleSave } = useStore();
   const district = useFeatures().home === 'district';
-  const { viewer, scenario, pop, push, availability, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, justAccepted, saved, acting, setActing, cannotReach, events, stack, profileVersion } = useStore();
+  const { viewer, pop, push, following, toggleFollow, openSheet, startConversation, userPosts, setHero, memberships, blocked, unblock, pendingCredits, acceptCredit, creditBusy, saved, acting, setActing, cannotReach, events, stack, profileVersion, userCollabs, showToast } = useStore();
   const p = person(id);
   const own = id === viewer.id;
   const heroKey = isTab ? `profile-${id}-tab` : `profile-${id}`;
@@ -101,43 +103,31 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const attachScroll = useCallback((el: HTMLDivElement | null) => { scrollRef.current = el; heroScroll(el); }, [heroScroll]);
   const [reelOpen, setReelOpen] = useState(false);
-  const profileActive = isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile';
+  const profileActive = isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile' && (stack[stack.length - 1] as { id: string }).id === id;
   useEffect(() => { if (!profileActive) setReelOpen(false); }, [profileActive]);
   const nameRef = useNameFit(p?.name ?? '');
-  // Explain once: read when this page opens (so the line stays for this visit), then remember it once it was shown.
-  // The Profile tab stays mounted behind the others, so it counts only while it is the tab in view.
-  const [creditsKnown] = useState(() => hasLearned(viewer.id, 'credits'));
   const showsCredits = active && !!p && (own || (p.visibility === 'public' && !cannotReach(id) && !blocked.includes(id)));
+  const [subjectSafeBottom, setSubjectSafeBottom] = useState<number | undefined>();
   // Readability follows the actual identity block, including shorter phones and wrapped languages.
   useLayoutEffect(() => {
     const hero = scrollRef.current?.querySelector<HTMLElement>('.phero');
     const intro = hero?.querySelector<HTMLElement>('.profile-intro');
     if (!district || !hero || !intro) return;
-    const update = () => hero.style.setProperty('--identity-start', `${intro.offsetTop}px`);
+    const update = () => {
+      hero.style.setProperty('--identity-start', `${intro.offsetTop}px`);
+      const play = intro.querySelector<HTMLElement>('.profile-play');
+      const contentTop = play ? Math.min(intro.offsetTop, play.getBoundingClientRect().top - hero.getBoundingClientRect().top) : intro.offsetTop;
+      setSubjectSafeBottom(contentTop - 12);
+    };
     const observer = new ResizeObserver(update);
     observer.observe(hero); observer.observe(intro); update();
     return () => observer.disconnect();
   }, [id, district, showsCredits, profileVersion]);
-  useEffect(() => {
-    if (showsCredits) markLearned(viewer.id, 'credits');
-  }, [showsCredits, viewer.id]);
-
   // While the photo sits under the status bar, the bar turns light.
   useEffect(() => {
     setHero(heroKey, overHero && p?.visibility !== 'private');
     return () => setHero(heroKey, false);
   }, [heroKey, overHero, setHero, p?.visibility]);
-  // Credit accepted: bring the newly stamped credit into view in its rail (horizontal only).
-  useEffect(() => {
-    if (!justAccepted) return;
-    const t = window.setTimeout(() => {
-      const item = document.querySelector<HTMLElement>('.rail-item--sealing');
-      const rail = item?.parentElement;
-      if (item && rail) rail.scrollTo({ left: item.offsetLeft - (rail.clientWidth - item.clientWidth) / 2, behavior: 'smooth' });
-    }, 60);
-    return () => window.clearTimeout(t);
-  }, [justAccepted]);
-
   if (!p) return <EmptyState title="Profile unavailable" />;
   // Someone who blocked the identity in use sees exactly what a private profile looks like. They are never told.
   if (!own && (p.visibility !== 'public' || (cannotReach(id) && !blocked.includes(id)))) {
@@ -176,18 +166,15 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const stills = work;
   const bento = bentoLayout(stills.length);
   const posts = [...userPosts.filter((x) => x.authorId === id), ...seed.posts.filter((x) => x.authorId === id)];
-  const collabs = seed.opportunities.filter((o) => o.authorId === id);
-  const from = own ? (availability.open ? availability.from : null) : p.availableFrom ?? null;
+  const collabs = [...userCollabs, ...seed.opportunities].filter((o, i, all) => o.authorId === id && all.findIndex(x => x.id === o.id) === i);
+  const preferences = workPreferencesOf(id);
   const isFollowing = following.includes(id);
   const backdrop = reel?.cover ?? work[0] ?? d.credits[0]?.media;
-  // The hero is the person's work; the person themself is the portrait in the identity block below
-  // (Person, Craft, Work, Credibility). With no work yet a neutral Art and Artist illustration stands in (the
-  // photo would only repeat the portrait), never a broken image.
   const heroSrc = backdrop?.src ?? 'images/brand/entry/camera.jpg';
   const hero: Media = { id: `hero-${id}`, kind: 'image', src: heroSrc, fallback: backdrop?.fallback ?? heroSrc };
 
   const coverChoice = profileOf(id).profileCover;
-  const portrait: Media | undefined = p.photo ? { id: `portrait-${id}`, kind: 'image', src: p.photo, contentType: 'portrait', width: 480, height: 600 } : undefined;
+  const portrait = profilePortrait(p);
   const selectedCover = resolveProfileCover(coverChoice, work, eligibleFeaturedProjects(id), reel, portrait);
   const identityRegion = coverChoice?.identityRegion === 'centre-lower' ? 'centre-lower' : 'lower';
   const scrollToWork = () => {
@@ -196,15 +183,25 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
     if (el && sheet) el.scrollTo({ top: sheet.offsetTop - 64, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
 
+  const shareProfile = async () => {
+    if (id.startsWith('you-')) { showToast({ text: 'This prototype profile is only available in this session.' }); return; }
+    const url = new URL(location.pathname, location.origin); url.searchParams.set('profile', id);
+    if (navigator.share) {
+      try { await navigator.share({ title: p.name, url: url.href }); return; }
+      catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
+    }
+    openSheet({ name: 'share', label: p.name, url: url.href });
+  };
+
   return (
-    <div ref={attachScroll} className={`screen screen--hero canvas v-profile${district ? ' v-profile--immersive' : ''}`} data-scroll={isTab ? 'profile' : undefined}>
+    <div ref={attachScroll} className={`screen screen--hero canvas v-profile${district ? ' v-profile--immersive' : ''}${!isTab ? ' v-profile--pushed' : ''}`} data-scroll={isTab ? 'profile' : undefined}>
       {district && <div className="profile-compact-slot"><header className="profile-compact" aria-hidden={overHero} {...(overHero ? { inert: '' } as Record<string, string> : {})}>
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
         <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
       <div className={`phero phero--identity-${identityRegion}`} data-hero>
         <div className="ohero-parallax" data-hero-photo>
-          {district ? selectedCover.media ? <ProfileHeroMedia key={selectedCover.media.src} media={selectedCover.media} focal={coverChoice?.focal ?? selectedCover.media.focal} className="phero-photo" alt={`Featured image of ${p.name}`} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
+          {district ? selectedCover.media ? <ProfileHeroMedia key={selectedCover.media.src} media={selectedCover.media} focal={coverChoice?.focal ?? selectedCover.media.focal} className="phero-photo" safeBottom={subjectSafeBottom} subjectHeight={coverChoice?.subjectHeight} alt={`Featured image of ${p.name}`} /> : <div className="profile-art-fallback" aria-hidden><span>ANA / CREATIVE INDUSTRY</span><i /><b>Made of stories.<br />Defined by work.</b></div> : <Photo media={hero} className="phero-photo" alt={p.name} />}
         </div>
         <div className="phero-dim" data-hero-dim aria-hidden />
         <div className="phero-bar">
@@ -221,7 +218,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               <Bookmark size={18} fill={isSaved('person', id) ? 'currentColor' : 'none'} />
             </IconButton>
           )}
-          <IconButton label={own ? 'Share your profile' : `Share ${p.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: p.name })}>
+          <IconButton label={own ? 'Share your profile' : `Share ${p.name}`} className="icon-btn--float" onClick={shareProfile}>
             <Share size={18} />
           </IconButton>
           <IconButton label={own ? 'Settings' : `More options for ${p.name}`} className="icon-btn--float" onClick={() => (own ? push({ name: 'settings' }) : openSheet({ name: 'more', id }))}>
@@ -230,18 +227,11 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         </div>
         {district && <div className="profile-intro">
           <header className="pid">
-          {own && isTab && memberships.length > 0 ? (
-            <button ref={nameRef as RefObject<HTMLButtonElement>} className="large-title org-name--switch display-title display-title--name" {...displayTitle(p.name)} onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
-              {p.name}
-              {p.identityVerified && <Verified size={22} label="Identity verified" />}
-              <ChevronDown size={20} />
-            </button>
-          ) : (
-            <h1 ref={nameRef as RefObject<HTMLHeadingElement>} className="large-title display-title display-title--name" {...displayTitle(p.name)}>
-              {p.name}
-              {p.identityVerified && <Verified size={22} label="Identity verified" />}
-            </h1>
-          )}
+          <h1 ref={nameRef as RefObject<HTMLHeadingElement>} className="large-title display-title display-title--name" {...displayTitle(p.name)}>
+            {own && isTab && memberships.length > 0 ? <button className="profile-name-switch" onClick={() => openSheet({ name: 'identity' })} aria-label={`${p.name}, switch identity`}>
+              {p.name}{p.identityVerified && <Verified size={22} label="Identity verified" />}<ChevronDown size={20} />
+            </button> : <>{p.name}{p.identityVerified && <Verified size={22} label="Identity verified" />}</>}
+          </h1>
           <p className="pid-role" lang={scriptLang(p.role)}>
             {p.role}
           </p>
@@ -319,7 +309,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </p>
         </header></>}
 
-        <ReelCard person={p} active={isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile'} />
+        <ReelCard person={p} active={profileActive} />
 
 
         {stills.length > 0 && (
@@ -338,42 +328,28 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         <>{district && <FeaturedWorkSection personId={p.id} />}<WorkLinks person={p} /></>
 
 
-        <section className="section section--flush">
-          <SectionHeader title="Verified credits" />
-          {/* V30: the trust layer, stated plainly. Credits come only from productions; people confirm them, never claim them.
-              Explain once (docs/TEXT_LOAD.md): the line shows on the first profile a person opens; after that only
-              "How credits work" stays, with the full explanation on request. */}
-          <div className="meta evidence-note">
-            {!creditsKnown && (
-              <span>
-                <Verified size={12} /> Issued by productions, confirmed by {own ? 'you' : p.name.split(' ')[0]}.
-              </span>
-            )}
-            <HowItWorks label="How credits work">
-              Only a production can issue a credit. {own ? 'You accept' : `${p.name.split(' ')[0]} accepts`} or {own ? 'correct' : 'corrects'} it before it appears here, so no one can add their own credits.
-            </HowItWorks>
-          </div>
-          {credits.length ? (
-            <div className="rail credit-rail">
-              {credits.map((c) => (
-                <Pressable key={c.id} className={`rail-item ${justAccepted === c.id ? 'rail-item--sealing' : ''}`} scale={0.97} onClick={() => { const wid = world.credits.find((x) => x.id === c.id)?.projectId; if (wid) push({ name: 'work', id: wid }); }} aria-label={`${c.title}, ${c.role}, ${org(c.orgId).name}`}>
-                  <span className="rail-poster-wrap">
-                    <Photo media={c.media} className="rail-poster" showPlay={false} />
-                    {justAccepted === c.id && <CreditSeal />}
-                  </span>
-                  <p className="item-title">{c.title}</p>
-                  <p className="meta">{c.role}</p>
-                  <p className="meta rail-issuer">
-                    <span className="rail-issuer-name">{org(c.orgId).name}</span> <Verified size={12} />
-                  </p>
-                  {district && <p className="profile-credit-status"><Verified size={12} /> Production-confirmed credit</p>}
-                </Pressable>
+        {d.projects.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Independent projects" />
+            <p className="meta evidence-note">Shared by {own ? 'you' : p.name.split(' ')[0]}. Roles on independent work aren't verified yet.</p>
+            <div className="list list--flush">
+              {d.projects.map((pr) => (
+                <PressCard key={pr.id} className="rrow" onPress={() => push({ name: 'work', id: pr.id })} scale={0.985}>
+                  <Photo media={pr.media} className="rrow-thumb" showPlay={false} />
+                  <div className="rrow-text">
+                    <p className="item-title">{pr.title}</p>
+                    <p className="meta">
+                      {pr.format} · {pr.year}
+                    </p>
+                    {pr.note && <p className="meta">{pr.note}</p>}
+                  </div>
+                </PressCard>
               ))}
             </div>
-          ) : (
-            <p className="meta">{own ? 'No verified credits yet. When a production credits you, you confirm it here.' : 'No verified credits yet.'}</p>
-          )}
-        </section>
+          </section>
+        )}
+
+        {district ? <ProfileCreditsSection id={id} /> : <LegacyProfileCredits credits={credits} person={p} own={own} />}
 
 
         {posts.length > 0 && (
@@ -387,7 +363,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
 
-        <ProfileReviewsSection id={p.id} />
 
 
         {(d.about || p.gear) && (
@@ -404,32 +379,14 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
         <ProfileDetails person={p} />
 
-        {/* Availability: one quiet row under credibility. Your own is editable; someone else's shows only when open. */}
-        {own ? (
-          <Pressable className="pid-availability" onClick={() => openSheet({ name: 'availability' })} aria-label="Work preferences">
-            {scenario.newUser ? (
-              <span className="link link--underline">Add work preferences</span>
-            ) : (
-              <span className="pid-availability-text">
-                <span>{availability.open ? availableLabel(availability.from) : 'Not taking work'}</span>
-                {availability.open && availability.scope && <span className="meta">{availability.scope}</span>}
-              </span>
-            )}
-            <ChevronRight size={18} className="pid-availability-chevron" />
-          </Pressable>
-        ) : (
-          from && (
-            <div className="pid-availability">
-              <span className="pid-availability-text">
-                <span>{availableLabel(from)}</span>
-                <span className="meta">
-                  {p.city}
-                  {p.openToTravel ? ' · will travel' : ''}
-                </span>
-              </span>
-            </div>
-          )
-        )}
+        {preferences.configured && <section className="section section--flush profile-preferences"><div className="section-head"><h2>Work preferences</h2>{own && <button className="section-all" aria-label="Edit work preferences" onClick={() => openSheet({ name: 'availability' })}>Edit</button>}</div>
+          <dl className="pf-details"><dt>Professional availability</dt><dd>{preferences.open ? availableLabel(preferences.from) : 'Not taking work'}</dd>
+            {preferences.scope && <><dt>Where</dt><dd>{preferences.scope.replace(/\s*·\s*will travel/i, '')}</dd></>}
+            {preferences.travel && <><dt>Travel</dt><dd>Open to travel</dd></>}
+          </dl>
+        </section>}
+
+        <ProfileReviewsSection id={p.id} />
 
         {!district && <>        <div className="profile-actions">
           {own ? (
@@ -454,6 +411,23 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </div></>}
 
+        {/* Events: what they're hosting (their own under-review ones only to them) and where they're speaking. */}
+        <EventsSection title="Hosting" list={eventsOfHost(events, p.id, Date.now())} />
+        <EventsSection title="Speaking at" list={speakingAt(events, p.id, Date.now())} />
+
+        {collabs.length > 0 && (
+          <section className="section section--flush">
+            <SectionHeader title="Collaborations" />
+            <div className="list list--flush">
+              {collabs.map((o) => (
+                <RoleRow key={o.id} o={o} />
+              ))}
+            </div>
+          </section>
+        )}
+        {own && <details className="profile-management"><summary><span>Manage your profile</span><small>Only you · private tools{pendingCredits.length ? ` · ${pendingCredits.length} pending ${pendingCredits.length === 1 ? 'credit' : 'credits'}` : ''}</small></summary><div className="profile-management-body">
+          <Button size="s" variant="secondary" onClick={() => push({ name: 'editProfile' })}>Edit profile</Button>
+          {!credits.length && <p className="meta">Verified credits come from productions. You can accept or dispute a credit issued to you; you cannot create your own.</p>}
         {own && <WaysToBeFound person={p} />}
 
         {/* Private to you, one quiet line: what you saved and what you sent. */}
@@ -510,31 +484,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
 
-        {/* Events: what they're hosting (their own under-review ones only to them) and where they're speaking. */}
-        <EventsSection title="Hosting" list={eventsOfHost(events, p.id, Date.now(), viewer.id, own ? 'self' : '')} />
-        <EventsSection title="Speaking at" list={speakingAt(events, p.id, Date.now())} />
-
-        {d.projects.length > 0 && (
-          <section className="section section--flush">
-            <SectionHeader title="Independent projects" />
-            <p className="meta evidence-note">Shared by {own ? 'you' : p.name.split(' ')[0]}. Roles on independent work aren't verified yet.</p>
-            <div className="list list--flush">
-              {d.projects.map((pr) => (
-                <PressCard key={pr.id} className="rrow" onPress={() => push({ name: 'work', id: pr.id })} scale={0.985}>
-                  <Photo media={pr.media} className="rrow-thumb" showPlay={false} />
-                  <div className="rrow-text">
-                    <p className="item-title">{pr.title}</p>
-                    <p className="meta">
-                      {pr.format} · {pr.year}
-                    </p>
-                    {pr.note && <p className="meta">{pr.note}</p>}
-                  </div>
-                </PressCard>
-              ))}
-            </div>
-          </section>
-        )}
-
         {own && (() => {
           // Private associations others made, plus the person's own unshared independent projects.
           const mine = world.associations.filter((a) => {
@@ -585,16 +534,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           );
         })()}
 
-        {collabs.length > 0 && !own && (
-          <section className="section section--flush">
-            <SectionHeader title="Collaborations" />
-            <div className="list list--flush">
-              {collabs.map((o) => (
-                <RoleRow key={o.id} o={o} />
-              ))}
-            </div>
-          </section>
-        )}
+          <EventsSection title="Events you manage" list={eventsOfHost(events, p.id, Date.now(), viewer.id, 'self').filter(e => !eventsOfHost(events, p.id, Date.now()).some(publicEvent => publicEvent.id === e.id))} />
+        </div></details>}
+
 
 
       </div>

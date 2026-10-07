@@ -16,6 +16,7 @@ import { NetworkRow } from './screens/home/NetworkActivity';
 import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
 import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
+import { ProfileCreditsScreen } from './screens/profile/ProfileCredits';
 import { EditProfile } from './screens/profile/EditProfile';
 import { ProductionHome } from './screens/production/Production';
 import { DistrictHouseHome, HouseListScreen, type HousePeopleFocus } from './screens/production/DistrictHouse';
@@ -83,6 +84,8 @@ function RouteView({ r }: { r: Route }) {
       return <OpportunityScreen id={r.id} fromCard={r.from === 'card'} />;
     case 'profile':
       return <ProfileScreen id={r.id} />;
+    case 'profileCredits':
+      return <ProfileCreditsScreen id={r.id} />;
     case 'conversation':
       return <ConversationScreen id={r.id} />;
     case 'composePost':
