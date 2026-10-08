@@ -416,6 +416,7 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 - **Nav lens:** now takes the selected tab's full layout box, both axes (`nav/TabBar.tsx`). It used to be the tab plus 2 px on each side with fixed 4 px vertical insets.
 - **/test:** Discover default restored (`App.tsx`).
 - **Review samples:** now include a text post.
+- **Edge-to-edge media (review feedback):** in the row layout, post images and videos run to the screen edges with square corners (`--post-bleed` in `styles/post-row.css`: 16 px in the stream, the page gutter elsewhere). The header, caption and action row keep their inset. Checked at 320, 393 and 430 px, light and dark, in the stream and on profiles.
 
 **Design system:**
 

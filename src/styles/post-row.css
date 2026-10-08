@@ -51,8 +51,13 @@
 /* Text posts: the row sits under the text in the same place. */
 .ana-post--text .ana-post-actions--row { margin: 12px 0 0; width: auto; }
 
-/* ---------------------------------------------------------------- Media in the row layout */
-.ana-post-stage--row { touch-action: manipulation; }
+/* ---------------------------------------------------------------- Media in the row layout
+ * Edge to edge: the media cancels its container's side inset and drops its rounded corners; the header, caption and
+ * action row keep the inset. --post-bleed is the container's inset (the page gutter; the post stream uses 16 px). */
+.ana-post { --post-bleed: var(--gutter, 20px); }
+.post-stream > .ana-post { --post-bleed: 16px; }
+.ana-post-stage--row { touch-action: manipulation; margin-inline: calc(-1 * var(--post-bleed)); }
+.ana-post-stage--row .ana-post-track { border-radius: 0; }
 /* The slide count sits top-right, away from the video's progress line. */
 .ana-post-stage--row .ana-post-index { top: 12px; right: 12px; left: auto; bottom: auto; }
 
