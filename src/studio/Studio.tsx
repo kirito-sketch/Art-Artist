@@ -105,12 +105,10 @@ export function Studio() {
         </div>
       </Section>
 
-      <Section id="approved" title="Approved refinements, in preview" intro="Each has its own link. Neither is in the default app yet.">
+      <Section id="approved" title="Glass navigation and post notch" intro="Both are the default. The links below show the review samples and the previous versions for comparison.">
         <div className="st-list st-list--2">
-          <Item href="/?nav=glass" title="Glass navigation (Direction B)" hint="?nav=glass · floating glass bar with the selected lens" />
-          <Item href="/?actions=notch" title="Post actions notch (Option A)" hint="?actions=notch · corner cut-out, quiet feed video, expanded viewer" />
-          <Item href="/?actions=notch&samples" title="Post notch review samples" hint="Ratios, video states, failure, long caption" />
-          <Item href="/?nav=glass&actions=notch&samples" title="Both refinements together" hint="How the two materials sit side by side" />
+          <Item href="/?samples" title="Post notch review samples" hint="Ratios, video states, failure, long caption" />
+          <Item href="/?nav=off&actions=pill" title="Previous navigation and post actions" hint="?nav=off · ?actions=pill, for comparison only" />
         </div>
       </Section>
 

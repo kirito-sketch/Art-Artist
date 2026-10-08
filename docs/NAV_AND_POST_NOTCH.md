@@ -1,14 +1,15 @@
-# Glass navigation lens and post action notch (approved, in preview)
+# Glass navigation lens and post action notch (default)
 
-Two separate approved decisions, each behind its own URL flag. Neither is in the default app yet.
+Two separate approved decisions, both the default everywhere (the app, /test and Compare) since October 2026.
+`src/ui/preview.ts` holds the switches:
 
-| Flag | What it turns on |
+| URL | Effect |
 | --- | --- |
-| `?nav=glass` | Direction B's floating glass bottom navigation with the corrected selected lens. Also on with `?dir=b`, which still shows the whole Title Card review. `?nav=glass` shows the navigation alone, over the current profile. |
-| `?actions=notch` | Option A post actions: the corner cut-out on every post, the quiet feed video and the expanded video viewer. |
-| `?actions=notch&samples` | Opens a stream of review samples: real seeded posts first, then ratio, video and failure samples (`src/qa/notchSamples.ts`). |
+| `?nav=off` | The previous solid bottom navigation, for comparison. |
+| `?actions=pill` | The previous frosted action pill and native video controls, for comparison. |
+| `?samples` | Opens a stream of review samples: real seeded posts first, then ratio, video and failure samples (`src/qa/notchSamples.ts`). |
 
-Flags are read once per load from the URL (`src/ui/preview.ts`) and never stored, so a reload keeps the preview and a plain link never shows it. Studio lists all four links under "Approved refinements, in preview". The profile-direction selector (`?dir=`) is unchanged and separate.
+`?dir=a` and `?dir=c` (profile-direction review) keep their own navigation treatment.
 
 The two use different materials on purpose. Glass is for controls floating above content (the bar, and the small video controls on media). The notch is part of the card: solid, no glass. They share icons, stroke weight, 44 px targets, spring motion and focus treatment.
 
@@ -89,4 +90,3 @@ In the feed you watch. Seeking lives in the viewer (`src/screens/home/FeedVideo.
 - **Footage.** The repository has no landscape, 9:16 or long video; every clip is a native 4:5, six-second file. The 16:9 and 9:16 samples frame that clip at those ratios, and the player crops it with `object-fit`; no file is changed. Real landscape footage should be checked before rollout.
 - **Captions.** No clip has a caption track, so the viewer has no CC control yet. It should appear when a `<track>` exists.
 - **Like count.** It is no longer visible on the card (it is announced). If the client wants it visible, it belongs under the caption, not in the notch.
-- **Two flags.** `?dir=b` still turns on the glass bar as part of the full Direction B review. Use `?nav=glass` to review the bar alone.
