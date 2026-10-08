@@ -1,11 +1,14 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { MoreHorizontal, Pencil, ThumbsUp } from 'lucide-react';
+import { MoreHorizontal, Pencil } from 'lucide-react';
 import type { Work } from '../../data/works';
 import { featured, MAX_TEXT, opensLater, releaseLabel, reviewsOpen, sortReviews, stats, starsLabel, type Review } from '../../domain/reviews';
 import { person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { reviewsOf } from '../../state/world';
-import { Avatar, Button, PressCard, SectionHeader, Toggle } from '../../ui/primitives';
+import { Avatar, Button, Photo, PressCard, SectionHeader, Toggle } from '../../ui/primitives';
+import { posterFor } from '../../data/posters';
+import { TypesetPoster } from '../../ui/PosterCard';
+import { org } from '../../state/selectors';
 
 /* Shared review pieces: the film page, the profile, the reviews lists, Home in both versions. */
 
@@ -80,13 +83,12 @@ export function StarPicker({ value, onChange }: { value: number; onChange: (v: n
   );
 }
 
-/** One review. Spoilers stay hidden until tapped; Helpful is never offered on your own review. */
+/** One review. Spoilers stay hidden until tapped. Film reviews carry no Helpful vote (a review is a point of view, not an answer). */
 export function ReviewCard({ r, showFilm, film }: { r: Review; showFilm?: boolean; film?: Work }) {
-  const { viewer, acting, push, openSheet, toggleHelpful } = useStore();
+  const { viewer, push, openSheet } = useStore();
   const [reveal, setReveal] = useState(false);
   const p = person(r.personId);
   const own = r.personId === viewer.id;
-  const marked = r.helpful.includes(viewer.id);
   return (
     <article className="rv-card">
       <header className="rv-card-head">
@@ -129,13 +131,33 @@ export function ReviewCard({ r, showFilm, film }: { r: Review; showFilm?: boolea
         ) : (
           <p className="rv-card-text">{r.text}</p>
         ))}
-      {r.text && !own && acting === 'self' && (
-        <button className={`rv-helpful ${marked ? 'is-on' : ''}`} aria-pressed={marked} onClick={() => toggleHelpful(r.id)}>
-          <ThumbsUp size={14} aria-hidden fill={marked ? 'currentColor' : 'none'} /> Helpful{r.helpful.length ? ` · ${r.helpful.length}` : ''}
-        </button>
-      )}
-      {r.text && (own || acting !== 'self') && r.helpful.length > 0 && <p className="meta rv-helpful-count">{r.helpful.length} found this helpful</p>}
     </article>
+  );
+}
+
+/**
+ * One of a person's film reviews, as it reads on their profile (docs/ux-refinement/PLAN.md): the film's poster, then
+ * its title, the rating and when, and the review itself in a few lines. A spoiler stays hidden behind a line. Tapping
+ * opens the film, where the full review sits with everyone else's (and where your own is edited).
+ */
+export function FilmReviewTile({ r, film }: { r: Review; film: Work }) {
+  const { push } = useStore();
+  const poster = posterFor(film.id);
+  const house = film.orgIds[0] ? org(film.orgIds[0]) : undefined;
+  return (
+    <PressCard className="rvt" onPress={() => push({ name: 'work', id: film.id })} scale={0.985} aria-label={`${film.title}, ${starsLabel(r.stars)} out of 5 stars, ${reviewAge(r.at)}${r.spoiler ? ', contains spoilers' : r.text ? `: ${r.text}` : ''}`}>
+      <span className="rvt-poster" aria-hidden>
+        {poster ? <Photo media={poster} surface="credit-card" frameRatio={2 / 3} showPlay={false} alt="" /> : <TypesetPoster title={film.title} production={house?.name} year={film.year} />}
+      </span>
+      <span className="rvt-body">
+        <b className="rvt-title">{film.title}</b>
+        <span className="rvt-meta">
+          <Stars value={r.stars} size={13} />
+          <span>{reviewAge(r.at)}</span>
+        </span>
+        {r.text ? (r.spoiler ? <span className="rvt-spoiler">Contains spoilers</span> : <span className="rvt-text">{r.text}</span>) : <span className="rvt-spoiler">Rated, no written review</span>}
+      </span>
+    </PressCard>
   );
 }
 
@@ -188,7 +210,7 @@ export function FilmReviewsSection({ w }: { w: Work }) {
   const mine = all.find((r) => r.personId === viewer.id);
   const others = sortReviews(
     all.filter((r) => r !== mine && r.text),
-    'helpful',
+    'newest',
   ).slice(0, 3);
   const can = mayReview(w.id);
   return (

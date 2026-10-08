@@ -6,7 +6,7 @@ import { org, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { publicWorks, reviewsBy, reviewsOf, work, world } from '../../state/world';
 import { Button, Chip, EmptyState, IconButton, Photo, PressCard, SectionHeader } from '../../ui/primitives';
-import { featuredFor, RatingSummary, ReviewCard, ScoreLine } from './reviewUnits';
+import { featuredFor, FilmReviewTile, RatingSummary, ReviewCard, ScoreLine } from './reviewUnits';
 
 const maker = (w: Work) => (w.orgIds[0] ? org(w.orgIds[0]).name : w.format);
 export const outThisWeek = (now = Date.now()) => publicWorks().filter((w) => isOutThisWeek(w, now));
@@ -126,11 +126,11 @@ export function ReviewsBody({ q = '' }: { q?: string }) {
   );
 }
 
-/** Every review of one film, most helpful or newest first. */
+/** Every review of one film, newest or highest rated first. */
 export function FilmReviewsScreen({ id }: { id: string }) {
   const { viewer, mayReview, openSheet, worldVersion } = useStore();
   void worldVersion;
-  const [sort, setSort] = useState<ReviewSort>('helpful');
+  const [sort, setSort] = useState<ReviewSort>('newest');
   const w = work(id);
   if (!w) return null;
   const all = reviewsOf(id);
@@ -146,11 +146,11 @@ export function FilmReviewsScreen({ id }: { id: string }) {
         <RatingSummary id={id} />
         {mine ? <ReviewCard r={mine} /> : mayReview(id) && <Button block variant="secondary" onClick={() => openSheet({ name: 'review', projectId: id })}>Rate and review</Button>}
         <div className="chips rv-sort" role="group" aria-label="Sort">
-          <Chip active={sort === 'helpful'} onClick={() => setSort('helpful')}>
-            Most helpful
-          </Chip>
           <Chip active={sort === 'newest'} onClick={() => setSort('newest')}>
             Newest
+          </Chip>
+          <Chip active={sort === 'rating'} onClick={() => setSort('rating')}>
+            Highest rated
           </Chip>
         </div>
         <div className="rv-cards">
@@ -172,9 +172,9 @@ export function PersonReviewsScreen({ id }: { id: string }) {
     <div className="screen canvas rv">
       <Top title={id === viewer.id ? 'Your reviews' : `${person(id).name.split(' ')[0]}'s reviews`} />
       <div className="rv-page">
-        <div className="rv-cards">
+        <div className="rvt-list">
           {list.map((r) => (
-            <ReviewCard key={r.id} r={r} showFilm film={work(r.projectId)} />
+            <FilmReviewTile key={r.id} r={r} film={work(r.projectId)!} />
           ))}
         </div>
       </div>
@@ -182,18 +182,23 @@ export function PersonReviewsScreen({ id }: { id: string }) {
   );
 }
 
-/** Profile: the latest three reviews, then See all. */
+/**
+ * Profile: the person's film reviews as a rail of poster-led tiles, newest first. One review fills the width; more
+ * become a swipeable rail that peeks at the next, so ten reviews take the same space as two. See all lists them.
+ */
 export function ProfileReviewsSection({ id }: { id: string }) {
   const { push, worldVersion } = useStore();
   void worldVersion;
   const list = reviewsBy(id).filter((r) => work(r.projectId));
   if (!list.length) return null;
   return (
-    <section className="section section--flush rv-section">
-      <SectionHeader title="Reviews" action={list.length > 3 ? 'See all' : undefined} onAction={() => push({ name: 'personReviews', id })} />
-      <div className="rv-cards">
-        {list.slice(0, 3).map((r) => (
-          <ReviewCard key={r.id} r={r} showFilm film={work(r.projectId)} />
+    <section className="section section--flush rv-section profile-reviews">
+      <SectionHeader title={`Film reviews · ${list.length}`} action={list.length > 1 ? 'See all' : undefined} onAction={() => push({ name: 'personReviews', id })} />
+      <div className={`rvt-rail${list.length > 1 ? ' rvt-rail--many' : ''}`} role="list">
+        {list.slice(0, 8).map((r) => (
+          <div key={r.id} role="listitem" className="rvt-item">
+            <FilmReviewTile r={r} film={work(r.projectId)!} />
+          </div>
         ))}
       </div>
     </section>

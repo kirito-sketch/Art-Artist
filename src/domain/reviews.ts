@@ -89,9 +89,10 @@ export function featured(list: Review[]) {
   return [...(good.length ? good : q)].sort((a, b) => (b.text!.length - a.text!.length) || b.at - a.at)[0];
 }
 
-export type ReviewSort = 'helpful' | 'newest';
+/** Reviews are sorted by what people can see: the rating, or the date. ('helpful' stays for older callers only.) */
+export type ReviewSort = 'rating' | 'newest' | 'helpful';
 export const sortReviews = (list: Review[], by: ReviewSort) =>
-  [...list].sort((a, b) => (by === 'helpful' ? b.helpful.length - a.helpful.length || b.at - a.at : b.at - a.at));
+  [...list].sort((a, b) => (by === 'rating' ? b.stars - a.stars || b.at - a.at : by === 'helpful' ? b.helpful.length - a.helpful.length || b.at - a.at : b.at - a.at));
 
 /** Films with enough ratings, best first. */
 export function topRated<T extends { id: string }>(films: T[], reviewsOf: (id: string) => Review[]) {

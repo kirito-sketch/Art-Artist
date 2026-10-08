@@ -56,22 +56,8 @@
 
 /* ---------------------------------------------------------------- Acts and sections */
 .phone .v-profile--immersive .pgroup:empty { display: none; }
-.phone .v-profile--immersive .pgroup:not(:empty) ~ .pgroup:not(:empty) {
-  position: relative;
-  margin-top: 36px;
-  padding-top: 6px;
-}
-/* The band: full-bleed, a quiet step in the surface, like a chapter break. */
-.phone .v-profile--immersive .pgroup:not(:empty) ~ .pgroup:not(:empty)::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: calc(-1 * var(--gutter));
-  right: calc(-1 * var(--gutter));
-  height: 8px;
-  background: var(--fill);
-  box-shadow: inset 0 1px 0 var(--line), inset 0 -1px 0 var(--line);
-}
+/* Acts follow each other with space only (review feedback: the full-bleed band read as a break in the page). */
+.phone .v-profile--immersive .pgroup:not(:empty) ~ .pgroup:not(:empty) { margin-top: 8px; }
 .phone .v-profile--immersive .psheet .section { padding-top: 32px; }
 .phone .v-profile--immersive .pgroup > .section:first-child,
 .phone .v-profile--immersive .pgroup > :first-child > .section:first-child { padding-top: 28px; }
@@ -375,3 +361,30 @@
   .phone .v-role .booking { padding-left: 16px; }
   .phone .v-role .booking .btn { padding-inline: 16px; font-size: 15px; }
 }
+
+
+/* ===================================================== Film reviews on a profile (review feedback)
+ * Poster-led tiles: the film's 2:3 poster, its title, the rating and when, then the review in up to four lines.
+ * One review fills the width; several become a rail that peeks at the next. The full list uses the same tile. */
+.rvt { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; align-items: start; width: 100%; padding: 12px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); text-align: left; color: var(--text); }
+.rvt-poster { position: relative; display: block; width: 76px; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hairline); container-type: inline-size; }
+.rvt-poster .photo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rvt-poster img { width: 100%; height: 100%; object-fit: cover; }
+.rvt-poster .poster-type { padding: 7px 6px; gap: 3px; }
+.rvt-poster .poster-type::before { inset: 3px; border-radius: 4px; }
+.rvt-poster .poster-type-house { top: 7px; left: 7px; right: 7px; font-size: 5.5px; }
+.rvt-poster .poster-type-title { font-size: 15px; }
+.rvt-poster .poster-type-year { font-size: 7px; }
+.rvt-body { display: grid; gap: 5px; min-width: 0; padding-top: 2px; }
+.rvt-title { font-size: 15.5px; font-weight: 650; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rvt-meta { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); }
+.rvt-text { font-size: 14px; line-height: 1.42; color: var(--text); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.rvt-spoiler { font-size: 13.5px; font-style: italic; color: var(--text-2); }
+.rvt-rail { display: flex; gap: 12px; }
+.rvt-rail > .rvt-item { flex: 1 1 auto; min-width: 0; display: flex; }
+.rvt-rail--many { overflow-x: auto; margin-inline: calc(-1 * var(--gutter)); padding: 2px var(--gutter) 6px; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); overscroll-behavior-x: contain; scrollbar-width: none; }
+.rvt-rail--many::-webkit-scrollbar { display: none; }
+.rvt-rail--many > .rvt-item { flex: 0 0 calc(100% - 28px); scroll-snap-align: start; }
+.rvt-item > .rvt { height: 100%; }
+.rvt-list { display: grid; gap: 12px; }
+.rvt:focus-visible { outline: 3px solid var(--focus-color, var(--action)); outline-offset: 2px; }

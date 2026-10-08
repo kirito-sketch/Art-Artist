@@ -67,6 +67,11 @@ test('sorting by most helpful, then newest', () => {
   assert.deepEqual(sortReviews(list, 'newest').map((x) => x.id), ['c', 'b', 'a']);
 });
 
+test('sorting by highest rating, then newest', () => {
+  const list = [r({ id: 'a', at: 1, stars: 3 }), r({ id: 'b', at: 2, stars: 5 }), r({ id: 'c', at: 3, stars: 3 })];
+  assert.deepEqual(sortReviews(list, 'rating').map((x) => x.id), ['b', 'c', 'a']);
+});
+
 test('top rated leaves out films without enough ratings', () => {
   const by: Record<string, Review[]> = { a: Array(5).fill(r({ stars: 3 })), b: Array(6).fill(r({ stars: 4.5 })), c: [r({ stars: 5 })] };
   assert.deepEqual(topRated([{ id: 'a' }, { id: 'b' }, { id: 'c' }], (id) => by[id]).map((f) => f.id), ['b', 'a']);

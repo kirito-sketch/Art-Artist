@@ -76,7 +76,7 @@
 .ana-post-copy--tap .ana-tap-heart { color: var(--action); filter: none; }
 
 /* ---------------------------------------------------------------- Feed video (Instagram-style) */
-.rv { position: relative; width: 100%; height: 100%; background: #0d0d0e; }
+.rv[data-reel] { position: relative; width: 100%; height: 100%; background: #0d0d0e; }
 .rv video { display: block; width: 100%; height: 100%; }
 /* Only while paused: a quiet play mark, never a control bar. */
 .rv-paused {

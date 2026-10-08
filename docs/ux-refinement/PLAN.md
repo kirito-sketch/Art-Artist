@@ -563,3 +563,13 @@ Unit tests, typecheck and build pass. Screenshots are in `docs/ux-refinement/sta
 
 Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, fields 21/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, resume 7/0, focusflow 18/0, and Stage 2 64/0. Screenshots are in `docs/ux-refinement/stage3/`.
 
+### Stage 3 review feedback
+
+- **No Helpful on film reviews.** The Helpful button and "N found this helpful" are removed. The film review sort is now Newest (default) and Highest rated (`sortReviews(..., 'rating')`, unit-tested). The stored `helpful` field is no longer shown anywhere.
+- **Profile film reviews, redesigned** (`FilmReviewTile`):
+  - Each tile shows the film's 2:3 poster (the supplied poster or the type-set one), its title, the rating and when, then the review in up to four lines. Spoilers stay behind a line.
+  - One review fills the width. Several become a swipeable rail that peeks at the next, so ten reviews take the space of one, and See all lists them with the same tile.
+  - The section is "Film reviews · N".
+- **Profile bands removed.** The full-bleed band between acts is gone; acts are separated by spacing only.
+- **Bug fixed:** the Stage 1 feed-video `.rv` style collided with the reviews screens' `.rv` class and painted their background dark. It is now scoped to `.rv[data-reel]`.
+
