@@ -1,22 +1,26 @@
 /*
- * How the normal prototype is presented (not part of Art and Artist itself):
- *   prototype: the phone on a desktop canvas with the persona / QA console beside it.
- *   app:       only the product, filling the viewport (real device, safe areas, Add to Home Screen).
+ * How the normal app is presented (not part of Art and Artist itself):
+ *   auto:      the default. A viewport that has room for a phone (a laptop, a desktop window, a tablet) shows the app
+ *              inside an iPhone frame scaled to fit; a phone-sized viewport shows the app itself, full screen, on the
+ *              device's own status bar and safe areas. Decided by viewport size, re-evaluated on resize, never by
+ *              user agent.
+ *   prototype: auto, plus the development notice and view switch (?view=prototype).
+ *   app:       never the frame (?view=app; the installed Home Screen app is always this).
  *
- * Choice order: installed Home Screen app → app (always); ?view=app|prototype (applied and
- * used only for that explicit launch); otherwise app on all viewport sizes. Old stored prototype
- * choices no longer affect ordinary launches. /test and /research never read this.
+ * Choice order: installed Home Screen app → app; ?view=app|prototype (that launch only); otherwise auto.
+ * /test and /research never read this.
  */
 import { Eye, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export type ViewMode = 'prototype' | 'app';
+export type ViewMode = 'prototype' | 'app' | 'auto';
+type Explicit = Exclude<ViewMode, 'auto'>;
 const KEY = 'aa_view_mode';
 
 export const isStandalone = () =>
   typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true);
 
-const valid = (v: unknown): v is ViewMode => v === 'prototype' || v === 'app';
+const valid = (v: unknown): v is Explicit => v === 'prototype' || v === 'app';
 
 export function saveViewMode(m: ViewMode) {
   try {
@@ -37,7 +41,42 @@ export function initialViewMode(): ViewMode {
     window.history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : '') + window.location.hash);
     return fromUrl;
   }
-  return 'app';
+  return 'auto';
+}
+
+/** A viewport with room for the frame: wider than any phone held upright, taller than any phone held sideways. */
+export const FRAME_QUERY = '(min-width: 600px) and (min-height: 480px)';
+/** The frame's outer size: 393 × 852 screen plus a 12 px bezel. */
+export const FRAME = { width: 417, height: 876, margin: 24 };
+
+const frameFits = () => typeof window !== 'undefined' && !!window.matchMedia?.(FRAME_QUERY).matches;
+
+/** Whether the app is shown in the device frame, live: resizing a desktop window switches presentations. */
+export function useDeviceFrame(mode: ViewMode) {
+  const [fits, setFits] = useState(frameFits);
+  useEffect(() => {
+    if (mode === 'app' || !window.matchMedia) return;
+    const mq = window.matchMedia(FRAME_QUERY);
+    const on = () => setFits(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [mode]);
+  return mode !== 'app' && fits;
+}
+
+/** The frame's scale: 1 when the window has room, smaller on short or narrow windows so it never clips. */
+export function useFrameScale(framed: boolean) {
+  const measure = () => (typeof window === 'undefined' ? 1 : Math.min(1, (window.innerHeight - FRAME.margin * 2) / FRAME.height, (window.innerWidth - FRAME.margin * 2) / (FRAME.width + 8)));
+  const [scale, setScale] = useState(measure);
+  useEffect(() => {
+    if (!framed) return;
+    const on = () => setScale(Math.max(0.4, Math.round(measure() * 1000) / 1000));
+    on();
+    window.addEventListener('resize', on);
+    return () => window.removeEventListener('resize', on);
+  }, [framed]);
+  return scale;
 }
 
 /** Add to Home Screen support, only for the normal app (never on /test or /research). */

@@ -46,7 +46,7 @@ import { research } from './research-data/client';
 import { RESEARCH_DASHBOARD, STUDIO, STUDIO_COMPARE, TEST_MODE } from './research-data/surface';
 import { Compare } from './studio/Compare';
 import { TestMode } from './research-data/TestMode';
-import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, type ViewMode } from './dev/viewMode';
+import { FloatingViewSwitch, initialViewMode, installAppHead, isStandalone, saveViewMode, useDeviceFrame, useFrameScale, type ViewMode } from './dev/viewMode';
 import { LaunchSplash, type LaunchPhase } from './ui/LaunchSplash';
 import { launchSplashPending } from './ui/launchSession';
 import { enableTheme } from './ui/theme';
@@ -493,9 +493,15 @@ export default function App() {
   return <NormalApp />;
 }
 
-/** The normal prototype, in Prototype mode (the phone on a stage) or App mode (only the product). Studio links set it up. */
+/**
+ * The normal app. On a viewport with room for a phone it sits in the iPhone frame, scaled to fit; on a phone it is the
+ * app itself, full screen (src/dev/viewMode.tsx). Both presentations share one element tree, so resizing across the
+ * breakpoint keeps the app mounted; only the frame, the simulated status bar and the home indicator come and go.
+ */
 function NormalApp() {
   const [mode, setMode] = useState<ViewMode>(initialViewMode);
+  const framed = useDeviceFrame(mode);
+  const scale = useFrameScale(framed);
   const standalone = isStandalone();
   // Installed Home Screen app: the launch splash covers the app (inert, and unpainted while the mark
   // draws) until it finishes.
@@ -508,29 +514,29 @@ function NormalApp() {
     enableTheme();
   }, []);
   useEffect(() => {
-    document.documentElement.classList.toggle('view-app', mode === 'app');
-    return () => document.documentElement.classList.remove('view-app');
-  }, [mode]);
+    const root = document.documentElement;
+    root.classList.toggle('view-app', !framed);
+    root.classList.toggle('view-device', framed);
+    return () => root.classList.remove('view-app', 'view-device');
+  }, [framed]);
   const choose = (m: ViewMode) => {
     saveViewMode(m);
     setMode(m);
   };
+  // Gestures (drag to dismiss, swipes) read pointer positions in the frame's own, unscaled coordinates.
+  const unscale = framed && scale !== 1 ? (p: { x: number; y: number }) => ({ x: p.x / scale, y: p.y / scale }) : undefined;
   return (
     <StoreProvider>
       <ResearchObserver />
       <DeepLink />
-      {mode === 'app' ? (
-        <div className={`app-shell${launch === 'covered' ? ' app-shell--covered' : ''}`} {...inertProps(launch !== 'off')}>
-          <Phone app />
+      <div className={framed ? 'device-stage' : `app-shell${launch === 'covered' ? ' app-shell--covered' : ''}`} {...(framed ? {} : inertProps(launch !== 'off'))}>
+        <div className={framed ? 'device-fit' : 'app-fit'} style={framed ? ({ '--device-scale': scale } as import('react').CSSProperties) : undefined}>
+          {framed && mode === 'prototype' ? <StageNotice /> : null}
+          <MotionConfig transformPagePoint={unscale}>
+            <Phone app={!framed} />
+          </MotionConfig>
         </div>
-      ) : (
-        <div className="stage">
-          <div className="stage-phone">
-            <StageNotice />
-            <Phone />
-          </div>
-        </div>
-      )}
+      </div>
       <BackToStudio />
       <LaunchSplash enabled={standalone} onPhase={setLaunch} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}

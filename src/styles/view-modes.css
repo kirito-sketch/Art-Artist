@@ -81,6 +81,106 @@ html.view-app body {
   bottom: calc(env(safe-area-inset-bottom) + 12px);
 }
 
+/* In app mode the frame wrapper is transparent: the phone column lays out exactly as before. */
+.app-fit {
+  display: contents;
+}
+
+/* ---------------------------------------------------------------- Device frame (auto, desktop and tablet)
+ * The app inside the existing iPhone frame (src/styles/base.css .phone: 393 × 852 screen, 12 px bezel, simulated
+ * status bar with the Dynamic Island, home indicator). The frame is scaled with a transform so it always fits the
+ * window (src/dev/viewMode.tsx useFrameScale), and .device-fit takes the scaled size so the page never scrolls.
+ * The transform also makes the phone the containing block for everything fixed inside it: sheets, menus, toasts and
+ * the video viewer stay on the phone's screen. Scrolling happens inside the app only.
+ */
+html.view-device,
+html.view-device body,
+html.view-device #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.device-stage {
+  --device-ground: #e9e7e3;
+  --device-ground-2: #dedbd5;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 40%, var(--device-ground) 0%, var(--device-ground-2) 100%);
+}
+
+html[data-theme='dark'] .device-stage {
+  --device-ground: #1a1a1c;
+  --device-ground-2: #0e0e10;
+}
+
+.device-fit {
+  --device-scale: 1;
+  position: relative;
+  width: calc(417px * var(--device-scale));
+  height: calc(876px * var(--device-scale));
+  flex: none;
+}
+
+.device-fit > .phone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scale(var(--device-scale));
+  transform-origin: 0 0;
+  /* The frame: a dark bezel, a thin titanium rim and one soft shadow. */
+  background: #0b0b0c;
+  box-shadow:
+    0 0 0 1.5px #3b3b3e,
+    0 0 0 3px #1c1c1e,
+    inset 0 0 0 1px #2c2c2e,
+    0 30px 70px -24px rgba(20, 16, 10, 0.42),
+    0 10px 24px -12px rgba(20, 16, 10, 0.25);
+}
+
+html[data-theme='dark'] .device-fit > .phone {
+  box-shadow:
+    0 0 0 1.5px #4a4a4e,
+    0 0 0 3px #2a2a2d,
+    inset 0 0 0 1px #2c2c2e,
+    0 30px 70px -24px rgba(0, 0, 0, 0.7);
+}
+
+/* Side buttons: action and volume on the left, side button on the right, drawn at the frame's scale. */
+.device-fit::before,
+.device-fit::after {
+  content: '';
+  position: absolute;
+  width: calc(3px * var(--device-scale));
+  border-radius: 2px;
+  background: #2a2a2d;
+  pointer-events: none;
+}
+
+.device-fit::before {
+  left: calc(-3.5px * var(--device-scale));
+  top: calc(122px * var(--device-scale));
+  height: calc(32px * var(--device-scale));
+  box-shadow:
+    0 calc(64px * var(--device-scale)) 0 0 #2a2a2d,
+    0 calc(130px * var(--device-scale)) 0 0 #2a2a2d;
+}
+
+.device-fit::after {
+  right: calc(-3.5px * var(--device-scale));
+  top: calc(212px * var(--device-scale));
+  height: calc(100px * var(--device-scale));
+}
+
+/* The development notice sits above the frame, outside the screen. */
+.device-fit .stage-notice {
+  top: -30px;
+}
+
 /* ---------------------------------------------------------------- the switch (development) */
 .vm-switch {
   display: inline-flex;
