@@ -292,6 +292,129 @@ Acceptance:
 - All journeys pass.
 - Regression shows no new failures versus the known baseline (section 9).
 
+**Stage 6. Create flows, all personas (planned, not authorised).** A separate scope item added after Stage 5. Stage 5's integration QA has already run, so Stage 6 ends with its own integration QA re-run (6.7) rather than reopening Stage 5.
+
+*Depends on:*
+
+- Stage 2: Selected Work and the one portfolio.
+- Stage 4: trailer upload, which reads files in the same way.
+- D6: device media is session-only.
+- The feed's `postFrame` rules.
+
+*Does not touch:* credit rules, D7, the post model or permissions.
+
+*Why all flows, not only Post:* `MediaPicker` (in `PostComposer.tsx`) is used by 10 create surfaces and `MediaFramingEditor` by 7. Fixing them for Post changes every flow below, so the whole set is planned and tested together.
+
+*Creation flows by persona:*
+
+| Persona | Flow | Entry | Media used |
+|---|---|---|---|
+| Individual | Post | Create → Post | picker (10), post framing |
+| Individual | Looking for someone / Open to work | Create | cover picker |
+| Individual | Independent project | Create → `newProject` | project image + framing |
+| Individual | Event | Create → Event | cover + framing |
+| Individual | Portfolio images, showreel, profile photo, cover | Edit Profile, Selected Work | picker + framing |
+| Individual | Rate and review a film | project page | none |
+| New user | Profile photo, first portfolio images | onboarding (`Entry.tsx`) | picker + avatar framing |
+| House (acting) | Post as the house | Create | as Post |
+| House (acting) | New project; Open a role (pick project → Add role) | Create | project image + framing |
+| House (acting) | Event by the house | Create | cover + framing |
+| House (acting) | Trailers; add person / issue credit; share | project workspace | trailer upload (Stage 4) |
+| House (acting) | House setup (logo, cover) | `houseSetup` | picker |
+
+*First findings from reading the code (6.1 confirms each one in the running app before anything changes):*
+
+1. The composer asks twice: the label "What are you working on?" sits above the placeholder "Write a post".
+2. Adjust framing is a second tall sheet. It holds:
+   - four presentation chips
+   - per-image chips
+   - Fit/Fill and drag
+   - two focus sliders
+   - an "Image content" select
+
+   It writes real metadata (`media.presentations.post`), which the feed reads. Keep the metadata; remove the UI.
+3. The picker:
+   - shows a bare native "Choose Files" control
+   - lists the 12 seeded `cameraRoll` images as large tiles in one long column
+   - mixes device files into the same list with no label, which reads as access to the camera roll
+4. Selection order isn't shown (a tick, no number). Nothing can be reordered. Nothing previews the post before posting.
+5. **Bug:** Add to portfolio always adds to the person's own portfolio, even when posting as a house. It silently drops videos, and its copy doesn't say what it does or that it isn't a credit.
+6. Publishing closes the composer at once and shows the existing upload bar on Home (failure keeps `lastDraft` for Retry). This needs checking with the `failPublish` scenario and video.
+7. The individual Create menu has five rows. "Open to work" (a collab post) overlaps the Availability setting.
+8. Event, project, showreel and cover flows each embed the full framing editor, sliders included.
+
+*Target model:*
+
+- **One composer.** It shows the identity (avatar and "Posting as …"), one text field, the media tray under the text, Post at the top right and Cancel at the top left.
+  - Text-first: write, then Post.
+  - Media-first: + opens the device's own picker directly, with no intermediate sheet. You return to the composer with the selection in the tray.
+- **Media tray.** Compact thumbnails, each with:
+  - its order number and a remove control
+  - an "Add more" tile
+  - the count and limit ("3 of 10")
+  - reordering by drag, with Move earlier and Move later as the accessible alternative
+
+  Device items carry a quiet "This session only" note (D6). The seeded demo images move to a separate "Sample media (prototype)" row, never mixed with device files.
+- **Preview.** Tapping a thumbnail opens a full-width preview in the feed's own frame (`postFrame`), with paging and Remove. Video plays muted inline, tap for sound, no desktop controls. What you see is what the feed shows.
+- **No framing UI in Post.** New posts use nondestructive defaults: original proportions inside the feed's bounds, and Fit for mixed carousels (nothing cropped). Saved framing on existing posts keeps rendering. Source files are never altered.
+- **Elsewhere,** where a fixed crop can't be avoided (round avatar, hero banners), framing becomes one simple Reposition. You drag, or use the arrow keys on the frame, with a Reset. The sliders, Fit/Fill and the content select are removed.
+- **Portfolio.** For individuals only (hidden when acting as a house), labelled "Also add photos to Selected work". It explains that it adds the photos to your profile, isn't a credit and leaves credit rules unchanged. If videos are selected, it says videos stay in the post only.
+- **States.** Post is:
+  - disabled when empty or while files are being prepared
+  - shows a pending label once tapped, then the existing Home progress bar
+  - on failure, uses the existing banner with Retry
+
+  Discard asks only when there is something to lose.
+- **Create menu.** Post leads for every persona.
+  - Individual: Post, Looking for someone, Open to work, Event, Independent project.
+  - House: Post as the house, Open a role, New project, Event.
+- **Every create form follows the same rules:**
+  - Cancel and the primary action in the top bar
+  - the identity line
+  - grouped rows
+  - the primary action disabled with a missing-field hint
+  - Discard confirmation
+  - a sticky bar clear of the keyboard and safe area
+  - the session-only label on device media
+
+*Steps:*
+
+- **6.1 Targeted audit.** Covers only the Create and media components. In the running app, verify each capability:
+  - framing, ratio, Fit/Fill, drag, the focus sliders and image editing
+  - preview, multi-select, reorder
+  - portfolio, video, failure
+
+  Record what works in this section before removing any UI.
+- **6.2 Shared media picker and tray.** Keep `MediaPicker`'s API so the other 9 call sites keep working.
+- **6.3 Post composer rebuild:** one composer, the tray, preview, reorder, portfolio fix, states.
+- **6.4 Framing simplification** on the other 6 surfaces: Reposition only, metadata preserved.
+- **6.5 Create menu and the other composers:** a consistency pass for each persona (collab, event, project, role, house setup, onboarding media). This is light-touch, with no new fields.
+- **6.6 Tests.** A targeted create suite at 320, 375, 393 and 430 px for individual, house and new user. It covers:
+  - text-only, portrait, landscape and video, the 10-item limit
+  - remove, reorder, preview, long captions
+  - discard, `failPublish`
+  - the keyboard and safe areas
+  - portfolio (individual adds; hidden for a house)
+  - existing posts rendering unchanged
+  - a smoke check on every other picker surface
+
+  Screenshots of each journey go in `docs/ux-refinement/stage6/`.
+- **6.7 Integration QA re-run:** the Stage 5 journeys plus regression versus section 9. Then record, commit and stop for review.
+
+*Decisions needed before 6.2:*
+
+- **C1. A single image taller than 3:4.** Recommend showing it whole inside the feed's 3:4 frame (Fit, quiet bands) instead of today's centre crop, so nothing is cut unexpectedly.
+- **C2. "Open to work".** Recommend keeping it as a collab post, but having it also turn on Availability, so there's one source of truth.
+- **C3. Reordering.** Recommend drag in the tray plus Move earlier and Move later buttons in the preview.
+
+*Out of scope:*
+
+- filters, music, stickers, text overlays
+- tagging people, location, polls, AI labels
+- a storage backend (still `TRAILER_STORAGE.md`, pending approval)
+- changes to credits or permissions
+
+
 ## 8. Decisions (approved after Stage 0)
 
 - **D1. Post actions: approved.**
@@ -404,7 +527,8 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 | 2 Profile | Approved (with round 2 feedback) | `65ff282` |
 | 3 Detail pages | Approved (with review feedback) | `f3768b1` |
 | 4 Project and trailers | Approved (with review feedback) | `0bede79` |
-| 5 Home, integration, QA | Done, awaiting review | see below |
+| 5 Home, integration, QA | Done, awaiting review | `9bd0736` |
+| 6 Create flows, all personas | Planned, awaiting authorisation | |
 
 ### Stage 1 record
 
