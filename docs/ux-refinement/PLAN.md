@@ -584,16 +584,21 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
   - It also blocks moving a public project into those stages, unpublishing or removing the last version.
   - Drafts, early stages and seeded projects (no `trailerRule`) are exempt; existing projects keep their still or poster fallback.
   - Wired into Share on Art and Artist, the Details stage change, and the trailer manager.
-- **TrailerPlayer** (`screens/org/TrailerPlayer.tsx`). A 16:9 frame under a black cinema band that holds the page controls.
-  - Plays muted on its own when 60% on screen (never with Reduced Motion or Save Data), and pauses when scrolled away or the page hides.
-  - Shares the feed's one-video-at-a-time rule and sound setting.
-  - Touch controls: tap to pause or resume; sound and full-screen circles (44 px targets); a progress hairline.
-  - Language chips appear only with more than one version, and switching keeps your place.
-  - A failed file shows the still with "Trailer unavailable". The label names the version and marks "this session only" or "sample clip, not this film".
-- **Trailer-first project page** (`WorkScreen`, house projects).
-  - The trailer leads when published; otherwise the still hero stays as the fallback.
-  - Then the title card, logline, production, your credit, Cast and crew (a rail of people with their credited roles and the verified note), Poster and stills (the 2:3 poster leads, then stills at one height), Hiring, Screenings, Reviews and Posts.
-  - Sections without data don't render.
+- **Project page, redesigned on review feedback** (`screens/org/WorkCinema.tsx`, `styles/project-cinema.css`). It follows District's movie-page structure in Ana's design, replacing the first 16:9 version.
+  - **Always dark** (a cinema), whatever the app theme.
+  - **Pinned hero.** The trailer fills about 64% of the screen and stays put while the details sheet (with a handle) slides up over it. The trailer eases in, dims and pauses once covered.
+  - **Hero overlays:**
+    - back, a language pill (it opens a version picker when there are several versions; switching keeps your place), and share
+    - sound, bottom left
+    - "Watch full trailer" (or teaser), bottom right: full screen, from the start, with sound and native controls
+    - a tag for "This session only" or "Sample clip, not this film"
+  - **No trailer:** the 2:3 poster holds the hero, else the still.
+  - **Sheet:** title; a meta line (format | language +N more | stage or year); release; "By <production> ✓".
+    - A momentum row with one pill: before release, a countdown with Save; once reviews are open, the rating and Rate (or "You rated 4").
+    - Then the logline (with View more), action cards (your credit with "Something wrong?", Hiring now with the open-role count), Buzz around this film (screenings and review quotes, with All reviews), Cast and crew (avatar with name and role beside it), Posters and stills (a large poster with two stills, then rows of three), Open roles, Posts, and Report.
+  - **One fixed action:** Open in your workspace (lead house), See open roles · N, Rate and review (released, not rated yet), or Save project.
+  - **Compact header** once the sheet covers the hero: back, centred title and share over a blurred poster backdrop.
+  - The old-design page is unchanged.
 - **Trailer manager** in the house workspace (`screens/production/TrailerManager.tsx`, file reading in `ui/trailerPreview.ts`).
   - Add a trailer or teaser with kind and language (one per language and kind).
   - File checks: type, size up to 500 MB, length up to 5 minutes, 1080p or smaller.
@@ -609,13 +614,13 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
 
 **Verification:**
 
-- **Player:** 17/0 checks covering:
-  - 16:9 at full width, muted autoplay, the sample label
-  - language chips, and the switch keeping your place
-  - tap to pause, play to resume, sound on, full screen
-  - pause when scrolled away, 44 px controls, section order
-  - Reduced Motion (no autoplay), the no-trailer fallback
-  - no horizontal scroll at 320, 393 (dark) and 430 px
+- **Project page:** 18/0 checks covering:
+  - the hero at ~64% of the screen, the overlays, dark in the light theme
+  - muted autoplay, the language picker, tap to pause and resume
+  - Watch full trailer (full screen with sound)
+  - the hero pinned and paused under the sheet, the compact header, section order, the fixed action
+  - Reduced Motion, the poster fallback, the rating row, "See open roles" on a hiring project
+  - no horizontal scroll at 320, 393 and 430 px
 - **House flow:** 7/0 checks covering:
   - the workspace section, a wrong file refused, added as a session-only draft
   - publish, then the public page leading with the 16:9 trailer labelled session-only and playing muted
