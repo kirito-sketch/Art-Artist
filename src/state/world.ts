@@ -28,7 +28,8 @@ export const STAGES = ['Development', 'Pre-production', 'Shooting', 'Post-produc
  */
 export interface Trailer {
   id: string;
-  kind: 'trailer' | 'teaser';
+  /** A clip is the film's own footage shown until a trailer exists; it is never called a trailer. */
+  kind: 'trailer' | 'teaser' | 'clip';
   language: string;
   url: string;
   poster?: Media;

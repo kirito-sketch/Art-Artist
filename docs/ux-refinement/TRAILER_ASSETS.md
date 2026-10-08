@@ -2,6 +2,8 @@
 
 **No project has a real trailer or teaser yet.** The six bundled clips in `public/video/` are 6-second, 4:5 test clips. They are not trailers, and they are never shown as one. A Studio review mode (`?trailer-sample`) uses two of them as clearly labelled stand-ins ("sample clip, not this film") to review the player and language chips.
 
+**Until trailers arrive,** a project's own clip (where one exists) moves in the hero of its page, labelled "Watch clip" and never called a trailer. Ratri and Dhoop have no clip, so they show their poster.
+
 **Under the trailer rule (D7):**
 - **Existing projects** keep their still or poster fallback until a trailer is supplied.
 - **New projects** need a published trailer or teaser to be made public at post-production or released.

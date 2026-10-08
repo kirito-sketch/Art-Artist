@@ -592,7 +592,8 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
     - sound, bottom left
     - "Watch full trailer" (or teaser), bottom right: full screen, from the start, with sound and native controls
     - a tag for "This session only" or "Sample clip, not this film"
-  - **No trailer:** the 2:3 poster holds the hero, else the still.
+  - **No trailer yet:** the film's own footage clip (in the prototype: Kaaval, Fault Lines, Monsoon Letters, Neeli Raat, Neela Akasham, Backwaters) moves in the hero, called a clip ("Watch clip", no language pill). It is never presented as a trailer, so D6 and D7 still hold. Without a clip, the 2:3 poster holds the hero, else the still. A published trailer always takes over.
+  - **Fix:** with no language pill, the top bar keeps back on the left and share on the right (an empty middle slot).
   - **Sheet:** title; a meta line (format | language +N more | stage or year); release; "By <production> ✓".
     - A momentum row with one pill: before release, a countdown with Save; once reviews are open, the rating and Rate (or "You rated 4").
     - Then the logline (with View more), action cards (your credit with "Something wrong?", Hiring now with the open-role count), Buzz around this film (screenings and review quotes, with All reviews), Cast and crew (avatar with name and role beside it), Posters and stills (a large poster with two stills, then rows of three), Open roles, Posts, and Report.
@@ -614,7 +615,7 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
 
 **Verification:**
 
-- **Project page:** 18/0 checks covering:
+- **Project page:** 20/0 checks (including the clip hero and button placement) covering:
   - the hero at ~64% of the screen, the overlays, dark in the light theme
   - muted autoplay, the language picker, tap to pause and resume
   - Watch full trailer (full screen with sound)

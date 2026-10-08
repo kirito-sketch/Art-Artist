@@ -57,7 +57,9 @@ export function WorkCinema({ w }: { w: Work }) {
   const id = w.id;
   const wp = wproject(id);
   const languages = wp?.languages ?? [];
-  const versions = orderVersions(TRAILER_SAMPLE && wp ? sampleTrailers(id, languages) : (w.trailers ?? []), languages);
+  const published = orderVersions(TRAILER_SAMPLE && wp ? sampleTrailers(id, languages) : (w.trailers ?? []), languages);
+  // Until a trailer exists, the film's own footage (when the prototype has it) moves in the hero, called a clip.
+  const versions: Trailer[] = published.length ? published : CLIPS.includes(id) ? [{ id: `clip-${id}`, kind: 'clip', language: '', url: `video/${id}.mp4`, status: 'published' }] : [];
   const [index, setIndex] = useState(0);
   const [picker, setPicker] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -125,13 +127,13 @@ export function WorkCinema({ w }: { w: Work }) {
         <span className="wp-hero-shade" aria-hidden />
         <div className="wp-top">
           <IconButton label="Back" className="wp-btn" onClick={pop}><ChevronLeft size={22} /></IconButton>
-          {t && (versions.length > 1 ? (
+          {t && t.kind !== 'clip' ? (versions.length > 1 ? (
             <button className="wp-lang" onClick={() => setPicker(true)} aria-label={`${t.language} ${t.kind}. Choose another version`}>
               <AudioLines size={15} aria-hidden /> {t.language} <ChevronDown size={15} aria-hidden />
             </button>
           ) : (
             <span className="wp-lang wp-lang--static"><AudioLines size={15} aria-hidden /> {t.language}</span>
-          ))}
+          )) : <span aria-hidden />}
           <IconButton label={`Share ${w.title}`} className="wp-btn" onClick={share}><Share size={18} /></IconButton>
         </div>
       </div>
@@ -361,7 +363,7 @@ function TrailerHero({ t, fallback, title, active }: { t: Trailer; fallback?: Me
     else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen();
     else v.webkitEnterFullscreen?.();
   };
-  const kind = t.kind === 'teaser' ? 'teaser' : 'trailer';
+  const kind = t.kind;
   return (
     <div ref={box} className={`wp-trailer${playing ? ' is-playing' : ''}${failed ? ' is-failed' : ''}`}>
       <video
@@ -373,7 +375,7 @@ function TrailerHero({ t, fallback, title, active }: { t: Trailer; fallback?: Me
         loop
         controls={full}
         preload="metadata"
-        aria-label={`${title}, ${kind}, ${t.language}`}
+        aria-label={[title, kind, t.language].filter(Boolean).join(', ')}
         onClick={full ? undefined : toggle}
         onLoadedMetadata={() => active && !held.current && autoplayAllowed() && play()}
         onPlay={() => setPlaying(true)}
@@ -392,7 +394,7 @@ function TrailerHero({ t, fallback, title, active }: { t: Trailer; fallback?: Me
             {muted ? <VolumeX size={17} strokeWidth={2.2} /> : <Volume2 size={17} strokeWidth={2.2} />}
           </button>
           <button className="wp-watch" onClick={watchFull}>
-            <Play size={15} fill="currentColor" strokeWidth={0} aria-hidden /> Watch full {kind}
+            <Play size={15} fill="currentColor" strokeWidth={0} aria-hidden /> {kind === 'clip' ? 'Watch clip' : `Watch full ${kind}`}
           </button>
         </>
       )}
