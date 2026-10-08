@@ -33,6 +33,8 @@ export interface Work {
   credits: WorkCredit[];
   /** Release date set by the house (YYYY-MM-DD). Reviews open on this day. */
   releaseDate?: string;
+  /** Published trailer versions only (see world.Trailer). */
+  trailers?: import('../state/world').Trailer[];
 }
 
 export interface SeedWork {

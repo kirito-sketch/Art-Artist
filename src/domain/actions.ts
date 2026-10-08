@@ -33,7 +33,7 @@ export type RoleState = { state: 'filled' | 'closed'; reason: string };
 /* ------------------------------------------------------------ projects */
 
 export function createProject(actor: Actor, d: { workingTitle: string; format: Format; languages: string[] }) {
-  const p: HouseProject = { id: wid('hp'), ...(actor.acting !== 'self' ? { houseId: actor.acting } : { ownerId: actor.viewerId }), workingTitle: d.workingTitle, format: d.format, languages: d.languages, stage: 'Development', shared: false };
+  const p: HouseProject = { id: wid('hp'), ...(actor.acting !== 'self' ? { houseId: actor.acting } : { ownerId: actor.viewerId }), workingTitle: d.workingTitle, format: d.format, languages: d.languages, stage: 'Development', shared: false, trailerRule: true };
   world.projects.unshift(p);
   return p.id;
 }

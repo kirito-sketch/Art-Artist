@@ -22,6 +22,8 @@ const actions = q.get('actions');
 export const POST_ACTIONS: PostActionsMode = actions === 'pill' || actions === 'notch' ? actions : 'row';
 export const POST_NOTCH = POST_ACTIONS === 'notch';
 export const POST_SAMPLES = q.has('samples');
+/** Studio review only: attach labelled stand-in clips as trailer versions, to review the trailer player (never the film's trailer). */
+export const TRAILER_SAMPLE = q.has('trailer-sample');
 /**
  * The Home audit's new order with Spotlight Direction A, "This week" (docs/HOME_SPOTLIGHT.md). The default since
  * October 2026; ?home-previous shows the earlier Home (big Spotlight, five tiles) for comparison.

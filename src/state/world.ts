@@ -20,6 +20,27 @@ export const FORMATS: Format[] = ['Feature', 'Series', 'Short', 'Documentary', '
 export const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Malayalam', 'Kannada', 'Marathi', 'Bengali', 'English'];
 export const STAGES = ['Development', 'Pre-production', 'Shooting', 'Post-production', 'Released'] as const;
 
+/**
+ * A trailer or teaser for a project, one per language version (docs/ux-refinement/PLAN.md, D6). Only `published`
+ * versions of a shared project reach the public page. `temporary` marks a session-only file (a device preview kept in
+ * this browser tab): it is never presented as a stored upload, and disappears on reload. Persistent storage is the
+ * open proposal in docs/ux-refinement/TRAILER_STORAGE.md.
+ */
+export interface Trailer {
+  id: string;
+  kind: 'trailer' | 'teaser';
+  language: string;
+  url: string;
+  poster?: Media;
+  duration?: string;
+  width?: number;
+  height?: number;
+  status: 'draft' | 'published';
+  temporary?: boolean;
+  /** A labelled stand-in clip for review (Studio only), never the film's real trailer. */
+  sample?: boolean;
+}
+
 export interface HouseProject {
   id: string;
   /** Organisation that owns it (the lead production), or a person for an independent project. */
@@ -43,6 +64,10 @@ export interface HouseProject {
   shared: boolean;
   /** Set by the house (YYYY-MM-DD). Reviews open on this day. */
   releaseDate?: string;
+  /** Trailer and teaser versions, by language (D6). */
+  trailers?: Trailer[];
+  /** Created after the trailer rule (D7): sharing it at post-production or released needs a trailer. Seeded projects keep their fallback. */
+  trailerRule?: boolean;
 }
 
 export interface Association {
@@ -193,6 +218,8 @@ export function toPublicWork(p: HouseProject): Work | undefined {
     stills: p.stills ?? (p.artwork ? [p.artwork] : []),
     credits: world.credits.filter((c) => c.projectId === p.id && c.status === 'accepted').map((c) => ({ personId: c.personId, role: c.line, dept: c.dept })),
     releaseDate: p.releaseDate,
+    // Drafts never leave the workspace.
+    trailers: (p.trailers ?? []).filter((t) => t.status === 'published'),
   };
 }
 

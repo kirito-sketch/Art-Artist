@@ -401,8 +401,8 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 | 0 Audit and plan | Approved | `10eaacf` |
 | 1 Foundations, nav, post actions | Approved | `6329e99` |
 | 2 Profile | Approved (with round 2 feedback) | `65ff282` |
-| 3 Detail pages | Done, awaiting review | see below |
-| 4 Project and trailers | Not started | |
+| 3 Detail pages | Approved (with review feedback) | `f3768b1` |
+| 4 Project and trailers | Done, awaiting review | see below |
 | 5 Home, integration, QA | Not started | |
 
 ### Stage 1 record
@@ -572,4 +572,61 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
   - The section is "Film reviews · N".
 - **Profile bands removed.** The full-bleed band between acts is gone; acts are separated by spacing only.
 - **Bug fixed:** the Stage 1 feed-video `.rv` style collided with the reviews screens' `.rv` class and painted their background dark. It is now scoped to `.rv[data-reel]`.
+
+### Stage 4 record
+
+**Built:**
+
+- **Trailer model (D6).** `Trailer` in `state/world.ts`: kind (trailer or teaser), language, url, poster frame, duration, dimensions, status (draft or published), and `temporary` or `sample` flags.
+  - House projects carry `trailers[]`.
+  - The public work gets only published versions, so drafts never leave the workspace.
+- **Trailer rule (D7, `domain/trailers.ts`, unit-tested).** `trailerGate()` blocks making a new project public at post-production or released without a published trailer or teaser.
+  - It also blocks moving a public project into those stages, unpublishing or removing the last version.
+  - Drafts, early stages and seeded projects (no `trailerRule`) are exempt; existing projects keep their still or poster fallback.
+  - Wired into Share on Art and Artist, the Details stage change, and the trailer manager.
+- **TrailerPlayer** (`screens/org/TrailerPlayer.tsx`). A 16:9 frame under a black cinema band that holds the page controls.
+  - Plays muted on its own when 60% on screen (never with Reduced Motion or Save Data), and pauses when scrolled away or the page hides.
+  - Shares the feed's one-video-at-a-time rule and sound setting.
+  - Touch controls: tap to pause or resume; sound and full-screen circles (44 px targets); a progress hairline.
+  - Language chips appear only with more than one version, and switching keeps your place.
+  - A failed file shows the still with "Trailer unavailable". The label names the version and marks "this session only" or "sample clip, not this film".
+- **Trailer-first project page** (`WorkScreen`, house projects).
+  - The trailer leads when published; otherwise the still hero stays as the fallback.
+  - Then the title card, logline, production, your credit, Cast and crew (a rail of people with their credited roles and the verified note), Poster and stills (the 2:3 poster leads, then stills at one height), Hiring, Screenings, Reviews and Posts.
+  - Sections without data don't render.
+- **Trailer manager** in the house workspace (`screens/production/TrailerManager.tsx`, file reading in `ui/trailerPreview.ts`).
+  - Add a trailer or teaser with kind and language (one per language and kind).
+  - File checks: type, size up to 500 MB, length up to 5 minutes, 1080p or smaller.
+  - Honest local progress (checking, reading, poster frame) with cancel.
+  - Clear errors, then Publish or Move to draft, Replace, and Remove (with confirm).
+  - Every file is labelled "on this device for this session only", and the section says storage isn't set up.
+- **Studio review mode:** `?trailer-sample` attaches two labelled stand-in clips to review the player and language chips. It's never the film's trailer.
+
+**Docs:**
+
+- `TRAILER_STORAGE.md`: the persistent storage proposal (Supabase Storage recommended for the prototype; Cloudflare Stream later; a hosted link as the fallback). Covers cost, permissions, encoding and the approvals needed.
+- `TRAILER_ASSETS.md`: the missing trailer assets. No real trailers exist; the six clips are 6-second 4:5 tests.
+
+**Verification:**
+
+- **Player:** 17/0 checks covering:
+  - 16:9 at full width, muted autoplay, the sample label
+  - language chips, and the switch keeping your place
+  - tap to pause, play to resume, sound on, full screen
+  - pause when scrolled away, 44 px controls, section order
+  - Reduced Motion (no autoplay), the no-trailer fallback
+  - no horizontal scroll at 320, 393 (dark) and 430 px
+- **House flow:** 7/0 checks covering:
+  - the workspace section, a wrong file refused, added as a session-only draft
+  - publish, then the public page leading with the 16:9 trailer labelled session-only and playing muted
+  - a draft never reaching the public page
+- **D7:** unit tests.
+- **Regression:** all suites pass, plus the Stage 2 (64/0) and Stage 3 (240/0) checks and resume (7/0).
+
+**Accepted limits:**
+
+- **Uploads are session-only (D6),** pending approval of `TRAILER_STORAGE.md`.
+- **No codec check on files.** Headless Chromium can't decode H.264, so the automated upload check uses the WebM version. On devices, MP4 plays natively. A file the browser can't read shows a clear error.
+
+Screenshots are in `docs/ux-refinement/stage4/`.
 

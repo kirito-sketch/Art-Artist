@@ -1,3 +1,5 @@
+import { TrailerManager } from './TrailerManager';
+import { trailerGate } from '../../domain/trailers';
 import { MediaFramingEditor } from '../../ui/MediaFraming';
 import { MediaPicker } from '../create/PostComposer';
 import { CreditSeal } from '../../ui/CreditSeal';
@@ -186,6 +188,9 @@ export function HouseProjectScreen({ id, focusAssociation }: { id: string; focus
       )}
 
       {!district && detailsSection}
+
+      {/* Trailers (D6): house projects only; independent projects keep their stills. */}
+      {p.houseId && <TrailerManager id={id} canAct={canAct} />}
 
       {(p.stage !== 'Released' || roles.length > 0) && (
       <section className="section">
@@ -397,9 +402,11 @@ function ShareProject({ id, done }: { id: string; done: () => void }) {
         <p className="meta"><Lock size={13} /> People added privately and unaccepted credits stay private.</p>
         <details className="dhouse-privacy"><summary>Public and private details</summary>{visibility}</details>
       </> : visibility}
+      {trailerGate(p, { shared: true }) && <p className="field-error" role="alert">{trailerGate(p, { shared: true })}</p>}
       <Button
         block
         size="l"
+        disabled={!!trailerGate(p, { shared: true })}
         onClick={() => {
           updateProject(id, { shared: true, publicTitle: title.trim() || undefined });
           done();
@@ -457,9 +464,11 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
       <Sheet open={artPicker} onClose={() => setArtPicker(false)} title="Project image" size="tall"><MediaPicker single kind="image" selected={[]} onDone={items => { setArt(items[0]); setArtPicker(false); }} /></Sheet>
       {art && <MediaFramingEditor media={art} surface="project-hero" onChange={setArt} title="Project hero framing" />}
       {district && <div><span className="field-label">Release date</span><DateField label="Release date" value={releaseDate} onChange={setReleaseDate} clearable /></div>}
+      {trailerGate(p, { stage }) && <p className="field-error" role="alert">{trailerGate(p, { stage })}</p>}
       <Button
         block
         size="l"
+        disabled={!!trailerGate(p, { stage })}
         onClick={() => {
           updateProject(id, { publicTitle: title.trim() || undefined, logline: logline.trim() || undefined, stage, artwork: art, ...(district ? { releaseDate: releaseDate || undefined } : {}) });
           done();
