@@ -213,6 +213,8 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
 // Discover opens on Posts: a grid of work first, People, Opportunities, Projects and Events beside it.
 // On /test it stays on People, so the Home comparison changes one thing only (like Events).
 const DISCOVER_DEFAULT: Scope = TEST_MODE ? 'people' : 'posts';
+// The same rule for the District Discover, which /test now uses: the study's scenarios start Discover on People.
+const DISTRICT_CHIP_DEFAULT: DiscoverChip = TEST_MODE ? 'people' : DISCOVER_CHIP_DEFAULT;
 
 
 const TAB_TITLE: Record<string, string> = { home: 'Home', discover: 'Discover', inbox: 'Inbox', profile: 'Profile' };
@@ -222,7 +224,7 @@ function Phone({ app = false }: { app?: boolean }) {
   const { tab, setTab, stack, viewer } = store;
   const [discoverScope, setDiscoverScope] = useState<Scope>(DISCOVER_DEFAULT);
   // District Discover's chip: Home's tiles and "See all" open it on a chip; switching chips adds no Back step.
-  const [districtChip, setDistrictChip] = useState<DiscoverChip>(DISCOVER_CHIP_DEFAULT);
+  const [districtChip, setDistrictChip] = useState<DiscoverChip>(DISTRICT_CHIP_DEFAULT);
   const [houseChip, setHouseChip] = useState<DiscoverChip>('people');
   const [housePeopleFocus, setHousePeopleFocus] = useState<HousePeopleFocus>({ roleId: null, n: 0 });
   const openHouseDiscover = (chip: DiscoverChip = 'people', roleId: string | null = null) => {
@@ -231,7 +233,7 @@ function Phone({ app = false }: { app?: boolean }) {
     setTab('discover');
   };
   const openDistrict = (c?: DiscoverChip) => {
-    setDistrictChip(c ?? DISCOVER_CHIP_DEFAULT);
+    setDistrictChip(c ?? DISTRICT_CHIP_DEFAULT);
     setTab('discover');
   };
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
