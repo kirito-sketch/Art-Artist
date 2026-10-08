@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import type { Media, Org } from '../../data/types';
 import { Avatar, Photo, Verified } from '../../ui/primitives';
@@ -14,10 +14,12 @@ import { scriptLang } from '../../ui/compose';
  * Over the image, bottom-up like a film's title card: the house mark, an eyebrow (production house and city), the
  * name, its line, the record (projects, credited people, open roles), then the actions. A slate above names what
  * the house is making now.
+ *
+ * The hero is pinned while the page's sheet slides up over it (the same cover-slide as an individual profile).
  */
 const HOLD = 6500;
 
-export function HouseHero({ o, stills, slate, record, actions, bar, own, onSwitch, onExplore, active }: {
+export function HouseHero({ o, stills, slate, record, actions, bar, own, onSwitch, onExplore, active, depth = 0 }: {
   o: Org;
   stills: Media[];
   slate?: { label: string; title: string };
@@ -28,6 +30,8 @@ export function HouseHero({ o, stills, slate, record, actions, bar, own, onSwitc
   onSwitch: () => void;
   onExplore: () => void;
   active: boolean;
+  /** 0 → 1 as the sheet slides up over the pinned hero (drives the cover-slide in CSS). */
+  depth?: number;
 }) {
   const reduce = useReducedMotion();
   const [shot, setShot] = useState(0);
@@ -41,7 +45,7 @@ export function HouseHero({ o, stills, slate, record, actions, bar, own, onSwitc
   }, [moving, stills.length]);
 
   return (
-    <div className={`hhero${moving ? ' hhero--moving' : ''}`} data-hero>
+    <div className={`hhero${moving ? ' hhero--moving' : ''}`} data-hero style={{ '--hero-t': reduce ? 0 : depth } as CSSProperties}>
       <div className="hhero-reel" aria-hidden>
         {stills.length ? (
           stills.map((m, i) => (

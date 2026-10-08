@@ -495,6 +495,13 @@ These QA scripts live in the session scratchpad, not the repository. Their check
   - Own house: Open a role is primary.
   - Visitor: Follow is solid green.
 - **Deep link:** `?org=<id>` opens a house page (QA and Studio).
+- **Review feedback, round 2:**
+  - **Posters supplied.** Six prototype posters are now live (`POSTER_INVENTORY.md`).
+  - **Edit profile is solid green**, matching Follow: one primary action on every profile.
+  - **Cover-slide.** On both the person and house pages, the hero is pinned (`position: sticky`) and the sheet slides up over it, casting a soft shadow.
+    - As the sheet rises, `--hero-t` (0 → 1) eases the image in by 6% and dims it by up to 60%, and the title card lifts 40 px and fades out.
+    - Only transform and opacity change. With Reduced Motion the sheet still covers the hero, but nothing moves.
+    - The compact header now appears once the sheet is about 100 px from the top.
 - **Empty state:** a profile with nothing to show yet gets one quiet line, plus Add work on your own profile, instead of an empty sheet. Empty Professional details and leading bands are suppressed.
 
 **Measured (Kiran, own, 393 px):**

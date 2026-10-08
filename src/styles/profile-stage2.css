@@ -303,3 +303,23 @@
 @media (prefers-reduced-transparency: reduce) {
   .hhero-slate { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(18, 18, 20, 0.86); }
 }
+
+/* ===================================================== Cover-slide (review feedback)
+ * The cinematic hero stays pinned while the content sheet slides up over it, like a curtain card over the title:
+ * the hero never scrolls away. As the sheet rises (--hero-t, 0 → 1, written by src/ui/useHeroParallax.ts and
+ * HouseHero), the image eases in a little and dims, and the title card lifts and fades. Only transform and opacity
+ * change. With Reduced Motion --hero-t stays 0: the sheet still covers the hero, but nothing moves or fades. */
+.phone .v-profile--immersive .phero,
+.phone .hpage--cine .hhero { position: sticky; top: 0; z-index: 0; }
+.phone .v-profile--immersive .psheet,
+.phone .hpage--cine .psheet { z-index: 3; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.22); }
+.phone .v-profile--immersive .phero .ohero-parallax { transform: scale(calc(1 + 0.06 * var(--hero-t, 0))) !important; transform-origin: 50% 35%; will-change: transform; }
+.phone .hpage--cine .hhero-reel { transform: scale(calc(1 + 0.06 * var(--hero-t, 0))); transform-origin: 50% 35%; will-change: transform; }
+.phone .v-profile--immersive .phero-dim { display: block; position: absolute; inset: 0; z-index: 2; background: #000; pointer-events: none; opacity: calc(0.6 * var(--hero-t, 0)) !important; }
+.phone .hpage--cine .hhero::after { content: ''; position: absolute; inset: 0; z-index: 2; background: #000; pointer-events: none; opacity: calc(0.6 * var(--hero-t, 0)); }
+.phone .v-profile--immersive .phero .profile-intro,
+.phone .hpage--cine .hhero-intro { z-index: 3; opacity: calc(1 - 1.5 * var(--hero-t, 0)); transform: translate3d(0, calc(-40px * var(--hero-t, 0)), 0) scale(calc(1 - 0.05 * var(--hero-t, 0))); will-change: transform, opacity; }
+.phone .v-profile--immersive .phero .profile-scroll-cue,
+.phone .hpage--cine .hhero-cue { z-index: 3; opacity: calc(1 - 4 * var(--hero-t, 0)); }
+.phone .v-profile--immersive .phero .phero-bar,
+.phone .hpage--cine .hhero .phero-bar { z-index: 4; }

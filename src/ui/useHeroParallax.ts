@@ -39,6 +39,8 @@ export function useHeroParallax(onOver: (over: boolean) => void) {
     const frame = () => {
       raf = 0;
       const y = Math.max(0, sc.scrollTop);
+      // --hero-t (0 → 1 over the hero's height) drives the immersive profile's cover-slide in CSS.
+      hero.style.setProperty('--hero-t', reduced.matches ? '0' : Math.min(1, y / height).toFixed(3));
       if (reduced.matches) {
         photo.style.transform = '';
         if (dim) dim.style.opacity = '';
@@ -47,7 +49,8 @@ export function useHeroParallax(onOver: (over: boolean) => void) {
         photo.style.transform = `translate3d(0, ${(y * SPEED).toFixed(1)}px, 0) scale(${(1 + SCALE * t).toFixed(4)})`;
         if (dim) dim.style.opacity = (DIM * t).toFixed(3);
       }
-      const now = y < height * 0.75;
+      // The pinned hero is under the status bar until the sheet has nearly reached the top.
+      const now = y < height - 100;
       if (now !== isOver) {
         isOver = now;
         over.current(now);
@@ -69,6 +72,7 @@ export function useHeroParallax(onOver: (over: boolean) => void) {
       reduced.removeEventListener?.('change', onScroll);
       photo.style.transform = '';
       if (dim) dim.style.opacity = '';
+      hero.style.removeProperty('--hero-t');
     };
   }, []);
 }

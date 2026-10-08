@@ -1,6 +1,6 @@
 # Poster inventory
 
-Verified credits and a house's "Made by us" show each film as a 2:3 theatrical poster (`src/ui/PosterCard.tsx`, decision D4). No official poster artwork exists in the repository yet: `public/images/posters/` is empty. Until it's supplied, every card shows the **type-set poster**: the title in the display face on a deep ground, with the production and year.
+Verified credits and a house's "Made by us" show each film as a 2:3 theatrical poster (`src/ui/PosterCard.tsx`, decision D4). Six posters are supplied (2026-10-08) and live in `public/images/posters/`. Any other film shows the **type-set poster**: the title in the display face on a deep ground, with the production and year.
 
 **Prototype posters.** The product owner approved generated posters for these fictional films on 2026-10-08. The prompts are in `POSTER_PROMPTS.md`.
 
@@ -17,7 +17,16 @@ Verified credits and a house's "Made by us" show each film as a 2:3 theatrical p
 
 The card switches automatically, and its `data-poster` attribute changes from `typeset` to `supplied`.
 
-## Needed now
+## Supplied (2026-10-08)
+
+All six posters are in. They were cut from one contact sheet, so each is 334 × 501 px and slightly cropped at the sides to reach 2:3:
+
+- Neeli Raat loses part of the nurse's shoulder.
+- Dhoop loses the lighthouse at the right edge.
+
+Sharper, full-frame originals (600 × 900 or larger) can be dropped in over the same files.
+
+## Originally needed
 
 These projects are public and appear as poster cards: in a verified credit, or in "Made by us" once released.
 

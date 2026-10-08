@@ -299,7 +299,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           {selectedCover.showreel && <button className="profile-play" onClick={() => setReelOpen(true)}><Play size={16} fill="currentColor" /> Play showreel</button>}
           <div className={`profile-actions${own ? ' profile-actions--self' : ''}`}>
           {own ? (
-            <Button block variant="secondary" onClick={() => push({ name: 'editProfile' })}>
+            <Button block variant="primary" onClick={() => push({ name: 'editProfile' })}>
               Edit profile
             </Button>
           ) : (

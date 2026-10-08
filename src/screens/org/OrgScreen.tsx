@@ -247,6 +247,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           onSwitch={() => openSheet({ name: 'identity' })}
           onExplore={() => { const el = scroller.current; const sheet = el?.querySelector<HTMLElement>('.psheet'); if (el && sheet) el.scrollTo({ top: sheet.offsetTop - 64, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }}
           active={scrollY < 500}
+          depth={Math.min(1, Math.max(0, scrollY) / (scroller.current?.querySelector<HTMLElement>('.hhero')?.offsetHeight || 700))}
         />
       ) : (
         <div className={`whero whero--org${dirOn ? ' whero--controls-only' : ''}`}>
