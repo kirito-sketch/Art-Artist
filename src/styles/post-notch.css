@@ -8,24 +8,28 @@
  *   M168 0 A12 12 0 0 1 156 12   convex corner on the right edge
  *   H28 A16 16 0 0 0 12 28       inner concave corner
  *   V48 A12 12 0 0 1 0 60        convex corner on the bottom edge
- *   H168 Z
+ *   V68 H176 V0 Z                runs 8 px past the card's right and bottom edges, so no
+ *                                anti-aliased hairline of the media survives along them
  */
 .ana-post-stage--notch {
   --notch-w: 156px;
   --notch-h: 48px;
-  --notch-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='60' viewBox='0 0 168 60'%3E%3Cpath d='M168 0A12 12 0 0 1 156 12H28A16 16 0 0 0 12 28V48A12 12 0 0 1 0 60H168Z'/%3E%3C/svg%3E");
+  --notch-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='176' height='68' viewBox='0 0 176 68'%3E%3Cpath d='M168 0A12 12 0 0 1 156 12H28A16 16 0 0 0 12 28V48A12 12 0 0 1 0 60V68H176V0Z'/%3E%3C/svg%3E");
 }
 .ana-post-stage--notch .ana-post-track {
   -webkit-mask-image: var(--notch-mask), linear-gradient(#000 0 0);
-  -webkit-mask-position: right bottom, 0 0;
-  -webkit-mask-size: 168px 60px, 100% 100%;
+  -webkit-mask-position: right -8px bottom -8px, 0 0;
+  -webkit-mask-size: 176px 68px, 100% 100%;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-composite: xor;
   mask-image: var(--notch-mask), linear-gradient(#000 0 0);
-  mask-position: right bottom, 0 0;
-  mask-size: 168px 60px, 100% 100%;
+  mask-position: right -8px bottom -8px, 0 0;
+  mask-size: 176px 68px, 100% 100%;
   mask-repeat: no-repeat;
   mask-composite: exclude;
+  /* That corner lies wholly inside the cut-out. Squared, its own rounded clip can't leave an anti-aliased arc behind
+     (the track scrolls, and its corner clip is drawn apart from the mask). */
+  border-bottom-right-radius: 0;
 }
 
 /* The actions: three 44 px targets in the cut-out, Like, Share, Save. Ink on the page ground, never glass. */
