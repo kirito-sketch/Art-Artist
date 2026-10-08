@@ -1,4 +1,5 @@
-import { cardRatio, CARD_LANDSCAPE } from '../../domain/mediaPresentation';
+import { cardRatio, CARD_LANDSCAPE, displayedSource } from '../../domain/mediaPresentation';
+import { mediaRatio } from '../../domain/mediaLayout';
 import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { scriptLang } from '../../ui/compose';
 import { useEffect, useState } from 'react';
@@ -15,6 +16,8 @@ import { eventsOfHost } from '../../state/events';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
 import { useFeatures } from '../../ui/features';
 import { ScoreLine } from '../reviews/reviewUnits';
+import { DIRECTION } from '../../ui/designDirection';
+import { HeroIntro } from '../profile/HeroDirections';
 
 /**
  * The organisation's public identity. One page: visitors see it from a byline, a credit or search;
@@ -30,6 +33,8 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const { pop, push, openSheet, acting, following, toggleFollow, startConversation, setHero, showToast, blocked, roleStatus, memberships, setActing, events, viewer } = useStore();
   const o = org(id);
   const district = useFeatures().home === 'district';
+  // Review directions only (docs/PROFILE_GLASS_DIRECTIONS.md): the house hero, identity and actions as one composition.
+  const dirOn = district && DIRECTION !== 'current';
   const own = acting === id;
   const [scrollY, setScrollY] = useState(0);
   const heroKey = isTab ? 'org-tab' : `org-${id}`;
@@ -64,7 +69,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
     </section>
   );
   const hiring = roles.length > 0 && (
-    <section key="hiring" className="section section--flush">
+    <section key="hiring" id={`hiring-${id}`} className="section section--flush">
       <SectionHeader title={`Hiring · ${roles.length}`} />
       <div className="list list--flush">
         {roles.map((r) => (
@@ -115,7 +120,37 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 
   return (
     <div className={`screen screen--hero${district ? ' dhouse-page dhouse-profile' : ''}`} data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
-      <div className="whero whero--org">
+      {dirOn && <div className={`dirhouse dirhouse--${DIRECTION}`}>
+        {/* The still plays at its own wide shape, like a screen; never blown up to fill a tall phone. */}
+        <div className="dirhouse-media" style={{ aspectRatio: hero ? Math.max(1.5, Math.min(2.39, mediaRatio(displayedSource(hero)))) : 16 / 9 }}>{hero ? <Photo surface="project-hero" media={hero} frameRatio={Math.max(1.5, Math.min(2.39, mediaRatio(displayedSource(hero))))} showPlay={false} /> : <div className="whero-empty" />}</div>
+        <span className="dirhouse-shade" aria-hidden />
+        {DIRECTION === 'b' && live[0] && <span className="glass-chip dirhouse-slate">Now making · {live[0].title}</span>}
+        <div className="profile-intro profile-intro--dir">
+          <HeroIntro
+            dir={DIRECTION as 'a' | 'b' | 'c'}
+            facts={{
+              name: o.name,
+              verified: o.verified,
+              role: 'Production house',
+              place: [o.city, o.about.replace(/\.$/, '')].filter(Boolean).join(' · '),
+              facts: [`${ws.length} ${ws.length === 1 ? 'project' : 'projects'}`, `${people.length} credited people`],
+              status: roles.length ? `${roles.length} open ${roles.length === 1 ? 'role' : 'roles'}` : undefined,
+              ledeKicker: live[0] ? 'Now making' : made[0] ? 'Latest release' : undefined,
+              lede: live[0] ? `${live[0].title} · ${live[0].format}` : made[0] ? `${made[0].title} · ${made[0].year}` : undefined,
+              nameSwitch: own ? { label: 'Switch identity', onPress: () => openSheet({ name: 'identity' }) } : undefined,
+            }}
+            primary={own ? (
+              <button className="cta cta--solid" onClick={() => openSheet({ name: 'pickProject' })}>Open a role</button>
+            ) : memberships.includes(id) ? (
+              <button className="cta cta--solid" onClick={() => setActing(id, true, true)}>Switch to {o.name}</button>
+            ) : (
+              <button className={`cta ${isFollowing ? 'cta--glass cta--on' : 'cta--solid'}`} aria-pressed={isFollowing} onClick={() => toggleFollow(id)}>{isFollowing ? 'Following' : 'Follow'}</button>
+            )}
+            secondary={roles.length > 0 && !own ? <button className="cta cta--glass" onClick={() => document.getElementById(`hiring-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Open roles</button> : undefined}
+          />
+        </div>
+      </div>}
+      <div className={`whero whero--org${dirOn ? ' whero--controls-only' : ''}`}>
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
           {hero ? <Photo surface="project-hero" media={hero} className="whero-photo" showPlay={false} /> : <div className="whero-photo whero-empty" />}
         </div>
@@ -144,7 +179,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       </div>
 
       <div className="psheet">
-        <header className="org-id">
+        <header className="org-id" hidden={dirOn}>
           <Avatar party={o} size={64} />
           {own ? (
             <button className="org-name org-name--switch" onClick={() => openSheet({ name: 'identity' })} aria-label="Switch identity">
@@ -172,7 +207,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
           <EmptyState icon={<Lock />} title={`You blocked ${o.name}`} body="Unblock from More to see their work and roles again." />
         ) : (
           <>
-            <div className="profile-actions">
+            <div className="profile-actions" hidden={dirOn}>
               {own ? (
                 <>
                   <Button block variant="secondary" onClick={() => showToast({ text: 'House details are set up with Art and Artist during onboarding' })}>

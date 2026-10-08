@@ -8,6 +8,7 @@ import { Avatar } from '../ui/primitives';
 import { shared, spring } from '../ui/motion';
 import { focusables, inertProps } from '../ui/a11y';
 import { TabIcon } from './TabIcon';
+import { DIRECTION } from '../ui/designDirection';
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -51,6 +52,8 @@ export function TabBar() {
         {...inertProps(createOpen)}
         aria-current={active ? 'page' : undefined}
       >
+        {/* Review directions: the selected tab sits on a lens that glides between tabs (docs/PROFILE_GLASS_DIRECTIONS.md). */}
+        {active && DIRECTION !== 'current' && DIRECTION !== 'c' && <motion.span layoutId="tab-lens" className="tab-lens" transition={spring.settle} aria-hidden />}
         <span className="tab-icon">
           {it.id === 'profile' ? (
             // The ring frame stays put; inside it the avatar morphs when you switch who you act as.

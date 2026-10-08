@@ -1,0 +1,307 @@
+/* ===================================================== Glass material and CTAs (docs/PROFILE_GLASS_DIRECTIONS.md)
+ * Review directions only: everything here is scoped to .phone[data-dir="a|b|c"] or to elements that only render
+ * when ?dir= is set. Glass is for floating controls over content (navigation, hero controls, action groups,
+ * overlays), never for reading surfaces. Every glass surface has a solid fallback for reduced transparency and for
+ * browsers without backdrop-filter. */
+
+.phone[data-dir='a'],
+.phone[data-dir='b'],
+.phone[data-dir='c'] {
+  /* On paper and app surfaces */
+  --glass-fill: rgba(255, 255, 255, 0.58);
+  --glass-edge: rgba(255, 255, 255, 0.7);
+  --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 10px 30px rgba(28, 22, 14, 0.13), 0 1px 3px rgba(28, 22, 14, 0.08);
+  --glass-ink: #1b1a18;
+  --glass-ink-2: rgba(27, 26, 24, 0.62);
+  /* Over photography: a darker tint keeps white text readable on bright and busy images */
+  --glass-fill-media: rgba(18, 18, 20, 0.36);
+  --glass-edge-media: rgba(255, 255, 255, 0.24);
+  --glass-hi-media: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --glass-blur: 22px;
+  --glass-sat: 170%;
+}
+
+html[data-theme='dark'] .phone[data-dir='a'],
+html[data-theme='dark'] .phone[data-dir='b'],
+html[data-theme='dark'] .phone[data-dir='c'] {
+  --glass-fill: rgba(40, 38, 35, 0.55);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 12px 34px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --glass-ink: #f4f1ec;
+  --glass-ink-2: rgba(244, 241, 236, 0.62);
+}
+
+/* ---------------------------------------------------------------- CTAs: one family, three weights */
+.cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease-out, background-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.cta:active { transform: scale(0.97); }
+.cta:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.cta:disabled,
+.cta[aria-disabled='true'] { opacity: 0.45; pointer-events: none; }
+.cta[aria-busy='true'] { color: transparent; }
+.cta[aria-busy='true']::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(127, 127, 127, 0.35); border-top-color: currentColor; animation: cta-spin 0.8s linear infinite; }
+@keyframes cta-spin { to { transform: rotate(360deg); } }
+
+/* High emphasis: solid. Over imagery it is white; on app surfaces it is the action colour. */
+.cta--solid { background: #fff; color: #141414; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
+.cta--solid:hover { background: #f1f1f1; }
+/* Medium emphasis: glass. Only over imagery or as part of a floating group. */
+.cta--glass {
+  background: var(--glass-fill-media);
+  color: #fff;
+  box-shadow: var(--glass-hi-media), inset 0 0 0 1px var(--glass-edge-media);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+/* Selected (Following): stays visible but steps down, with a check, so the change is felt and reversible. */
+.cta--on { font-weight: 600; }
+/* Low emphasis on app surfaces (compact header) */
+.cta--quiet { background: var(--fill); color: var(--text); box-shadow: inset 0 0 0 1px var(--hairline); }
+.cta--s { min-height: 34px; padding: 0 14px; font-size: 13px; }
+.cta--s::before { content: ''; position: absolute; inset: -6px -2px; } /* 44px touch target */
+.profile-compact .cta--solid { background: var(--action); color: var(--on-action, #fff); box-shadow: none; }
+
+.cta-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.12s ease-out;
+}
+.cta-icon:active { transform: scale(0.94); }
+.cta-icon:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.cta-icon--glass {
+  background: var(--glass-fill-media);
+  box-shadow: var(--glass-hi-media), inset 0 0 0 1px var(--glass-edge-media);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+/* Hero controls (back, share, more) in the directions: the same glass as the CTAs, not a third style */
+.phone[data-dir='a'] .phero-bar .icon-btn,
+.phone[data-dir='b'] .phero-bar .icon-btn,
+.phone[data-dir='c'] .phero-bar .icon-btn {
+  background: var(--glass-fill-media);
+  border: 0;
+  box-shadow: var(--glass-hi-media), inset 0 0 0 1px var(--glass-edge-media);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------- Glass building blocks over imagery */
+.glass-card,
+.glass-group,
+.glass-chip {
+  background: var(--glass-fill-media);
+  color: #fff;
+  box-shadow: var(--glass-hi-media), inset 0 0 0 1px var(--glass-edge-media);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+.glass-card { border-radius: 22px; padding: 14px 16px; }
+.glass-group { border-radius: 999px; padding: 5px; }
+/* Inside a group the glass buttons drop their own surface: one layer of glass, never glass on glass. */
+.glass-group .cta--glass,
+.glass-group .cta-icon--glass { background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.glass-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.glass-chip--status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4cc38a; }
+
+/* ---------------------------------------------------------------- Individual hero (directions) */
+.v-profile--dir .profile-intro--dir { text-shadow: none; }
+.v-profile--dir .profile-play,
+.v-profile--dir .pid-available { display: none; }
+/* A softer scrim: clear at the top for the subject, a short deep fade where text sits. */
+.phone .v-profile--dir .phero::after {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.32) 0, rgba(0, 0, 0, 0) 18%, rgba(0, 0, 0, 0) 46%, rgba(0, 0, 0, 0.42) 64%, rgba(0, 0, 0, 0.78) 100%);
+}
+.dirh { color: #fff; }
+.dirh-name {
+  margin: 0;
+  display: block;
+  font-family: var(--display, inherit);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: #fff;
+  text-wrap: balance;
+}
+.dirh-name .verified, .dirh-name svg { display: inline-block; vertical-align: 0.12em; margin-left: 6px; }
+.dirh-name-switch { display: inline; text-align: inherit;  padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; }
+.dirh-role { margin: 8px 0 0; font-size: 16px; font-weight: 600; }
+.dirh-place { margin: 4px 0 0; font-size: 13px; color: rgba(255, 255, 255, 0.78); }
+.dirh-actions { display: flex; align-items: center; gap: 8px; }
+
+/* A · Poster: centred, one card, one action group */
+.dirh--a { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.dirh--a .dirh-card { width: min(100%, 340px); margin-top: 14px; }
+.dirh-kicker { display: block; margin-bottom: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.72); }
+.dirh-lede { margin: 0; font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dirh-facts { margin: 6px 0 0; font-size: 12px; color: rgba(255, 255, 255, 0.78); }
+.dirh--a .glass-group { width: min(100%, 340px); margin-top: 10px; }
+.dirh--a .dirh-actions .cta { flex: 1; }
+
+/* B · Title card: left-aligned lower third, name large, facts as chips, solid primary + glass secondary */
+.dirh--b { text-align: left; }
+.dirh-eyebrow { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.86); }
+.dirh--b .dirh-name { font-size: 46px; line-height: 0.94; }
+.dirh--b .dirh-place { margin-top: 8px; font-size: 14px; }
+.dirh-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.dirh--b .dirh-actions { margin-top: 16px; }
+.dirh--b .dirh-actions .cta--solid { flex: 1.4; }
+.dirh--b .dirh-actions .cta--glass { flex: 1; }
+.phone .v-profile--dir.dir-b .profile-intro--dir,
+.phone .v-profile--dir.dir-a .profile-intro--dir { left: 20px; right: 20px; }
+
+/* C · Framed print: the image is an inset print, the identity a solid panel; glass only on image controls */
+.phone .v-profile--dir.dir-c .phero { margin: 8px 10px 0; width: auto; border-radius: 28px; overflow: hidden; height: calc(var(--phone-h, 100dvh) - var(--profile-work-peek, 64px) - 8px); }
+.phone .v-profile--dir.dir-c .profile-intro--dir {
+  left: 10px;
+  right: 10px;
+  padding: 16px 18px 18px;
+  border-radius: 22px;
+  background: var(--raised, #fff);
+  color: var(--text);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  text-align: left;
+}
+.dirh--c,
+.dirh--c .dirh-name,
+.dirh--c .dirh-place { color: var(--text); }
+.dirh--c .dirh-eyebrow { color: var(--text-2); }
+.dirh--c .dirh-name { font-size: 32px; }
+.dirh--c .dirh-place { color: var(--text-2); }
+.dirh-status { display: inline-flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 13px; font-weight: 600; color: var(--success, #2f7d4f); }
+.dirh-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.dirh--c .dirh-actions { margin-top: 14px; }
+.dirh--c .dirh-actions .cta { flex: 1; }
+.dirh--c .cta--solid { background: var(--action); color: var(--on-action, #fff); box-shadow: none; }
+.dirh--c .cta--glass,
+.dirh--c .cta-icon--glass { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1.5px var(--line); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.dirh--c .cta-icon:focus-visible { outline-color: var(--text); }
+
+/* ---------------------------------------------------------------- House hero (directions)
+   A studio, not a person: the featured still plays at its own wide shape like a screen, and the house's identity sits
+   on a dark stage beneath it, in both themes. */
+.whero--controls-only { position: absolute; inset: 0 0 auto; height: auto !important; min-height: 0 !important; overflow: visible !important; z-index: 4; background: none !important; }
+.whero--controls-only .ohero-parallax { display: none; }
+.dhouse-profile [hidden] { display: none !important; }
+.dirhouse { position: relative; display: flex; flex-direction: column; background: #0f0f10; padding-top: calc(var(--status-bar, 12px) + 56px); padding-bottom: 40px; }
+.dirhouse-media { position: relative; width: 100%; overflow: hidden; background: #000; }
+.dirhouse-media .photo,
+.dirhouse-media .whero-empty { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dirhouse-shade { display: none; }
+.dirhouse .profile-intro--dir { position: relative; inset: auto; padding: 22px 20px 0; text-shadow: none; }
+.dirhouse-slate { position: absolute; z-index: 2; left: 20px; top: calc(var(--status-bar, 12px) + 68px); }
+.dirhouse .dirh-name { font-size: 42px; }
+.dirhouse ~ .psheet { margin-top: -24px; }
+.dirhouse--c { background: transparent; padding-top: calc(var(--status-bar, 12px) + 56px); }
+.dirhouse--c .dirhouse-media { margin: 0 10px; width: auto; border-radius: 22px; }
+.dirhouse--c .profile-intro--dir { margin: 12px 10px 0; padding: 16px 18px 18px; border-radius: 22px; background: var(--raised, #fff); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); }
+.dirhouse--c ~ .psheet { margin-top: 0; }
+/* On the house stage the top controls sit above the still, on dark: same glass */
+.phone[data-dir] .dhouse-profile .whero--controls-only .phero-bar .icon-btn { color: #fff; }
+
+/* ---------------------------------------------------------------- Bottom navigation (directions) */
+.phone[data-dir='a'] .tabbar-pill,
+.phone[data-dir='b'] .tabbar-pill,
+.phone[data-dir='c'] .tabbar-pill {
+  background: var(--glass-fill);
+  box-shadow: var(--glass-hi), inset 0 0 0 1px var(--glass-edge), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+/* Over a hero image the bar takes the darker media tint, so its labels stay readable on bright and busy pictures */
+.phone[data-dir='a'][data-chrome='light'] .tabbar-pill,
+.phone[data-dir='b'][data-chrome='light'] .tabbar-pill {
+  background: var(--glass-fill-media);
+  box-shadow: var(--glass-hi-media), inset 0 0 0 1px var(--glass-edge-media), 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.phone[data-dir='a'][data-chrome='light'] .tab-item,
+.phone[data-dir='b'][data-chrome='light'] .tab-item { color: rgba(255, 255, 255, 0.78); }
+.phone[data-dir='a'][data-chrome='light'] .tab-item .tab-label,
+.phone[data-dir='b'][data-chrome='light'] .tab-item .tab-label { color: rgba(255, 255, 255, 0.82); }
+
+.phone[data-dir] .tab-item { isolation: isolate; }
+.tab-lens { position: absolute; inset: 2px 0; z-index: -1; border-radius: 22px; }
+/* A: the selected tab is a solid white capsule (the reference's selected segment) */
+.phone[data-dir='a'] .tab-lens { background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); }
+html[data-theme='dark'] .phone[data-dir='a'] .tab-lens { background: rgba(255, 255, 255, 0.92); }
+.phone[data-dir='a'] .tab-item.is-on .tab-label,
+.phone[data-dir='a'][data-chrome='light'] .tab-item.is-on .tab-label { color: #141414; }
+/* B: the selected tab sits on a clear lens: brighter glass with a top highlight and a fine rim */
+.phone[data-dir='b'] .tab-lens {
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.75), 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+html[data-theme='dark'] .phone[data-dir='b'] .tab-lens,
+.phone[data-dir='b'][data-chrome='light'] .tab-lens {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.phone[data-dir='b'][data-chrome='light'] .tab-item.is-on .tab-label { color: #fff; }
+/* C: a quieter frosted bar, nearly solid, with the existing colour-and-weight selected state */
+.phone[data-dir='c'] .tabbar-pill { background: color-mix(in srgb, var(--raised, #fff) 82%, transparent); }
+
+/* ---------------------------------------------------------------- Accessibility and fallbacks */
+@media (prefers-reduced-transparency: reduce) {
+  .phone[data-dir] .tabbar-pill,
+  .phone[data-dir] .cta--glass,
+  .phone[data-dir] .cta-icon--glass,
+  .phone[data-dir] .glass-card,
+  .phone[data-dir] .glass-group,
+  .phone[data-dir] .glass-chip,
+  .phone[data-dir] .phero-bar .icon-btn {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .phone[data-dir] .tabbar-pill { background: var(--raised, #fff); }
+  .phone[data-dir][data-chrome='light'] .tabbar-pill,
+  .phone[data-dir] .cta--glass,
+  .phone[data-dir] .cta-icon--glass,
+  .phone[data-dir] .glass-card,
+  .phone[data-dir] .glass-group,
+  .phone[data-dir] .glass-chip,
+  .phone[data-dir] .phero-bar .icon-btn { background: rgba(22, 22, 24, 0.86); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .phone[data-dir] .tabbar-pill { background: var(--raised, #fff); }
+  .phone[data-dir] .cta--glass,
+  .phone[data-dir] .glass-card,
+  .phone[data-dir] .glass-group,
+  .phone[data-dir] .glass-chip { background: rgba(22, 22, 24, 0.78); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta, .cta-icon { transition: none; }
+  .cta:active, .cta-icon:active { transform: none; }
+}
+
+/* The hero runs to the bottom edge so the floating bar sits over the image (where its media tint belongs), and the
+   work begins directly below the image: one composition, like the reference. */
+.phone .v-profile--dir { --profile-work-peek: 0px; }

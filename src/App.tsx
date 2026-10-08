@@ -8,6 +8,7 @@ import { CollabComposer } from './screens/create/CollabComposer';
 import { PostComposer } from './screens/create/PostComposer';
 import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
 import { DISCOVER_CHIP_DEFAULT, type DiscoverChip } from './domain/contentTypes';
+import { DIRECTION } from './ui/designDirection';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { HomeNext } from './screens/home/HomeNext';
 import { DistrictHome } from './screens/home/DistrictHome';
@@ -344,7 +345,7 @@ function Phone({ app = false }: { app?: boolean }) {
     <MotionConfig reducedMotion="user">
     <LayoutGroup>
     <ModalContext.Provider value={modalLayer}>
-    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal" data-home={features.home} data-acting={store.acting}>
+    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal" data-home={features.home} data-acting={store.acting} data-chrome={statusTone} data-dir={DIRECTION}>
       <div className="phone-screen" ref={screen}>
         {/* App mode runs on the real device: it supplies the status bar and home indicator. */}
         {!app && <StatusBar tone={statusTone} />}

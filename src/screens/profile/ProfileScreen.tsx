@@ -1,4 +1,6 @@
 import { workRows } from '../../domain/workRows';
+import { DIRECTION } from '../../ui/designDirection';
+import { HeroIntro } from './HeroDirections';
 import { LegacyProfileCredits } from './LegacyProfileCredits';
 import { ProfileCreditsSection } from './ProfileCredits';
 import { workPreferencesOf } from '../../state/workPreferences';
@@ -12,7 +14,7 @@ import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
 import { useFeatures } from '../../ui/features';
 import { FeaturedWorkSection } from './WorkPortfolio';
-import { Ban, Bookmark, Camera, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, Check, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
@@ -195,10 +197,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   };
 
   return (
-    <div ref={attachScroll} className={`screen screen--hero canvas v-profile${district ? ' v-profile--immersive' : ''}${!isTab ? ' v-profile--pushed' : ''}`} data-scroll={isTab ? 'profile' : undefined}>
+    <div ref={attachScroll} className={`screen screen--hero canvas v-profile${district ? ' v-profile--immersive' : ''}${district && DIRECTION !== 'current' ? ` v-profile--dir dir-${DIRECTION}` : ''}${!isTab ? ' v-profile--pushed' : ''}`} data-scroll={isTab ? 'profile' : undefined}>
       {district && <div className="profile-compact-slot"><header className="profile-compact" aria-hidden={overHero} {...(overHero ? { inert: '' } as Record<string, string> : {})}>
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
-        <span>{p.name}</span><IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
+        <span>{p.name}</span>{DIRECTION === 'b' && !own && <button className={`cta cta--s ${isFollowing ? 'cta--quiet cta--on' : 'cta--solid'}`} aria-pressed={isFollowing} onClick={() => toggleFollow(id)}>{isFollowing ? 'Following' : 'Follow'}</button>}<IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
       <div className={`phero phero--identity-${identityRegion}`} data-hero>
         <div className="ohero-parallax" data-hero-photo>
@@ -226,7 +228,36 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
           </IconButton>
         </div>
-        {district && <div className="profile-intro">
+        {district && DIRECTION !== 'current' && <div className="profile-intro profile-intro--dir">
+          <HeroIntro
+            dir={DIRECTION}
+            facts={{
+              name: p.name,
+              verified: p.identityVerified,
+              role: p.role,
+              place: [p.city, ...(p.languages?.length ? [p.languages.slice(0, 2).join(', ')] : [])].join(' · '),
+              facts: [`${credits.length} verified ${credits.length === 1 ? 'credit' : 'credits'}`, ...(p.years ? [`${p.years} years`] : [])],
+              status: preferences.configured && preferences.open ? availableLabel(preferences.from) : undefined,
+              lede: d.about?.split(/(?<=\.)\s/)[0],
+              nameRef: nameRef as RefObject<HTMLHeadingElement>,
+              nameSwitch: own && isTab && memberships.length > 0 ? { label: `${p.name}, switch identity`, onPress: () => openSheet({ name: 'identity' }) } : undefined,
+            }}
+            primary={own ? (
+              <button className="cta cta--glass" onClick={() => push({ name: 'editProfile' })}>Edit profile</button>
+            ) : (
+              <button className={`cta ${isFollowing ? 'cta--glass cta--on' : 'cta--solid'}`} aria-pressed={isFollowing} onClick={() => toggleFollow(id)}>
+                {isFollowing ? <><Check size={16} aria-hidden /> Following</> : 'Follow'}
+              </button>
+            )}
+            secondary={own ? undefined : (
+              <button className="cta cta--glass" onClick={() => { const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' }); cid && push({ name: 'conversation', id: cid }); }}>
+                {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
+              </button>
+            )}
+            onPlay={selectedCover.showreel ? () => setReelOpen(true) : undefined}
+          />
+        </div>}
+        {district && DIRECTION === 'current' && <div className="profile-intro">
           <header className="pid">
           <h1 ref={nameRef as RefObject<HTMLHeadingElement>} className="large-title display-title display-title--name" {...displayTitle(p.name)}>
             {own && isTab && memberships.length > 0 ? <button className="profile-name-switch" onClick={() => openSheet({ name: 'identity' })} aria-label={`${p.name}, switch identity`}>
@@ -274,7 +305,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </div>
         </div>}
-        {district && <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>}
+        {district && DIRECTION === 'current' && <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>}
       </div>
 
       <div className="psheet">
