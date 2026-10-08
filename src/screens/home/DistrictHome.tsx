@@ -10,10 +10,10 @@ import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
 import { blockedBy, discoverableProjects, discoverableRoles, searchablePeople } from '../../domain/discovery';
 import { workedWith } from '../../domain/home/graph';
 import type { DiscoverChip } from '../../domain/contentTypes';
-import { discoverPosts, org, party, person } from '../../state/selectors';
+import { discoverPosts, networkFor, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
-import { work, world } from '../../state/world';
+import { reviewsOf, work, world } from '../../state/world';
 import { typeLabel, whenLabel } from '../../domain/events';
 import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
 import { markOpened, markShown, readSeen } from '../../state/eventSeen';
@@ -25,7 +25,10 @@ import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHe
 import { SaveButton } from './OpportunityCard';
 import { eventArt } from '../../state/eventArt';
 import { FirstStep } from './FirstHome';
-import { spotCard, spotlightFor, type SpotCard } from './districtFeed';
+import { spotCard, spotlightFor, thisWeekFor, weekCard, type SpotCard, type WeekCard } from './districtFeed';
+import { WeekSpotlight } from './WeekSpotlight';
+import { NetworkRow } from './NetworkActivity';
+import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
 import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
 import { Sheet } from '../../ui/Sheet';
 
@@ -50,7 +53,7 @@ function motionOk() {
 
 export function DistrictHome({ go }: { go: Go }) {
   const store = useStore();
-  const { viewer, push, notifications, openSheet, events, following, userPosts, saved, userCollabs, roleStatus, acting, reloadKey, intent } = store;
+  const { viewer, push, notifications, openSheet, events, following, userPosts, saved, userCollabs, roleStatus, acting, reloadKey, intent, tab, sheet, stack, scenario, mayReview } = store;
   const features = useFeatures();
   const me = person(viewer.id);
   const unread = notifications.filter((n) => n.unread).length;
@@ -65,16 +68,29 @@ export function DistrictHome({ go }: { go: Go }) {
   const rolesOf = (w: Work) => roles.filter((o) => ('projectId' in o && (o as { projectId?: string }).projectId === w.id) || o.project === w.title);
   const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => p.media.length && p.authorId !== me.id);
   const pool = features.events ? visibleEvents(events, now, viewer.id, acting) : [];
-  const week = outThisWeek(now);
+  const thisWeekReleases = outThisWeek(now);
 
   // The Spotlight: chosen once for the session; a save, follow or block chooses again.
   const network = [...workedWith(me.id)];
   const spotlit = spotlightFor(
-    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool.filter(e => e.id !== seed.HOME_REQUEST_EVENT_ID), releases: week },
+    { now, me, roles, projects, rolesOf, posts: allPosts, events: pool.filter(e => e.id !== seed.HOME_REQUEST_EVENT_ID), releases: thisWeekReleases },
     { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
     [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
   );
-  const shown = new Set(spotlit.map((x) => x.key));
+  // Preview (?preview=home): Spotlight becomes "This week", notable things only (docs/HOME_SPOTLIGHT.md).
+  const week: WeekCard[] = HOME_PREVIEW
+    ? thisWeekFor(
+        { now, me, roles, projects, rolesOf, posts: allPosts, events: pool.filter((e) => e.id !== seed.HOME_REQUEST_EVENT_ID), releases: thisWeekReleases },
+        { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
+        [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
+      )
+        .map((it) => weekCard(it, { roles, events: pool, me, network, following, quote: (id) => { const f = featuredFor(id); return f?.text ? { text: f.text, by: person(f.personId).name } : undefined; } }))
+        .filter((c): c is WeekCard => !!c)
+        .map((c) => (c.media || c.type !== 'event' ? c : { ...c, media: eventArt(pool.find((e) => `event:${e.id}` === c.key)!) }))
+        .map((c) => (WEEK_TEST === 'noimg' ? { ...c, media: undefined } : c))
+        .slice(0, WEEK_TEST === '1' ? 1 : WEEK_TEST === '2' ? 2 : undefined)
+    : [];
+  const shown = new Set((HOME_PREVIEW ? week : spotlit).map((x) => x.key));
   const quote = (id: string) => {
     const f = featuredFor(id);
     return f?.text ? { text: f.text, by: person(f.personId).name } : undefined;
@@ -103,9 +119,10 @@ export function DistrictHome({ go }: { go: Go }) {
   // Keep one concrete request-to-attend example in the Home event shelf of this prototype.
   const requestExample = eventPool.find(e => e.id === seed.HOME_REQUEST_EVENT_ID && e.status === 'scheduled' && !blocked.includes(e.hostId));
   const upcoming = requestExample ? [requestExample, ...rankedEvents.filter(e => e.id !== requestExample.id && e.hostId !== requestExample.hostId)].slice(0, 3) : rankedEvents;
-  const friday = week.filter((w) => !shown.has(`release:${w.id}`));
+  const friday = thisWeekReleases.filter((w) => !shown.has(`release:${w.id}`));
 
   const continueItems = saved
+    .filter((s) => !HOME_PREVIEW || now - s.at < 7 * 864e5)
     .slice()
     .reverse()
     .map((s) => {
@@ -147,6 +164,133 @@ export function DistrictHome({ go }: { go: Go }) {
     { key: 'roles', label: 'Opportunities', icon: 'crews', open: () => go.discover('roles'), wide: true },
     { key: 'reviews', label: 'Reviews', icon: 'reviews', open: () => go.discover('reviews'), wide: true },
   ];
+
+  // ---------------------------------------------------------------- ?preview=home (docs/HOME_SPOTLIGHT.md)
+  // Same data and rules as below; only the order and three blocks change: compact shortcuts, This week (Spotlight
+  // Direction A), From your network, Film talk and a compact People near you.
+  if (HOME_PREVIEW) {
+    const chips = [tiles.find((t) => t.key === 'roles'), tiles.find((t) => t.key === 'people'), tiles.find((t) => t.key === 'projects'), tiles.find((t) => t.key === 'events'), tiles.find((t) => t.key === 'reviews')].filter(Boolean) as typeof tiles;
+    const net = networkFor(viewer, scenario).slice(0, 4);
+    const reviewable = [...thisWeekReleases].find((w) => mayReview(w.id) && !reviewsOf(w.id).some((r) => r.personId === viewer.id));
+    const peopleRail = near.length >= 2 && (
+      <section className="dh-sec" aria-label="People near you">
+        <SectionHeader title="People near you" action={near.length > 6 ? 'See all' : undefined} onAction={() => go.discover('people')} className="dh-pad" />
+        <div className="dh-rail dh-prail">
+          {near.slice(0, 8).map((p) => <NearCard key={p.id} p={p} compact />)}
+        </div>
+      </section>
+    );
+    return (
+      <>
+      {atmosphere && <LivingBackground scrollRef={scrollRef} />}
+      <div className={`screen canvas v-home dh dh--next${atmosphere ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
+        <div className="dh-wash">
+          <header className="dh-head">
+            <h1 className="sr-only">Home</h1>
+            <MapPin size={20} className="dh-pin" aria-hidden />
+            <div className="dh-loc"><b>{me.city}</b></div>
+            <span className="flex" />
+            <IconButton label={unread ? `Notifications, ${unread} new` : 'Notifications'} onClick={() => openSheet({ name: 'notifications' })}>
+              <Bell size={21} aria-hidden />
+              {unread > 0 && <span className="dot" aria-hidden />}
+            </IconButton>
+          </header>
+          <OfflineBanner />
+          <PublishBar />
+          <nav className="dh-chiprow" aria-label="Explore">
+            {chips.map((t) => (
+              <PressCard key={t.key} className="dh-chipnav" onPress={t.open} scale={0.96} aria-label={t.label}>
+                <img src={`/images/tiles/${t.icon}.webp`} alt="" draggable={false} />
+                <b>{t.label}</b>
+              </PressCard>
+            ))}
+          </nav>
+          {continueItems.length > 0 && (
+            <div className="dh-rail dh-pills dh-continue" role="group" aria-label="Continue where you left off">
+              {continueItems.map((c) => (
+                <PressCard key={c.key} className="dh-pill" onPress={c.open} scale={0.97} aria-label={`Continue: ${c.label}`}>
+                  {c.party ? <Avatar party={c.party} size={26} /> : <Photo surface="spotlight" media={c.img} showPlay={false} className="dh-pill-img" />}
+                  <span>{c.label}</span>
+                </PressCard>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {week.length > 0 && (
+          <section className="dh-sec dh-week" aria-label="This week">
+            <SectionHeader title="This week" className="dh-pad" />
+            <WeekSpotlight cards={week} active={tab === 'home' && !sheet && stack.length === 0} />
+          </section>
+        )}
+
+        <IntentShelf intent={intent} me={me} roles={roles.filter((o) => !shown.has(`role:${o.id}`) && o.authorId !== me.id)} blocked={blocked} go={go} toKnow={near.filter((p) => !following.includes(p.id))} />
+
+        <div className="dh-pad">
+          <FirstStep />
+        </div>
+
+        {net.length > 0 ? (
+          <section className="dh-sec dh-pad" aria-label="From your network">
+            <SectionHeader title="From your network" action="See all" onAction={() => push({ name: 'network' })} />
+            <div className="dh-net">
+              {net.map((e, i) => <NetworkRow key={e.id} e={e} index={i} />)}
+            </div>
+          </section>
+        ) : peopleRail}
+
+        {upcoming.length > 0 && (
+          <section className="dh-sec" aria-label={eventsTitle(upcoming, me.city)}>
+            <SectionHeader title={eventsTitle(upcoming, me.city)} className="dh-pad" action="See all" onAction={() => go.discover('events')} />
+            <EventsA list={upcoming} city={me.city} />
+          </section>
+        )}
+
+        {(friday.length > 0 || reviewable) && (
+          <section className="dh-sec" aria-label="Film talk">
+            <SectionHeader title="Film talk" className="dh-pad" action="See all" onAction={() => go.discover('reviews')} />
+            {friday.length > 0 && (
+              <div className={friday.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
+                {friday.map((w) => <Quote key={w.id} w={w} onOpen={() => push({ name: 'work', id: w.id })} />)}
+              </div>
+            )}
+            {reviewable && (
+              <div className="dh-pad">
+                <PressCard className="dh-rate" onPress={() => openSheet({ name: 'review', projectId: reviewable.id })} scale={0.985} aria-label={`Seen ${reviewable.title}? Rate and review`}>
+                  <Photo surface="search-thumbnail" media={reviewable.media} showPlay={false} />
+                  <span><b>Seen {reviewable.title}?</b><span>Rate and review</span></span>
+                </PressCard>
+              </div>
+            )}
+          </section>
+        )}
+
+        {posts.length === 3 && (
+          <section className="dh-sec dh-pad" aria-label="New work">
+            <SectionHeader title="New work" action="See all" onAction={() => go.discover('posts')} />
+            <div className="dh-mosaic">
+              {posts.map((p, i) => {
+                const a = party(p.authorId);
+                return (
+                  <Pressable key={p.id} className={`dh-mos ${i === 0 ? 'dh-mos--big' : ''}`} onClick={() => push({ name: 'posts', ids: posts.map((x) => x.id), index: i })} scale={0.98} aria-label={`Post by ${a?.name ?? 'someone'}`}>
+                    <Photo surface="discover-bento" media={p.media[0]} showPlay={false} />
+                    {a && <span className="dh-by"><Avatar party={a} size={20} />{i === 0 ? a.name : first(a.name)}</span>}
+                  </Pressable>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {net.length > 0 && peopleRail}
+
+        <section className="dh-end" aria-labelledby="dh-end-title">
+          <h2 id="dh-end-title">You're up to date.</h2>
+        </section>
+      </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -290,7 +434,7 @@ const closes = (n?: number) => (n === undefined ? '' : n <= 0 ? 'Closes today' :
  * The shelf that follows why you're here: Find work → Opportunities for you; Find people → People for your project;
  * Collaborate → Collaborations and roles. Grow my network and Just exploring have none: New work comes next anyway.
  */
-function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: Person; roles: Opportunity[]; blocked: string[]; go: Go }) {
+function IntentShelf({ intent, me, roles, blocked, go, toKnow }: { intent: string; me: Person; roles: Opportunity[]; blocked: string[]; go: Go; toKnow?: Person[] }) {
   const { push } = useStore();
   const mine = [me.craft, ...(me.crafts ?? [])];
   const related = mine.flatMap((c) => familyOf(c).crafts);
@@ -327,15 +471,17 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
     );
   }
 
-  if (intent === 'hire') {
-    const list = searchablePeople(me.id, blocked)
+  if (intent === 'hire' || (toKnow && toKnow.length > 0)) {
+    // ?preview=home: when you're here to network or explore, For you shows people to know instead of nothing.
+    const knowing = intent !== 'hire';
+    const list = knowing ? toKnow!.slice(0, 3) : searchablePeople(me.id, blocked)
       .filter((p) => p.availableFrom)
       .sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city) || (b.years ?? 0) - (a.years ?? 0))
       .slice(0, 3);
     if (!list.length) return null;
     return (
-      <section className="dh-sec dh-pad" aria-label="People for your project">
-        <SectionHeader title="People for your project" action="See all" onAction={() => go.discover('people')} />
+      <section className="dh-sec dh-pad" aria-label={knowing ? 'People to know' : 'People for your project'}>
+        <SectionHeader title={knowing ? 'People to know' : 'People for your project'} action="See all" onAction={() => go.discover('people')} />
         <div className="dh-ilist">
           {list.map((p) => (
             <div key={p.id} className="dh-irow">
@@ -348,7 +494,7 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
                   <span>
                     {p.role} · {p.city}
                   </span>
-                  <span className="dh-irow-fact">{p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}`}</span>
+                  <span className="dh-irow-fact">{!p.availableFrom ? `${p.years ?? 0} yrs · ${p.craft === me.craft ? 'Your department' : 'Works beside your department'}` : p.availableFrom === 'Now' ? 'Open to work' : `Open to work from ${p.availableFrom}`}</span>
                 </span>
               </PressCard>
             </div>
@@ -488,11 +634,11 @@ function Quote({ w, onOpen }: { w: Work; onOpen: () => void }) {
   );
 }
 
-function NearCard({ p }: { p: Person }) {
+function NearCard({ p, compact = false }: { p: Person; compact?: boolean }) {
   const { push, following, toggleFollow } = useStore();
   const on = following.includes(p.id);
   return (
-    <div className="dh-near">
+    <div className={`dh-near ${compact ? 'dh-near--compact' : ''}`}>
       <PressCard className="dh-near-main" onPress={() => push({ name: 'profile', id: p.id })} scale={0.98} aria-label={`${p.name}, ${p.role}`}>
         <span className="dh-near-img">
           <PersonPhoto party={p} />

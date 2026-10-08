@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { agoDays, eligible, kicker, pickSpotlight, spotScore, type SpotContext, type SpotItem } from './spotlight';
+import { agoDays, eligible, kicker, notable, pickSpotlight, spotScore, type SpotContext, type SpotItem } from './spotlight';
 import { relatedCrafts } from '../data/crafts';
 
 let n = 0;
@@ -98,4 +98,34 @@ test('related crafts read from the taxonomy, unchanged', () => {
   assert.deepEqual(relatedCrafts('actor'), []);
   assert.deepEqual(relatedCrafts('production'), []);
   assert.deepEqual(relatedCrafts('music'), ['sound']);
+});
+
+test('This week: notable, time-bound things only; never ordinary roles or posts', () => {
+  assert.ok(notable(it({ type: 'event', eventType: 'screening', inDays: 6 }), ctx()), 'a premiere or screening this week');
+  assert.ok(!notable(it({ type: 'event', eventType: 'workshop', inDays: 2 }), ctx()), 'an ordinary workshop goes to Events');
+  assert.ok(notable(it({ type: 'event', eventType: 'workshop', inDays: 2, mine: true }), ctx()), 'one you are speaking at');
+  assert.ok(notable(it({ type: 'event', eventType: 'meetup', inDays: 2, organiser: 'konark' }), ctx({ network: ['konark'] })), 'hosted by someone you know');
+  assert.ok(!notable(it({ type: 'event', eventType: 'screening', inDays: 9 }), ctx()), 'not this week');
+  assert.ok(notable(it({ type: 'project', stageChanged: true, ageDays: 1 }), ctx()), 'a production that just started shooting');
+  assert.ok(!notable(it({ type: 'project', crewing: true, city: 'Hyderabad' }), ctx()), 'crewing alone is an opportunity, not news');
+  assert.ok(notable(it({ type: 'release', rating: 4.1 }), ctx()), 'a release people are rating');
+  assert.ok(!notable(it({ type: 'release' }), ctx()), 'a release nobody has rated yet');
+  assert.ok(!notable(it({ type: 'role', crafts: ['cinematographer'], inDays: 2 }), ctx()), 'an ordinary role goes to For you');
+  assert.ok(notable(it({ type: 'role', crafts: ['cinematographer'], inDays: 2, organiser: 'konark' }), ctx({ network: ['konark'] })), 'your craft, your network, closing in days');
+  assert.ok(!notable(it({ type: 'post', organiser: 'vikram', ageDays: 0 }), ctx({ following: ['vikram'] })), 'posts never');
+});
+
+test('This week: what you are part of leads; one per organiser; posts never appear', () => {
+  const items = [
+    it({ type: 'event', ref: 'premiere', eventType: 'screening', inDays: 6, organiser: 'saffron', city: 'Mumbai', mine: true }),
+    it({ type: 'project', ref: 'neela', stageChanged: true, ageDays: 1, organiser: 'konark', city: 'Hyderabad' }),
+    it({ type: 'event', ref: 'meet', eventType: 'meetup', inDays: 1, organiser: 'konark', city: 'Hyderabad' }),
+    it({ type: 'release', ref: 'dhoop', rating: 4.1, organiser: 'bluelotus' }),
+    it({ type: 'post', ref: 'p1', ageDays: 0, organiser: 'vikram' }),
+  ];
+  const out = pickSpotlight(items, ctx({ network: ['konark'], following: ['vikram'] }), 'week');
+  assert.equal(out[0].ref, 'premiere');
+  assert.ok(!out.some((x) => x.type === 'post'));
+  assert.equal(out.filter((x) => x.organiser === 'konark').length, 1);
+  assert.ok(out.some((x) => x.ref === 'dhoop'));
 });

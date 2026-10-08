@@ -1,359 +1,155 @@
-/* =============================================================== The new Home (docs/HOME.md)
- * Fixed frame (header, lead, personal news, end) + a composed middle. Uses the app's tokens and existing
- * components; only the frame pieces are new. Motion is transform/opacity only; Reduce Motion is still. */
+/* ===================================================== Home preview (?preview=home, docs/HOME_SPOTLIGHT.md)
+ * The Home audit's new order: compact shortcuts, This week (Spotlight Direction A), For you, From your network,
+ * Events, Film talk, New work, People near you. Scoped to .dh--next, which only renders in the preview. */
 
-.hn .hn-header {
+/* ---------------------------------------------------------------- Shortcuts: one row, small */
+.dh--next .dh-chiprow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px var(--gutter) 4px;
+  scrollbar-width: none;
+}
+.dh--next .dh-chiprow::-webkit-scrollbar { display: none; }
+.dh--next .dh-chipnav {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-left: var(--gutter);
-  padding-right: var(--gutter);
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px 0 8px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hairline) 70%, transparent);
+  font-size: 13.5px;
+  white-space: nowrap;
 }
+.dh--next .dh-chipnav img { width: 28px; height: 28px; object-fit: contain; }
+.dh--next .dh-chipnav b { font-weight: 600; }
+.dh--next .dh-continue { margin-top: 10px; }
+.dh--next .dh-continue .dh-pill { min-height: 40px; font-size: 13px; }
+.dh--next .dh-continue .dh-pill-img { width: 28px; height: 28px; }
 
-/* The header already clears the status bar; the page itself doesn't add it again (it left a 54px gap). */
-.screen.hn {
-  padding-top: 0;
+/* ---------------------------------------------------------------- This week */
+.dh--next .dh-week { padding-top: 18px; }
+.wk {
+  --wk-peek: 28px;
+  --wk-gap: 12px;
+  /* Sized from the section (container units), not the scroller's padded content box. */
+  --wk-w: calc(100cqw - 2 * var(--gutter) - var(--wk-peek));
+  position: relative;
+  container-type: inline-size;
 }
-
-.hn-sheet {
+.wk-track {
+  display: flex;
+  gap: var(--wk-gap);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  /* Room after the last card so every card, the loop's copy included, can settle at the start. */
+  padding: 2px calc(var(--gutter) + var(--wk-peek)) 4px var(--gutter);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.wk-track::-webkit-scrollbar { display: none; }
+.wk-track:focus-visible { outline: 3px solid var(--focus-color, var(--accent)); outline-offset: 2px; border-radius: 20px; }
+/* One card: full width, nothing to peek at. */
+.wk:not(:has(.wk-foot)) { --wk-peek: 0px; }
+.wk-card {
+  position: relative;
+  flex: 0 0 var(--wk-w);
+  max-width: 420px;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline), 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.wk-open {
+  appearance: none;
   display: flex;
   flex-direction: column;
-  padding-bottom: 120px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-
-/* Every unit carries the gutter itself, so the sheet adds none: cards line up with the logo and search. */
-.home-sheet.hn-sheet {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-/* First Home: the welcome and the one next step, right under the lead. */
-.hn-first .first-step {
-  margin-top: 0;
-}
-
-.first-step-welcome {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  margin-bottom: 2px;
-}
-
-/* ---------------------------------------------------------------------------------------- lead */
-.hn-lead-wrap {
-  padding: 8px var(--gutter) 0;
-}
-
-.hn-lead {
-  position: relative;
-  display: block;
+.wk-open:focus-visible { outline: 3px solid var(--focus-color, var(--accent)); outline-offset: -3px; border-radius: 20px; }
+/* The still at its own shape: the app's stills are landscape, so the frame is 16:9. */
+.wk-media { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--surface-2, #e9e6e0); }
+.wk-media .photo, .wk-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.wk-art { position: absolute; inset: 0; }
+/* Glass, used only for the small label on the image (and the Save control): it floats over the photo. */
+.wk-chip {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  max-width: calc(100% - 64px);
   overflow: hidden;
-  border-radius: var(--r-xl);
-  aspect-ratio: 4 / 5;
-  max-height: 520px;
-  width: 100%;
-  background: var(--sand, #ece7df);
-  color: #fff;
-}
-
-.hn-lead .hn-lead-photo,
-.hn-lead .hn-lead-photo img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hn-lead::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.8) 100%);
-  pointer-events: none;
-}
-
-.hn-lead-text {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
-  z-index: 1;
-  display: grid;
-  gap: 6px;
-}
-
-.hn-tag {
-  justify-self: start;
-  padding: 5px 9px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--action);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hn-lead-title {
-  font-family: var(--display);
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  text-wrap: balance;
-}
-
-.hn-lead-meta {
-  font-size: 14px;
-  opacity: 0.94;
-}
-
-.hn-lead-meta .verified {
-  color: #fff;
-}
-
-.hn-lead-why {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 550;
-}
-
-.hn-faces {
-  display: inline-flex;
-  flex: none;
-}
-
-.hn-faces > * {
-  margin-left: -7px;
-  box-shadow: 0 0 0 2px #fff;
-  border-radius: 50%;
-}
-
-.hn-faces > *:first-child {
-  margin-left: 0;
-}
-
-.hn-faces--lg > * {
-  box-shadow: 0 0 0 2px var(--surface);
-}
-
-/* -------------------------------------------------------------------------------- units */
-.hn-unit {
-  padding-left: var(--gutter);
-  padding-right: var(--gutter);
-}
-
-.hn-unit:not(.v-section) {
-  padding-top: 20px;
-}
-
-/* Rails keep their own edge-to-edge scroll inside the gutter. */
-.hn-unit .portrait-rail {
-  margin-left: calc(-1 * var(--gutter));
-  margin-right: calc(-1 * var(--gutter));
-  padding-left: var(--gutter);
-  padding-right: var(--gutter);
-}
-
-.hn-news {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--r-m);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-}
-
-.hn-news-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 15px;
-  line-height: 1.35;
-}
-
-.hn-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--r-m);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-}
-
-.hn-row-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.hn-row-text {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.hn-row-text b {
-  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
   font-weight: 650;
-  line-height: 1.3;
+  color: #fff;
+  background: rgba(18, 18, 20, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+.wk-save { position: absolute; right: 8px; top: 8px; z-index: 1; }
+.wk-body { display: flex; flex-direction: column; gap: 2px; padding: 11px 16px 14px; flex: 1; }
+.wk-reason { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--action-ink, var(--action)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wk-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
+.wk-meta { font-size: 13px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-transparency: reduce) {
+  .wk-chip { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(18, 18, 20, 0.86); }
 }
 
-.hn-row-text span {
-  font-size: 13px;
-  color: var(--text-2);
-  line-height: 1.35;
-}
+/* Progress: one short segment per card; the current one fills over the interval, which is the timer itself. */
+.wk-foot { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; }
+.wk-steps { display: flex; align-items: center; }
+.wk-step { appearance: none; border: 0; background: none; padding: 0 3px; height: 32px; display: grid; place-items: center; cursor: pointer; }
+.wk-step-bar { position: relative; display: block; width: 18px; height: 3px; border-radius: 2px; overflow: hidden; background: color-mix(in srgb, var(--text) 16%, transparent); transition: width 0.3s ease; }
+.wk-step.is-on .wk-step-bar { width: 32px; background: color-mix(in srgb, var(--text) 22%, transparent); }
+/* Not running (paused, hidden, Reduced Motion): the current segment is simply full. */
+.wk-step.is-on .wk-step-bar::after { content: ''; position: absolute; inset: 0; background: var(--text); opacity: 0.75; }
+.wk-step.is-on .wk-step-bar:has(.wk-fill)::after { content: none; }
+.wk-fill { position: absolute; inset: 0; background: var(--text); opacity: 0.75; transform-origin: left; animation: wk-fill linear forwards; animation-play-state: paused; }
+.wk.is-running .wk-fill { animation-play-state: running; }
+@keyframes wk-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.wk-step:focus-visible { outline: 2px solid var(--focus-color, var(--accent)); outline-offset: -4px; border-radius: 6px; }
+.wk-pause { appearance: none; border: 0; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text-2); cursor: pointer; position: relative; }
+.wk-pause::before { content: ''; position: absolute; inset: -6px; }
+.wk-pause:focus-visible { outline: 2px solid var(--focus-color, var(--accent)); outline-offset: 2px; }
 
-.hn-row-text em {
-  font-style: normal;
-  font-size: 13px;
-  color: var(--action);
-  line-height: 1.35;
-}
+/* ---------------------------------------------------------------- From your network */
+.dh--next .dh-net { display: grid; gap: 2px; }
+.dh--next .dh-net .nrow { border-radius: 14px; }
 
-.hn-rows {
-  display: grid;
-  border-radius: var(--r-m);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-  overflow: hidden;
-}
+/* ---------------------------------------------------------------- Film talk: write as well as read */
+.dh--next .dh-rate { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 14px 8px 8px; border-radius: 14px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
+.dh--next .dh-rate .photo { width: 44px; height: 44px; flex: none; border-radius: 9px; overflow: hidden; }
+.dh--next .dh-rate .photo img { width: 100%; height: 100%; object-fit: cover; }
+.dh--next .dh-rate > span:not([hidden]) { display: grid; gap: 1px; }
+.dh--next .dh-rate b { font-size: 14.5px; }
+.dh--next .dh-rate > span > span { font-size: 13px; color: var(--action-ink, var(--action)); font-weight: 600; }
 
-.hn-update {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  min-height: 72px;
-}
-
-.hn-update + .hn-update {
-  border-top: 1px solid var(--hairline);
-}
-
-.hn-update-art {
-  width: 44px;
-  height: 58px;
-  flex: none;
-  border-radius: 7px;
-  overflow: hidden;
-  background: var(--sand, #ece7df);
-}
-
-.hn-update-art img,
-.hn-update-art .photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hn-post .post {
-  border-radius: var(--r-m);
-}
-
-/* ------------------------------------------------------------------------- the end ("That's a wrap") */
-.hn-end {
-  margin: 36px var(--gutter) 0;
-  padding: 26px 18px 14px;
-  border-top: 1px solid var(--hairline);
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  text-align: center;
-}
-
-.hn-end-title {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.hn-end-sub {
-  font-size: 14px;
-  color: var(--text-2);
-  max-width: 30ch;
-}
-
-.hn-golden {
-  margin-top: 2px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  background: linear-gradient(90deg, rgba(232, 160, 74, 0.16), rgba(232, 160, 74, 0.06));
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 550;
-}
-
-.hn-find {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.hn-find .chip {
-  min-height: 44px;
-}
-
-.hn-refresh {
-  min-height: 44px;
-  font-size: 14px;
-  color: var(--text-2);
-}
-
-/* The clapper claps once when the end comes into view. */
-.hn-clapper-arm {
-  transform-origin: 8px 17px;
-  transform: rotate(-16deg);
-}
-
-.hn-clapper.is-clapping .hn-clapper-arm {
-  animation: hn-clap 520ms cubic-bezier(0.3, 0.7, 0.2, 1) 120ms forwards;
-}
-
-@keyframes hn-clap {
-  0% { transform: rotate(-16deg); }
-  55% { transform: rotate(1.5deg); }
-  100% { transform: rotate(0deg); }
-}
-
-/* "Take 2": a one-line slate while Home recomposes. */
-.hn-slate {
-  align-self: center;
-  margin: 6px 0 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  background: var(--text);
-  color: var(--surface, #fff);
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-}
-
-.hn-slate-board {
-  width: 14px;
-  height: 10px;
-  border-radius: 2px;
-  background: repeating-linear-gradient(-45deg, var(--surface, #fff) 0 3px, var(--text) 3px 6px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hn-clapper .hn-clapper-arm,
-  .hn-clapper.is-clapping .hn-clapper-arm {
-    animation: none;
-    transform: none;
-  }
-}
+/* ---------------------------------------------------------------- People near you: a compact rail */
+.dh--next .dh-prail { gap: 10px; padding-bottom: 6px; }
+.dh-near--compact { flex: 0 0 132px; }
+.dh-near--compact .dh-near-img { aspect-ratio: 4 / 5; }
+.dh-near--compact .dh-near-t { padding: 8px 10px 10px; }
+.dh-near--compact .dh-near-t b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dh-near--compact .dh-near-t span { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dh-near--compact .dh-follow { top: 8px; right: 8px; width: 32px; height: 32px; }
+.dh-near--compact .dh-follow::before { content: ''; position: absolute; inset: -6px; }

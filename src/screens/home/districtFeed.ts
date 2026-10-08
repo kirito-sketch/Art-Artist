@@ -3,7 +3,7 @@ import type { Craft, IndustryEvent, Media, Opportunity, Person, Post } from '../
 import { isLive, type Work } from '../../data/works';
 import { agoDays, pickSpotlight, type SpotContext, type SpotItem, type Spotlit } from '../../domain/spotlight';
 import { stats } from '../../domain/reviews';
-import { priceLabel, whenLabel } from '../../domain/events';
+import { priceLabel, typeLabel, whenLabel } from '../../domain/events';
 import { creditedOn } from '../../domain/home/graph';
 import { org, party, person } from '../../state/selectors';
 import { reviewsOf, work } from '../../state/world';
@@ -56,6 +56,7 @@ export function spotItems(s: SpotSources): SpotItem[] {
       languages: langOf(w) ? [langOf(w)] : [],
       ageDays: change ? change.hoursAgo / 24 : undefined,
       people: creditedOn(w.id),
+      mine: creditedOn(w.id).includes(s.me.id),
       stageChanged: !!change,
       crewing: roles.length > 0,
       need: roles[0]?.role,
@@ -69,11 +70,11 @@ export function spotItems(s: SpotSources): SpotItem[] {
   }
   for (const e of s.events) {
     if (e.status !== 'scheduled' || e.start < s.now) continue;
-    out.push({ key: `event:${e.id}`, type: 'event', ref: e.id, title: e.title, organiser: e.hostId, city: e.venue === 'Online' ? undefined : e.city, crafts: Array.isArray(e.audience) ? (e.audience as Craft[]) : [], ageDays: e.publishedAt ? (s.now - e.publishedAt) / DAY : undefined, inDays: Math.floor((e.start - s.now) / DAY), interest: e.interestedCount, people: e.projectId ? creditedOn(e.projectId) : [], day: day(e.start) });
+    out.push({ key: `event:${e.id}`, type: 'event', ref: e.id, title: e.title, organiser: e.hostId, city: e.venue === 'Online' ? undefined : e.city, crafts: Array.isArray(e.audience) ? (e.audience as Craft[]) : [], ageDays: e.publishedAt ? (s.now - e.publishedAt) / DAY : undefined, inDays: Math.floor((e.start - s.now) / DAY), interest: e.interestedCount, people: e.projectId ? creditedOn(e.projectId) : [], day: day(e.start), eventType: e.type, mine: (e.speakerIds ?? []).includes(s.me.id) || e.hostId === s.me.id });
   }
   for (const w of s.releases) {
     const st = stats(reviewsOf(w.id));
-    out.push({ key: `release:${w.id}`, type: 'release', ref: w.id, title: w.title, organiser: w.orgIds[0] ?? w.ownerId ?? w.id, city: cityOf(w), languages: langOf(w) ? [langOf(w)] : [], people: creditedOn(w.id), rating: st.enough ? st.avg : undefined });
+    out.push({ key: `release:${w.id}`, type: 'release', ref: w.id, title: w.title, organiser: w.orgIds[0] ?? w.ownerId ?? w.id, city: cityOf(w), languages: langOf(w) ? [langOf(w)] : [], people: creditedOn(w.id), rating: st.enough ? st.avg : undefined, mine: creditedOn(w.id).includes(s.me.id) });
   }
   return out;
 }
@@ -87,6 +88,74 @@ export function spotlightFor(s: SpotSources, c: Omit<SpotContext, 'pin'>, change
   const list = pickSpotlight(spotItems(s), { ...c, pin: SPOTLIGHT_PIN });
   cache.set(key, list);
   return list;
+}
+
+/** "This week" (Spotlight Direction A, ?preview=home): the same sources, the stricter notable rules. */
+const weekCache = new Map<string, Spotlit[]>();
+export function thisWeekFor(s: SpotSources, c: Omit<SpotContext, 'pin'>, change: string): Spotlit[] {
+  const key = [s.me.id, s.me.city, new Date(s.now).toDateString(), change].join('|');
+  const hit = weekCache.get(key);
+  if (hit) return hit;
+  const list = pickSpotlight(spotItems(s), { ...c, pin: SPOTLIGHT_PIN }, 'week');
+  weekCache.set(key, list);
+  return list;
+}
+
+/**
+ * A This-week card: what it is and when (the chip on the image), why it is here for you (the reason), the title and
+ * one line. Every card has a reason; none repeats a section below.
+ */
+export interface WeekCard {
+  key: string;
+  type: Spotlit['type'];
+  chip: string;
+  reason: string;
+  title: string;
+  meta: string;
+  media?: Media;
+  save?: { id: string; kind: SavedKind };
+  open: SpotCard['open'];
+}
+
+const STAGE_CHIP: Record<string, string> = { Shooting: 'Now shooting', Released: 'Just released', 'Post-production': 'In post', 'Pre-production': 'In pre-production', Development: 'In development' };
+const shortDate = (ms: number) => new Date(ms).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+
+export function weekCard(it: Spotlit, d: { roles: Opportunity[]; events: IndustryEvent[]; me: Person; network: string[]; following: string[]; quote: (id: string) => { text: string; by: string } | undefined }): WeekCard | undefined {
+  const known = (id?: string) => !!id && (d.network.includes(id) || d.following.includes(id));
+  switch (it.type) {
+    case 'event': {
+      const e = d.events.find((x) => x.id === it.ref);
+      if (!e) return undefined;
+      const host = party(e.hostId);
+      const kind = typeLabel(e.type).split(' or ')[0];
+      const reason = (e.speakerIds ?? []).includes(d.me.id) ? "You're speaking" : e.hostId === d.me.id ? 'You are hosting' : known(e.hostId) ? `From ${host?.name ?? 'someone you know'}` : e.interestedCount && e.interestedCount >= 50 ? `${e.interestedCount} interested` : e.city === d.me.city ? `In ${e.city}` : kind;
+      return { key: it.key, type: 'event', chip: `${kind} · ${shortDate(e.start)}`, reason, title: e.title, meta: [e.venue === 'Online' ? 'Online' : `${e.venue.split(',')[0]}, ${e.city}`, host?.name].filter(Boolean).join(' · '), media: e.cover, save: { id: e.id, kind: 'event' }, open: { name: 'event', id: e.id } };
+    }
+    case 'project': {
+      const w = work(it.ref);
+      if (!w) return undefined;
+      const roles = d.roles.filter((o) => ('projectId' in o && (o as { projectId?: string }).projectId === w.id) || o.project === w.title).length;
+      const house = houseOf(w);
+      const since = it.stageChanged && it.ageDays !== undefined ? (it.ageDays < 1 ? 'since today' : it.ageDays < 2 ? 'since yesterday' : `for ${Math.floor(it.ageDays)} days`) : '';
+      const reason = it.mine ? "You're credited on it" : [known(house?.id ?? w.ownerId) ? `${house?.name ?? 'Someone you know'}, you've worked together` : house?.name, since].filter(Boolean).join(' · ');
+      return { key: it.key, type: 'project', chip: STAGE_CHIP[it.stage ?? w.stage] ?? w.stage, reason, title: w.title, meta: [cityOf(w), roles ? `${roles} open ${roles === 1 ? 'role' : 'roles'}` : langOf(w)].filter(Boolean).join(' · '), media: w.stills[0] ?? w.media, save: { id: w.id, kind: 'project' }, open: { name: 'work', id: w.id } };
+    }
+    case 'release': {
+      const w = work(it.ref);
+      if (!w) return undefined;
+      const st = stats(reviewsOf(w.id));
+      const q = d.quote(w.id);
+      return { key: it.key, type: 'release', chip: 'Out this week', reason: st.enough ? `★ ${st.avg.toFixed(1)} · ${st.count} ratings` : 'New release', title: w.title, meta: q ? `"${q.text}"` : [houseOf(w)?.name, langOf(w)].filter(Boolean).join(' · '), media: w.stills[0] ?? w.media, open: { name: 'work', id: w.id } };
+    }
+    case 'role': {
+      const o = d.roles.find((x) => x.id === it.ref);
+      if (!o) return undefined;
+      const by = o.orgId ? org(o.orgId).name : o.authorId ? person(o.authorId).name : '';
+      return { key: it.key, type: 'role', chip: o.closesInDays === 0 ? 'Closes today' : `Closes in ${o.closesInDays} days`, reason: `From ${by}, in your network`, title: o.role, meta: [o.project, o.city.split(',')[0], o.paid ? 'Paid' : 'Unpaid'].join(' · '), media: o.media, save: { id: o.id, kind: 'role' }, open: { name: 'opportunity', id: o.id } };
+    }
+    case 'post':
+      return undefined;
+  }
 }
 
 export interface SpotCard {

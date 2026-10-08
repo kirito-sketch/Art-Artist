@@ -40,6 +40,10 @@ export interface SpotItem {
   by?: string;
   day?: string;
   rating?: number;
+  /** An event's kind (screening, festival, meetup...). */
+  eventType?: string;
+  /** The person is part of it: speaking at the event, credited on the film or project. */
+  mine?: boolean;
 }
 
 export interface SpotContext {
@@ -84,6 +88,28 @@ export function eligible(it: SpotItem, c: SpotContext): boolean {
   }
 }
 
+/*
+ * "This week" (Spotlight Direction A, docs/HOME_SPOTLIGHT.md): only notable, time-bound things that have no other
+ * place on Home. Ordinary roles and posts never qualify (For you and your network carry them); a role qualifies only
+ * when it is exceptional: your craft, from someone you know, closing within three days.
+ */
+const NOTABLE_EVENTS = ['screening', 'festival'];
+export function notable(it: SpotItem, c: SpotContext): boolean {
+  if (c.blocked.includes(it.organiser) || (it.people ?? []).some((p) => c.blocked.includes(p))) return false;
+  switch (it.type) {
+    case 'event':
+      return soon(it, 7) && (!!it.mine || NOTABLE_EVENTS.includes(it.eventType ?? '') || knows(it, c) || (it.interest ?? 0) >= 50);
+    case 'project':
+      return (!!it.stageChanged && recent(it, 3)) || (!!it.crewing && it.city === c.city && knows(it, c));
+    case 'release':
+      return it.rating !== undefined;
+    case 'role':
+      return fit(it, c) === 'direct' && knows(it, c) && soon(it, 3);
+    case 'post':
+      return false;
+  }
+}
+
 /** Urgency and freshness, 0 to 2: what makes it a "this week" thing. */
 const timing = (it: SpotItem) => Math.max(it.inDays !== undefined && it.inDays >= 0 ? ((7 - Math.min(7, it.inDays)) / 7) * 2 : 0, it.ageDays !== undefined ? ((3 - Math.min(3, it.ageDays)) / 3) * 1.5 : 0);
 const interest = (it: SpotItem) => Math.min(1, (it.interest ?? 0) / 50);
@@ -116,7 +142,8 @@ export interface Spotlit extends SpotItem {
  * At most five; at most two of a kind; one per organiser; at least two kinds in the first three; one card the same
  * for everyone in the city; an optional national pin first.
  */
-export function pickSpotlight(items: SpotItem[], c: SpotContext): Spotlit[] {
+export function pickSpotlight(items: SpotItem[], c: SpotContext, rules: 'spotlight' | 'week' = 'spotlight'): Spotlit[] {
+  const ok = rules === 'week' ? notable : eligible;
   const out: Spotlit[] = [];
   const fits = (it: SpotItem) => out.length < SPOT_MAX && !out.some((x) => x.key === it.key || x.organiser === it.organiser) && out.filter((x) => x.type === it.type).length < PER_TYPE;
   const because = (it: SpotItem): Partial<Spotlit> => (it.type !== 'project' ? {} : { because: it.crewing && it.city === c.city ? 'crewing' : 'stage' });
@@ -125,8 +152,8 @@ export function pickSpotlight(items: SpotItem[], c: SpotContext): Spotlit[] {
   const pin = c.pin ? items.find((it) => it.key === c.pin && !c.blocked.includes(it.organiser)) : undefined;
   add(pin, { pinned: true });
 
-  const personal = items.filter((it) => eligible(it, c)).sort(byScore((it) => spotScore(it, c)));
-  const universal = universalPool(items, c).sort(byScore(universalScore)).find(fits);
+  const personal = items.filter((it) => ok(it, c)).sort(byScore((it) => spotScore(it, c) + (rules === 'week' && it.mine ? 10 : 0)));
+  const universal = universalPool(items, c).filter((it) => rules !== 'week' || notable(it, c)).sort(byScore(universalScore)).find(fits);
   const lead = personal.find((it) => fits(it) && (!universal || it.organiser !== universal.organiser || it.key === universal.key));
   add(lead, lead && lead.key === universal?.key ? { universal: true } : {});
   if (universal && !out.some((x) => x.key === universal.key)) add(universal, { universal: true });

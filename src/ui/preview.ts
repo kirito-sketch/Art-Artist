@@ -14,3 +14,7 @@ export const NAV_GLASS = q.get('nav') !== 'off' && DIRECTION !== 'a' && DIRECTIO
 export const NAV_LENS = NAV_GLASS || DIRECTION === 'a';
 export const POST_NOTCH = q.get('actions') !== 'pill';
 export const POST_SAMPLES = POST_NOTCH && q.has('samples');
+/** ?preview=home: the Home audit's new order with Spotlight Direction A, "This week" (docs/HOME_SPOTLIGHT.md). */
+export const HOME_PREVIEW = q.get('preview') === 'home';
+/** Review aid for the preview only: ?week=1 or ?week=2 limits This week to that many cards; ?week=noimg drops the images. */
+export const WEEK_TEST = HOME_PREVIEW ? q.get('week') : null;
