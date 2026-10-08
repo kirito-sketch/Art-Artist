@@ -90,7 +90,7 @@ export function spotlightFor(s: SpotSources, c: Omit<SpotContext, 'pin'>, change
   return list;
 }
 
-/** "This week" (Spotlight Direction A, ?preview=home): the same sources, the stricter notable rules. */
+/** "This week" (Spotlight Direction A): the same sources, the stricter notable rules. */
 const weekCache = new Map<string, Spotlit[]>();
 export function thisWeekFor(s: SpotSources, c: Omit<SpotContext, 'pin'>, change: string): Spotlit[] {
   const key = [s.me.id, s.me.city, new Date(s.now).toDateString(), change].join('|');

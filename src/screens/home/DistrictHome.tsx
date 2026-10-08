@@ -77,7 +77,7 @@ export function DistrictHome({ go }: { go: Go }) {
     { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
     [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
   );
-  // Preview (?preview=home): Spotlight becomes "This week", notable things only (docs/HOME_SPOTLIGHT.md).
+  // Spotlight becomes "This week", notable things only (docs/HOME_SPOTLIGHT.md).
   const week: WeekCard[] = HOME_PREVIEW
     ? thisWeekFor(
         { now, me, roles, projects, rolesOf, posts: allPosts, events: pool.filter((e) => e.id !== seed.HOME_REQUEST_EVENT_ID), releases: thisWeekReleases },
@@ -165,7 +165,7 @@ export function DistrictHome({ go }: { go: Go }) {
     { key: 'reviews', label: 'Reviews', icon: 'reviews', open: () => go.discover('reviews'), wide: true },
   ];
 
-  // ---------------------------------------------------------------- ?preview=home (docs/HOME_SPOTLIGHT.md)
+  // ---------------------------------------------------------------- The Home (docs/HOME_SPOTLIGHT.md); ?home-previous keeps the earlier one below
   // Same data and rules as below; only the order and three blocks change: compact shortcuts, This week (Spotlight
   // Direction A), From your network, Film talk and a compact People near you.
   if (HOME_PREVIEW) {
@@ -472,7 +472,7 @@ function IntentShelf({ intent, me, roles, blocked, go, toKnow }: { intent: strin
   }
 
   if (intent === 'hire' || (toKnow && toKnow.length > 0)) {
-    // ?preview=home: when you're here to network or explore, For you shows people to know instead of nothing.
+    // When you're here to network or explore, For you shows people to know instead of nothing.
     const knowing = intent !== 'hire';
     const list = knowing ? toKnow!.slice(0, 3) : searchablePeople(me.id, blocked)
       .filter((p) => p.availableFrom)

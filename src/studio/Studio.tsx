@@ -105,9 +105,10 @@ export function Studio() {
         </div>
       </Section>
 
-      <Section id="approved" title="Glass navigation and post notch" intro="Both are the default. The links below show the review samples and the previous versions for comparison.">
+      <Section id="approved" title="Approved and live" intro="The glass navigation, the post notch and the new Home are the default. These links show review cases and the previous versions.">
         <div className="st-list st-list--2">
-          <Item href="/?preview=home" title="New Home order with This week (preview)" hint="Spotlight Direction A: auto-advancing carousel · ?week=1, ?week=2, ?week=noimg" />
+          <Item href="/?week=2" title="This week with two cards" hint="Review aids: ?week=1, ?week=2, ?week=noimg" />
+          <Item href="/?home-previous" title="Previous Home" hint="?home-previous · the big Spotlight and five tiles, for comparison only" />
           <Item href="/?samples" title="Post notch review samples" hint="Ratios, video states, failure, long caption" />
           <Item href="/?nav=off&actions=pill" title="Previous navigation and post actions" hint="?nav=off · ?actions=pill, for comparison only" />
         </div>

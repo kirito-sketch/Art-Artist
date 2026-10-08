@@ -8,7 +8,7 @@ import { SaveButton } from './OpportunityCard';
 import type { WeekCard } from './districtFeed';
 
 /*
- * Spotlight, Direction A (?preview=home, docs/HOME_SPOTLIGHT.md): compact 16:9 cards in a native scroll-snap rail that
+ * Spotlight, Direction A (default Home, docs/HOME_SPOTLIGHT.md): compact 16:9 cards in a native scroll-snap rail that
  * advances on its own, one card at a time, and loops without a visible jump.
  *
  * Why native scrolling (not the earlier transform carousel): the browser does the swipe, the momentum, the snap and the

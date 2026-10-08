@@ -1,9 +1,9 @@
 # Home preview: This week (Spotlight Direction A) and the new section order
 
-Preview only. Open the app with `?preview=home`; the default Home is unchanged. This builds the approved parts of
+The default Home since October 2026 (approved). `?home-previous` shows the earlier Home for comparison. This builds the approved parts of
 the Home audit, with Spotlight Direction A (a compact auto-advancing carousel) in place of Direction B.
 
-Review aids, preview only: `?week=1` and `?week=2` limit This week to one or two cards; `?week=noimg` drops the images.
+Review aids: `?week=1` and `?week=2` limit This week to one or two cards; `?week=noimg` drops the images.
 
 ## Order
 
