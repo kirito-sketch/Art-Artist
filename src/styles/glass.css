@@ -279,6 +279,16 @@ html[data-theme='dark'] .phone[data-nav='glass'] {
   --nav-ink-2: rgba(255, 255, 255, 0.74);
 }
 .phone[data-nav='glass'] .tab-lens { background: var(--lens-fill); box-shadow: var(--lens-hi); }
+/* Tabs size to their label, so the lens is a capsule that always clears the text ("Discover" in bold, larger system
+   text) instead of a fixed 60 px circle the label spills out of. Short labels keep a 56 px minimum touch width. */
+.phone[data-nav='glass'] .tabbar-pill { gap: 2px; padding: 5px 6px; }
+.phone[data-nav='glass'] .tab-item { width: auto; min-width: 56px; padding-inline: 12px; }
+.phone[data-nav='glass'] .tab-label { white-space: nowrap; }
+.phone[data-nav='glass'] .tab-create { margin: 0 6px; }
+@media (max-width: 359px) {
+  .phone[data-nav='glass'] .tab-item { min-width: 50px; padding-inline: 9px; }
+  .phone[data-nav='glass'] .tab-create { margin: 0 4px; }
+}
 .phone[data-nav='glass'] .tab-item,
 .phone[data-nav='glass'] .tab-item .tab-label { color: var(--nav-ink-2); }
 .phone[data-nav='glass'] .tab-item.is-on,
