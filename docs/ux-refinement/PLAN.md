@@ -311,6 +311,7 @@ Acceptance:
   - Don't crop stills into posters.
   - Inventory the films that need real 2:3 artwork; it will be supplied separately and dropped into the same component.
   - Never present generated concept art as official posters.
+  - Amended 2026-10-08: the product owner will supply generated posters for the prototype's fictional films (`POSTER_PROMPTS.md`). Real productions still use only their own posters.
 - **D5. Profile order: approved.** Hero, Showreel, compact Selected work bento (3–5 items), Verified credits, Independent projects, Professional information, the rest. No duplicated information.
 - **D6. Trailers.**
   - Add a structured trailer/teaser model with a language per version.
@@ -481,6 +482,14 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 - **No duplication:**
   - Professional details no longer repeats craft, languages or years.
   - Work preferences no longer repeats "Open to work", which sits under the name.
+- **House profile, cinematic hero (review feedback):** the house page used the older cover-and-logo layout, because the immersive hero had only been built into the individual profile.
+  - It now has its own full-screen hero (`screens/org/HouseHero.tsx`, styles in `profile-stage2.css`).
+  - The house's own stills play as a slow reel: a push-in while each shot holds, then a 1.6 s dissolve. With Reduced Motion the first still holds, and the reel stops when the hero is off screen or the page is hidden.
+  - The identity is set like a title card: a Now making / Latest release slate, the house mark, a "Production house · City" eyebrow, the name with verified mark, the house's line, then its record (projects, credited people, open roles).
+  - Actions use the profile CTA system:
+    - Visitor: Follow (solid green) and Open roles (outlined).
+    - Own house: Edit page (neutral) and Open a role (green).
+  - A compact header with Follow appears on scroll. The sheet starts with the house's work.
 - **House profile:**
   - "Made by us" is the same 2:3 poster rail.
   - Own house: Open a role is primary.

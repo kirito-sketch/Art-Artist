@@ -2,6 +2,8 @@
 
 Verified credits and a house's "Made by us" show each film as a 2:3 theatrical poster (`src/ui/PosterCard.tsx`, decision D4). No official poster artwork exists in the repository yet: `public/images/posters/` is empty. Until it's supplied, every card shows the **type-set poster**: the title in the display face on a deep ground, with the production and year.
 
+**Prototype posters.** The product owner approved generated posters for these fictional films on 2026-10-08. The prompts are in `POSTER_PROMPTS.md`.
+
 **Rules (D4)**
 
 - Use only the production's own poster.
