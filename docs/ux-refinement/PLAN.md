@@ -304,8 +304,8 @@ Acceptance:
   - Hairline progress bar; touch-hold to scrub.
   - A small sound toggle.
   - A play mark only while paused.
-  - No control bar, cast, menu or visible fullscreen button.
-  - The fullscreen viewer is kept, reachable by keyboard and assistive tech.
+  - No control bar, cast or menu.
+  - The fullscreen viewer is kept. On touch it opens from a small expand circle in the bottom-left corner, the same 28 px glass circle (44 px target) as the sound toggle opposite it; it is a real button, so the card's single and double taps never fire on it. It also works from the keyboard and assistive tech.
 - **D3. Actions: Like (with count), Share, Save. Double-tap to Like on every post type.** Details in section 8a.
 - **D4. Posters: temporary type-set 2:3 fallback.**
   - Don't crop stills into posters.
@@ -323,7 +323,7 @@ Acceptance:
   - New public projects at post-production or released require a trailer or teaser.
   - Existing published projects stay accessible with a poster or still fallback.
 - **D8. Research baseline: frozen.**
-  - Branch `research/baseline` (commit `d37bbb7`), with its own Vercel preview, is the stable /test build for participants. Active development continues on `claude/ana-product-strategy-in22y2`.
+  - Branch `research/baseline` (commit `d37bbb7`) is the frozen /test code. As of Stage 2 it has no deployment of its own (its Vercel branch URL returns DEPLOYMENT_NOT_FOUND), so participants should not be pointed at it until one exists; the smallest fix is to assign a stable alias in Vercel to the existing `d37bbb7` deployment. Active development continues on `claude/ana-product-strategy-in22y2`.
   - The "missing Anvi Reddy" crash was real. Since /test moved to the District Discover, it opened on Posts instead of the study's People; fixed in `d37bbb7`. The flow and resume suites' selectors were also updated for the District markup.
 
 ## 8a. Mobile-only interaction rules (all stages)
@@ -444,4 +444,4 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 **Accepted limits:**
 
 - The house-identity Like is kept by construction: the same hook, keyed by the person.
-- There is no visible fullscreen control in the feed (D2).
+- Fullscreen in the feed is the small expand circle only (D2); no large button.

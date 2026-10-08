@@ -1,4 +1,4 @@
-import { Play, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Play, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent, type KeyboardEvent } from 'react';
 import type { Media, Post } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -12,8 +12,8 @@ import { clock, onPlayhead, playheadKey, videoSources } from '../../state/playhe
  *   - a single tap pauses and resumes; a double tap Likes (the post card owns both gestures, src/ui/useTapGestures.ts);
  *     this component only listens for the card's "reel-toggle"
  *   - a hairline progress bar along the bottom edge; touching it scrubs (it thickens and shows the time while held)
- *   - a small sound toggle in the corner; nothing else on the picture. A play mark shows only while paused
- *   - the full-screen viewer stays available from the keyboard and assistive tech ("Open full screen", shown on focus)
+ *   - two small glass circles in the bottom corners: sound (right) and full screen (left), the same size, both real
+ *     buttons so the card's tap gestures never fire on them; nothing else on the picture. A play mark shows only while paused
  */
 export function ReelVideo({ post, index, media, label, fit, position, onMetadata }: { post: Post; index: number; media: Media; label: string; fit: 'cover' | 'contain'; position: string; onMetadata: (video: HTMLVideoElement) => void }) {
   const { push } = useStore();
@@ -174,8 +174,8 @@ export function ReelVideo({ post, index, media, label, fit, position, onMetadata
           <button type="button" className="rv-sound" onClick={() => setFeedMuted(!muted)} aria-pressed={!muted} aria-label="Sound">
             {muted ? <VolumeX size={15} strokeWidth={2.2} /> : <Volume2 size={15} strokeWidth={2.2} />}
           </button>
-          <button type="button" className="rv-open sr-only-focusable" onClick={openViewer}>
-            Open full screen
+          <button type="button" className="rv-open" onClick={openViewer} aria-label="Open full screen">
+            <Maximize2 size={14} strokeWidth={2.4} />
           </button>
           <div
             className="rv-scrub"

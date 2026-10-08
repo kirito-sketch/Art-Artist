@@ -97,10 +97,9 @@
   backdrop-filter: blur(12px);
   pointer-events: none;
 }
-/* Sound: one small glass circle in the corner (28 px inside a 44 px target). */
-.rv-sound {
+/* Sound (right) and full screen (left): one small glass circle each in the bottom corners (28 px inside a 44 px target). */
+.rv-sound, .rv-open {
   position: absolute;
-  right: 6px;
   bottom: 20px;
   z-index: 2;
   width: 44px;
@@ -114,8 +113,10 @@
   cursor: pointer;
   isolation: isolate;
 }
-.rv-sound::before { content: ''; position: absolute; inset: 8px; z-index: -1; border-radius: 50%; background: rgba(18, 18, 20, 0.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.rv-sound:focus-visible { outline: 2px solid #fff; outline-offset: -4px; border-radius: 50%; }
+.rv-sound { right: 6px; }
+.rv-open { left: 6px; }
+.rv-sound::before, .rv-open::before { content: ''; position: absolute; inset: 8px; z-index: -1; border-radius: 50%; background: rgba(18, 18, 20, 0.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.rv-sound:focus-visible, .rv-open:focus-visible { outline: 2px solid #fff; outline-offset: -4px; border-radius: 50%; }
 /* Progress: a hairline along the bottom; holding it scrubs (it thickens and shows the time). */
 .rv-scrub { position: absolute; left: 0; right: 0; bottom: 0; height: 26px; z-index: 1; touch-action: none; cursor: pointer; }
 .rv-track { position: absolute; left: 14px; right: 14px; bottom: 9px; height: 2px; border-radius: 2px; overflow: hidden; background: rgba(255, 255, 255, 0.32); transition: height 0.15s ease, bottom 0.15s ease; }
@@ -126,9 +127,6 @@
 .rv-time { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 3px 9px; border-radius: 999px; background: rgba(10, 10, 12, 0.6); color: #fff; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; pointer-events: none; }
 .rv-failed { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 550; }
 .rv.is-failed video { opacity: 0.35; }
-/* The full-screen viewer, for keyboard and assistive tech: hidden until focused. */
-.rv-open { position: absolute; left: 10px; top: 10px; z-index: 3; padding: 8px 12px; border: 0; border-radius: 999px; background: rgba(18, 18, 20, 0.8); color: #fff; font-size: 13px; font-weight: 600; }
-.rv-open:not(:focus-visible) { width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (prefers-reduced-transparency: reduce) {
-  .rv-paused, .rv-sound::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(18, 18, 20, 0.82); }
+  .rv-paused, .rv-sound::before, .rv-open::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(18, 18, 20, 0.82); }
 }
