@@ -1,4 +1,4 @@
-import { cardRatio, CARD_LANDSCAPE, displayedSource } from '../../domain/mediaPresentation';
+import { cardRatio, displayedSource } from '../../domain/mediaPresentation';
 import { mediaRatio } from '../../domain/mediaLayout';
 import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { scriptLang } from '../../ui/compose';
@@ -8,6 +8,7 @@ import { isLive, type Work } from '../../data/works';
 import { world, worksForOrg } from '../../state/world';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
+import { PosterCard } from '../../ui/PosterCard';
 import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
 import { useLoad } from '../../ui/useLoad';
@@ -83,7 +84,9 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   const filmography = made.length > 0 && (
     <section key="made" className="section section--flush">
       <SectionHeader title="Made by us" />
-      <div className={`rail${district && madeRatio === CARD_LANDSCAPE ? ' rail--wide' : ''}`}>
+      {district ? <div className="poster-rail">
+        {made.map((w) => <PosterCard key={w.id} projectId={w.id} title={w.title} year={w.year} production={org(w.orgIds[0]).name} line={w.orgIds[0] !== id ? `${w.format} · with ${org(w.orgIds[0]).name}` : w.format} houseLine={false} onPress={() => push({ name: 'work', id: w.id })} label={`${w.title}, ${w.year}, ${w.format}`} />)}
+      </div> : <div className="rail">
         {made.map((w) => (
           <Pressable key={w.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'work', id: w.id })}>
             <Photo surface="project-card" media={w.media} className="rail-poster" frameRatio={district ? madeRatio : undefined} showPlay={false} />
@@ -94,7 +97,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
             </p>
           </Pressable>
         ))}
-      </div>
+      </div>}
     </section>
   );
   const workedWith = people.length > 0 && (
@@ -213,7 +216,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                   <Button block variant="secondary" onClick={() => showToast({ text: 'House details are set up with Art and Artist during onboarding' })}>
                     Edit page
                   </Button>
-                  <Button block variant="outline" onClick={() => openSheet({ name: 'pickProject' })}>
+                  <Button block variant="primary" onClick={() => openSheet({ name: 'pickProject' })}>
                     Open a role
                   </Button>
                 </>

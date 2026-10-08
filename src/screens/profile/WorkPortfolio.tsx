@@ -19,15 +19,19 @@ const move = <T,>(items: T[], index: number, change: number) => {
   const next = [...items]; const [item] = next.splice(index, 1); next.splice(Math.max(0, Math.min(next.length, index + change)), 0, item); return next;
 };
 
-export function FeaturedWorkSection({ personId }: { personId: string }) {
+export function FeaturedWorkSection({ personId, links = [] }: { personId: string; links?: { id: string; label?: string; url: string }[] }) {
   const { push } = useStore();
   const items = featuredWorkOf(personId);
-  if (!items.length) return null;
-  return <section className="section section--flush"><SectionHeader title="Featured work" /><div className="ana-featured-work">
+  if (!items.length && !links.length) return null;
+  // One section for outside work and links (docs/ux-refinement/PLAN.md, Stage 2 order).
+  const title = items.length ? (links.length ? 'Featured work and links' : 'Featured work') : 'Links';
+  return <section className="section section--flush"><SectionHeader title={title} />{items.length > 0 && <div className="ana-featured-work">
     {items.map((item) => item.kind === 'project' ? <button key={item.id} className="ana-featured-item" onClick={() => push({ name: 'work', id: item.projectId })}>
       {project(item.projectId)?.artwork && <Photo surface="portfolio-thumbnail" media={project(item.projectId)!.artwork!} showPlay={false} />}<span><span className="item-title">{publicName(project(item.projectId)!)}</span><span className="meta">Ana project</span></span>
     </button> : <a key={item.id} className="ana-featured-item" href={item.url} target="_blank" rel="noopener noreferrer"><span><span className="item-title">{item.title || 'Selected work'}</span><span className="meta">External work <ExternalLink size={12} /></span></span></a>)}
-  </div></section>;
+  </div>}
+    {links.length > 0 && <div className="pf-links profile-links">{links.map((l) => <a key={l.id} className="pf-reel-link" href={l.url} target="_blank" rel="noopener noreferrer">{l.label || l.url.replace(/^https?:\/\//, '')} <ExternalLink size={13} aria-hidden /></a>)}</div>}
+  </section>;
 }
 
 /** District work editor: media and selected work are separate optional parts. */

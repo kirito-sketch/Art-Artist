@@ -31,6 +31,7 @@ import './styles/glass.css';
 import './styles/post-notch.css';
 import './styles/home-next.css';
 import './styles/post-row.css';
+import './styles/profile-stage2.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';

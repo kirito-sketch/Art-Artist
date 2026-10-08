@@ -391,14 +391,15 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 - In `glass.css`, the reduced-transparency rules use `.phone[data-dir]`, which also matches `data-dir="current"`, so they apply to the default app too. Should be `:not([data-dir='current'])`.
 - The CSS layering (26 files) should be consolidated over time. Not part of this refinement beyond the token fixes.
 - In `ProfileScreen.tsx`, some house admin a11y labels are missing (see the axe items in section 9).
+- `src/main.tsx` imports `home-next.css` and `post-row.css` twice. The first import wins, so both load before the district and profile layers. Remove the early pair and check the cascade.
 
 ## 11. Progress
 
 | Stage | Status | Checkpoint |
 |---|---|---|
 | 0 Audit and plan | Approved | `10eaacf` |
-| 1 Foundations, nav, post actions | Done, awaiting review | see below |
-| 2 Profile | Not started | |
+| 1 Foundations, nav, post actions | Approved | `6329e99` |
+| 2 Profile | Done, awaiting review | see below |
 | 3 Detail pages | Not started | |
 | 4 Project and trailers | Not started | |
 | 5 Home, integration, QA | Not started | |
@@ -445,3 +446,70 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 
 - The house-identity Like is kept by construction: the same hook, keyed by the person.
 - Fullscreen in the feed is the small expand circle only (D2); no large button.
+
+### Stage 1 sign-off additions
+
+- **Touch fullscreen:** a small expand circle (bottom-left, mirroring sound) opens the viewer. It's a real button, so tap gestures never fire on it. Checks: 56/0.
+
+### Stage 2 record
+
+**Built** (default immersive profile; the legacy profile is unchanged):
+
+- **Hero:**
+  - Actions have no outer frame.
+  - Visitor: Follow is solid brand green (`--action`, the lifted green in dark mode). Message is outlined glass. Following turns neutral glass. All are 52 px.
+  - Own profile: one neutral glass Edit profile, 52 px.
+  - Hierarchy: name, then role (16 px, semibold), then place and credibility (13 px), then availability, then actions.
+- **Selected work:** a compact bento (`domain/selectedWork.ts`, unit-tested from 0 to 12 items, every shape, no holes).
+  - At most five tiles in two rows, in the person's order.
+  - A portrait first piece leads with a tall tile.
+  - With more than five, the last tile shows "+N". See all opens the full collection.
+  - Row heights come from container units, so spanning tiles never collapse.
+- **Verified credits:** 2:3 poster rail with about 2.4 cards visible (`ui/PosterCard.tsx`).
+  - Each card shows the title, the credited role (accent), the production with its verified mark, and a small seal on the poster.
+  - The full history is a two-column poster grid.
+  - Credit rules, permissions and the acceptance seal animation are unchanged; the cards only re-skin `publicCreditsFor`.
+- **Posters (D4):**
+  - Official posters only, via `data/posters.ts`. None are supplied yet, so every card uses the type-set poster.
+  - Stills are never cropped into posters.
+  - The missing artwork is listed in `docs/ux-refinement/POSTER_INVENTORY.md` (6 films needed now).
+- **Section order (D5):** three acts separated by a full-bleed band; within an act, sections are separated by space only.
+  1. Showreel, Selected work, Verified credits, Independent projects.
+  2. About (clamped to four lines with More), Skills, Professional details (two-column facts), Featured work and links (one section), Work preferences.
+  3. Posts (a compact grid that opens the stream), Reviews, Hosting and Speaking, Collaborations.
+  - Then "Manage your profile", visible only to you.
+- **No duplication:**
+  - Professional details no longer repeats craft, languages or years.
+  - Work preferences no longer repeats "Open to work", which sits under the name.
+- **House profile:**
+  - "Made by us" is the same 2:3 poster rail.
+  - Own house: Open a role is primary.
+  - Visitor: Follow is solid green.
+- **Deep link:** `?org=<id>` opens a house page (QA and Studio).
+- **Empty state:** a profile with nothing to show yet gets one quiet line, plus Add work on your own profile, instead of an empty sheet. Empty Professional details and leading bands are suppressed.
+
+**Measured (Kiran, own, 393 px):**
+
+| | Baseline | Now | Change |
+|---|---|---|---|
+| Total height | 4,693 px | 3,933 px | −16% |
+| Height below the hero | 3,905 px | 3,145 px | −19% |
+| Selected work | 986 px | 317 px | −68% |
+| Verified credits start | ~2,050 px | 1,376 px | −33% |
+
+**Accepted limit:**
+
+- The ≥40% total reduction target in section 7 isn't met. The hero is a fixed full screen (788 px), and the remaining length is real content: reviews, events, collaborations and details.
+- Reaching 40% would mean hiding content behind disclosures. That's proposed for review, not done.
+
+**Verification:** 58/0 Stage 2 checks under touch emulation, at 320, 393 and 430 px in light and dark. They cover:
+
+- CTAs: frame, colour, height, and the Following state
+- the bento: tile count, two rows, no overlap, filled, +N
+- posters: exactly 2:3 and 2.4 visible
+- section order and no repeated facts
+- no horizontal scroll
+- content states: sparse (Nikhil), two credits (Vikram), posts grid to stream, credit history, poster to project, and the house page
+
+Unit tests, typecheck and build pass. Screenshots are in `docs/ux-refinement/stage2/`.
+

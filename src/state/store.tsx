@@ -167,6 +167,8 @@ function useStoreValue() {
     const query = new URLSearchParams(location.search);
     const profileId = query.get('profile');
     if (profileId) return [{ name: 'profile', id: profileId }];
+    const orgId = query.get('org');
+    if (orgId) return [{ name: 'org', id: orgId }];
     if (POST_SAMPLES) return [{ name: 'posts', ids: NOTCH_SAMPLE_IDS, index: 0 }];
     const postId = query.get('post');
     const posts = discoverPosts(viewer, DEFAULT_FOLLOWING, []);

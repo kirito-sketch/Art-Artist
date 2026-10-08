@@ -1,4 +1,5 @@
-import { workRows } from '../../domain/workRows';
+import { selectedWorkBento } from '../../domain/selectedWork';
+import { PostGrid } from '../discover/PostGrid';
 import { DIRECTION } from '../../ui/designDirection';
 import { HeroIntro } from './HeroDirections';
 import { LegacyProfileCredits } from './LegacyProfileCredits';
@@ -8,7 +9,6 @@ import { profilePortrait } from '../../domain/profilePortrait';
 import { ProfileHeroMedia } from './ProfileHeroMedia';
 import { eligibleFeaturedProjects } from '../../domain/featuredWork';
 import { resolveProfileCover } from '../../domain/profileCover';
-import { presentationRatio } from '../../domain/mediaPresentation';
 import { ShowreelMedia } from './Showreel';
 import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
@@ -63,6 +63,21 @@ export function associationStage(credit?: string) {
   return 'Added · not a credit';
 }
 
+
+/** The bio, held to four lines with a More link when it runs longer (the full text stays in the document). */
+function AboutText({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+  const ref = useRef<HTMLParagraphElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !open) setLong(el.scrollHeight > el.clientHeight + 2);
+  }, [text, open]);
+  return <>
+    <p ref={ref} className={`body profile-about${open ? '' : ' profile-about--clamped'}`}>{text}</p>
+    {long && <button className="link profile-about-more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? 'Less' : 'More'}</button>}
+  </>;
+}
 
 function Fact({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
@@ -343,25 +358,37 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </p>
         </header></>}
 
+        {/* Three acts, separated by a band: the work, who they are professionally, and what they do on Ana. */}
+        {district && !reel && !stills.length && !credits.length && !d.projects.length && !posts.length && !d.about && (
+          <div className="profile-empty">
+            <p className="item-title">{own ? 'Your work goes here' : `${p.name.split(' ')[0]} hasn't added work yet`}</p>
+            <p className="meta">{own ? 'Add a showreel or a few images. Verified credits appear once a production issues them and you accept.' : 'Verified credits appear here once a production issues them.'}</p>
+            {own && <Button size="s" variant="secondary" onClick={() => push({ name: 'editProfile', section: 'portfolio' })}>Add work</Button>}
+          </div>
+        )}
+        <div className="pgroup pgroup--work">
         <ReelCard person={p} active={profileActive} />
 
 
         {stills.length > 0 && (
-          <section className="section section--flush">
-            <SectionHeader title={district ? 'Selected work' : craftProfile(p.craft).work.images ?? 'Portfolio'} action={district && stills.length > 4 ? 'See all' : undefined} onAction={() => push({ name: 'media', items: stills, index: 0, what: 'Portfolio image', from: `by ${p.name}` })} />
-            {district ? <div className="profile-work-rows">
-              {workRows(stills.slice(0, 5)).map((row) => (
-                <div key={row.items.join('-')} className={`profile-work-row profile-work-row--${row.items.length}`}>
-                  {row.items.map((i) => (
-                    <Pressable key={stills[i].id + i} className="profile-work-tile" style={{ aspectRatio: row.ratio } as CSSProperties} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(stills[i], i, stills.length, 'Portfolio image', `by ${p.name}`)}>
-                      <Photo media={stills[i]} surface="portfolio-thumbnail" frameRatio={row.ratio} />
-                    </Pressable>
-                  ))}
-                </div>
-              ))}
-            </div> : <div className="bento">
+          <section className="section section--flush profile-work-section">
+            <SectionHeader title={district ? 'Selected work' : craftProfile(p.craft).work.images ?? 'Portfolio'} action={district && stills.length > 1 ? 'See all' : undefined} onAction={() => push({ name: 'media', items: stills, index: 0, what: 'Portfolio image', from: `by ${p.name}` })} />
+            {district ? (() => {
+              // A compact preview: at most five pieces in two rows, fixed patterns, no holes (src/domain/selectedWork.ts).
+              const b = selectedWorkBento(stills);
+              return <div className="work-bento" data-count={b.tiles.length} style={{ gridTemplateColumns: `repeat(${b.cols}, minmax(0, 1fr))`, '--cell-ratio': b.cellRatio, '--cols': b.cols } as CSSProperties}>
+                {b.tiles.map((t, k) => {
+                  const m = stills[t.index];
+                  const last = k === b.tiles.length - 1 && b.more > 0;
+                  return <Pressable key={m.id + t.index} className="work-bento-tile" style={{ gridColumn: `${t.col} / span ${t.colSpan}`, gridRow: `${t.row} / span ${t.rowSpan}` }} onClick={() => push({ name: 'media', items: stills, index: t.index, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={last ? `${mediaName(m, t.index, stills.length, 'Portfolio image', `by ${p.name}`)}. ${b.more} more` : mediaName(m, t.index, stills.length, 'Portfolio image', `by ${p.name}`)}>
+                    <Photo media={m} surface="portfolio-thumbnail" showPlay={m.kind === 'video'} />
+                    {last && <span className="work-bento-more" aria-hidden>+{b.more}</span>}
+                  </Pressable>;
+                })}
+              </div>;
+            })() : <div className="bento">
               {stills.map((m, i) => (
-                <Pressable key={m.id + i} className={district ? 'profile-work-tile' : 'bento-tile'} style={district ? { aspectRatio: presentationRatio(m, 'portfolio-thumbnail') } as CSSProperties : undefined} data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
+                <Pressable key={m.id + i} className="bento-tile" data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
                   <Photo media={m} surface="portfolio-thumbnail" />
                 </Pressable>
               ))}
@@ -398,7 +425,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {!district && <LegacyProfileCredits credits={credits} person={p} own={own} />}
 
 
-        {posts.length > 0 && (
+        {!district && posts.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Posts" />
             <div className="list list--flush">
@@ -408,13 +435,16 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </div>
           </section>
         )}
+        </div>
+
+        <div className="pgroup pgroup--about">
 
 
 
         {(d.about || p.gear) && (
           <section className="section section--flush" data-profile-about>
             <SectionHeader title="About" />
-            {d.about && <p className="body">{d.about}</p>}
+            {d.about && (district ? <AboutText text={d.about} /> : <p className="body">{d.about}</p>)}
             {p.gear && (
               <ul className="facts facts--tight facts--after">
                 <Fact icon={<Camera size={20} />}>{p.gear}</Fact>
@@ -426,15 +456,26 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         <ProfileDetails person={p} />
 
         {/* One place for outside work and links, after who they are. */}
-        {district && <><FeaturedWorkSection personId={p.id} /><WorkLinks person={p} /></>}
+        {district && <FeaturedWorkSection personId={p.id} links={profileOf(id).links} />}
 
-        {preferences.configured && <section className="section section--flush profile-preferences"><div className="section-head"><h2>Work preferences</h2>{own && <button className="section-all" aria-label="Edit work preferences" onClick={() => openSheet({ name: 'availability' })}>Edit</button>}</div>
-          <dl className="pf-details"><dt>Professional availability</dt><dd>{preferences.open ? availableLabel(preferences.from) : 'Not taking work'}</dd>
-            {preferences.scope && <><dt>Where</dt><dd>{preferences.scope.replace(/\s*·\s*will travel/i, '')}</dd></>}
-            {preferences.travel && <><dt>Travel</dt><dd>Open to travel</dd></>}
+        {preferences.configured && (!district || !preferences.open || preferences.scope || preferences.travel) && <section className="section section--flush profile-preferences"><div className="section-head"><h2>Work preferences</h2>{own && <button className="section-all" aria-label="Edit work preferences" onClick={() => openSheet({ name: 'availability' })}>Edit</button>}</div>
+          <dl className="pf-details">
+            {/* Open to work is already under the name on the immersive profile. */}
+            {(!district || !preferences.open) && <div className="pf-pair"><dt>Professional availability</dt><dd>{preferences.open ? availableLabel(preferences.from) : 'Not taking work'}</dd></div>}
+            {preferences.scope && <div className="pf-pair"><dt>Where</dt><dd>{preferences.scope.replace(/\s*·\s*will travel/i, '')}</dd></div>}
+            {preferences.travel && <div className="pf-pair"><dt>Travel</dt><dd>Open to travel</dd></div>}
           </dl>
         </section>}
 
+        </div>
+
+        <div className="pgroup pgroup--activity">
+        {district && posts.length > 0 && (
+          <section className="section section--flush profile-posts">
+            <SectionHeader title={`Posts · ${posts.length}`} action={posts.length > 6 ? 'See all' : undefined} onAction={() => push({ name: 'posts', ids: posts.map((x) => x.id), index: 0 })} />
+            <PostGrid posts={posts.slice(0, 6)} onOpen={(i) => push({ name: 'posts', ids: posts.map((x) => x.id), index: i })} />
+          </section>
+        )}
         <ProfileReviewsSection id={p.id} />
 
         {!district && <>        <div className="profile-actions">
@@ -474,6 +515,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </div>
           </section>
         )}
+        </div>
         {own && <details className="profile-management"><summary><span>Manage your profile</span><small>Only you · private tools{pendingCredits.length ? ` · ${pendingCredits.length} pending ${pendingCredits.length === 1 ? 'credit' : 'credits'}` : ''}</small></summary><div className="profile-management-body">
           <Button size="s" variant="secondary" onClick={() => push({ name: 'editProfile' })}>Edit profile</Button>
           {!credits.length && <p className="meta">Verified credits come from productions. You can accept or dispute a credit issued to you; you cannot create your own.</p>}

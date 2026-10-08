@@ -50,6 +50,7 @@ export function ReelCard({ person, active = true }: { person: Person; active?: b
 
 /** Craft details and skills, each detail shown only to whoever its visibility allows. */
 export function ProfileDetails({ person }: { person: Person }) {
+  const district = useFeatures().home === 'district';
   const who = useViewerKind(person.id);
   const x = profileOf(person.id);
   const sets = setsFor([person.craft, ...(person.crafts ?? [])]);
@@ -77,23 +78,19 @@ export function ProfileDetails({ person }: { person: Person }) {
           </ul>
         </section>
       )}
-      {(crafts.length > 0 || rows.length > 0 || exp || x.workTypes.length > 0) && (
+      {(district ? !!person.crafts?.length || !!person.specialisation || rows.length > 0 || !!exp || x.workTypes.length > 0 : crafts.length > 0 || rows.length > 0 || exp || x.workTypes.length > 0) && (
         <section className="section section--flush">
           <SectionHeader title="Professional details" />
           <dl className="pf-details">
-            <dt>Primary craft</dt><dd>{person.role || craftDef(person.craft)?.label}</dd>
-            {!!person.crafts?.length && <><dt>Other crafts</dt><dd>{person.crafts.map(c => craftDef(c)?.label ?? c).join(', ')}</dd></>}
-            {!!person.languages?.length && <><dt>Languages</dt><dd>{person.languages.join(', ')}</dd></>}
-            {person.specialisation && <><dt>Specialisation</dt><dd>{person.specialisation}</dd></>}
-            {!!person.years && <><dt>Years active</dt><dd>{person.years}</dd></>}
-            {exp && (
-              <>
-                <dt>Experience</dt>
-                <dd>{exp}</dd>
-              </>
-            )}
+            {/* The immersive profile already says the craft, languages and years under the name: no repeats here. */}
+            {!district && <div className="pf-pair"><dt>Primary craft</dt><dd>{person.role || craftDef(person.craft)?.label}</dd></div>}
+            {!!person.crafts?.length && <div className="pf-pair"><dt>Other crafts</dt><dd>{person.crafts.map(c => craftDef(c)?.label ?? c).join(', ')}</dd></div>}
+            {!district && !!person.languages?.length && <div className="pf-pair"><dt>Languages</dt><dd>{person.languages.join(', ')}</dd></div>}
+            {person.specialisation && <div className="pf-pair"><dt>Specialisation</dt><dd>{person.specialisation}</dd></div>}
+            {!district && !!person.years && <div className="pf-pair"><dt>Years active</dt><dd>{person.years}</dd></div>}
+            {exp && <div className="pf-pair"><dt>Experience</dt><dd>{exp}</dd></div>}
             {rows.map(({ f, v }) => (
-              <div key={f.id} style={{ display: 'contents' }}>
+              <div key={f.id} className="pf-pair">
                 <dt>{f.label}</dt>
                 <dd>
                   {show(f, v)}
@@ -101,12 +98,7 @@ export function ProfileDetails({ person }: { person: Person }) {
                 </dd>
               </div>
             ))}
-            {x.workTypes.length > 0 && (
-              <>
-                <dt>Work</dt>
-                <dd>{x.workTypes.join(', ')}</dd>
-              </>
-            )}
+            {x.workTypes.length > 0 && <div className="pf-pair"><dt>Work</dt><dd>{x.workTypes.join(', ')}</dd></div>}
           </dl>
         </section>
       )}
