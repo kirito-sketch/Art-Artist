@@ -152,8 +152,6 @@ export function DistrictHome({ go }: { go: Go }) {
     {atmosphere && <LivingBackground scrollRef={scrollRef} />}
     <div className={`screen canvas v-home dh${atmosphere ? ' has-ambient' : ''}`} ref={scrollRef} data-scroll="home" key={`${viewer.id}-${reloadKey}`}>
       <div className="dh-wash">
-        {/* Static ambient light at the top of the page, like District's. Background only. */}
-        <span className="dh-top-amb" aria-hidden />
         <header className="dh-head">
           <h1 className="sr-only">Home</h1>
           <MapPin size={20} className="dh-pin" aria-hidden />

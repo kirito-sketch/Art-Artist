@@ -21,7 +21,7 @@ Production houses: the New Home applies to the individual identity. While acting
 
 Rebuilt to docs/DISTRICT_FIXES.md. Each shelf does a different job, and nothing appears twice: anything in the Spotlight is left out of the shelves below it.
 
-1. Where you are: city, craft and languages, notifications, over the static top glow.
+1. Where you are: city, craft and languages, notifications, 
 2. Tiles: Events, Projects, People, Opportunities, Reviews. Each opens Discover on that chip. There are no separate category pages any more.
 3. In the spotlight: up to five time-sensitive things this week, of mixed kinds (roles, projects, new work from people you know, events, films out this week). Never people. Rules in `src/domain/spotlight.ts` (tested), data in `src/screens/home/districtFeed.ts`. The shared editorial shell has a type tag, dominant 4:5 image, title and contextual secondary line over a lower gradient, and one compact metadata footer. Roles show project/creator and closing/city/pay; events show host and date/city/Free; projects show house and stage; reviews show compact rating context. The active card is centred from the first layout, at 70% of the viewport capped at 300 px, with a 10 px gutter and symmetric previous/next peeks scaled to 88%. Scale follows scroll position without 3D effects. Three runs allow seamless looping, including native manual scrolling across the boundary. Rest is 6000 ms after settling; advance takes 600 ms with cubic ease-in-out. Touch and wheel input cancel motion immediately and start a full rest after settling. Rotation pauses offscreen, in a background/unfocused app, while Home is inert/covered and during keyboard focus. Reduced motion, Save-Data and low power disable autoplay; manual navigation still works. Pagination is a compact group of tiny dots and an 18 px active pill, with accessible card labels and no transport controls. The heading and See all remain on the 20 px grid; See all opens the mixed selection in a sheet. The active card plays its clip when motion is allowed.
 4. The completion prompt, when one is due.
@@ -60,18 +60,7 @@ Tile icons: `public/images/tiles/*.webp`. Spotlight clips: `public/video/<projec
 
 ## Top of Home
 
-At the top of the page there's a static ambient glow (`.dh-top-amb`), like District's. It's strongest behind the location header and has faded out by the middle of the first row of tiles. Below that, the page is Ana's normal background. It never moves.
-
-How it's built: one broad radial from just above the top edge, plus a smaller offset one for depth. Eased stops and a 24 px blur mean there's no band or edge. The layer starts 60 px above the page so the blur doesn't thin the top, where the light is strongest.
-
-It uses Ana's palette, not District's purple. Theme tokens on `.dh`:
-
-| Token | Light | Dark |
-| --- | --- | --- |
-| `--home-ambient` | warm accent #e9a25a at 28% | deep brand green #2f7a66 at 52% |
-| `--home-ambient-2` | muted green #7fae9e at 14% | warm #a8662f at 16% |
-
-Measured against the same frame without it, at the top centre: light is about 15% warm tint, fading to under 1% by 140 px down. Dark lifts the top by up to about 44 levels in green and has faded out by the same point. The spotlight section has no glow of its own.
+There is no glow, wash or blur layer behind the header or the status bar. The top of Home is the page's own ground (and the cinematic atmosphere, which is the same in both versions), so the location header and the system clock read crisply. An earlier build had a static ambient glow (`.dh-top-amb`, a blurred radial gradient); on iPhone it read as a haze washing out the header and the status bar, so it was removed.
 
 ## Events (manual rail)
 

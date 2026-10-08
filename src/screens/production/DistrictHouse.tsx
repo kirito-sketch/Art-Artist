@@ -150,7 +150,6 @@ export function DistrictHouseHome({ discover }: { discover: (chip?: DiscoverChip
       {atmosphere && <LivingBackground scrollRef={scrollRef} />}
       <div ref={scrollRef} className={`screen canvas dh dhouse${atmosphere ? ' has-ambient' : ''}`} data-scroll="home">
         <div className="dh-wash">
-          <span className="dh-top-amb" aria-hidden />
           <header className="dh-head dhouse-head">
             <h1 className="sr-only">{house.name} home</h1>
             <button className="dhouse-identity" onClick={() => openSheet({ name: 'identity' })} aria-label={`Acting for ${house.name}. Switch identity`}>

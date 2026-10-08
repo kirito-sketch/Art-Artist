@@ -104,57 +104,6 @@
   padding-bottom: 6px;
 }
 
-/*
- * Top ambient (docs/DISTRICT.md, Top of Home): soft light at the top of the page behind the header, fading
- * out through the first row of tiles, like District's. One broad radial from just above the top edge, a quieter
- * offset one for depth, eased stops and a blur, so there's no band or edge. Static. Separate tokens per theme:
- * light is a faint warmth on the page; dark carries more colour, still low in saturation. Ana's palette, not
- * District's purple: warm accent in light, deep brand green in dark.
- */
-.dh {
-  --home-ambient: #e9a25a;
-  --home-ambient-strength: 28%;
-  --home-ambient-2: #7fae9e;
-  --home-ambient-2-strength: 14%;
-}
-
-html[data-theme='dark'] .dh {
-  --home-ambient: #2f7a66;
-  --home-ambient-strength: 52%;
-  --home-ambient-2: #a8662f;
-  --home-ambient-2-strength: 16%;
-}
-
-.dh-top-amb {
-  position: absolute;
-  z-index: -1;
-  left: 0;
-  right: 0;
-  /* Starts above the page so the blur never thins the top edge, where the light is strongest. */
-  top: -60px;
-  height: 300px;
-  pointer-events: none;
-  --a: var(--home-ambient-strength);
-  --b: var(--home-ambient-2-strength);
-  background:
-    radial-gradient(
-      ellipse 100% 55% at 42% 20%,
-      color-mix(in srgb, var(--home-ambient) var(--a), transparent) 0%,
-      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.8), transparent) 20%,
-      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.5), transparent) 42%,
-      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.22), transparent) 64%,
-      color-mix(in srgb, var(--home-ambient) calc(var(--a) * 0.06), transparent) 84%,
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse 50% 34% at 82% 20%,
-      color-mix(in srgb, var(--home-ambient-2) var(--b), transparent) 0%,
-      color-mix(in srgb, var(--home-ambient-2) calc(var(--b) * 0.45), transparent) 50%,
-      transparent 100%
-    );
-  filter: blur(24px);
-}
-
 .dh-head {
   display: flex;
   align-items: center;
