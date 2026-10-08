@@ -4,7 +4,7 @@ import * as seed from '../../data/seed';
 import { CRAFTS } from '../../data/crafts';
 import { familyOf, nearCrafts } from '../../data/taxonomy';
 import type { IndustryEvent, Media, Opportunity, Person } from '../../data/types';
-import { isLive, type Work } from '../../data/works';
+import { type Work } from '../../data/works';
 import { outThisWeek } from '../reviews/ReviewsScreen';
 import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
 import { blockedBy, discoverableProjects, discoverableRoles, searchablePeople } from '../../domain/discovery';
@@ -13,7 +13,7 @@ import type { DiscoverChip } from '../../domain/contentTypes';
 import { discoverPosts, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
-import { work, world, worksForOrg } from '../../state/world';
+import { work, world } from '../../state/world';
 import { typeLabel, whenLabel } from '../../domain/events';
 import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
 import { markOpened, markShown, readSeen } from '../../state/eventSeen';
@@ -23,6 +23,7 @@ import { OfflineBanner, PublishBar } from '../../ui/chrome';
 import { useFeatures } from '../../ui/features';
 import { Avatar, IconButton, PersonPhoto, Photo, PressCard, Pressable, SectionHeader } from '../../ui/primitives';
 import { SaveButton } from './OpportunityCard';
+import { eventArt } from '../../state/eventArt';
 import { FirstStep } from './FirstHome';
 import { spotCard, spotlightFor, type SpotCard } from './districtFeed';
 import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
@@ -357,16 +358,6 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
     );
   }
   return null;
-}
-
-/** What an event looks like: its film, else the host's current project, else the host's own work. */
-function eventArt(e: IndustryEvent): Media | undefined {
-  if (e.cover) return e.cover;
-  const w = e.projectId ? work(e.projectId) : undefined;
-  if (w && w.media.id !== 'ph') return w.stills[0] ?? w.media;
-  const lead = worksForOrg(e.hostId).filter((x) => x.media.id !== 'ph').sort((a, b) => Number(isLive(b)) - Number(isLive(a)))[0];
-  if (lead) return lead.stills[0] ?? lead.media;
-  return (seed.portfolio[e.hostId] ?? []).find((m) => m.kind === 'image');
 }
 
 // One choice per person per day; a change that matters (Interested, a block) recalculates. Never while on screen.

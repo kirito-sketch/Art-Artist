@@ -1,3 +1,4 @@
+import { cardRatio, CARD_LANDSCAPE } from '../../domain/mediaPresentation';
 import { ChevronDown, ChevronLeft, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
 import { scriptLang } from '../../ui/compose';
 import { useEffect, useState } from 'react';
@@ -57,7 +58,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       <SectionHeader title="Now making" />
       <div className="org-now">
         {live.map((w) => (
-          <NowCard key={w.id} w={w} district={district} roles={roles.filter((r) => r.project === w.title).map((r) => r.role)} />
+          <NowCard key={w.id} w={w} district={district} ratio={cardRatio(live.map((x) => x.stills[0] ?? x.media))} roles={roles.filter((r) => r.project === w.title).map((r) => r.role)} />
         ))}
       </div>
     </section>
@@ -72,13 +73,15 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       </div>
     </section>
   );
+  // One card shape for the filmography: what is shown today is landscape stills, so the cards are landscape.
+  const madeRatio = cardRatio(made.map((w) => w.media));
   const filmography = made.length > 0 && (
     <section key="made" className="section section--flush">
       <SectionHeader title="Made by us" />
-      <div className="rail">
+      <div className={`rail${district && madeRatio === CARD_LANDSCAPE ? ' rail--wide' : ''}`}>
         {made.map((w) => (
           <Pressable key={w.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'work', id: w.id })}>
-            <Photo surface="project-card" media={w.media} className="rail-poster" showPlay={false} />
+            <Photo surface="project-card" media={w.media} className="rail-poster" frameRatio={district ? madeRatio : undefined} showPlay={false} />
             <p className="item-title">{w.title}</p>
             <p className="meta">
               {district ? <ScoreLine id={w.id} /> : w.year}
@@ -217,10 +220,10 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
   );
 }
 
-function NowCard({ w, roles, district }: { w: Work; roles: string[]; district?: boolean }) {
+function NowCard({ w, roles, district, ratio }: { w: Work; roles: string[]; district?: boolean; ratio?: number }) {
   const { push } = useStore();
   if (district) return <PressCard className="dhouse-project" onPress={() => push({ name: 'work', id: w.id })} aria-label={w.title}>
-    <span className="dhouse-project-media"><Photo surface="project-card" media={w.media} showPlay={false} /><span className="dh-badge">{w.stage}</span></span>
+    <span className="dhouse-project-media" style={{ aspectRatio: ratio }}><Photo surface="project-card" media={w.stills[0] ?? w.media} frameRatio={ratio} showPlay={false} /><span className="dh-badge">{w.stage}</span></span>
     <span className="dhouse-project-body"><span className="item-title" lang={scriptLang(w.title)}>{w.title}</span><span className="meta">{w.format}</span><span className="dhouse-project-fact">{roles.length ? `${roles.length} open ${roles.length === 1 ? 'role' : 'roles'}` : 'View project'}</span></span>
   </PressCard>;
   return (

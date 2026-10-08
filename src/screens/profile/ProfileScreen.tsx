@@ -1,3 +1,4 @@
+import { workRows } from '../../domain/workRows';
 import { LegacyProfileCredits } from './LegacyProfileCredits';
 import { ProfileCreditsSection } from './ProfileCredits';
 import { workPreferencesOf } from '../../state/workPreferences';
@@ -246,6 +247,8 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               {p.years ? ` · ${p.years} years active` : ''}
             </span>
           </p>
+          {/* Availability is what someone hiring checks first, so it sits with the identity, not at the bottom. */}
+          {preferences.configured && preferences.open && <p className="pid-available">{availableLabel(preferences.from)}</p>}
         </header>
           {selectedCover.showreel && <button className="profile-play" onClick={() => setReelOpen(true)}><Play size={16} fill="currentColor" /> Play showreel</button>}
           <div className={`profile-actions${own ? ' profile-actions--self' : ''}`}>
@@ -315,17 +318,29 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {stills.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title={district ? 'Selected work' : craftProfile(p.craft).work.images ?? 'Portfolio'} action={district && stills.length > 4 ? 'See all' : undefined} onAction={() => push({ name: 'media', items: stills, index: 0, what: 'Portfolio image', from: `by ${p.name}` })} />
-            <div className={district ? `profile-work-grid profile-work-grid--${Math.min(stills.length, 2)}` : 'bento'}>
-              {(district ? stills.slice(0, 4) : stills).map((m, i) => (
+            {district ? <div className="profile-work-rows">
+              {workRows(stills.slice(0, 5)).map((row) => (
+                <div key={row.items.join('-')} className={`profile-work-row profile-work-row--${row.items.length}`}>
+                  {row.items.map((i) => (
+                    <Pressable key={stills[i].id + i} className="profile-work-tile" style={{ aspectRatio: row.ratio } as CSSProperties} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(stills[i], i, stills.length, 'Portfolio image', `by ${p.name}`)}>
+                      <Photo media={stills[i]} surface="portfolio-thumbnail" frameRatio={row.ratio} />
+                    </Pressable>
+                  ))}
+                </div>
+              ))}
+            </div> : <div className="bento">
+              {stills.map((m, i) => (
                 <Pressable key={m.id + i} className={district ? 'profile-work-tile' : 'bento-tile'} style={district ? { aspectRatio: presentationRatio(m, 'portfolio-thumbnail') } as CSSProperties : undefined} data-span={bento[i].span} data-ratio={bento[i].ratio} onClick={() => push({ name: 'media', items: stills, index: i, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={mediaName(m, i, stills.length, 'Portfolio image', `by ${p.name}`)}>
                   <Photo media={m} surface="portfolio-thumbnail" />
                 </Pressable>
               ))}
-            </div>
+            </div>}
           </section>
         )}
 
-        <>{district && <FeaturedWorkSection personId={p.id} />}<WorkLinks person={p} /></>
+        {/* Legacy keeps links here. In the New version, production-confirmed credits come before self-declared work and links. */}
+        {!district && <WorkLinks person={p} />}
+        {district && <ProfileCreditsSection id={id} />}
 
 
         {d.projects.length > 0 && (
@@ -349,7 +364,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
 
-        {district ? <ProfileCreditsSection id={id} /> : <LegacyProfileCredits credits={credits} person={p} own={own} />}
+        {!district && <LegacyProfileCredits credits={credits} person={p} own={own} />}
 
 
         {posts.length > 0 && (
@@ -378,6 +393,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         )}
 
         <ProfileDetails person={p} />
+
+        {/* One place for outside work and links, after who they are. */}
+        {district && <><FeaturedWorkSection personId={p.id} /><WorkLinks person={p} /></>}
 
         {preferences.configured && <section className="section section--flush profile-preferences"><div className="section-head"><h2>Work preferences</h2>{own && <button className="section-all" aria-label="Edit work preferences" onClick={() => openSheet({ name: 'availability' })}>Edit</button>}</div>
           <dl className="pf-details"><dt>Professional availability</dt><dd>{preferences.open ? availableLabel(preferences.from) : 'Not taking work'}</dd>

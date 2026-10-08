@@ -320,6 +320,13 @@
   aspect-ratio: 4 / 5;
   border-radius: 18px;
 }
+/* Landscape stills get landscape cards: the frame stays whole and two films fit side by side less cramped. */
+.dhouse-profile .rail--wide .rail-item {
+  width: min(280px, 76%);
+}
+.dhouse-profile .rail--wide .rail-poster {
+  aspect-ratio: 16 / 9;
+}
 .dhouse-profile .org-person {
   flex: 0 0 80px;
   min-height: 100px;

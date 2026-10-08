@@ -1,5 +1,7 @@
 # Ana media audit and presentation system
 
+Current rules and the October 2026 audit: see [Media and profile audit](MEDIA_PROFILE_AUDIT.md), which supersedes the ratio rules below where they differ.
+
 Post-specific correction: see [Post sizing and demo content](POST_MEDIA_DEMO.md). Posts now have no View original CTA; the seeds demonstrate mixed heights, and genuine native vertical video can retain up to 9:16. The original inspection results below describe the initial migration, before this correction.
 
 Discover layout correction: see [Deterministic Bento groups](DISCOVER_BENTO.md). The previous independent source-ratio tiles and modulo column spans are retired; complete group rectangles now reserve all tile dimensions before load.
@@ -47,7 +49,7 @@ Needs infrastructure later: durable upload/object storage; server thumbnail/resi
 - Keep `Photo`, extend it with `surface`, `frameRatio`, priority and source/fallback-aware presentation resolution.
 - `Media.src` remains the original source of truth. `Media.poster` is a generated or delivered video preview, never the video replacement.
 - `Media.presentations[surface]` holds independent fit/focal metadata. It is cloned by `withFraming`; source objects are not edited in place.
-- `Post.presentation` chooses the shared carousel frame. Image ratios within .75–1.91 retain natural proportions; outside that range the frame is bounded and defaults to Fit. Playable video can retain up to 9:16. Slides of different ratios Fit by default. Framing is a creator-side decision; the Post viewer has no alternate-original CTA.
+- `Post.presentation` chooses the shared carousel frame. Image ratios within 3:4 (.75) and 2.39:1 retain natural proportions (see docs/MEDIA_PROFILE_AUDIT.md for why 2.39 rather than Instagram's 1.91); outside that range the frame is bounded and defaults to Fit. Playable video can retain up to 9:16. Slides of different ratios Fit by default. Framing is a creator-side decision; the Post viewer has no alternate-original CTA.
 - `mediaPresentation.ts` is the typed destination policy; `mediaLayout.ts` retains legacy source classification and normalized focal handling. Measured delivered seed dimensions live in `mediaGeometry.ts`.
 - Posters/artwork default to Fit across public previews. Actual missing-poster fallback is classified by the delivered fallback, centrally.
 - `ProfileHeroMedia` retains its specialist responsive protected-region algorithm, requests the shared policy, and uses hero-only focal metadata. There is no claim that every subject can fit; editor warns about impossible regions. Artwork preserves composition and does not claim subject protection.

@@ -672,8 +672,8 @@ export const posts: Post[] = [
   {
     id: 'p-ishaan-square', authorId: 'ishaan', time: '3d', likes: 28, comments: 2,
     text: 'A new portrait for the studio journal.',
-    presentation: 'square',
-    media: [{ id: 'post-ishaan-square', kind: 'image', src: 'images/people/ishaan.jpg', width: 480, height: 600, contentType: 'portrait', alt: 'Portrait of Ishaan Bose outdoors', presentations: { post: { fit: 'cover', focal: { x: 50, y: 20 } } } }],
+    // Shown at its natural 4:5. An earlier build cropped it to a square only for feed variety.
+    media: [{ id: 'post-ishaan-square', kind: 'image', src: 'images/people/ishaan.jpg', width: 480, height: 600, contentType: 'portrait', alt: 'Portrait of Ishaan Bose outdoors' }],
   },
   {
     id: 'p5', authorId: 'vikram', time: '6d', likes: 143, comments: 9, project: 'Monsoon Letters',

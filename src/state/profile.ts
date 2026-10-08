@@ -90,6 +90,8 @@ export const profiles: Record<string, ProfileExtra> = {
     experience: '2-5',
     reel: { url: 'https://vimeo.com/', title: 'Acting reel', cover: media('reel-tara', 'stills/reel-tara', 'covers/paper-boats'), duration: '1:52' },
     workLinks: [],
+    // Her portrait is a profile looking right, face at the right edge: frame the hero on the face, not the centre.
+    profileCover: { kind: 'portrait', focal: { x: 82, y: 30 } },
   },
 };
 

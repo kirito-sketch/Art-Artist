@@ -33,6 +33,9 @@ export function EventTicket({ e, reason, onOpen }: { e: IndustryEvent; reason?: 
   const host = party(e.hostId);
   const project = e.projectId ? work(e.projectId) : undefined;
   const art = e.cover ?? (project && project.media.id !== 'ph' ? (project.stills[0] ?? project.media) : undefined);
+  // New version: an event without its own image shows its date, which differs per event, instead of a generic icon
+  // or the host's project image repeated down a list.
+  const dated = useFeatures().home === 'district';
   const status = eventStatus(e.id);
   return (
     <div className="ev-ticket ev-discovery-card">
@@ -48,9 +51,16 @@ export function EventTicket({ e, reason, onOpen }: { e: IndustryEvent; reason?: 
           {art ? (
             <Photo surface="event-card" media={art} showPlay={false} />
           ) : (
-            <span className="ev-card-fallback">
-              <CalendarDays size={22} aria-hidden />
-            </span>
+            dated ? (
+              <span className="ev-card-date" aria-hidden>
+                <b>{new Date(e.start).toLocaleDateString('en-IN', { day: 'numeric', timeZone: 'Asia/Kolkata' })}</b>
+                {new Date(e.start).toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase()}
+              </span>
+            ) : (
+              <span className="ev-card-fallback">
+                <CalendarDays size={22} aria-hidden />
+              </span>
+            )
           )}
         </span>
         <span className="ev-body">

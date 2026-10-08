@@ -99,6 +99,9 @@
 .profile-credit-help .link { font-size: 11px; }
 .profile-credit-shelf { display: flex; gap: 12px; overflow-x: auto; padding: 2px 0 12px; scroll-snap-type: x mandatory; scroll-padding-left: 0; overscroll-behavior-x: contain; scrollbar-width: thin; }
 .profile-credit-card { flex: 0 0 clamp(160px, 58%, 240px); width: clamp(160px, 58%, 240px); min-width: 0; align-self: flex-start; display: flex; flex-direction: column; text-align: left; padding: 0; background: none; border: 0; color: var(--text); scroll-snap-align: start; scroll-snap-stop: normal; cursor: pointer; }
+/* Landscape film stills get landscape cards, wider so the frame keeps its height and reads at a glance. */
+.profile-credit-card--wide { flex-basis: clamp(240px, 82%, 330px); width: clamp(240px, 82%, 330px); }
+.profile-credit-grid .profile-credit-card--wide { width: 100%; }
 .profile-credit-image { position: relative; display: block; width: 100%; aspect-ratio: var(--media-credit-card-ratio); overflow: hidden; border-radius: 16px; background: var(--surface-2); }
 .profile-credit-image .photo { width: 100%; height: 100%; }
 .profile-credit-image .photo img { object-fit: var(--credit-fit, cover); object-position: var(--credit-position, center); }
@@ -133,3 +136,16 @@
 
 .profile-subject-guide { position: absolute; z-index: 2; border: 1px dashed #fff; border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 1px #0005; }
 .profile-subject-guide--overlap { border-style: double; border-width: 3px; }
+
+/* Selected work (src/domain/workRows.ts): rows in the person's order; landscape full width, portraits in pairs. */
+.profile-work-rows { display: grid; gap: 10px; }
+.profile-work-row { display: grid; gap: 10px; }
+.profile-work-row--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profile-work-row .profile-work-tile { width: 100%; }
+
+/* Availability sits with the identity: a hirer's first question. Green dot, same weight as the stats line. */
+.v-profile--immersive .pid-available { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 0; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.14); color: #fff; font-size: 12px; font-weight: 600; }
+.v-profile--immersive .pid-available::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4cc38a; }
+
+/* The hero leaves the top of the work visible above the tab bar, so the page shows there is a portfolio below. */
+.phone .v-profile--immersive .phero { height: calc(var(--phone-h, 100dvh) - var(--profile-work-peek, 64px)); }

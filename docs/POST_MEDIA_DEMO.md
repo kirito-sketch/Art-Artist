@@ -17,11 +17,11 @@ Audit used the repository asset tree at `6a5f98c`, decoded delivered images and 
 | QA crop-square / crop-portrait | 600 × 600 / 600 × 750 | Placeholder graphics; excluded from public demo content |
 | All six existing MP4s: neela, backwaters, faultlines, kaaval, monsoon, neeliraat | 400 × 500, six seconds | Actual native 4:5 players, not 9:16 footage |
 
-No genuine square professional-work file was found in the delivered content set. The square Post uses a modest explicit creator-selected framing of Ishaan's existing 4:5 portrait; it does not crop a landscape image into a manufactured portrait. No genuine 9:16 source video was found; the demo keeps the existing native 4:5 clip. The player supports genuine 9:16 source uploads without manufacturing one.
+No genuine square professional-work file was found in the delivered content set. Superseded: the square framing of Ishaan's 4:5 portrait was a crop made only for variety, so it was removed; the Post now shows at its natural 4:5 (docs/MEDIA_PROFILE_AUDIT.md). No genuine 9:16 source video was found; the demo keeps the existing native 4:5 clip. The player supports genuine 9:16 source uploads without manufacturing one.
 
 ## Shared rules
 
-- Images retain their natural ratio between 3:4 and 1.91:1. Extreme ratios Fit in a bounded frame unless the creator explicitly chooses Fill.
+- Images retain their natural ratio between 3:4 and 2.39:1 (was 1.91:1; see docs/MEDIA_PROFILE_AUDIT.md). Extreme ratios Fit in a bounded frame unless the creator explicitly chooses Fill.
 - Normal image maximum height is 1.33 × media width. 4:5 is naturally 1.25 × width.
 - Playable videos retain native ratio down to 9:16. An image labelled video but pointing to a JPEG does not get the vertical-player exception.
 - Creator-selected Square/Portrait/Landscape still overrides natural framing. A carousel uses its first item or explicit creator selection for one stable frame, with per-slide scoped Fit/Fill/focal metadata.

@@ -1100,3 +1100,23 @@
   margin-top: 0;
   padding-top: 0;
 }
+
+/* An event with no image of its own shows its date (eventUnits EventTicket, New version). */
+.ev-card-date {
+  display: grid;
+  place-content: center;
+  width: 100%;
+  height: 100%;
+  background: color-mix(in srgb, var(--action) 10%, var(--surface-2));
+  color: var(--action);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  line-height: 1.1;
+}
+.ev-card-date b {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
