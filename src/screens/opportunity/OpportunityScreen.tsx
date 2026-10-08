@@ -1,7 +1,8 @@
 import { useFeatures } from '../../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
 import { dur, shared, spring } from '../../ui/motion';
-import { Check, ChevronLeft, Clock, MapPin, Share, Sparkles, Users } from 'lucide-react';
+import { CalendarDays, Check, ChevronLeft, Clock, IndianRupee, Languages, MapPin, Share, Sparkles, Users } from 'lucide-react';
+import { InfoGroup } from '../../ui/InfoGroup';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { world } from '../../state/world';
@@ -220,10 +221,23 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
           <h1 className="large-title display-title" {...displayTitle(o.role)}>
             {keepSeparators(o.role)}
           </h1>
-          <Pressable className="detail-by" onClick={() => (author ? push({ name: 'profile', id: author.id }) : push({ name: 'org', id: o.orgId! }))} scale={0.98}>
-            {o.orgId && <Avatar party={org(o.orgId)} size={26} />}
-            <Byline o={o} />
-            <span className="meta">· {o.project}</span>
+          <Pressable className={`detail-by${districtFeature ? ' detail-by--stack' : ''}`} onClick={() => (author ? push({ name: 'profile', id: author.id }) : push({ name: 'org', id: o.orgId! }))} scale={0.98}>
+            {districtFeature ? (
+              <>
+                {/* Who posted it, then the project on its own line: no separator left dangling at 320 px. */}
+                <span className="detail-by-line">
+                  {o.orgId && <Avatar party={org(o.orgId)} size={26} />}
+                  <Byline o={o} />
+                </span>
+                <span className="meta">{o.project}</span>
+              </>
+            ) : (
+              <>
+                {o.orgId && <Avatar party={org(o.orgId)} size={26} />}
+                <Byline o={o} />
+                <span className="meta">· {o.project}</span>
+              </>
+            )}
           </Pressable>
 
           {mine && !status && (
@@ -257,14 +271,26 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
               <Sparkles size={18} /> {o.highlight}
             </p>
           )}
-          <CallSheet
-            items={[
-              { label: 'Location', value: o.city },
-              { label: 'Dates', value: o.dates },
-              ...(o.language && !languageSaid ? [{ label: 'Language', value: o.language }] : []),
-              ...(payInBar ? [] : [{ label: 'Pay', value: o.paid ? o.compensation : 'Unpaid' }]),
-            ]}
-          />
+          {districtFeature ? (
+            <InfoGroup
+              label="Role details"
+              items={[
+                { key: 'where', icon: <MapPin size={20} />, primary: o.city },
+                { key: 'when', icon: <CalendarDays size={20} />, primary: o.dates },
+                ...(o.language && !languageSaid ? [{ key: 'lang', icon: <Languages size={20} />, primary: o.language }] : []),
+                ...(payInBar ? [] : [{ key: 'pay', icon: <IndianRupee size={20} />, primary: o.paid ? o.compensation : 'Unpaid' }]),
+              ]}
+            />
+          ) : (
+            <CallSheet
+              items={[
+                { label: 'Location', value: o.city },
+                { label: 'Dates', value: o.dates },
+                ...(o.language && !languageSaid ? [{ label: 'Language', value: o.language }] : []),
+                ...(payInBar ? [] : [{ label: 'Pay', value: o.paid ? o.compensation : 'Unpaid' }]),
+              ]}
+            />
+          )}
           {!o.allowDM && !mine && (
             <p className="role-decides">
               <Users size={18} /> {poster} sees your profile and decides whether to message you

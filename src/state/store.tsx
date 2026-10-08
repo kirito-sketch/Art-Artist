@@ -169,6 +169,13 @@ function useStoreValue() {
     if (profileId) return [{ name: 'profile', id: profileId }];
     const orgId = query.get('org');
     if (orgId) return [{ name: 'org', id: orgId }];
+    // QA and Studio deep links for detail pages.
+    const eventId = query.get('event');
+    if (eventId) return [{ name: 'event', id: eventId }];
+    const roleId = query.get('role');
+    if (roleId) return [{ name: 'opportunity', id: roleId }];
+    const workId = query.get('work');
+    if (workId) return [{ name: 'work', id: workId }];
     if (POST_SAMPLES) return [{ name: 'posts', ids: NOTCH_SAMPLE_IDS, index: 0 }];
     const postId = query.get('post');
     const posts = discoverPosts(viewer, DEFAULT_FOLLOWING, []);

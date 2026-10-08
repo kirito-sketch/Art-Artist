@@ -323,3 +323,55 @@
 .phone .hpage--cine .hhero-cue { z-index: 3; opacity: calc(1 - 4 * var(--hero-t, 0)); }
 .phone .v-profile--immersive .phero .phero-bar,
 .phone .hpage--cine .hhero .phero-bar { z-index: 4; }
+
+/* ===================================================== Stage 3: detail pages (docs/ux-refinement/PLAN.md)
+ * The detail info group: facts as rows without a box; icon, primary line, secondary line beneath (never a split
+ * column), hairlines between rows, an optional action on its own row. */
+.info-group { list-style: none; margin: 0; padding: 0; display: grid; }
+.info-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 14px; align-items: start; padding: 13px 0; }
+.info-row + .info-row { border-top: 1px solid var(--line); }
+.info-row:not(:has(.info-icon)) { grid-template-columns: minmax(0, 1fr); }
+.info-icon { display: grid; place-items: center; height: 22px; color: var(--text-2); }
+.info-text { display: grid; gap: 2px; min-width: 0; }
+.info-primary { font-size: 15.5px; font-weight: 600; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; text-wrap: pretty; }
+.info-secondary { font-size: 13.5px; line-height: 1.4; color: var(--text-2); overflow-wrap: anywhere; text-wrap: pretty; }
+.info-action { margin-top: 4px; font-size: 13.5px; }
+.info-action .link { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; font-weight: 600; color: var(--action-ink, var(--action)); }
+
+/* Event: the listing's art as a cinematic hero, then a title card with its organiser. */
+.ev-screen .ev-hero:not(.ev-hero--branded) { width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: 46vh; }
+.ev-screen .ev-hero:not(.ev-hero--branded)::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, transparent 28%, transparent 62%, rgba(0, 0, 0, 0.35) 100%); }
+.ev-screen .ev-hero .phero-bar { z-index: 2; }
+.ev-screen .ev-sheet { gap: 12px; }
+.ev-screen .ev-page-title { text-wrap: balance; overflow-wrap: anywhere; }
+.ev-byline { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; min-height: 40px; padding: 0; border: 0; background: none; color: var(--text-2); font: inherit; font-size: 14px; cursor: pointer; text-align: left; }
+.ev-byline b { color: var(--text); font-weight: 600; }
+.ev-byline .verified { color: var(--text-2); flex: none; }
+.ev-screen .info-group { margin-top: 2px; }
+.ev-screen .ev-attendance { margin-top: 6px; }
+
+/* Role and collaboration detail: titles fit the sheet (a long single word such as "Cinematographer" never breaks
+ * mid-word at 320 px), the byline flows as one line that wraps between its parts, and the bar keeps pay on one line. */
+.v-role .osheet { container-type: inline-size; }
+.v-role .osheet .display-title[data-display] { font-size: min(var(--display-size), 10.6cqi) !important; overflow-wrap: break-word; hyphens: manual; }
+.v-role .detail-by { flex-wrap: wrap; row-gap: 2px; align-items: center; }
+.v-role .detail-by > * { flex-shrink: 0; max-width: 100%; }
+.v-role .detail-by > .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-role .osheet .info-group { margin-top: 14px; }
+.phone .v-role .booking { gap: 12px; }
+.phone .v-role .booking-left .item-title { -webkit-line-clamp: 1; font-size: 16px; }
+.phone .v-role .booking-left .meta { -webkit-line-clamp: 1; }
+.phone .v-role .booking .btn { flex: none; }
+/* Event: verified mark beside the host's name, not under it. */
+.ev-host-card .prow-text b { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ev-host-card .prow-text b .verified { flex: none; }
+.v-role .detail-by .byline { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.v-role .detail-by--stack { flex-direction: column; align-items: flex-start; gap: 2px; }
+.v-role .detail-by-line { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.v-role .detail-by--stack > .meta { padding-left: 34px; white-space: normal; }
+.phone .v-role .booking .btn { padding-inline: 18px; }
+.phone .v-role .booking-left .item-title { font-size: 15px; }
+@media (max-width: 360px) {
+  .phone .v-role .booking { padding-left: 16px; }
+  .phone .v-role .booking .btn { padding-inline: 16px; font-size: 15px; }
+}

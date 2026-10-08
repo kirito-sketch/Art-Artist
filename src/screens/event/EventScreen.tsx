@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronLeft, ExternalLink, Flag, MapPin, MoreHorizontal, Pencil, Share, Users, XCircle } from 'lucide-react';
+import { CalendarDays, ChevronLeft, Clapperboard, ExternalLink, Flag, MapPin, MoreHorizontal, Pencil, Share, Ticket, Users, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { hostFacts } from '../../state/events';
 import { listable, typeLabel, whenLabel } from '../../domain/events';
@@ -11,6 +11,8 @@ import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Row, SectionH
 import { Sheet } from '../../ui/Sheet';
 import { SaveButton } from '../home/OpportunityCard';
 import { EventAttendance } from './EventAttendance';
+import { eventArt } from '../../state/eventArt';
+import { InfoGroup } from '../../ui/InfoGroup';
 
 export function EventScreen({ id }: { id: string }) {
   const district = useFeatures().home === 'district';
@@ -45,7 +47,8 @@ export function EventScreen({ id }: { id: string }) {
   const status = store.eventStatus(id);
   const ownRequest = store.eventRequest(id);
   const online = event.location === 'online' || event.venue === 'Online';
-  const art = event.cover ?? (project && project.media.id !== 'ph' ? (project.stills[0] ?? project.media) : undefined);
+  // One rule for event art everywhere (src/state/eventArt.ts): cover, then its film, then the host's own work.
+  const art = eventArt(event);
   const rows = store.eventRequestsForHost(id);
   const pending = rows.filter((r) => r.status === 'pending');
   const confirmed = rows.filter((r) => r.status === 'confirmed');
@@ -88,6 +91,15 @@ export function EventScreen({ id }: { id: string }) {
         )}
         <p className="ev-kind">{typeLabel(event.type)}</p>
         <h1 className="title-1 ev-page-title">{event.title}</h1>
+        {host && (
+          <button className="ev-byline" onClick={() => push(host.kind === 'org' ? { name: 'org', id: host.id } : { name: 'profile', id: host.id })}>
+            <Avatar party={host} size={24} />
+            <span>
+              By <b>{host.name}</b>
+            </span>
+            {host.kind === 'org' && host.verified && <Verified size={13} label="Verified production house" />}
+          </button>
+        )}
         {['Cancelled', 'Full', 'Closed', 'Ended', 'Today'].includes(status) && (
           <p className={`ev-banner ${status === 'Cancelled' ? 'ev-banner--stop' : ''}`} role="status">
             {status === 'Cancelled' ? 'The organiser cancelled this event.' : status}
@@ -96,21 +108,27 @@ export function EventScreen({ id }: { id: string }) {
         {event.changed && event.status !== 'cancelled' && (
           <p className="meta">Event details have changed. Please check the time and location.</p>
         )}
-        <div className="group ev-facts">
-          <Row
-            icon={<CalendarDays size={20} />}
-            label={whenLabel(event.start)}
-            value={event.end ? `Ends ${whenLabel(event.end)}` : undefined}
-            chevron={false}
-          />
-          <Row
-            icon={<MapPin size={20} />}
-            label={online ? 'Online event' : event.venue}
-            value={online ? undefined : event.city}
-            chevron={false}
-          />
-          <Row label="Free" value={event.capacity ? `${event.capacity} ${event.capacity === 1 ? 'place' : 'places'}` : undefined} chevron={false} />
-        </div>
+        <InfoGroup
+          label="Event details"
+          items={[
+            { key: 'when', icon: <CalendarDays size={20} />, primary: whenLabel(event.start), secondary: event.end ? `Ends ${whenLabel(event.end)}` : undefined },
+            online
+              ? { key: 'where', icon: <MapPin size={20} />, primary: 'Online event', secondary: 'Joining details are shared once your place is confirmed' }
+              : {
+                  key: 'where',
+                  icon: <MapPin size={20} />,
+                  primary: event.venue,
+                  secondary: event.city,
+                  action: (
+                    <a className="link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.city}`)}`} target="_blank" rel="noopener noreferrer">
+                      View on map <ExternalLink size={13} aria-hidden />
+                    </a>
+                  ),
+                },
+            ...(project ? [{ key: 'film', icon: <Clapperboard size={20} />, primary: project.title, secondary: project.format, action: <button className="link" onClick={() => push({ name: 'work', id: project.id })}>View project</button> }] : []),
+            { key: 'price', icon: <Ticket size={20} />, primary: 'Free', secondary: event.capacity ? `${event.capacity} ${event.capacity === 1 ? 'place' : 'places'} · the organiser confirms each request` : 'The organiser confirms each request' },
+          ]}
+        />
         {mine ? (
           <div className="ev-host-controls">
             <Button
@@ -155,53 +173,35 @@ export function EventScreen({ id }: { id: string }) {
                   <b>
                     {host.name} {host.kind === 'org' && host.verified && <Verified size={13} />}
                   </b>
-                  <span className="meta">{host.kind === 'org' ? 'Production House' : 'Event organiser'}</span>
+                  <span className="meta">{host.kind === 'org' ? 'Production house' : 'Event organiser'}</span>
                 </span>
               </PressCard>
               {host.id !== store.viewer.id && (
-                <Button size="s" variant={following.includes(host.id) ? 'secondary' : 'primary'} onClick={() => toggleFollow(host.id)}>
+                <Button size="s" variant="secondary" aria-pressed={following.includes(host.id)} onClick={() => toggleFollow(host.id)}>
                   {following.includes(host.id) ? 'Following' : 'Follow'}
                 </Button>
               )}
             </div>
           </section>
         )}
-        <section className="section section--flush">
-          <SectionHeader title={online ? 'Joining the event' : 'Venue'} />
-          {online ? (
-            <>
-              {event.joiningUrl && (mine || ownRequest?.status === 'confirmed') && event.status !== 'cancelled' ? (
-                <a className="btn btn--secondary btn--m" href={event.joiningUrl} target="_blank" rel="noopener noreferrer">
-                  Open joining link <ExternalLink size={15} />
-                </a>
-              ) : (
-                <p className="meta">
-                  {event.status === 'cancelled'
-                    ? 'This event was cancelled. Joining details are no longer available.'
-                    : ownRequest?.status === 'confirmed'
-                      ? 'The organiser will share joining details with you.'
-                      : 'Joining details are shared after your place is confirmed.'}
-                </p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="body">
-                {event.venue}
-                <br />
-                {event.city}
-              </p>
-              <a
-                className="link"
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.city}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View on map <ExternalLink size={13} />
+        {online && (
+          <section className="section section--flush">
+            <SectionHeader title="Joining the event" />
+            {event.joiningUrl && (mine || ownRequest?.status === 'confirmed') && event.status !== 'cancelled' ? (
+              <a className="btn btn--secondary btn--m" href={event.joiningUrl} target="_blank" rel="noopener noreferrer">
+                Open joining link <ExternalLink size={15} />
               </a>
-            </>
-          )}
-        </section>
+            ) : (
+              <p className="meta">
+                {event.status === 'cancelled'
+                  ? 'This event was cancelled. Joining details are no longer available.'
+                  : ownRequest?.status === 'confirmed'
+                    ? 'The organiser will share joining details with you.'
+                    : 'Joining details are shared after your place is confirmed.'}
+              </p>
+            )}
+          </section>
+        )}
         {event.link && (
           <a className="link ev-info-link" href={event.link} target="_blank" rel="noopener noreferrer">
             More information <ExternalLink size={14} />

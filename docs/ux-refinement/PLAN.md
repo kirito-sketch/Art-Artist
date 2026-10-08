@@ -400,8 +400,8 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 |---|---|---|
 | 0 Audit and plan | Approved | `10eaacf` |
 | 1 Foundations, nav, post actions | Approved | `6329e99` |
-| 2 Profile | Done, awaiting review | see below |
-| 3 Detail pages | Not started | |
+| 2 Profile | Approved (with round 2 feedback) | `65ff282` |
+| 3 Detail pages | Done, awaiting review | see below |
 | 4 Project and trailers | Not started | |
 | 5 Home, integration, QA | Not started | |
 
@@ -528,4 +528,38 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 - content states: sparse (Nikhil), two credits (Vikram), posts grid to stream, credit history, poster to project, and the house page
 
 Unit tests, typecheck and build pass. Screenshots are in `docs/ux-refinement/stage2/`.
+
+### Stage 3 record
+
+**Built:**
+
+- **Shared `InfoGroup`** (`ui/InfoGroup.tsx`, styles in `profile-stage2.css`). It is the plan's "detail info group": facts as rows with no box.
+  - Each row is an icon, a primary line and a secondary line beneath it, never a split column.
+  - Hairlines separate rows. An optional action (View on map, View project) sits on its own row.
+- **Event detail:**
+  - **Art (root cause fixed).** `EventScreen` used the event's cover or its film only, so it skipped the host-work fallback in `eventArt`. It now uses `eventArt`, so every listing shows its art; the crew evening uses Konark's current production.
+  - **Hero:** 4:3, up to 46% of the screen height, with a shade for the controls.
+  - **Title block:** type, title (balanced), then a "By <organiser>" byline that opens the organiser.
+  - **Info group:** When (with end for multi-day events), Where (venue, city beneath, View on map), Film (when linked), Free (places, and the organiser confirms each request). The bordered box and split city column are gone.
+  - **One primary action:** Request to attend is the only green button. Follow in Hosted by is now outlined.
+  - **No repeated venue:** the separate Venue section now appears only for online events (joining details).
+- **Role and collaboration detail:**
+  - Location, Dates and Language use the info group instead of the two-column call sheet.
+  - Titles are capped by the sheet's width (container units), so "Cinematographer" no longer breaks mid-word at 320 px.
+  - The poster's name and verified mark sit on one line, with the project beneath. No dangling "·".
+  - The bottom bar keeps pay and closing date on one line each at 320 px, with a tighter button under 360 px.
+- **Review cards and post detail:** checked at 320 px. Nothing needed fixing; the project page belongs to Stage 4.
+- **Deep links:** `?event=`, `?role=` and `?work=` for QA and Studio.
+
+**Verification:** 240/0 Stage 3 checks at 320, 393 and 430 px in light and dark, on 4 events (house host, person host, multi-day, film-linked) and 4 roles (crew, collab, ad, series). They cover:
+
+- no word broken mid-word in titles
+- exactly one primary action on the page
+- no horizontal scroll
+- facts in the info group with no split columns
+- the listing's art in the event hero
+- the organiser under the title
+- pay not cut in the bar
+
+Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, fields 21/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, resume 7/0, focusflow 18/0, and Stage 2 64/0. Screenshots are in `docs/ux-refinement/stage3/`.
 
