@@ -38,7 +38,7 @@ export function TabBar() {
   // offsetLeft and offsetWidth ignore transforms, so a tab pressed (scaled) at the moment of selection never skews it.
   const pill = useRef<HTMLDivElement>(null);
   const tabs = useRef<Partial<Record<Tab, HTMLElement | null>>>({});
-  const [lens, setLens] = useState<{ x: number; width: number } | null>(null);
+  const [lens, setLens] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const still = useReducedMotion();
   useLayoutEffect(() => {
     if (!NAV_LENS || !pill.current) return;
@@ -46,8 +46,10 @@ export function TabBar() {
       const el = tabs.current[shown];
       setLens((prev) => {
         if (!el) return null;
-        const next = { x: el.offsetLeft - 2, width: el.offsetWidth + 4 };
-        return prev && prev.x === next.x && prev.width === next.width ? prev : next;
+        // The lens is the tab's own box on both axes, so icon and label always sit at its centre (no overhang into the
+        // gap beside it, no fixed insets that drift when the bar's padding or the item height changes).
+        const next = { x: el.offsetLeft, y: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight };
+        return prev && prev.x === next.x && prev.y === next.y && prev.width === next.width && prev.height === next.height ? prev : next;
       });
     };
     place();

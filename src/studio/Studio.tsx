@@ -109,8 +109,9 @@ export function Studio() {
         <div className="st-list st-list--2">
           <Item href="/?week=2" title="This week with two cards" hint="Review aids: ?week=1, ?week=2, ?week=noimg" />
           <Item href="/?home-previous" title="Previous Home" hint="?home-previous · the big Spotlight and five tiles, for comparison only" />
-          <Item href="/?samples" title="Post notch review samples" hint="Ratios, video states, failure, long caption" />
-          <Item href="/?nav=off&actions=pill" title="Previous navigation and post actions" hint="?nav=off · ?actions=pill, for comparison only" />
+          <Item href="/studio/compare?set=actions" title="Post actions: live and archived" hint="Row under the media (live) beside the Original Action Pill and the Corner Notch (archived)" />
+          <Item href="/?samples" title="Post review samples" hint="Ratios, video states, failure, long caption" />
+          <Item href="/?nav=off" title="Previous navigation" hint="?nav=off, for comparison only" />
         </div>
       </Section>
 

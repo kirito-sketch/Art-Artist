@@ -20,6 +20,6 @@ const samples: Post[] = [
   { id: 'qa-notch-failed', authorId: 'vikram', time: '4h', likes: 0, comments: 0, text: 'Review sample: a video that fails to load.', media: [clip('qa-clip-missing', 400, 500, 'Missing clip', 'video/missing-sample.mp4')] },
 ];
 
-const real = ['p-vikram-video', 'p1', 'p-sameer-portrait', 'p5'];
+const real = ['p-vikram-video', 'p1', 'p2', 'p-sameer-portrait', 'p5'];
 export const NOTCH_SAMPLES = samples;
 export const NOTCH_SAMPLE_IDS = [...real.filter((id) => seed.posts.some((p) => p.id === id)), ...samples.map((p) => p.id)];

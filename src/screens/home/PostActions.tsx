@@ -9,19 +9,23 @@ import { IconButton } from '../../ui/primitives';
 import { usePostLike } from '../../state/postLikes';
 
 /**
- * One set of post actions for every placement, always Like, Share, Save. `pill` is the frosted pill on the media
- * (default app); `notch` sits in the card's corner cut-out and `viewer` on its own row in the expanded video viewer
- * (Option A, ?actions=notch, docs/NAV_AND_POST_NOTCH.md). Notch and viewer carry the like count in the label only, so
- * the cut-out keeps one width on every post. Comments stay absent until Ana supports a comments experience.
+ * One set of post actions for every placement, always Like, Share, Save, on one Like state (state/postLikes.ts).
+ *   row     the production default: a row under the media (Reddit's structure, our tokens), Like with its count on the
+ *           left, Share and Save on the right (docs/ux-refinement/PLAN.md D1)
+ *   pill    archived: the original frosted pill on the media (Studio, ?actions=pill)
+ *   notch   archived: the corner cut-out, Option A (Studio, ?actions=notch, docs/NAV_AND_POST_NOTCH.md)
+ *   viewer  its own row in the full-screen video viewer
+ * Comments, reposts and votes stay absent: Ana doesn't support them.
  */
-export function PostActions({ post, variant = 'pill' }: { post: Post; variant?: 'pill' | 'notch' | 'viewer' }) {
+export function PostActions({ post, variant = 'row' }: { post: Post; variant?: 'row' | 'pill' | 'notch' | 'viewer' }) {
   const { openSheet, viewer, isSaved, toggleSave, showToast, dismissToast } = useStore();
   const [liked, toggleLike] = usePostLike(viewer.id, post.id);
   const saved = isSaved('post', post.id);
   const author = party(post.authorId);
   const label = `Post by ${author?.name ?? 'someone'}`;
   const likes = post.likes + Number(liked);
-  const quiet = variant !== 'pill';
+  const quiet = variant === 'notch' || variant === 'viewer';
+  const counted = variant === 'row' || quiet;
   const share = async () => {
     dismissToast();
     const url = new URL(location.pathname, location.origin);
@@ -35,10 +39,10 @@ export function PostActions({ post, variant = 'pill' }: { post: Post; variant?: 
     if (!persistent) { showToast({ text: 'This prototype post is only available in this session.' }); return; }
     openSheet({ name: 'share', label, url: url.href });
   };
-  const size = quiet ? 22 : 20, stroke = quiet ? 1.75 : 2;
+  const size = quiet ? 22 : 20, stroke = quiet || variant === 'row' ? 1.85 : 2;
   return <div className={`ana-post-actions ana-post-actions--${variant}`}>
-    <motion.button whileTap={{ scale: quiet ? .9 : 1.06 }} transition={spring.press} onClick={toggleLike} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}${quiet && likes > 0 ? `, ${likes} ${likes === 1 ? 'like' : 'likes'}` : ''}`}>
-      <motion.span className="ana-post-icon" animate={quiet && liked ? { scale: [1, 1.18, 1] } : { scale: 1 }} transition={{ duration: .28, ease: 'easeOut' }}>
+    <motion.button whileTap={{ scale: quiet ? .9 : 1.06 }} transition={spring.press} onClick={toggleLike} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}${counted && likes > 0 ? `, ${likes} ${likes === 1 ? 'like' : 'likes'}` : ''}`}>
+      <motion.span className="ana-post-icon" animate={variant !== 'pill' && liked ? { scale: [1, 1.18, 1] } : { scale: 1 }} transition={{ duration: .28, ease: 'easeOut' }}>
         <Heart size={size} strokeWidth={stroke} fill={liked ? 'currentColor' : 'none'} />
       </motion.span>
       {!quiet && likes > 0 && <span className="ana-post-likes" aria-hidden="true">{likes}</span>}

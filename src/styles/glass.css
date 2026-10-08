@@ -251,7 +251,7 @@ html[data-theme='dark'] .phone[data-nav='glass'] {
 /* The lens is one element per bar, positioned from the selected tab (src/nav/TabBar.tsx). It sits under the tabs. */
 .phone[data-dir='a'] .tabbar-pill,
 .phone[data-nav='glass'] .tabbar-pill { position: relative; }
-.tab-lens { position: absolute; left: 0; top: 4px; bottom: 4px; border-radius: 999px; pointer-events: none; will-change: transform; }
+.tab-lens { position: absolute; left: 0; top: 0; border-radius: 999px; pointer-events: none; will-change: transform; }
 /* A: the selected tab is a solid white capsule (the reference's selected segment) */
 .phone[data-dir='a'] .tab-lens { background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); }
 html[data-theme='dark'] .phone[data-dir='a'] .tab-lens { background: rgba(255, 255, 255, 0.92); }

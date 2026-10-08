@@ -292,27 +292,66 @@ Acceptance:
 - All journeys pass.
 - Regression shows no new failures versus the known baseline (section 9).
 
-## 8. Decisions needing approval (before the stage that needs them)
+## 8. Decisions (approved after Stage 0)
 
-- **D1, Stage 1. Post actions.** The live default is the Option A corner notch, approved recently. The brief asks for a Reddit-style row under the media, and to keep the "Original Action Pill" in Studio.
-  - Proposal: the row under the media becomes the default. Studio keeps both earlier versions selectable: *Original Action Pill* (the frosted pill on media, `?actions=pill`) and *Corner notch* (`?actions=notch`).
-  - Confirm that "Original" means the frosted pill, not the notch.
-- **D2, Stage 1. Feed video.** With the actions moved under the media, the reason for Option A's "no scrubber in the feed" goes away.
-  - Proposal: restore a full-width interactive scrubber, duration, mute and fullscreen on feed videos, and keep the fullscreen viewer.
-- **D3, Stage 1. Comment and Repost.** Ana has no comments or repost (comments were deliberately left out).
-  - Proposal: the row keeps Like (with count), Share and Save. No Comment or Repost.
-- **D4, Stage 2. Posters (B3).** There are no 2:3 poster files.
-  - Proposal: when a real poster is missing, show a type-set poster card (title, year, house, on a tinted ground; no generated imagery). Do not crop 2:1 stills to 2:3 (that keeps about 25% of the image). Real posters drop in through the existing `posters/*` mapping once delivered.
-- **D5, Stage 2. Profile section order.** As listed in Stage 2 above. Confirm, or adjust.
-- **D6, Stage 4. Trailer assets (B1, B2).**
-  - Proposal: add `trailers` to the data model. Seed demo trailers from the existing clips, clearly marked as demo, or from YouTube or Vimeo URLs you supply. Trailer uploads stay session-only.
-  - A persistent storage backend is out of scope unless approved.
-- **D7, Stage 4. Trailer required to publish.** Proposal:
-  - required only when a film project is first made public at the Post-production or Released stage
-  - drafts, earlier stages and existing projects are never blocked; they show a still or poster fallback
-- **D8. Research study.** /test participants see the live app, so each stage changes what they see.
-  - Option: pin /test to a frozen build.
-  - Proposal: leave it, but say so before each stage ships.
+- **D1. Post actions: approved.**
+  - The row under the media is the only production treatment.
+  - The Original Action Pill (frosted, on the media) and the Corner Notch (Option A) are archived. They render only through Studio (`/studio/compare?set=actions`, or `?actions=pill|notch`), never in the regular app.
+  - One `PostActions` component, one Like state; rollback is the URL flag.
+- **D2. Feed video: Instagram-style, mobile-only.**
+  - Muted autoplay when allowed.
+  - Single tap pauses or resumes.
+  - Hairline progress bar; touch-hold to scrub.
+  - A small sound toggle.
+  - A play mark only while paused.
+  - No control bar, cast, menu or visible fullscreen button.
+  - The fullscreen viewer is kept, reachable by keyboard and assistive tech.
+- **D3. Actions: Like (with count), Share, Save. Double-tap to Like on every post type.** Details in section 8a.
+- **D4. Posters: temporary type-set 2:3 fallback.**
+  - Don't crop stills into posters.
+  - Inventory the films that need real 2:3 artwork; it will be supplied separately and dropped into the same component.
+  - Never present generated concept art as official posters.
+- **D5. Profile order: approved.** Hero, Showreel, compact Selected work bento (3–5 items), Verified credits, Independent projects, Professional information, the rest. No duplicated information.
+- **D6. Trailers.**
+  - Add a structured trailer/teaser model with a language per version.
+  - Session-only upload is not acceptable as the final implementation. In Stage 4, propose the smallest persistent media architecture (Supabase Storage, Cloudflare R2 or hosted video), covering storage, playback, authentication, permissions, cost and encoding.
+  - No paid backend without approval.
+  - Temporary clips and links may be used for prototyping, but never presented as persistent uploads.
+  - The six 6-second clips are not trailers. Document the missing trailer assets.
+- **D7. Trailer requirement.**
+  - Drafts, pre-production and production can publish without a trailer.
+  - New public projects at post-production or released require a trailer or teaser.
+  - Existing published projects stay accessible with a poster or still fallback.
+- **D8. Research baseline: frozen.**
+  - Branch `research/baseline` (commit `d37bbb7`), with its own Vercel preview, is the stable /test build for participants. Active development continues on `claude/ana-product-strategy-in22y2`.
+  - The "missing Anvi Reddy" crash was real. Since /test moved to the District Discover, it opened on Posts instead of the study's People; fixed in `d37bbb7`. The flow and resume suites' selectors were also updated for the District markup.
+
+## 8a. Mobile-only interaction rules (all stages)
+
+Art & Artist is touch-only, including inside the desktop phone frame.
+
+- No hover-dependent actions.
+- No desktop control bars.
+- No extra player chrome.
+- Every target is 44 px or larger.
+
+**Gestures.** One hook, `ui/useTapGestures.ts`, on post media and on text-post bodies:
+
+| Gesture | Result |
+|---|---|
+| Single tap on a video | Pause or resume. Confirmed after the 280 ms double-tap window, so a double tap never toggles playback. |
+| Single tap on a still | Nothing. |
+| Double tap on any post | Like it: same `usePostLike` state as the button, optimistic, personal even when acting as a house. Never unlikes. Shows a white heart at the tap point (green on text posts) for 0.7 s; with Reduced Motion it only fades. |
+| Unlike | Only through the Like button, which is also the accessible alternative to the gesture. |
+
+**Not gestures:** buttons, links, the scrubber (`role=slider`), carousel dots and anything marked `data-no-gesture`. Swipes don't produce clicks, so carousel swipes and scrubbing never Like. A keyboard activation (a click with `detail 0`) is an immediate single action.
+
+**Video.**
+
+- One video plays at a time.
+- The feed shares one sound setting (`state/feedVideo.ts`).
+- Videos pause off screen.
+- No autoplay with Reduced Motion or Save Data.
 
 ## 9. Known test baseline (before Stage 1)
 
@@ -338,9 +377,9 @@ Acceptance:
 **Known failures (pre-existing):**
 
 - smoke: 4 combos
-- `/test` flow, desktop and mobile: crash, "missing Anvi Reddy"
-- test-resume: 6/1
 - axe2 / axe navigation: "no tap target: Availability", "no label Back", "no tap target: Edit profile"
+
+**Fixed before Stage 1:** the `/test` flow (mobile 39/0, desktop 37/0) and test-resume (7/0); see D8.
 
 **Outdated after an approved change:** `a11y/views.cjs` and `a11y/mobile.cjs` still test the old manual view switch. They need rewriting for the automatic device frame.
 
@@ -357,9 +396,51 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 
 | Stage | Status | Checkpoint |
 |---|---|---|
-| 0 Audit and plan | Done, awaiting approval | this commit |
-| 1 Foundations, nav, post actions | Not started | |
+| 0 Audit and plan | Approved | `10eaacf` |
+| 1 Foundations, nav, post actions | Done, awaiting review | see below |
 | 2 Profile | Not started | |
 | 3 Detail pages | Not started | |
 | 4 Project and trailers | Not started | |
 | 5 Home, integration, QA | Not started | |
+
+### Stage 1 record
+
+**Built:**
+
+- **Post actions:**
+  - The row under the media is the default (`PostActions` variant `row`, `styles/post-row.css`).
+  - The archived pill and notch are behind `?actions=` (`ui/preview.ts`).
+  - Studio has a three-way live comparison (`studio/Compare.tsx`, `?set=actions`).
+- **Feed video:** Instagram-style (`screens/home/ReelVideo.tsx`). The archived notch keeps `FeedVideo.tsx`; the pill keeps the native player.
+- **Double-tap Like:** on images, carousels, videos and text posts (`PostCard.tsx`, `ui/useTapGestures.ts`).
+- **Nav lens:** now takes the selected tab's full layout box, both axes (`nav/TabBar.tsx`). It used to be the tab plus 2 px on each side with fixed 4 px vertical insets.
+- **/test:** Discover default restored (`App.tsx`).
+- **Review samples:** now include a text post.
+
+**Design system:**
+
+- No token replacement was needed for this stage. The new components use the existing tokens: `--action`, `--action-ink`, `--action-tint`, `--text`, `--focus-color`.
+- CTA height and treatment normalisation belongs to Stage 2, where the profile CTAs are rebuilt.
+
+**Verification:** 52/0 Stage 1 checks under touch emulation, covering:
+
+- the nav lens on every tab at 320, 393 and 430 px, in light and dark
+- the row under the media on all 11 sample posts
+- double tap on images, carousels, text and video
+- no unlike on a liked post
+- the Like button unliking
+- controls never acting as gestures
+- carousel swipes
+- single tap delayed past the double-tap window
+- scrubbing
+- sound
+- one video at a time
+- minimal chrome
+- the viewer still reachable
+- Reduced Motion
+- the Studio three-way comparison
+
+**Accepted limits:**
+
+- The house-identity Like is kept by construction: the same hook, keyed by the person.
+- There is no visible fullscreen control in the feed (D2).

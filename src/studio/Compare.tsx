@@ -47,7 +47,61 @@ function Phone({ home, who, n, onRestart, scale }: { home: 'current' | 'district
   );
 }
 
+/*
+ * Studio › Compare › Post actions (/studio/compare?set=actions): the production row under the media beside the two
+ * archived treatments, each a live app on the same review posts (docs/ux-refinement/PLAN.md D1). The archived ones
+ * exist only here: the regular app never renders them.
+ */
+const ACTIONS: { id: 'row' | 'pill' | 'notch'; label: string }[] = [
+  { id: 'row', label: 'Row under the media (live)' },
+  { id: 'pill', label: 'Original Action Pill (archived)' },
+  { id: 'notch', label: 'Corner Notch (archived)' },
+];
+function ActionsCompare() {
+  const fit = () => (typeof window === 'undefined' ? 1 : Math.min(1, (window.innerHeight - 170) / PH, (window.innerWidth - 64) / (PW * 3)));
+  const [scale, setScale] = useState(fit());
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    document.title = 'Post actions · Art and Artist Studio';
+    const r = () => setScale(Math.max(0.42, fit()));
+    r();
+    window.addEventListener('resize', r);
+    return () => window.removeEventListener('resize', r);
+  }, []);
+  return (
+    <div className="st st--wide cmp">
+      <header className="cmp-head">
+        <a className="cmp-back" href="/studio">
+          <ArrowLeft size={14} aria-hidden /> Studio
+        </a>
+        <button className="cmp-restart" onClick={() => setN((x) => x + 1)} aria-label="Restart all three">
+          <RotateCcw size={14} aria-hidden /> Restart
+        </button>
+      </header>
+      <div className="cmp-stage cmp-stage--both cmp-stage--three">
+        {ACTIONS.map((a) => (
+          <figure key={a.id} className="cmp-phone">
+            <figcaption className="cmp-cap">
+              <span className={`cmp-tag ${a.id === 'row' ? 'cmp-tag--district' : 'cmp-tag--current'}`}>{a.label}</span>
+            </figcaption>
+            <div className="cmp-fit" style={{ width: PW * scale, height: PH * scale }}>
+              <div className="cmp-frame" style={{ transform: `scale(${scale})` }}>
+                <iframe key={`${a.id}-${n}`} title={a.label} src={`/?view=app&embed=1&samples&actions=${a.id}&r=${n}`} />
+              </div>
+            </div>
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Compare() {
+  if (typeof location !== 'undefined' && new URLSearchParams(location.search).get('set') === 'actions') return <ActionsCompare />;
+  return <CompareHomes />;
+}
+
+function CompareHomes() {
   const narrow = () => typeof window !== 'undefined' && window.innerWidth < 860;
   const [show, setShow] = useState<Show>(narrow() ? 'district' : 'both');
   const [who, setWho] = useState<Who>('kiran');

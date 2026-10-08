@@ -399,3 +399,4 @@ body:has(.st) {
   margin: 0;
 }
 
+.cmp-stage--three { gap: 24px; }

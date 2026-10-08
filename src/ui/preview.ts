@@ -12,8 +12,16 @@ const q = typeof location !== 'undefined' ? new URLSearchParams(location.search)
 export const NAV_GLASS = q.get('nav') !== 'off' && DIRECTION !== 'a' && DIRECTION !== 'c';
 /** Direction A keeps its own solid lens; everything else uses the glass lens. */
 export const NAV_LENS = NAV_GLASS || DIRECTION === 'a';
-export const POST_NOTCH = q.get('actions') !== 'pill';
-export const POST_SAMPLES = POST_NOTCH && q.has('samples');
+/**
+ * Post actions (docs/ux-refinement/PLAN.md, D1): the row under the media is the production default. The two earlier
+ * treatments are archived and only render when Studio asks for them: ?actions=pill (the original frosted pill on the
+ * media) and ?actions=notch (the corner notch, Option A).
+ */
+export type PostActionsMode = 'row' | 'pill' | 'notch';
+const actions = q.get('actions');
+export const POST_ACTIONS: PostActionsMode = actions === 'pill' || actions === 'notch' ? actions : 'row';
+export const POST_NOTCH = POST_ACTIONS === 'notch';
+export const POST_SAMPLES = q.has('samples');
 /**
  * The Home audit's new order with Spotlight Direction A, "This week" (docs/HOME_SPOTLIGHT.md). The default since
  * October 2026; ?home-previous shows the earlier Home (big Spotlight, five tiles) for comparison.
