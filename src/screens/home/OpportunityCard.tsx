@@ -72,7 +72,7 @@ export function OpportunityCard({ o, onOpen }: { o: Opportunity; onOpen: () => v
   return (
     <PressCard className="ocard" onPress={onOpen} aria-label={`${o.role}, ${o.project}`}>
       <div className="ocard-media">
-        <Photo media={o.media} />
+        <Photo surface="project-card" media={o.media} />
         {pill && <span className={`pill ${sent ? 'pill--done' : o.kind !== 'collab' && (o.closesInDays ?? 9) <= 3 ? 'pill--urgent' : ''}`}>{pill}</span>}
         <SaveButton id={o.id} floating name={`${o.role} role`} />
       </div>
@@ -93,7 +93,7 @@ export function FeaturedCard({ o, onOpen }: { o: Opportunity; onOpen: () => void
     <PressCard className="feature" onPress={onOpen} scale={0.985} aria-label={`${o.role}, ${o.project}`}>
       {/* The artwork carries into Role Detail as its hero (shared element). */}
       <motion.div layoutId={shared.role(o.id)} className="feature-photo" transition={spring.push}>
-        <Photo media={o.media} className="feature-photo" />
+        <Photo surface="project-card" media={o.media} className="feature-photo" />
       </motion.div>
       <div className="feature-scrim" />
       {pill && <FrameLabel tone={sent ? 'paper' : (o.closesInDays ?? 9) <= 5 ? 'urgent' : 'plate'}>{pill}</FrameLabel>}

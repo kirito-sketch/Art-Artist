@@ -1,3 +1,5 @@
+import { MediaFramingEditor } from '../ui/MediaFraming';
+import type { MediaFraming } from '../data/types';
 import { ShowreelManager, releaseUnusedShowreelPreviews } from '../screens/profile/Showreel';
 import { getFeatures } from '../ui/features';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -61,6 +63,7 @@ export function EntryFlow() {
   // Profile
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<string | undefined>();
+  const [avatarFraming, setAvatarFraming] = useState<MediaFraming>();
   // V30: onboarding asks only what personalises the first Home (identity, craft, intent, city, and
   // availability when it matters). Everything else is profile completion, later. Every choice is
   // kept when you go Back, and can be changed or cleared.
@@ -168,7 +171,7 @@ export function EntryFlow() {
       ...(district ? { reelDraft: showreelDraft, featuredWork: validLink(link) ? [{ id: 'w-onboard', kind: 'external' as const, title: 'Selected work', url: link.trim() }] : [] } : {}),
       workLinks: validLink(link) ? [{ id: 'w-onboard', label: words.links, url: link.trim() }] : [],
     };
-    const id = createPerson({ name: name.trim(), photo, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
+    const id = createPerson({ name: name.trim(), photo, avatarFraming, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
     setPersonId(id);
     if (invite) return go('invite');
     endEntry();
@@ -196,7 +199,7 @@ export function EntryFlow() {
           {step === 'entry' && (
             <div className="entry-home">
               <div className="entry-art">
-                <Photo media={art('chair')} className="splash-art" showPlay={false} />
+                <Photo surface="portfolio-thumbnail" media={art('chair')} className="splash-art" showPlay={false} />
                 <div className="entry-fade" />
               </div>
               <div className="entry-body">
@@ -276,9 +279,10 @@ export function EntryFlow() {
           {step === 'you' && (
             <Onboard step={stepIndex} total={steps.length} image="badge" title="About you" onBack={back}>
               <div className="ob-photo">
-                <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo }} size={88} />
-                <PhotoPicker onPick={setPhoto} has={!!photo} />
+                <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo, avatarFraming }} size={88} />
+                <PhotoPicker onPick={src => { setPhoto(src); setAvatarFraming(undefined); }} has={!!photo} />
               </div>
+              {photo && <MediaFramingEditor title="Profile photo framing" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
               <Field label="Your name">
                 <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoComplete="name" autoFocus />
               </Field>
@@ -466,7 +470,7 @@ export function EntryFlow() {
 
           {step === 'inviteTip' && personId && (
             <div className="ob">
-              <Photo media={art('badge')} className="ob-art" showPlay={false} />
+              <Photo surface="portfolio-thumbnail" media={art('badge')} className="ob-art" showPlay={false} />
               <div className="ob-body">
                 <h1 className="ob-title">You can now act for {org(INVITE.orgId).name}</h1>
                 <p className="body">Switch between yourself and {org(INVITE.orgId).name} from your name at the top of your profile, or from the house name on its Home. Your own profile and credits always stay yours.</p>
@@ -620,7 +624,7 @@ function AddWork({ craft, reelUrl, setReelUrl, work, setWork, link, setLink }: {
           <p className="field-label">{words.images}</p>
           <div className="ob-work-grid">
             {work.map((m) => (
-              <Photo key={m.id} media={m} showPlay={false} className="ob-work-thumb" />
+              <Photo surface="portfolio-thumbnail" key={m.id} media={m} showPlay={false} className="ob-work-thumb" />
             ))}
             <button className="ob-work-add" onClick={() => setPicker(true)} aria-label={`Add ${words.images.toLowerCase()}`}>
               <Camera size={20} aria-hidden />
@@ -652,7 +656,7 @@ function DistrictAddWork({ craft, reel, draft, setReel, setDraft, work, setWork,
   return <div className="ana-onboard-work">
     <p className="meta">Add something that helps people understand what you do. Everything here is optional.</p>
     {words.reel ? <ShowreelManager previewUrls={previewUrls} value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /> : <details className="ana-optional-reel"><summary>Showreel (optional)</summary><ShowreelManager previewUrls={previewUrls} value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></details>}
-    {words.images && <><div className="ob-work-grid">{work.map((m) => <Photo key={m.id} media={m} showPlay={false} className="ob-work-thumb" />)}</div><Button variant="secondary" onClick={() => setImages(true)}>Add portfolio images</Button></>}
+    {words.images && <><div className="ob-work-grid">{work.map((m) => <Photo surface="portfolio-thumbnail" key={m.id} media={m} showPlay={false} className="ob-work-thumb" />)}</div><Button variant="secondary" onClick={() => setImages(true)}>Add portfolio images</Button></>}
     <Button variant="secondary" onClick={() => setWorkLink(true)}>{link ? 'Edit work link' : 'Add work link'}</Button>
     <Sheet className="ana-work-sheet" open={workLink} onClose={() => setWorkLink(false)} title="Work link"><div className="stack"><Field label="A project, sample or selected work"><input className="field" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" aria-label="Work link" /></Field><Button block onClick={() => setWorkLink(false)} disabled={!!link && !validLink(link)}>Done</Button></div></Sheet>
     <Sheet className="ana-work-sheet" open={images} onClose={() => setImages(false)} title="Portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { setWork([...work, ...ms.filter((m) => m.kind === 'image' && !work.some((old) => old.id === m.id))]); setImages(false); }} /></Sheet>
@@ -663,7 +667,7 @@ function Onboard({ step, total, image, title, onBack, onSkip, skipLabel = 'Skip'
   return (
     <div className={`ob${className ? ` ${className}` : ''}`}>
       <div className="ob-top">
-        <Photo media={art(image)} className="ob-art" showPlay={false} />
+        <Photo surface="portfolio-thumbnail" media={art(image)} className="ob-art" showPlay={false} />
         <div className="ob-nav">
           <button className="icon-btn icon-btn--float" aria-label="Back" onClick={onBack}>
             <ChevronLeft size={24} />
@@ -698,6 +702,7 @@ function PhotoPicker({ onPick, has }: { onPick: (src: string) => void; has: bool
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Profile photo" size="tall">
         <MediaPicker
+          kind="image"
           single
           selected={[]}
           onDone={(ms: Media[]) => {
@@ -978,7 +983,7 @@ function Invitation({ accountEmail, onSwitchEmail, onAccept, onDecline }: { acco
   return (
     <div className="ob">
       <div className="ob-top">
-        <Photo media={art('badge')} className="ob-art" showPlay={false} />
+        <Photo surface="portfolio-thumbnail" media={art('badge')} className="ob-art" showPlay={false} />
       </div>
       <div className="ob-body">
         <div className="invite-card">
@@ -1068,7 +1073,7 @@ function Intro({ onDone }: { onDone: () => void }) {
             if (info.offset.x > 60 && i > 0) setI(i - 1);
           }}
         >
-          <Photo media={art(s.art)} className="splash-art" showPlay={false} />
+          <Photo surface="portfolio-thumbnail" media={art(s.art)} className="splash-art" showPlay={false} />
         </motion.div>
       </AnimatePresence>
       <div className="intro-shade" />

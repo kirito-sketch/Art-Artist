@@ -95,7 +95,7 @@ export function PosterTile({ media, title, meta, sub, label, lead, locked, share
       <div className="poster-tile-media">
         {media ? (
           <motion.div layoutId={sharedId} className="poster-tile-shared" transition={spring.push}>
-            <Photo media={media} showPlay={false} />
+            <Photo surface="project-card" media={media} showPlay={false} />
           </motion.div>
         ) : (
           <TitleCard title={title} locked={locked} />
@@ -164,7 +164,7 @@ export function HouseFeature({ house, still, line, label, onPress }: { house: Or
   return (
     <PressCard className="house-feature" onPress={onPress} scale={0.985} aria-label={house.name}>
       <div className="house-feature-still">
-        {still ? <Photo media={still} showPlay={false} /> : <TitleCard title={house.name} />}
+        {still ? <Photo surface="project-card" media={still} showPlay={false} /> : <TitleCard title={house.name} />}
         {label && <span className="house-feature-label">{label}</span>}
       </div>
       <div className="house-feature-sign">

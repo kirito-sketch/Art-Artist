@@ -184,7 +184,7 @@ export function DistrictHome({ go }: { go: Go }) {
           <Sheet open={spotlightAll} onClose={() => setSpotlightAll(false)} title="In the spotlight">
             <div className="dh-spot-list">
               {cards.map((card) => <button key={card.key} onClick={() => { setSpotlightAll(false); push(card.open); }}>
-                <Photo media={card.media} showPlay={false} />
+                <Photo surface="spotlight" media={card.media} showPlay={false} />
                 <span><small>{card.kicker}</small><b>{card.title}</b><small>{card.meta}</small></span>
               </button>)}
             </div>
@@ -206,7 +206,7 @@ export function DistrictHome({ go }: { go: Go }) {
               const a = party(p.authorId);
               return (
                 <Pressable key={p.id} className={`dh-mos ${i === 0 ? 'dh-mos--big' : ''}`} onClick={() => push({ name: 'posts', ids: posts.map((x) => x.id), index: i })} scale={0.98} aria-label={`Post by ${a?.name ?? 'someone'}`}>
-                  <Photo media={p.media[0]} showPlay={false} className={i === 0 && motionOk() ? 'dh-drift' : ''} />
+                  <Photo surface="discover-bento" media={p.media[0]} showPlay={false} className={i === 0 && motionOk() ? 'dh-drift' : ''} />
                   {p.media[0].kind === 'video' && (
                     <span className="dh-play" aria-hidden>
                       <Play size={11} fill="currentColor" strokeWidth={0} />
@@ -260,7 +260,7 @@ export function DistrictHome({ go }: { go: Go }) {
           <div className="dh-rail dh-pills">
             {continueItems.map((c) => (
               <PressCard key={c.key} className="dh-pill" onPress={c.open} scale={0.97} aria-label={c.label}>
-                {c.party ? <Avatar party={c.party} size={30} /> : <Photo media={c.img} showPlay={false} className="dh-pill-img" />}
+                {c.party ? <Avatar party={c.party} size={30} /> : <Photo surface="spotlight" media={c.img} showPlay={false} className="dh-pill-img" />}
                 <span>{c.label}</span>
               </PressCard>
             ))}
@@ -308,7 +308,7 @@ function IntentShelf({ intent, me, roles, blocked, go }: { intent: string; me: P
             <div key={o.id} className="dh-irow">
               <PressCard className="dh-irow-main" onPress={() => push({ name: 'opportunity', id: o.id })} scale={0.985} aria-label={`${o.role}, ${o.project}`}>
                 <span className="dh-irow-img">
-                  <Photo media={o.media} showPlay={false} />
+                  <Photo surface="spotlight" media={o.media} showPlay={false} />
                 </span>
                 <span className="dh-irow-t">
                   <b>{o.role}</b>
@@ -401,7 +401,7 @@ function EventsA({ list }: { list: IndustryEvent[]; city: string }) {
       const art = eventArt(e);
       return <div className="dh-event-card" key={e.id}>
         <PressCard className="dh-event-main" onPress={() => { markOpened(viewer.id, e.id); push({ name: 'event', id: e.id }); }} aria-label={`${e.title}. ${whenLabel(e.start)}. ${e.venue === 'Online' ? 'Online' : e.city}. Free.`}>
-          <span className="dh-event-image">{art ? <Photo media={art} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /><b>Meet. Make.<br />Be inspired.</b></span>}</span>
+          <span className="dh-event-image">{art ? <Photo surface="event-card" media={art} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /><b>Meet. Make.<br />Be inspired.</b></span>}</span>
           <span className="dh-event-copy">
             <span className="dh-event-category">{typeLabel(e.type).split(' or ')[0]}</span>
             <b>{e.title}</b>
@@ -429,7 +429,7 @@ function Spotlight({ items, i, setI }: { items: SpotCard[]; i: number; setI: (f:
           <div className="dh-card-visual">
             <PressCard className="dh-card-main" onPress={() => active ? push(c.open) : select(k % items.length)} scale={1} aria-label={`${c.kicker}. ${c.title}. ${c.meta}. ${c.fact ?? ''}`}>
               <span className="dh-card-media">
-                {c.media ? <Photo media={c.media} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /></span>}
+                {c.media ? <Photo surface="spotlight" media={c.media} showPlay={false} /> : <span className="dh-event-art" aria-hidden><span>Ana</span><i /></span>}
                 {animate && active && c.clip && CLIPS.has(c.clip) && <Clip id={c.clip} />}
                 <span className="dh-card-shade" aria-hidden />
                 <span className="dh-spot-type">{c.kicker}</span>
@@ -475,7 +475,7 @@ function Quote({ w, onOpen }: { w: Work; onOpen: () => void }) {
   return (
     <PressCard className="dh-quote" onPress={onOpen} scale={0.985} aria-label={w.title}>
       <span className="dh-qfilm dh-qfilm--top">
-        <Photo media={w.media} showPlay={false} />
+        <Photo surface="spotlight" media={w.media} showPlay={false} />
         <span className="dh-qfilm-t">
           <b>{w.title}</b>
           <ScoreLine id={w.id} />

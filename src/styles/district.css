@@ -153,8 +153,8 @@
 .dh-tiles {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  padding: 4px var(--gutter) 8px;
+  gap: 8px;
+  padding: 4px var(--gutter) 6px;
 }
 
 .dh-tile {
@@ -162,51 +162,62 @@
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 6px;
-  min-height: 112px;
-  padding: 10px 6px;
-  border-radius: 18px;
-  /* Frosted, so the moving colour behind shows through a little. */
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  backdrop-filter: blur(14px) saturate(1.3);
-  box-shadow: inset 0 0 0 1px var(--hairline), 0 1px 2px rgba(0, 0, 0, 0.04);
+  gap: 4px;
+  min-height: 86px;
+  padding: 8px 6px;
+  border-radius: 16px;
+  /* Quiet navigation surfaces leave the photographic Spotlight as the focus. */
+  background: color-mix(in srgb, var(--surface) 44%, transparent);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  backdrop-filter: blur(8px) saturate(1.1);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hairline) 55%, transparent);
   text-align: center;
 }
 
 .dh-tile b {
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .dh-tile-icon {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.06));
 }
 
 .dh-tile--wide {
   grid-column: span 3;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   justify-items: start;
   align-items: center;
-  min-height: 76px;
-  padding: 8px 12px;
-  gap: 8px;
+  min-height: 58px;
+  padding: 6px 8px;
+  gap: 6px;
 }
 
 .dh-tile--wide .dh-tile-icon {
-  width: 50px;
-  height: 50px;
+  width: 38px;
+  height: 38px;
 }
 
 .dh-tile--wide b {
+  font-size: 13px;
   white-space: nowrap;
+}
+
+@media (max-width: 350px) {
+  .dh-tile--wide { padding-inline: 6px; gap: 4px; }
+  .dh-tile--wide .dh-tile-icon { width: 30px; height: 30px; }
 }
 
 .dh-sec {
   padding-top: 26px;
+}
+
+/* Only the transition after category navigation; other Home shelves keep their rhythm. */
+.dh-wash + .dh-sec[aria-label='In the spotlight'] {
+  padding-top: 16px;
 }
 
 .dh-pad {
@@ -337,12 +348,16 @@
 }
 .dh-card.is-active { --spot-scale: 1; }
 .dh-card-main { display: block; overflow: hidden; background: var(--surface); border-radius: 20px; }
-.dh-card-media { position: relative; display: block; aspect-ratio: 4 / 5; background: #18382f; }
+.dh-card-media { position: relative; display: block; aspect-ratio: var(--media-spotlight-ratio); background: #18382f; }
 .dh-card-media .photo, .dh-card-media img, .dh-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .dh-card-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.22), transparent 30%, rgba(0,0,0,.12) 48%, rgba(0,0,0,.86)); pointer-events: none; }
 .dh-spot-type { position: absolute; top: 16px; left: 16px; font-size: 10px; font-weight: 750; letter-spacing: .13em; color: #fff; text-shadow: 0 1px 8px #000; }
 .dh-card-caption { position: absolute; left: 18px; right: 18px; bottom: 20px; display: grid; gap: 6px; color: #fff; text-align: left; }
 .dh-card-caption b { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -.035em; line-height: 1.08; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
+@media (max-width: 350px) {
+  /* Keep long craft names readable inside the unchanged narrow Spotlight card. */
+  .dh-card-caption b { font-size: 22px; }
+}
 .dh-card-caption > span { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,.83); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dh-card-fact { display: flex; align-items: center; padding: 9px 14px; min-height: 48px; font-size: 11.5px; line-height: 1.35; color: var(--text-2); text-align: left; }
 .dh-card-save .save { width: 32px; height: 32px; min-width: 32px; min-height: 32px; background: rgba(0,0,0,.25) !important; color: #fff !important; box-shadow: none; border: 1px solid rgba(255,255,255,.18); }
@@ -451,7 +466,7 @@
 .dh-events-rail::-webkit-scrollbar { display: none; }
 .dh-event-card { position: relative; flex: 0 0 min(285px, 78%); min-width: 0; scroll-snap-align: start; border-radius: 18px; overflow: hidden; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline); }
 .dh-event-main { display: block; height: 100%; text-align: left; }
-.dh-event-image { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #18382f; }
+.dh-event-image { position: relative; display: block; aspect-ratio: var(--media-event-card-ratio); overflow: hidden; background: #18382f; }
 .dh-event-image .photo, .dh-event-image img { width: 100%; height: 100%; object-fit: cover; }
 .dh-event-copy { display: grid; gap: 5px; padding: 13px 15px 15px; }
 .dh-event-category { font-size: 10px; line-height: 1.3; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; color: var(--action-ink); }
@@ -1047,7 +1062,7 @@
 }
 
 .dh-evhero { position: relative; }
-.dh-evhero-card { position: relative; display: block; aspect-ratio: 4 / 3; border-radius: 20px; overflow: hidden; background: #111; }
+.dh-evhero-card { position: relative; display: block; aspect-ratio: var(--media-event-card-ratio); border-radius: 20px; overflow: hidden; background: #111; }
 .dh-evhero-img, .dh-evhero-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .dh-evhero-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.78)); }
 .dh-evhero-card .dh-date { position: absolute; left: 12px; top: 12px; z-index: 1; }

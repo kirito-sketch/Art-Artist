@@ -16,8 +16,8 @@ export function isThemedSurface(): boolean {
   if (typeof location === 'undefined') return false;
   const q = new URLSearchParams(location.search);
   const p = location.pathname.replace(/\/+$/, '');
-  if (/\/(test|research)$/.test(p)) return false;
-  if (['test', 'dashboard', 'research', 'admin', 'lab', 'scenario', 'specimen', 'motion'].some((k) => q.has(k))) return false;
+  if (/\/research$/.test(p)) return false;
+  if (['dashboard', 'research', 'admin', 'lab', 'scenario', 'specimen', 'motion'].some((k) => q.has(k))) return false;
   try {
     if (sessionStorage.getItem('ana-research') === '1' || sessionStorage.getItem('ana-admin') === '1') return false;
   } catch {

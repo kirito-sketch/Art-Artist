@@ -16,7 +16,7 @@ function ThreadThumb({ c }: { c: Conversation }) {
   const p = party(c.withId)!;
   return (
     <span className="thumb">
-      {c.media ? <Photo media={c.media} className="thumb-image" showPlay={false} /> : <span className="thumb-image thumb-image--empty" />}
+      {c.media ? <Photo surface="search-thumbnail" media={c.media} className="thumb-image" showPlay={false} /> : <span className="thumb-image thumb-image--empty" />}
       <span className="thumb-avatar">
         <Avatar party={p} size={28} />
       </span>
@@ -57,7 +57,7 @@ export function InboxScreen() {
         {filter !== 'productions' && interestsReceived.length > 0 && interestFor && (
           <PressCard className="thread" onPress={() => openSheet({ name: 'reviewInterest' })} scale={0.99}>
             <span className="thumb">
-              <Photo media={interestFor.media} className="thumb-image" showPlay={false} />
+              <Photo surface="search-thumbnail" media={interestFor.media} className="thumb-image" showPlay={false} />
               <span className="thumb-avatar">
                 <Avatar party={person(interestsReceived[0].personId)} size={28} />
               </span>
@@ -174,7 +174,7 @@ export function ConversationScreen({ id }: { id: string }) {
 
       <div className="convo-scroll" ref={scrollRef}>
         <Pressable className="convo-context" onClick={() => ref && push({ name: 'opportunity', id: ref.id })} scale={0.99}>
-          {c.media && <Photo media={c.media} className="convo-context-thumb" showPlay={false} />}
+          {c.media && <Photo surface="search-thumbnail" media={c.media} className="convo-context-thumb" showPlay={false} />}
           <span className="convo-context-text">
             <span className="item-title">{c.context.detail.split(' · ')[0]}</span>
             <span className="meta">

@@ -1,3 +1,4 @@
+import { sourceOnly } from '../domain/mediaPresentation';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
 import { RESEARCH } from '../research';
@@ -17,8 +18,9 @@ const START = TEST_MODE ? 'kiran' : RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran
 const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
 // A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
-import { party } from './selectors';
+import { discoverPosts, party } from './selectors';
 import { phoneTaken, profileOf, type ProfileExtra } from './profile';
+import { updateWorkPreferences, workPreferencesOf } from './workPreferences';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
 import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
@@ -30,6 +32,7 @@ export type Tab = 'home' | 'discover' | 'inbox' | 'profile';
 export type Route =
   | { name: 'opportunity'; id: string; from?: 'card' }
   | { name: 'profile'; id: string }
+  | { name: 'profileCredits'; id: string }
   | { name: 'conversation'; id: string }
   | { name: 'network' }
   | { name: 'editProfile'; section?: import('../screens/profile/EditProfile').EditSection }
@@ -72,7 +75,7 @@ export type Sheet =
   | { name: 'reportCredit'; title: string; creditId?: string }
   | { name: 'activity' }
   | { name: 'identity' }
-  | { name: 'share'; label: string }
+  | { name: 'share'; label: string; url?: string }
   | { name: 'more'; id: string }
   | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event' | 'Review'; id: string } }
   | { name: 'review'; projectId: string }
@@ -115,7 +118,7 @@ export interface Toast {
   action?: { label: string; run: () => void };
 }
 
-export type PostDraft = { text: string; media: Media[]; addToPortfolio: boolean };
+export type PostDraft = { text: string; media: Media[]; addToPortfolio: boolean; presentation?: import('../data/types').PostPresentation };
 
 const VIEWERS: Record<string, Viewer> = {
   kiran: { id: 'kiran', craft: 'cinematographer', firstName: 'Kiran' },
@@ -127,12 +130,6 @@ const VIEWERS: Record<string, Viewer> = {
 const DEFAULT_INTENT: Record<string, Intent> = { kiran: 'work', tara: 'work', aditi: 'hire' };
 
 const DEFAULT_FOLLOWING = ['meera', 'arjun', 'rhea', 'vikram', 'devika', 'sameer', 'ishaan', 'nandini'];
-
-const DEFAULT_AVAILABILITY: Record<string, Availability> = {
-  kiran: { open: true, from: '3 Oct', scope: 'Hyderabad · will travel' },
-  tara: { open: true, from: 'Now', scope: 'Mumbai · self-tapes anywhere' },
-  aditi: { open: false, from: 'Now', scope: 'Hyderabad' },
-};
 
 let eventNoticeSequence = 0;
 function eventNotice(event: IndustryEvent, target: string, text: string, actorId: string, house = false) {
@@ -162,7 +159,15 @@ function useStoreValue() {
   });
 
   const [tab, setTabState] = useState<Tab>(BOOT?.tab ?? 'home');
-  const [stack, setStack] = useState<Route[]>(BOOT?.stack ?? []);
+  const [stack, setStack] = useState<Route[]>(() => {
+    const query = new URLSearchParams(location.search);
+    const profileId = query.get('profile');
+    if (profileId) return [{ name: 'profile', id: profileId }];
+    const postId = query.get('post');
+    const posts = discoverPosts(viewer, DEFAULT_FOLLOWING, []);
+    const index = posts.findIndex(post => post.id === postId);
+    return index >= 0 ? [{ name: 'posts', ids: posts.map(post => post.id), index }] : BOOT?.stack ?? [];
+  });
   const [sheet, setSheet] = useState<Sheet | null>(BOOT?.sheet ?? null);
   const [toast, setToast] = useState<Toast | null>(null);
 
@@ -198,7 +203,7 @@ function useStoreValue() {
   const [canIssue, setCanIssue] = useState(BOOT?.canIssue ?? true);
   const [following, setFollowing] = useState<string[]>(BOOT?.flags?.newUser ? [] : DEFAULT_FOLLOWING);
   const [interestsSent, setInterestsSent] = useState<Record<string, string>>({});
-  const [availability, setAvailabilityState] = useState<Availability>(DEFAULT_AVAILABILITY[START]);
+  const availability = workPreferencesOf(viewerId);
   const [conversations, setConversations] = useState<Conversation[]>(seed.conversations[START]);
   const [interestsReceived, setInterestsReceived] = useState<Interest[]>(RESEARCH ? [] : seed.interests[START_ACTING === 'self' ? START : START_ACTING] ?? []);
   const [notifications, setNotifications] = useState<Notification[]>(seed.notifications[START]);
@@ -256,7 +261,7 @@ function useStoreValue() {
     setToast(null);
     // A person created in onboarding follows nobody yet; seeded personas keep their demo network.
     setFollowing(id.startsWith('you-') ? [] : DEFAULT_FOLLOWING);
-    setAvailabilityState(DEFAULT_AVAILABILITY[id]);
+
     setConversations(seed.conversations[id]);
     setInterestsReceived(seed.interests[id]);
     setNotifications(seed.notifications[id]);
@@ -352,11 +357,12 @@ function useStoreValue() {
 
   const setAvailability = useCallback(
     (a: Availability, silent = false) => {
-      setAvailabilityState(a);
+      updateWorkPreferences(viewer.id, { ...workPreferencesOf(viewer.id), ...a });
+      setProfileVersion(v => v + 1);
       setReloadKey((k) => k + 1);
       if (!silent) showToast({ text: a.open ? 'Work preferences updated. For You is refreshing.' : 'Work preferences updated.', tone: 'success' });
     },
-    [showToast],
+    [showToast, viewer.id],
   );
 
   /**
@@ -485,14 +491,14 @@ function useStoreValue() {
       runUpload(
         { id, kind: 'post', label: draft.media.length ? `Posting ${draft.media.length} ${draft.media.length === 1 ? 'item' : 'items'}` : 'Posting', progress: 0, state: 'uploading', thumb: draft.media[0] },
         () => {
-          setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, likes: 0, comments: 0 }, ...ps]);
+          setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, presentation: draft.presentation, likes: 0, comments: 0 }, ...ps]);
           // One portfolio: what Edit Profile shows and orders (docs/REVIEW_EVENTS_PROFILE.md §7).
-          if (draft.addToPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image'), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
+          if (draft.addToPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image').map(sourceOnly), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
           showToast({ text: draft.addToPortfolio ? 'Posted and added to your portfolio' : 'Posted', tone: 'success' });
         },
       );
     },
-    [runUpload, showToast, viewer.id],
+    [runUpload, showToast, viewer.id, acting],
   );
 
   const publishCollab = useCallback(
@@ -504,12 +510,13 @@ function useStoreValue() {
         setUserCollabs((cs) => [collab, ...cs]);
         if (collab.collabIntent === 'available') {
           // Availability is one source of truth: the post updates the profile state.
-          setAvailabilityState({ open: true, from: collab.dates.split(' – ')[0] || 'Now', scope: collab.city });
+          updateWorkPreferences(collab.authorId ?? viewer.id, { ...workPreferencesOf(collab.authorId ?? viewer.id), open: true, from: collab.dates.split(' – ')[0] || 'Now', scope: collab.city });
+          setProfileVersion(v => v + 1);
         }
         showToast({ text: collab.collabIntent === 'available' ? 'You are now shown as available' : 'Collaboration is live', tone: 'success' });
       });
     },
-    [runUpload, showToast],
+    [runUpload, showToast, viewer.id],
   );
 
   const retryPublish = useCallback(() => {
@@ -558,15 +565,15 @@ function useStoreValue() {
     onboardingIntents: profileOf(viewer.id).onboardingIntents ?? [intent],
     setIntent: (i: Intent) => setIntents((m) => ({ ...m, [viewer.id]: i })),
     /** Creates the signed-in person from onboarding. The person owns this identity; no employer anywhere. */
-    createPerson: (d: { name: string; photo?: string; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {
+    createPerson: (d: { name: string; photo?: string; avatarFraming?: import('../data/types').MediaFraming; craft: Craft; crafts: Craft[]; specialisation: string; role: string; city: string; travel: boolean; languages: string[]; availability: Availability; work: Media[]; email: string; intent?: Intent; extra?: Partial<ProfileExtra> }) => {
       const id = `you-${Date.now().toString(36)}`;
       accountEmails[id] = d.email.trim();
       Object.assign(profileOf(id), d.extra ?? {});
-      const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, visibility: 'public', identityVerified: false };
+      const p: Person = { id, kind: 'person', name: d.name, role: d.role, craft: d.craft, crafts: d.crafts, specialisation: d.specialisation || undefined, city: d.city, openToTravel: d.travel, tone: 3, languages: d.languages, photo: d.photo, avatarFraming: d.avatarFraming, visibility: 'public', identityVerified: false };
       seed.people.push(p);
       seed.parties[id] = p;
       VIEWERS[id] = { id, craft: d.craft, firstName: d.name.split(' ')[0] };
-      DEFAULT_AVAILABILITY[id] = d.availability;
+      updateWorkPreferences(id, { ...d.availability, travel: d.travel });
       seed.conversations[id] = [];
       seed.interests[id] = [];
       seed.notifications[id] = [];
@@ -678,6 +685,7 @@ function useStoreValue() {
       const me = seed.people.find((p) => p.id === viewer.id);
       if (me) Object.assign(me, person);
       Object.assign(profileOf(viewer.id), extra);
+      if (person.openToTravel !== undefined) updateWorkPreferences(viewer.id, { ...workPreferencesOf(viewer.id), travel: person.openToTravel });
       setProfileVersion((v) => v + 1);
     },
     /** `check` only checks the number is free (onboarding: there is no account yet; it's saved with the profile). */

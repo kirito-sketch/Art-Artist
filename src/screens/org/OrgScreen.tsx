@@ -78,7 +78,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
       <div className="rail">
         {made.map((w) => (
           <Pressable key={w.id} className="rail-item" scale={0.97} onClick={() => push({ name: 'work', id: w.id })}>
-            <Photo media={w.media} className="rail-poster" showPlay={false} />
+            <Photo surface="project-card" media={w.media} className="rail-poster" showPlay={false} />
             <p className="item-title">{w.title}</p>
             <p className="meta">
               {district ? <ScoreLine id={w.id} /> : w.year}
@@ -114,7 +114,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
     <div className={`screen screen--hero${district ? ' dhouse-page dhouse-profile' : ''}`} data-scroll={isTab ? 'profile' : undefined} onScroll={(e) => setScrollY(e.currentTarget.scrollTop)}>
       <div className="whero whero--org">
         <div className="ohero-parallax" style={{ transform: `translateY(${Math.max(0, scrollY) * 0.4}px)` }}>
-          {hero ? <Photo media={hero} className="whero-photo" showPlay={false} /> : <div className="whero-photo whero-empty" />}
+          {hero ? <Photo surface="project-hero" media={hero} className="whero-photo" showPlay={false} /> : <div className="whero-photo whero-empty" />}
         </div>
         <div className="phero-bar">
           {isTab ? (
@@ -220,12 +220,12 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
 function NowCard({ w, roles, district }: { w: Work; roles: string[]; district?: boolean }) {
   const { push } = useStore();
   if (district) return <PressCard className="dhouse-project" onPress={() => push({ name: 'work', id: w.id })} aria-label={w.title}>
-    <span className="dhouse-project-media"><Photo media={w.media} showPlay={false} /><span className="dh-badge">{w.stage}</span></span>
+    <span className="dhouse-project-media"><Photo surface="project-card" media={w.media} showPlay={false} /><span className="dh-badge">{w.stage}</span></span>
     <span className="dhouse-project-body"><span className="item-title" lang={scriptLang(w.title)}>{w.title}</span><span className="meta">{w.format}</span><span className="dhouse-project-fact">{roles.length ? `${roles.length} open ${roles.length === 1 ? 'role' : 'roles'}` : 'View project'}</span></span>
   </PressCard>;
   return (
     <PressCard className="now-card" onPress={() => push({ name: 'work', id: w.id })} scale={0.985}>
-      <Photo media={w.stills[0] ?? w.media} className="now-card-photo" showPlay={false} />
+      <Photo surface="project-card" media={w.stills[0] ?? w.media} className="now-card-photo" showPlay={false} />
       <div className="now-card-text">
         <p className="now-card-kicker">
           {w.stage} · {w.format.split(' · ')[0]}

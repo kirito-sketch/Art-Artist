@@ -5,6 +5,9 @@ import type { StudyData } from './data';
 
 const ev = (session_id: string, event_name: string, metadata: Record<string, unknown> | null = null): HealthEvent => ({ session_id, task_attempt_id: null, sequence: 0, event_name, screen: null, object_type: null, object_id: null, metadata, created_at: '2026-10-03T10:00:00Z' });
 const session = (id: string, status: string) => ({ id, status, started_at: '2026-10-03T10:00:00Z', completed_at: status === 'completed' ? '2026-10-03T10:20:00Z' : null, device_type: 'desktop' }) as unknown as StudyData['sessions'][number];
+test('New Home sessions are labelled separately from archived experiments', () => {
+  assert.equal(homeArms([ev('new', 'session_started', { homeVariant: 'district' })]).get('new'), 'district');
+});
 
 test('home arms come from session_started; older sessions are unassigned', () => {
   const a = homeArms([ev('s1', 'session_started', { homeVariant: 'next' }), ev('s2', 'session_started', { homeVariant: 'current' }), ev('s3', 'session_started', { persona: 'kiran' })]);

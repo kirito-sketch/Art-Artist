@@ -7,9 +7,10 @@ import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
 import { world, project as wproject, work } from '../../state/world';
 import { useStore } from '../../state/store';
-import { org, person } from '../../state/selectors';
+import { discoverPosts, postWork, org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
 import { RoleRow } from '../discover/RoleRow';
+import { PostCard } from '../home/PostCard';
 import { SaveButton } from '../home/OpportunityCard';
 import { useLoad } from '../../ui/useLoad';
 import { PageError, PageSkeleton } from '../../ui/PageStates';
@@ -23,7 +24,7 @@ import { useFeatures } from '../../ui/features';
  * is hiring. The house's private workspace is a different screen and a different context.
  */
 export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean }) {
-  const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked, events } = useStore();
+  const { pop, push, openSheet, viewer, acting, setHero, roleStatus, blocked, events, following, userPosts } = useStore();
   const wp = wproject(id);
   const district = useFeatures().home === 'district' && !!wp?.houseId;
   const w = work(id);
@@ -53,6 +54,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
     .filter((o) => !roleStatus[o.id])
     // The record stays readable; hiring from someone you blocked is not offered.
     .filter((o) => !blocked.includes(o.orgId ?? o.authorId ?? ''));
+  const projectPosts = discoverPosts(viewer, following, userPosts).filter(post => postWork(post)?.id === id);
   const depts = [...new Set(w.credits.map((c) => c.dept))];
   const mine = acting === 'self' ? w.credits.find((c) => c.personId === viewer.id) : undefined;
   // Only the lead production opens the workspace. Co-producers see the public page like everyone else (authority is an open question).
@@ -68,7 +70,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
           ) : (
             // Opened from a poster: the poster's still becomes this hero, so the project stays one object.
             <motion.div layoutId={fromCard ? shared.work(w.id) : undefined} className="whero-photo" transition={spring.push}>
-              <Photo media={w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />
+              <Photo surface="project-hero" media={w.media.presentations?.['project-hero'] ? w.media : w.stills[0] ?? w.media} className="whero-photo" showPlay={false} />
             </motion.div>
           )}
         </div>
@@ -194,12 +196,16 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             <div className="grid-3">
               {w.stills.map((m, i) => (
                 <Pressable key={m.id} className="grid-item" onClick={() => push({ name: 'media', items: w.stills, index: i, what: 'Still', from: `from ${w.title}` })} scale={0.97} aria-label={mediaName(m, i, w.stills.length, 'Still', `from ${w.title}`)}>
-                  <Photo media={m} showPlay={false} />
+                  <Photo surface="project-card" media={m} showPlay={false} />
                 </Pressable>
               ))}
             </div>
           </section>
         )}
+        {projectPosts.length > 0 && <section className="section section--flush">
+          <SectionHeader title="Posts" />
+          {projectPosts.map(post => <PostCard key={post.id} post={post} />)}
+        </section>}
       </div>
     </div>
   );

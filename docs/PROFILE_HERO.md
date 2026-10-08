@@ -1,4 +1,6 @@
-# Individual profile hero
+# Legacy Individual profile hero
+
+This document describes the explicit Legacy presentation. The current shared immersive Individual hero is documented in [PROFILE_IMMERSIVE.md](PROFILE_IMMERSIVE.md).
 
 Scope: the individual profile (`ProfileScreen`) only. Production house profiles (`OrgScreen`) are a different
 component and are unchanged.
@@ -36,3 +38,4 @@ scroll listener):
 No React state is touched per frame; the only state change is the status-bar tint flipping when the hero has
 mostly gone (a boolean, set when it changes). Reduced motion: no transform, no dim; the page just scrolls.
 Resize is observed with a `ResizeObserver` so the progress stays correct across rotation or text-size changes.
+

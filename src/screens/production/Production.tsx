@@ -112,7 +112,7 @@ function LeadProject({ p, onOpen }: { p: HouseProject; onOpen: () => void }) {
   const faces = [...new Set(interest.map((i) => i.personId))].map(person);
   return (
     <PressCard className="slate-lead" onPress={onOpen} scale={0.985} aria-label={p.workingTitle}>
-      {p.artwork ? <Photo media={p.artwork} className="slate-lead-photo" showPlay={false} /> : <TitleCard title={p.workingTitle} locked={!p.shared} />}
+      {p.artwork ? <Photo surface="project-card" media={p.artwork} className="slate-lead-photo" showPlay={false} /> : <TitleCard title={p.workingTitle} locked={!p.shared} />}
       <span className="slate-lead-labels">
         <FrameLabel>{p.stage}</FrameLabel>
         {!p.shared && <FrameLabel icon={<Lock size={11} strokeWidth={2.6} />}>Not announced</FrameLabel>}
@@ -187,7 +187,7 @@ function OpenRoles() {
           const who = [...new Set(interestsReceived.filter((i) => i.opportunityId === r.id && !i.withdrawn).map((i) => i.personId))].map(person);
           return (
             <PressCard key={r.id} className="role-compact" onPress={() => push({ name: 'opportunity', id: r.id })} scale={0.98} aria-label={r.role}>
-              <span className="role-compact-media">{p.artwork ? <Photo media={p.artwork} showPlay={false} /> : <TitleCard title={p.workingTitle} />}</span>
+              <span className="role-compact-media">{p.artwork ? <Photo surface="project-card" media={p.artwork} showPlay={false} /> : <TitleCard title={p.workingTitle} />}</span>
               <span className="role-compact-text">
                 <p className="item-title">{r.role}</p>
                 <p className="meta">{p.workingTitle}</p>

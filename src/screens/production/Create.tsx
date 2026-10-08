@@ -1,3 +1,5 @@
+import { MediaFramingEditor } from '../../ui/MediaFraming';
+import { MediaPicker } from '../create/PostComposer';
 import { CreditSeal } from '../../ui/CreditSeal';
 import { scriptLang } from '../../ui/compose';
 import { ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
@@ -148,7 +150,7 @@ export function HouseProjectScreen({ id, focusAssociation }: { id: string; focus
           </button>
         )}
       </header>
-      {district && p.artwork && <div className="dhouse-workspace-art"><Photo media={p.artwork} showPlay={false} /></div>}
+      {district && p.artwork && <div className="dhouse-workspace-art"><Photo surface="project-card" media={p.artwork} showPlay={false} /></div>}
       <div className="title-block">
         <p className="kicker">
           {p.format} · {p.languages.join(', ')} · {p.stage}
@@ -389,7 +391,7 @@ function ShareProject({ id, done }: { id: string; done: () => void }) {
       </div>
       {district ? <>
         <div className="dhouse-share-preview">
-          {p.artwork && <Photo media={p.artwork} showPlay={false} />}
+          {p.artwork && <Photo surface="project-card" media={p.artwork} showPlay={false} />}
           <div><p className="item-title" lang={scriptLang(shownTitle)}>{shownTitle}</p><p className="meta">{p.format} · {p.languages.join(', ')} · {p.stage}</p><p className="meta">{p.houseId ? org(p.houseId).name : person(p.ownerId!).name}</p>{p.logline && <p className="body">{p.logline}</p>}<p className="meta">{open} open roles · {accepted} accepted credits</p></div>
         </div>
         <p className="meta"><Lock size={13} /> People added privately and unaccepted credits stay private.</p>
@@ -419,6 +421,7 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
   const [logline, setLogline] = useState(p.logline ?? '');
   const [stage, setStage] = useState(p.stage);
   const [art, setArt] = useState<Media | undefined>(p.artwork);
+  const [artPicker, setArtPicker] = useState(false);
   const [releaseDate, setReleaseDate] = useState(p.releaseDate ?? '');
   return (
     <div className="stack">
@@ -445,11 +448,14 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
         <div className="art-pick">
           {seed.cameraRoll.slice(0, 8).map((m) => (
             <Pressable key={m.id} className={`art-thumb ${art?.id === m.id ? 'is-on' : ''}`} onClick={() => setArt(art?.id === m.id ? undefined : m)} scale={0.95}>
-              <Photo media={m} showPlay={false} />
+              <Photo surface="project-card" media={m} showPlay={false} />
             </Pressable>
           ))}
         </div>
       </div>
+      <Button variant="secondary" onClick={() => setArtPicker(true)}>Choose project image</Button>
+      <Sheet open={artPicker} onClose={() => setArtPicker(false)} title="Project image" size="tall"><MediaPicker single kind="image" selected={[]} onDone={items => { setArt(items[0]); setArtPicker(false); }} /></Sheet>
+      {art && <MediaFramingEditor media={art} surface="project-hero" onChange={setArt} title="Project hero framing" />}
       {district && <div><span className="field-label">Release date</span><DateField label="Release date" value={releaseDate} onChange={setReleaseDate} clearable /></div>}
       <Button
         block

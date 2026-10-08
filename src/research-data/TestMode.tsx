@@ -160,8 +160,8 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   /** The scenario whose brief the participant has dismissed on a phone (the sheet starts open). */
   const [briefed, setBriefed] = useState<number>(restored.current?.briefed ?? -1);
   const lastPerson = useRef<string | undefined>(restored.current?.lastPerson);
-  /** The Home this session compares (docs/HOME.md). Assigned once at start, kept across reloads. */
-  const home = useRef<HomeVariant>(restored.current?.home ?? 'current');
+  /** Product default, with URL-only researcher override. Never restore a stale comparison arm. */
+  const home = useRef<HomeVariant>(assignHomeArm('', ARM));
   const [study, setStudy] = useState<{ slug: string } | null>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [view, setView] = useState<View>(null);
@@ -208,7 +208,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
     if (held && prev && prev.stage !== 'welcome') {
       const info = research.resume();
       if (info) {
-        setFeatures({ home: home.current, events: false }, false);
+        setFeatures({ home: home.current, events: true }, false);
         setSession(info);
         restoreProduct(prev);
         setStage(prev.stage === 'starting' ? 'scenario' : prev.stage);
@@ -304,7 +304,7 @@ export function TestMode({ phone }: { phone: ReactNode }) {
   const begin = async () => {
     setStage('starting');
     home.current = assignHomeArm(study!.slug, ARM);
-    setFeatures({ home: home.current, events: false }, false);
+    setFeatures({ home: home.current, events: true }, false);
     const s = await research.startSession({ studySlug: study!.slug, consent: true, participantCode: PARTICIPANT_CODE, participant: { participantType: PARTICIPANT_TYPE }, persona: 'kiran', metadata: { homeVariant: home.current } });
     if (!s) return setStartError(true), setStage('welcome');
     setStartError(false);

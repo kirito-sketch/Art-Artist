@@ -1,3 +1,4 @@
+import { isPlayableVideo } from './domain/mediaPresentation';
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
@@ -16,6 +17,7 @@ import { NetworkRow } from './screens/home/NetworkActivity';
 import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
 import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
+import { ProfileCreditsScreen } from './screens/profile/ProfileCredits';
 import { EditProfile } from './screens/profile/EditProfile';
 import { ProductionHome } from './screens/production/Production';
 import { DistrictHouseHome, HouseListScreen, type HousePeopleFocus } from './screens/production/DistrictHouse';
@@ -83,6 +85,8 @@ function RouteView({ r }: { r: Route }) {
       return <OpportunityScreen id={r.id} fromCard={r.from === 'card'} />;
     case 'profile':
       return <ProfileScreen id={r.id} />;
+    case 'profileCredits':
+      return <ProfileCreditsScreen id={r.id} />;
     case 'conversation':
       return <ConversationScreen id={r.id} />;
     case 'composePost':
@@ -160,6 +164,7 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
   const m = items[i];
   // Arrow keys move between items: swiping is never the only way (WCAG 2.5.7).
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.target instanceof HTMLVideoElement) return;
     if (e.key === 'ArrowRight' && i < items.length - 1) setI(i + 1);
     if (e.key === 'ArrowLeft' && i > 0) setI(i - 1);
   };
@@ -181,10 +186,10 @@ function MediaViewer({ items, index, what = 'Image', from = '' }: { items: Media
           </span>
         )}
       </div>
-      <motion.div className="viewer-stage" drag dragSnapToOrigin dragElastic={0.5} onDragEnd={onDragEnd}>
+      <motion.div className="viewer-stage" drag={!isPlayableVideo(m)} dragSnapToOrigin dragElastic={0.5} onDragEnd={onDragEnd}>
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div key={m.id} className="viewer-media" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={spring.gentle}>
-            <Photo media={m} alt={m.caption ? '' : mediaName(m, i, items.length, what, from)} />
+            {isPlayableVideo(m) ? <video src={m.src} poster={m.poster} controls playsInline preload="metadata" aria-label={mediaName(m, i, items.length, what, from)} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Photo media={m} surface="original" alt={m.caption ? '' : mediaName(m, i, items.length, what, from)} />}
           </motion.div>
         </AnimatePresence>
       </motion.div>
@@ -420,6 +425,7 @@ function Phone({ app = false }: { app?: boolean }) {
 }
 
 export default function App() {
+  useEffect(() => { if (TEST_MODE) enableTheme(); }, []);
   // The index.html launch splash belongs to the normal app; any other surface releases it at once.
   useEffect(() => {
     if (!document.querySelector('.app-shell')) document.getElementById('aa-boot')?.remove();
@@ -523,7 +529,7 @@ function NormalApp() {
       <BackToStudio />
       <LaunchSplash enabled={standalone} onPhase={setLaunch} />
       {/* The installed Home Screen app is always App mode, with no development controls. */}
-      {!standalone && !EMBED && <FloatingViewSwitch mode={mode} onChange={choose} className={mode === 'prototype' ? 'vm-float--narrow-only' : ''} />}
+      {!standalone && !EMBED && mode === 'prototype' && <FloatingViewSwitch mode={mode} onChange={choose} className="vm-float--narrow-only" />}
     </StoreProvider>
   );
 }

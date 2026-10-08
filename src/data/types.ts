@@ -9,7 +9,21 @@ export interface Media {
   fallback?: string;
   duration?: string;
   caption?: string;
+  width?: number;
+  height?: number;
+  contentType?: 'photo' | 'portrait' | 'artwork';
+  focal?: { x: number; y: number };
+  /** Original stays unchanged. Destination framing never becomes another surface's crop. */
+  presentations?: Partial<Record<MediaSurface, MediaFraming>>;
+  alt?: string;
+  poster?: string;
+  /** Optional delivered derivatives. The frontend never fabricates these URLs. */
+  variants?: { src: string; width: number }[];
 }
+
+export type MediaSurface = 'preview' | 'post' | 'discover-bento' | 'profile-hero' | 'portfolio-thumbnail' | 'credit-card' | 'project-card' | 'project-hero' | 'event-card' | 'event-hero' | 'spotlight' | 'search-thumbnail' | 'showreel' | 'original' | 'avatar' | 'logo';
+export type MediaFraming = { fit?: 'cover' | 'contain'; focal?: { x: number; y: number } };
+export type PostPresentation = 'original' | 'portrait' | 'square' | 'landscape';
 
 export type Craft =
   | 'cinematographer'
@@ -37,6 +51,7 @@ export interface Person {
   city: string;
   tone: number;
   photo?: string;
+  avatarFraming?: MediaFraming;
   gear?: string;
   years?: number;
   languages?: string[];
@@ -120,6 +135,7 @@ export interface Post {
   time: string;
   text: string;
   media: Media[];
+  presentation?: PostPresentation;
   likes: number;
   comments: number;
   project?: string;

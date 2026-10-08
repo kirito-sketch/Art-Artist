@@ -1,3 +1,4 @@
+import { MediaFramingEditor } from '../../ui/MediaFraming';
 import { useFeatures } from '../../ui/features';
 import { WorkPortfolioPage } from './WorkPortfolio';
 import { ArrowDown, ArrowUp, Camera, Check, ChevronLeft, Eye, Plus, Trash2, X } from 'lucide-react';
@@ -43,6 +44,7 @@ export function EditProfile({ section }: { section?: EditSection }) {
 /* ------------------------------------------------------------ overview */
 
 function Overview() {
+  const district = useFeatures().home === 'district';
   const { viewer, pop, push, availability, profileVersion } = useStore();
   void profileVersion;
   const me = person(viewer.id);
@@ -86,6 +88,7 @@ function Overview() {
           <R label="Languages" value={v(list(me.languages ?? []))} section={('languages')} />
         </div>
         <div className="group">
+          {district && <R label="Profile image & crop" value={v(x.profileCover ? 'Image selected' : 'Automatic')} section="portfolio" />}
           <R label={portfolioLabel(me.craft)} value={v(workCount)} section={('portfolio')} />
           <R label="Work" value={v('Credits and projects', '')} section={('work')} />
           <R label="About" value={v(seed.about[viewer.id] ? 'Bio added' : '')} section={('about')} />
@@ -187,17 +190,19 @@ function IdentityPage() {
   const [name, setName] = useState(me.name);
   const [role, setRole] = useState(me.role);
   const [photo, setPhoto] = useState(me.photo);
+  const [avatarFraming, setAvatarFraming] = useState(me.avatarFraming);
   const [picker, setPicker] = useState(false);
-  const dirty = name !== me.name || role !== me.role || photo !== me.photo;
+  const dirty = name !== me.name || role !== me.role || photo !== me.photo || JSON.stringify(avatarFraming) !== JSON.stringify(me.avatarFraming);
   return (
-    <Page title="Photo & name" dirty={dirty && !!name.trim() && !!role.trim()} onSave={() => save({ name: name.trim(), role: role.trim(), photo })}>
+    <Page title="Photo & name" dirty={dirty && !!name.trim() && !!role.trim()} onSave={() => save({ name: name.trim(), role: role.trim(), photo, avatarFraming })}>
       <div className="edit-photo">
-        <Avatar party={{ ...me, name: name || me.name, photo }} size={96} />
+        <Avatar party={{ ...me, name: name || me.name, photo, avatarFraming }} size={96} />
         <button className="link" onClick={() => setPicker(true)}>
           <Camera size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
           {photo ? 'Change photo' : 'Add photo'}
         </button>
       </div>
+      {photo && <MediaFramingEditor title="Profile photo framing" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
       <Field label="Name as credited">
         <input className="field" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" aria-label="Name as credited" />
       </Field>
@@ -205,7 +210,7 @@ function IdentityPage() {
         <input className="field" value={role} onChange={(e) => setRole(e.target.value)} aria-label="Headline" placeholder="e.g. Director of Photography" />
       </Field>
       <Sheet open={picker} onClose={() => setPicker(false)} title="Profile photo" size="tall">
-        <MediaPicker single selected={[]} onDone={(ms: Media[]) => (setPhoto(ms[0]?.src ?? photo), setPicker(false))} />
+        <MediaPicker single kind="image" selected={[]} onDone={(ms: Media[]) => (setPhoto(ms[0]?.src ?? photo), setAvatarFraming(undefined), setPicker(false))} />
       </Sheet>
     </Page>
   );
@@ -454,7 +459,7 @@ function PortfolioPage() {
         <Field label={words.reel}>
           {reel ? (
             <div className="ep-reel">
-              <span className="ep-reel-cover">{reel.cover ? <Photo media={reel.cover} showPlay={false} /> : null}</span>
+              <span className="ep-reel-cover">{reel.cover ? <Photo surface="portfolio-thumbnail" media={reel.cover} showPlay={false} /> : null}</span>
               <span className="ep-reel-t">
                 <b>{reel.title}</b>
                 <span className="meta">{reel.url.replace(/^https?:\/\//, '')}</span>
@@ -475,7 +480,7 @@ function PortfolioPage() {
           <div className="ep-images">
             {images.map((m, i) => (
               <span key={m.id} className="ep-img">
-                <Photo media={m} showPlay={false} />
+                <Photo surface="portfolio-thumbnail" media={m} showPlay={false} />
                 {i === 0 && <span className="ep-img-cover">Cover</span>}
                 <button className="ep-img-btn" onClick={() => setImgMenu(i)} aria-label={`Image ${i + 1} of ${images.length}${i === 0 ? ', cover' : ''}. Options`} />
               </span>
@@ -512,7 +517,7 @@ function PortfolioPage() {
             </Field>
             <Field label="Cover image">
               <div className="ep-reel">
-                <span className="ep-reel-cover">{reelEdit.cover ? <Photo media={reelEdit.cover} showPlay={false} /> : null}</span>
+                <span className="ep-reel-cover">{reelEdit.cover ? <Photo surface="portfolio-thumbnail" media={reelEdit.cover} showPlay={false} /> : null}</span>
                 <Button size="s" variant="secondary" onClick={() => setCoverPick(true)}>
                   {reelEdit.cover ? 'Change' : 'Add'}
                 </Button>

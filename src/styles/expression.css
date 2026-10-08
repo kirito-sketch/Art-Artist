@@ -1179,6 +1179,8 @@
 }
 
 /* The opened stream: one post after another, the work at full width. */
+.phone .post-grid--bento { display: flex; flex-direction: column; gap: 10px; margin-top: 0; padding-inline: 16px; }
+
 .stream-bar {
   position: sticky;
   top: 0;

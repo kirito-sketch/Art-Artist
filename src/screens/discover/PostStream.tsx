@@ -1,15 +1,11 @@
 import { motion } from 'framer-motion';
-import { mediaName } from '../../ui/a11y';
 import { ChevronLeft } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import * as seed from '../../data/seed';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
-import { party, postWork } from '../../state/selectors';
-import { FrameLabel } from '../../ui/compose';
-import { PostActions, PostMore } from '../home/PostActions';
-import { shared, spring } from '../../ui/motion';
-import { Avatar, IconButton, Photo, Pressable } from '../../ui/primitives';
+import { PostCard } from '../home/PostCard';
+import { IconButton } from '../../ui/primitives';
 
 /*
  * Discover → Posts, opened: the grid hides everything but the work; the stream shows the rest.
@@ -39,81 +35,9 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
         <span className="stream-bar-spacer" />
       </header>
       {posts.map((p, i) => (
-        <StreamPost key={p.id} post={p} anchor={i === index} />
+        <PostCard key={p.id} post={p} anchor={i === index} />
       ))}
       <p className="end">You've seen the latest posts</p>
     </motion.div>
-  );
-}
-
-/** A video in the feed: tap plays and pauses. */
-function StreamVideo({ src }: { src: string }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  return <video ref={ref} src={src} playsInline muted loop onClick={() => (ref.current?.paused ? ref.current.play() : ref.current?.pause())} />;
-}
-
-function StreamPost({ post, anchor }: { post: Post; anchor: boolean }) {
-  const { push } = useStore();
-  const author = party(post.authorId)!;
-  const work = postWork(post);
-  const [page, setPage] = useState(0);
-  const many = post.media.length > 1;
-  const open = () => push(author.kind === 'org' ? { name: 'org', id: author.id } : { name: 'profile', id: author.id });
-
-  return (
-    <article className="stream-post" data-post={post.id}>
-      <div className="stream-head">
-        <Pressable className="stream-author" onClick={open} scale={0.98}>
-          <Avatar party={author} size={36} />
-          <span className="stream-author-text">
-            <span className="item-title">{author.name}</span>
-            <span className="meta">
-              {author.kind === 'person' ? author.role : 'Production house'} · {post.time === 'now' ? 'Just now' : post.time}
-            </span>
-          </span>
-        </Pressable>
-        <PostMore post={post} />
-      </div>
-
-      {post.media.length > 0 ? (
-        <motion.div className="stream-media" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
-          <div className="stream-media-track" onScroll={(e) => setPage(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
-            {/* The feed is the expanded view: images are part of the post and swipe in place. No lightbox
-                (docs/REVIEW_EVENTS_PROFILE.md §12). */}
-            {post.media.map((m, i) => (
-              <div key={m.id + i} className="stream-media-item" role="img" aria-label={mediaName(m, i, post.media.length, 'Photo', `in ${author.name}'s post`)}>
-                {m.kind === 'video' && /\.(mp4|webm)$/.test(m.src) ? <StreamVideo src={m.src} /> : <Photo media={m} showPlay={false} />}
-              </div>
-            ))}
-          </div>
-          {many && (
-            <span className="stream-media-count">
-              <FrameLabel>
-                {page + 1} / {post.media.length}
-              </FrameLabel>
-            </span>
-          )}
-        </motion.div>
-      ) : (
-        <motion.div className="stream-note" layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push}>
-          <span className="title-card-rule" />
-          <p>{post.text}</p>
-        </motion.div>
-      )}
-
-      <div className="stream-body">
-        <PostActions post={post} />
-        {post.media.length > 0 && <p className="stream-caption">{post.text}</p>}
-        {work ? (
-          <Pressable className="stream-context" onClick={() => push({ name: 'work', id: work.id })} scale={0.98}>
-            <span className="stream-context-label">Project</span> {work.title}
-          </Pressable>
-        ) : post.project ? (
-          <p className="stream-context">
-            <span className="stream-context-label">Project</span> {post.project}
-          </p>
-        ) : null}
-      </div>
-    </article>
   );
 }

@@ -159,7 +159,7 @@ function Lead({ c }: { c: Candidate }) {
   return (
     <section className="hn-lead-wrap" aria-label="Lead story">
       <PressCard className="hn-lead" onPress={() => (track('lead', 0, c.reason), push({ name: 'work', id: w.id }))} scale={0.985} aria-label={`${w.title}. ${String(c.data?.text ?? '')}${c.reason ? `. ${c.reason}` : ''}`}>
-        <Photo media={w.stills[0] ?? w.media} className="hn-lead-photo" />
+        <Photo surface="project-card" media={w.stills[0] ?? w.media} className="hn-lead-photo" />
         <div className="hn-lead-text">
           <span className="hn-tag">{String(c.data?.tag ?? w.stage)}</span>
           <h2 className="hn-lead-title">{w.title}</h2>
@@ -319,7 +319,7 @@ function ProjectUpdates({ c, lead, onOpen }: { c: Candidate; lead: Candidate | n
         {items.map(({ r, w }) => (
           <PressCard key={r.id} className="hn-update" onPress={() => (onOpen(), push({ name: 'work', id: w!.id }))} scale={0.985} aria-label={`${w!.title}: ${String(r.data?.text ?? '')}${r.reason ? `. ${r.reason}` : ''}`}>
             <span className="hn-update-art">
-              <Photo media={w!.media} />
+              <Photo surface="project-card" media={w!.media} />
             </span>
             <span className="hn-row-text">
               <b>{w!.title}</b>

@@ -59,7 +59,7 @@ export function SheetHost() {
         <Identity />
       </Sheet>
       <Sheet open={is('share')} onClose={closeSheet} title="Share">
-        {sheet?.name === 'share' && <ShareSheet label={sheet.label} />}
+        {sheet?.name === 'share' && <ShareSheet label={sheet.label} url={sheet.url} />}
       </Sheet>
       <Sheet open={is('more')} onClose={closeSheet} title="" label="More options">
         {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
@@ -763,13 +763,13 @@ function Identity() {
 
 /* ------------------------------------------------------------------- Share */
 
-function ShareSheet({ label }: { label: string }) {
+function ShareSheet({ label, url }: { label: string; url?: string }) {
   const { closeSheet, showToast, conversations } = useStore();
   const recent = conversations.slice(0, 3);
   return (
     <div className="stack">
       <p className="meta">{label}</p>
-      {recent.length > 0 && (
+      {recent.length > 0 && !url && (
         <div className="share-people">
           {recent.map((c) => {
             const p = party(c.withId);
@@ -796,7 +796,11 @@ function ShareSheet({ label }: { label: string }) {
           icon={<Link2 size={22} />}
           label="Copy link"
           chevron={false}
-          onPress={() => {
+          onPress={async () => {
+            if (url) {
+              try { await navigator.clipboard.writeText(url); }
+              catch { showToast({ text: 'Could not copy the link. Try sharing from your browser.' }); return; }
+            }
             closeSheet();
             showToast({ text: 'Link copied' });
           }}
@@ -805,7 +809,13 @@ function ShareSheet({ label }: { label: string }) {
           icon={<Send size={22} />}
           label="Share outside Art and Artist"
           chevron={false}
-          onPress={() => {
+          onPress={async () => {
+            if (url) {
+              if (!navigator.share) { showToast({ text: 'Use Copy link to share from this browser.' }); return; }
+              try { await navigator.share({ title: label, url }); closeSheet(); }
+              catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) showToast({ text: 'Could not open device sharing. Try Copy link.' }); }
+              return;
+            }
             closeSheet();
             showToast({ text: 'Opens the phone share sheet' });
           }}
@@ -818,11 +828,12 @@ function ShareSheet({ label }: { label: string }) {
 /* ---------------------------------------------------------- More / Report / Block */
 
 function MoreSheet({ id }: { id: string }) {
-  const { openSheet, blocked, unblock, closeSheet, showToast } = useStore();
+  const { openSheet, blocked, unblock, closeSheet, showToast, isSaved, toggleSave } = useStore();
   const p = party(id)!;
   const isBlocked = blocked.includes(id);
   return (
     <div className="group">
+      {p.kind === 'person' && <Row icon={<Bookmark size={22} />} label={isSaved('person', id) ? 'Remove from saved' : `Save ${p.name}`} onPress={() => { toggleSave(id, 'person'); closeSheet(); }} />}
       <Row icon={<Flag size={22} />} label={`Report ${p.name}`} onPress={() => openSheet({ name: 'report', subject: p.name, partyId: id })} />
       {isBlocked ? (
         <Row

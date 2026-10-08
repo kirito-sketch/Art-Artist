@@ -1,5 +1,6 @@
 import { useFeatures } from '../../ui/features';
 import { ShowreelMedia } from './Showreel';
+import { craftDef } from '../../data/crafts';
 import { ExternalLink, Play } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
@@ -32,7 +33,7 @@ export function ReelCard({ person, active = true }: { person: Person; active?: b
     <section className="section section--flush">
       <SectionHeader title={craftProfile(person.craft).work.reel ?? 'Showreel'} />
       <a className="reel" href={x.reel.url} target="_blank" rel="noopener noreferrer" aria-label={`${x.reel.title}, opens ${host}`}>
-        {x.reel.cover ? <Photo media={x.reel.cover} showPlay={false} /> : <span className="reel-blank" />}
+        {x.reel.cover ? <Photo surface="showreel" media={x.reel.cover} showPlay={false} /> : <span className="reel-blank" />}
         <span className="reel-play" aria-hidden>
           <Play size={20} fill="currentColor" strokeWidth={0} />
         </span>
@@ -55,13 +56,36 @@ export function ProfileDetails({ person }: { person: Person }) {
   const rows = sets.flatMap((s) => s.fields.filter((f) => x.details[f.id] !== undefined && canSee(visibilityOf(x, f.id), who)).map((f) => ({ f, v: x.details[f.id] })));
   const exp = EXPERIENCE.find((e) => e.id === x.experience)?.label;
   const skills = x.skills.map((k) => ({ k, d: skillDef(k.id) })).filter((s) => s.d);
-  if (!rows.length && !skills.length && !x.suggestedSkills.length && !exp && !x.workTypes.length) return null;
+  const crafts = [person.craft, ...(person.crafts ?? [])];
   return (
     <>
-      {(rows.length > 0 || exp || x.workTypes.length > 0) && (
+      {(skills.length > 0 || x.suggestedSkills.length > 0) && (
         <section className="section section--flush">
-          <SectionHeader title="Details" />
+          <SectionHeader title="Skills" />
+          <ul className="pf-skills" aria-label="Skills">
+            {skills.map(({ k, d }) => (
+              <li key={k.id} className="pf-skill">
+                {d!.label}
+                {(k.level || k.cert) && <small>{[k.level, k.cert && categoryOf(d!.category)?.cert ? k.cert : ''].filter(Boolean).join(' · ')}</small>}
+              </li>
+            ))}
+            {x.suggestedSkills.map((s) => (
+              <li key={s} className="pf-skill">
+                {s}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {(crafts.length > 0 || rows.length > 0 || exp || x.workTypes.length > 0) && (
+        <section className="section section--flush">
+          <SectionHeader title="Professional details" />
           <dl className="pf-details">
+            <dt>Primary craft</dt><dd>{person.role || craftDef(person.craft)?.label}</dd>
+            {!!person.crafts?.length && <><dt>Other crafts</dt><dd>{person.crafts.map(c => craftDef(c)?.label ?? c).join(', ')}</dd></>}
+            {!!person.languages?.length && <><dt>Languages</dt><dd>{person.languages.join(', ')}</dd></>}
+            {person.specialisation && <><dt>Specialisation</dt><dd>{person.specialisation}</dd></>}
+            {!!person.years && <><dt>Years active</dt><dd>{person.years}</dd></>}
             {exp && (
               <>
                 <dt>Experience</dt>
@@ -84,24 +108,6 @@ export function ProfileDetails({ person }: { person: Person }) {
               </>
             )}
           </dl>
-        </section>
-      )}
-      {(skills.length > 0 || x.suggestedSkills.length > 0) && (
-        <section className="section section--flush">
-          <SectionHeader title="Skills" />
-          <ul className="pf-skills" aria-label="Skills">
-            {skills.map(({ k, d }) => (
-              <li key={k.id} className="pf-skill">
-                {d!.label}
-                {(k.level || k.cert) && <small>{[k.level, k.cert && categoryOf(d!.category)?.cert ? k.cert : ''].filter(Boolean).join(' · ')}</small>}
-              </li>
-            ))}
-            {x.suggestedSkills.map((s) => (
-              <li key={s} className="pf-skill">
-                {s}
-              </li>
-            ))}
-          </ul>
         </section>
       )}
     </>

@@ -3,12 +3,11 @@ import { ArrowLeft, RotateCcw } from 'lucide-react';
 import './studio.css';
 
 /*
- * Studio › Compare (/studio/compare): the New Home (the product's Home and Discover) and the Legacy Home, each a
- * live, tappable app in a phone, shown one at a time or side by side. New is the recommended one and comes first.
- * It includes the house pages and flows. The Legacy frame opens with ?home=legacy, which applies to that frame
- * only and is never remembered. Behind the shared password like the rest of Studio.
+ * Studio › Compare (/studio/compare): today's app and the District direction, each a live, tappable app in a
+ * phone, shown one at a time or side by side, including the house pages and flows.
+ * Behind the shared password like the rest of Studio.
  */
-type Show = 'district' | 'current' | 'both';
+type Show = 'current' | 'district' | 'both';
 type Who = 'kiran' | 'tara' | 'new' | 'konark' | 'tidewater';
 const WHO: { id: Who; label: string }[] = [
   { id: 'kiran', label: 'Kiran Varma, cinematographer' },
@@ -17,7 +16,7 @@ const WHO: { id: Who; label: string }[] = [
   { id: 'konark', label: 'Konark Pictures, production house' },
   { id: 'tidewater', label: 'Tidewater Films, production house' },
 ];
-const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Legacy Home', district: 'New Home' };
+const LABEL: Record<Exclude<Show, 'both'>, string> = { current: 'Legacy Home', district: 'New Home (default)' };
 
 const src = (home: 'current' | 'district', who: Who, n: number) => {
   const q = new URLSearchParams({ view: 'app', home: home === 'current' ? 'legacy' : home, embed: '1', r: String(n) });

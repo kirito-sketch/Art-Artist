@@ -53,10 +53,13 @@ Withheld items are counted ("1 saved item is no longer available to you") and ne
 
 ## Post actions
 
-Every post (the Discover stream, Home "Latest posts", Profile posts) has:
+Every post uses `PostCard` (Discover stream, Home "Latest posts", Profile and public Project posts):
 
-- **Header:** avatar, name, role · time (project context below the caption when there is one), and **More** (⋯) on the right for other people's posts.
-- **Action row** under the work: **Like** (with its count), **Share** (the existing share sheet), **Save** (right-aligned bookmark).
+- **Identity:** a compact avatar/name/craft/time row above the media, with **More** (⋯) at the right for other people's posts. Identity and overflow never overlay the work. Text-only posts keep a compact identity row.
+- **Actions:** one compact translucent bottom-right glass pill containing **Like**, **Share**, **Save**, with 44px targets. Like counts are secondary. Text-only posts place the pill after their caption. The neutral dark glass keeps white icons/counts readable over arbitrary media without an opaque white surface. Declared focal coordinates are projected through the crop to raise the pill away from the subject. Artwork reserves extra lower-edge space; short videos can move actions to the opposite corner. Without focal metadata, placement cannot detect faces or embedded text. Session likes are shared across views and scoped to the individual; Save keeps its existing private account store.
+- **Media:** all images swipe within one rounded rectangle, with one index and action set. Video uses native controls without autoplay; Ana actions sit above the controls. Media taps do not open another lightbox.
+- Caption (with More for long text) and public Project attribution sit below media. Project links do not issue or modify credits. Project posts use Discover's public-profile eligibility.
+- Seed posts support native device sharing and copied `?post=id` links, reopened only if eligible for the current viewer. Newly uploaded prototype posts remain session-only and do not offer a misleading permanent link.
 - **No comments:** no comment button, count, composer or "View comments". The `comments` field in seed data is unused internally and never shown.
 - The Discover Posts grid stays media-only: no actions on tiles, only the small set/video marks.
 

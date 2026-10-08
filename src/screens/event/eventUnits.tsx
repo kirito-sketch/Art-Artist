@@ -46,7 +46,7 @@ export function EventTicket({ e, reason, onOpen }: { e: IndustryEvent; reason?: 
       >
         <span className="ev-ticket-cover">
           {art ? (
-            <Photo media={art} showPlay={false} />
+            <Photo surface="event-card" media={art} showPlay={false} />
           ) : (
             <span className="ev-card-fallback">
               <CalendarDays size={22} aria-hidden />
@@ -90,7 +90,7 @@ export function EventRow({ c, position, lead }: { c: Candidate; position: number
           scale={0.985}
           aria-label={`${e.title}. ${whenLabel(e.start)}, ${e.venue}. ${c.reason ?? ''}`}
         >
-          {w && <Photo media={w.stills[0] ?? w.media} className="hn-lead-photo" />}
+          {w && <Photo surface="event-card" media={w.stills[0] ?? w.media} className="hn-lead-photo" />}
           <div className="hn-lead-text">
             <span className="hn-tag">
               <CalendarDays size={11} aria-hidden /> {typeLabel(e.type)}

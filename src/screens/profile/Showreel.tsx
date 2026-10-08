@@ -1,3 +1,4 @@
+import { MediaFramingEditor } from '../../ui/MediaFraming';
 import { Link2, Play, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { videoEmbed, videoLink } from '../../domain/showreel';
@@ -7,13 +8,13 @@ import { Sheet } from '../../ui/Sheet';
 import { previewVideo } from '../../ui/showreelPreview';
 import { MediaPicker } from '../create/PostComposer';
 
-export function ShowreelMedia({ reel, privateDraft = false, active = true }: { reel: Reel; privateDraft?: boolean; active?: boolean }) {
-  const [playing, setPlaying] = useState(false);
+export function ShowreelMedia({ reel, privateDraft = false, active = true, startPlaying = false }: { reel: Reel; privateDraft?: boolean; active?: boolean; startPlaying?: boolean }) {
+  const [playing, setPlaying] = useState(startPlaying);
   const [failed, setFailed] = useState(false);
   const native = reel.source?.kind === 'native';
   const ready = !native || reel.source?.kind === 'native' && reel.source.status === 'ready';
   const embed = videoEmbed(reel.source, reel.url);
-  useEffect(() => { setPlaying(false); setFailed(false); }, [reel.url]);
+  useEffect(() => { setPlaying(startPlaying); setFailed(false); }, [reel.url, startPlaying]);
   useEffect(() => { if (!active) setPlaying(false); }, [active]);
   useEffect(() => {
     const hide = () => { if (document.hidden) setPlaying(false); };
@@ -30,7 +31,7 @@ export function ShowreelMedia({ reel, privateDraft = false, active = true }: { r
       {failed && <p className="meta" role="alert">This video could not play. Try replacing it with an MP4 export.</p>}
       <div className="ana-reel-player-actions"><Button size="s" variant="plain" onClick={() => setPlaying(false)}>Close player</Button>{!native && <a className="link link--small" href={reel.url} target="_blank" rel="noopener noreferrer">Open on {videoLink(reel.url)?.source.provider === 'youtube' ? 'YouTube' : 'Vimeo'}</a>}</div>
     </> : <button className="reel ana-reel-cover" onClick={() => setPlaying(true)} disabled={!playable} aria-label={`Play showreel, ${reel.title}${reel.duration ? `, ${reel.duration}` : ''}`}>
-      {reel.cover ? <Photo media={reel.cover} showPlay={false} /> : <span className="reel-blank" />}
+      {reel.cover ? <Photo surface="showreel" media={reel.cover} showPlay={false} /> : <span className="reel-blank" />}
       <span className="reel-play" aria-hidden><Play size={20} fill="currentColor" strokeWidth={0} /></span>
       <span className="reel-caption"><span className="item-title">{reel.title}</span><span className="reel-sub">{playable ? ['Play showreel', reel.duration].filter(Boolean).join(' · ') : 'Video link unavailable'}</span></span>
     </button>}
@@ -121,6 +122,7 @@ export function ShowreelManager({ value, draft, onChange, onDraftChange, preview
         {error && <p role="alert" className="meta">{error}</p>}
         <label className="ob-field"><span className="field-label">Display title</span><input className="field" value={edit.title} maxLength={200} onChange={(e) => { titleEdited.current = true; setEdit({ ...edit, title: e.target.value }); }} /></label>
         {edit.url && <ShowreelMedia reel={edit} privateDraft />}
+        {edit.cover && <MediaFramingEditor media={edit.cover} surface="showreel" onChange={cover => setEdit({ ...edit, cover })} title="Showreel cover framing" />}
         <Button variant="secondary" onClick={() => setCover(true)}>{edit.cover ? 'Change cover' : 'Add cover'}</Button>
         <Button variant="secondary" onClick={() => setSources(true)}>Replace showreel</Button>
         <Button block size="l" disabled={loading || !edit.title.trim() || (edit.source?.kind === 'native' ? !edit.url : !link)} onClick={() => {

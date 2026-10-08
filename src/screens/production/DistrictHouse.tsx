@@ -36,7 +36,7 @@ export function HouseProjectCard({ p, publicPage = false }: { p: HouseProject; p
   return (
     <PressCard className="dhouse-project" aria-label={`Open ${title}`} onPress={() => push({ name: publicPage ? 'work' : 'hproject', id: p.id })}>
       <span className="dhouse-project-media">
-        {p.artwork ? <Photo media={p.artwork} showPlay={false} /> : <TitleCard title={title} />}
+        {p.artwork ? <Photo surface="project-card" media={p.artwork} showPlay={false} /> : <TitleCard title={title} />}
         <span className="dh-badge">{p.stage}</span>
       </span>
       <span className="dhouse-project-body">
@@ -114,7 +114,7 @@ function OwnedRoleRows({ roles }: { roles: HouseRole[] }) {
             onPress={() => push({ name: 'opportunity', id: r.id })}
             aria-label={`Manage ${r.role}, ${p.workingTitle}`}
           >
-            <span className="dh-irow-img">{p.artwork ? <Photo media={p.artwork} showPlay={false} /> : <TitleCard title={p.workingTitle} />}</span>
+            <span className="dh-irow-img">{p.artwork ? <Photo surface="project-card" media={p.artwork} showPlay={false} /> : <TitleCard title={p.workingTitle} />}</span>
             <span className="dh-irow-t">
               <span className="item-title">{r.role}</span>
               <span className="meta">{p.workingTitle}</span>

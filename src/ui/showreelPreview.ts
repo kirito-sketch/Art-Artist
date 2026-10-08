@@ -29,11 +29,11 @@ export async function previewVideo(file: File, signal: AbortSignal): Promise<Ree
     const error = videoMetadataError(video.duration, video.videoWidth, video.videoHeight);
     if (error) throw new Error(error);
     const canvas = document.createElement('canvas');
-    canvas.width = 640;
+    canvas.width = Math.min(640, Math.round(640 * video.videoWidth / video.videoHeight));
     canvas.height = Math.round(640 * video.videoHeight / video.videoWidth);
     canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
     const id = crypto.randomUUID();
-    return { id, source: { kind: 'native', status: 'draft' }, url, title: file.name.replace(/\.[^.]+$/, ''), duration: videoDuration(video.duration), cover: { id: `cover-${id}`, kind: 'image', src: canvas.toDataURL('image/jpeg', 0.8) } };
+    return { id, source: { kind: 'native', status: 'draft' }, url, title: file.name.replace(/\.[^.]+$/, ''), duration: videoDuration(video.duration), cover: { id: `cover-${id}`, kind: 'image', src: canvas.toDataURL('image/jpeg', 0.8), width: canvas.width, height: canvas.height } };
   } catch (error) { URL.revokeObjectURL(url); throw error; }
   finally { video.removeAttribute('src'); video.load(); }
 }
