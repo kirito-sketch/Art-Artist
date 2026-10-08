@@ -382,7 +382,7 @@ Art & Artist is touch-only, including inside the desktop phone frame.
 
 **Fixed before Stage 1:** the `/test` flow (mobile 39/0, desktop 37/0) and test-resume (7/0); see D8.
 
-**Outdated after an approved change:** `a11y/views.cjs` and `a11y/mobile.cjs` still test the old manual view switch. They need rewriting for the automatic device frame.
+**Outdated after an approved change:** `a11y/views.cjs` and `a11y/mobile.cjs` tested the old manual view switch. Rewritten in Stage 5 for the automatic device frame (views 22/0, mobile all pass).
 
 These QA scripts live in the session scratchpad, not the repository. Their checks are summarised here; recreate them only if needed.
 
@@ -391,7 +391,8 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 - Legacy Home code still in the tree: `HomeScreen`, `HomeNext`, the legacy Discover branches, `features.home` variants. An archive was requested earlier, still to execute.
 - In `glass.css`, the reduced-transparency rules use `.phone[data-dir]`, which also matches `data-dir="current"`, so they apply to the default app too. Should be `:not([data-dir='current'])`.
 - The CSS layering (26 files) should be consolidated over time. Not part of this refinement beyond the token fixes.
-- In `ProfileScreen.tsx`, some house admin a11y labels are missing (see the axe items in section 9).
+- axe2 still reports "no tap target: Availability" (the test's selector, not a missing control; the other two known items no longer appear).
+- `stills/tara-faultlines.jpg` is referenced in `data/works.ts` and `data/seed.ts` but was never added; the cover fallback shows instead.
 - `src/main.tsx` imports `home-next.css` and `post-row.css` twice. The first import wins, so both load before the district and profile layers. Remove the early pair and check the cascade.
 
 ## 11. Progress
@@ -402,8 +403,8 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 | 1 Foundations, nav, post actions | Approved | `6329e99` |
 | 2 Profile | Approved (with round 2 feedback) | `65ff282` |
 | 3 Detail pages | Approved (with review feedback) | `f3768b1` |
-| 4 Project and trailers | Done, awaiting review | see below |
-| 5 Home, integration, QA | Not started | |
+| 4 Project and trailers | Approved (with review feedback) | `0bede79` |
+| 5 Home, integration, QA | Done, awaiting review | see below |
 
 ### Stage 1 record
 
@@ -636,3 +637,41 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
 
 Screenshots are in `docs/ux-refinement/stage4/`.
 
+### Stage 5 record
+
+**Home audit and fixes:**
+
+- The category tiles were the loudest thing above the fold. They're now smaller (`home-next.css`): large tiles 92 to 82 px tall with 46 to 40 px art; wide tiles 60 to 52 px with 36 to 32 px art. This week (the approved carousel) now starts higher and carries the emphasis.
+- Section separation stays space and headers only; no sticky navigation, no bands. No other Home changes, and no archived Home design was brought back.
+
+**Consistency and responsive:**
+
+- No horizontal scroll on Discover, Inbox, own profile, visitor profile, house, project, event and role, light and dark, at 320, 375, 393 and 430 px.
+- Device frame: tablet (820×1180) and desktop (1440×900) show exactly one frame; phones in portrait and landscape show none.
+
+**The 16 journeys:** all pass (21/0 checks): Home and Discover; switching nav items; professional profiles; Follow and Message; compact Selected Work; the full gallery; film credits; projects; trailers; trailer languages; fullscreen playback; events; requesting attendance; post actions; switching identities (Konark house, then Aditi); light and dark. The Studio Original action pill is still there.
+
+**Bento reliability:** 21/0. Discover and Selected Work across 1 to 5+ items, every width: no gaps, no overlaps, at most two rows, "+N" on the last tile.
+
+**Final QA:**
+
+| Check | Result |
+|---|---|
+| Unit, typecheck, build | Pass |
+| launch, wt12, wt5, wt346, wth, fields | 43, 13, 14, 34, 24, 21 / 0 |
+| wtx, wtr | 5/0, 1/0 |
+| test-a11y, test-flow mobile, test-old-session, focusflow | 127/0, 39/0, 4/0, 18/0 |
+| views (rewritten), mobile | 22/0, pass |
+| Stage 2, 3, 4 checks; house upload | 64/0, 240/0, 20/0, 7/0 |
+| smoke | 4 known combos (baseline) |
+| axe2 | 1 known item (baseline had 3) |
+
+The Stage 3 check now waits for the event hero image; it read the image before the cover fallback had loaded.
+
+**Remaining issues:** none new. The known smoke combos and the axe2 selector item are unchanged from section 9.
+
+**Deferred scope:** persistent trailer storage (`TRAILER_STORAGE.md`, needs approval); real trailers and the missing still; the backlog in section 10 (legacy Home code, glass selector, CSS consolidation, duplicate imports).
+
+**Known limitations:** trailer uploads are session-only (D6); the automated upload check uses WebM because headless Chromium can't decode H.264.
+
+Screenshots are in `docs/ux-refinement/stage5/`.

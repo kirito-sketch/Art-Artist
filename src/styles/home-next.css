@@ -63,10 +63,10 @@ html[data-theme='dark'] .dh--next .dh-dtile { box-shadow: inset 0 0 0 1px rgba(2
 .dh--next .dh-dtile--reviews { --tint: var(--t-reviews); }
 .dh--next .dh-dtile b { font-size: 14px; font-weight: 650; color: var(--text); white-space: nowrap; }
 .dh--next .dh-dtile img { object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.1)); }
-.dh--next .dh-dtile--big { grid-column: span 2; min-height: 92px; padding: 10px 6px 9px; }
-.dh--next .dh-dtile--big img { width: 46px; height: 46px; }
-.dh--next .dh-dtile--wide { grid-column: span 3; flex-direction: row; justify-content: center; gap: 8px; min-height: 60px; padding: 8px 10px; }
-.dh--next .dh-dtile--wide img { width: 36px; height: 36px; }
+.dh--next .dh-dtile--big { grid-column: span 2; min-height: 82px; padding: 8px 6px 8px; }
+.dh--next .dh-dtile--big img { width: 40px; height: 40px; }
+.dh--next .dh-dtile--wide { grid-column: span 3; flex-direction: row; justify-content: center; gap: 8px; min-height: 52px; padding: 6px 10px; }
+.dh--next .dh-dtile--wide img { width: 32px; height: 32px; }
 @media (max-width: 350px) {
   .dh--next .dh-dtile b { font-size: 12.5px; }
   .dh--next .dh-dtile--big img { width: 38px; height: 38px; }
