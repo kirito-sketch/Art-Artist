@@ -197,9 +197,9 @@ export function DistrictHome({ go }: { go: Go }) {
           </header>
           <OfflineBanner />
           <PublishBar />
-          <nav className="dh-chiprow" aria-label="Explore">
-            {chips.map((t) => (
-              <PressCard key={t.key} className="dh-chipnav" onPress={t.open} scale={0.96} aria-label={t.label}>
+          <nav className="dh-dtiles" aria-label="Explore">
+            {chips.map((t, i) => (
+              <PressCard key={t.key} className={`dh-dtile dh-dtile--${t.key} ${i < 3 ? 'dh-dtile--big' : 'dh-dtile--wide'}`} onPress={t.open} scale={0.96} aria-label={t.label}>
                 <img src={`/images/tiles/${t.icon}.webp`} alt="" draggable={false} />
                 <b>{t.label}</b>
               </PressCard>

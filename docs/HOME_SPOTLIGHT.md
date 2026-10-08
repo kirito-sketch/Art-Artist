@@ -8,7 +8,7 @@ Review aids, preview only: `?week=1` and `?week=2` limit This week to one or two
 ## Order
 
 1. Header: city and notifications.
-2. Shortcuts: one row of compact chips (Opportunities, People, Projects, Events, Reviews). This replaces the 3 + 2 tile grid.
+2. Shortcuts, District style: three large tiles (Opportunities, People, Projects) above two wide ones (Events, Reviews), each in its own soft tint, about 166 px in all.
 3. Continue where you left off: a slim row, only for things saved in the last seven days.
 4. **This week.**
 5. For you, following intent: Opportunities for you, Collaborations and roles, People for your project. For the Network and Exploring intents it shows People to know.
