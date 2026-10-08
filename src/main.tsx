@@ -27,6 +27,7 @@ import './styles/profile-immersive.css';
 import './styles/post-media.css';
 import './styles/media-system.css';
 import './styles/glass.css';
+import './styles/post-notch.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';

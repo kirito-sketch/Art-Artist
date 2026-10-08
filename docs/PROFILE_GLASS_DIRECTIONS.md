@@ -13,3 +13,7 @@ Three directions for the individual and house profile heroes, the floating navig
 Code (review only): `src/ui/designDirection.ts` (the switch), `src/screens/profile/HeroDirections.tsx` (identity layer), `src/styles/glass.css` (glass tokens, CTA family and states, nav treatments, reduced-transparency and no-blur fallbacks). The phone element carries `data-dir` and `data-chrome` (light when a hero is under the chrome), which the navigation uses to switch to the media tint.
 
 Glass rules, the CTA inventory, scroll behaviour and scenarios are in the review page. After a direction is chosen, the switch is removed and the chosen direction replaces the current hero; Home, Discover, credit and permission rules are not touched.
+
+## Update: navigation approved
+
+Direction B's bottom navigation is approved, with a corrected selected lens; the rest of Direction B is not. It now has its own preview flag, `?nav=glass`. See docs/NAV_AND_POST_NOTCH.md.

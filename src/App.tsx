@@ -9,6 +9,7 @@ import { PostComposer } from './screens/create/PostComposer';
 import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
 import { DISCOVER_CHIP_DEFAULT, type DiscoverChip } from './domain/contentTypes';
 import { DIRECTION } from './ui/designDirection';
+import { NAV_GLASS, POST_NOTCH } from './ui/preview';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { HomeNext } from './screens/home/HomeNext';
 import { DistrictHome } from './screens/home/DistrictHome';
@@ -60,6 +61,7 @@ import { AdminConsole } from './admin/Admin';
 import { LAB, MOTION_REVIEW, SCENARIO, SPECIMEN } from './qa/boot';
 import { MotionReview } from './qa/MotionReview';
 import { Specimen } from './qa/Specimen';
+import { PostVideoViewer } from './screens/home/PostVideoViewer';
 import { PostStream } from './screens/discover/PostStream';
 import { SavedScreen } from './screens/profile/SavedScreen';
 import { EventScreen } from './screens/event/EventScreen';
@@ -75,7 +77,7 @@ import { ScenarioBar } from './qa/ScenarioBar';
 function transitionFor(r: Route) {
   if (r.name === 'posts' || ((r.name === 'opportunity' || r.name === 'work') && r.from === 'card')) return { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
   if (r.name === 'composePost' || r.name === 'composeCollab' || r.name === 'composeEvent') return { initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%' } };
-  if (r.name === 'media') return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 } };
+  if (r.name === 'media' || r.name === 'postVideo') return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 } };
   if (r.name === 'opportunity') return { initial: { opacity: 0, scale: 0.94, y: 24 }, animate: { opacity: 1, scale: 1, y: 0 }, exit: { opacity: 0, x: 60 } };
   return { initial: { x: '100%' }, animate: { x: 0 }, exit: { x: '100%' } };
 }
@@ -98,6 +100,8 @@ function RouteView({ r }: { r: Route }) {
       return <MediaViewer items={r.items} index={r.index} what={r.what} from={r.from} />;
     case 'posts':
       return <PostStream ids={r.ids} index={r.index} />;
+    case 'postVideo':
+      return <PostVideoViewer post={r.post} index={r.index} time={r.time} play={r.play} />;
     case 'saved':
       return <SavedScreen />;
     case 'reviews':
@@ -339,13 +343,13 @@ function Phone({ app = false }: { app?: boolean }) {
   const top = stack[stack.length - 1];
   // The status bar turns light and transparent over full-bleed photos (media viewer, profile hero).
   const topKey = top ? (top.name === 'profile' ? `profile-${top.id}` : top.name) : tab === 'profile' ? `profile-${viewer.id}-tab` : tab;
-  const statusTone = top?.name === 'media' || store.heroUnderStatus[topKey] ? 'light' : top?.name === 'posts' || top?.name === 'saved' || top?.name === 'opportunity' ? 'paper' : 'dark';
+  const statusTone = top?.name === 'media' || top?.name === 'postVideo' || store.heroUnderStatus[topKey] ? 'light' : top?.name === 'posts' || top?.name === 'saved' || top?.name === 'opportunity' ? 'paper' : 'dark';
 
   return (
     <MotionConfig reducedMotion="user">
     <LayoutGroup>
     <ModalContext.Provider value={modalLayer}>
-    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal" data-home={features.home} data-acting={store.acting} data-chrome={statusTone} data-dir={DIRECTION}>
+    <div className={`phone ${app ? 'phone--app' : ''}`} data-viewer={viewer.id} data-look="minimal" data-home={features.home} data-acting={store.acting} data-chrome={statusTone} data-dir={DIRECTION} data-nav={NAV_GLASS ? 'glass' : undefined} data-actions={POST_NOTCH ? 'notch' : undefined}>
       <div className="phone-screen" ref={screen}>
         {/* App mode runs on the real device: it supplies the status bar and home indicator. */}
         {!app && <StatusBar tone={statusTone} />}

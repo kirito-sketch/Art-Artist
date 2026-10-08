@@ -1,0 +1,131 @@
+/* ===================================================== Option A post actions (?actions=notch, docs/NAV_AND_POST_NOTCH.md)
+ * The media is cut, not covered. The track (the media and its placeholder) is masked around a 156 × 48 cut-out at its
+ * bottom-right, so whatever is behind the card shows through: the page ground in both themes. The actions sit in the
+ * cut-out on that ground, solid, with no pill or glass. The cut-out keeps one size on every ratio.
+ *
+ * Mask: a full layer XOR one 168 × 60 shape anchored bottom-right. The shape is the notch (156 × 48) plus a 12 px
+ * margin where the media's two convex corners round off; its inner corner is a 16 px concave radius.
+ *   M168 0 A12 12 0 0 1 156 12   convex corner on the right edge
+ *   H28 A16 16 0 0 0 12 28       inner concave corner
+ *   V48 A12 12 0 0 1 0 60        convex corner on the bottom edge
+ *   H168 Z
+ */
+.ana-post-stage--notch {
+  --notch-w: 156px;
+  --notch-h: 48px;
+  --notch-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='60' viewBox='0 0 168 60'%3E%3Cpath d='M168 0A12 12 0 0 1 156 12H28A16 16 0 0 0 12 28V48A12 12 0 0 1 0 60H168Z'/%3E%3C/svg%3E");
+}
+.ana-post-stage--notch .ana-post-track {
+  -webkit-mask-image: var(--notch-mask), linear-gradient(#000 0 0);
+  -webkit-mask-position: right bottom, 0 0;
+  -webkit-mask-size: 168px 60px, 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-image: var(--notch-mask), linear-gradient(#000 0 0);
+  mask-position: right bottom, 0 0;
+  mask-size: 168px 60px, 100% 100%;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+
+/* The actions: three 44 px targets in the cut-out, Like, Share, Save. Ink on the page ground, never glass. */
+.ana-post-actions--notch,
+.ana-post-actions--viewer {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: var(--text-2);
+  padding: 0;
+  border-radius: 0;
+  gap: 4px;
+}
+.ana-post-stage--notch .ana-post-actions--notch {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--notch-w);
+  height: var(--notch-h);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 2px 2px 0 0;
+}
+.ana-post--text .ana-post-actions--notch { position: static; display: flex; width: fit-content; margin: 8px -10px 0 auto; }
+.ana-post-actions--notch button,
+.ana-post-actions--viewer button { width: 44px; min-width: 44px; padding: 0; color: inherit; }
+.ana-post-actions--notch button:hover,
+.ana-post-actions--notch button:active,
+.ana-post-actions--notch button[aria-pressed='true'],
+.ana-post-actions--viewer button:hover,
+.ana-post-actions--viewer button:active,
+.ana-post-actions--viewer button[aria-pressed='true'] { background: none; }
+/* Liked and saved: the filled icon in full ink (the reference's black heart; no red). */
+.ana-post-actions--notch button[aria-pressed='true'] { color: var(--text); }
+.ana-post-actions--notch button:focus-visible { outline: 2px solid var(--action-ink); outline-offset: -2px; }
+.ana-post-icon { display: inline-flex; }
+
+/* Carousel index: bottom-left on photos; on video it moves to the top centre, clear of the progress line. */
+.ana-post-stage--notch .ana-post-index { bottom: 14px; left: 12px; }
+.ana-post-stage--notch.ana-post-stage--video .ana-post-index { bottom: auto; top: 14px; left: 50%; transform: translateX(-50%); }
+
+/* ---------------------------------------------------------------- Feed video: watch here, control in the viewer */
+.fv { position: relative; width: 100%; height: 100%; background: #0d0d0e; }
+.fv video { display: block; width: 100%; height: 100%; }
+/* The whole frame is the Play/Pause button (keyboard and screen readers included). */
+.fv-toggle { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fv-toggle:focus-visible { outline: 3px solid #fff; outline-offset: -6px; border-radius: 20px; }
+.fv-play,
+.fv-btn {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(18, 18, 20, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
+}
+.fv-play { width: 60px; height: 60px; border-radius: 50%; padding-left: 3px; }
+/* Mute and Expand: 34 px glass circles inside 44 px targets, at the top corners. */
+.fv-btn { position: absolute; top: 5px; z-index: 2; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; cursor: pointer; }
+.fv-btn::before { content: ''; position: absolute; inset: 5px; z-index: -1; border-radius: 50%; background: rgba(18, 18, 20, 0.42); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); -webkit-backdrop-filter: blur(12px) saturate(150%); backdrop-filter: blur(12px) saturate(150%); }
+.fv-btn { isolation: isolate; }
+.fv-expand { left: 5px; }
+.fv-mute { right: 5px; }
+.fv-btn:focus-visible { outline: 2px solid #fff; outline-offset: -3px; }
+/* Progress: informational only. 3 px, from 12 px in to 12 px before the cut-out; it takes no pointer events. */
+.fv-progress { position: absolute; left: 12px; right: calc(var(--notch-w, 156px) + 12px); bottom: 10px; z-index: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.38); overflow: hidden; pointer-events: none; }
+.fv-progress span { position: absolute; inset: 0; background: #fff; transform: scaleX(0); transform-origin: left; }
+.fv-failed { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 550; }
+.fv.is-failed video { opacity: 0.35; }
+@media (prefers-reduced-transparency: reduce) {
+  .fv-play, .fv-btn::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(18, 18, 20, 0.82); }
+}
+
+/* ---------------------------------------------------------------- Expanded viewer */
+.pvv { position: absolute; inset: 0; display: flex; flex-direction: column; background: #000; color: #fff; }
+.pvv-bar { display: flex; align-items: center; justify-content: space-between; padding: calc(var(--status-bar) + 4px) 12px 0; }
+.pvv-stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; touch-action: pan-x; }
+.pvv-stage video { display: block; width: 100%; height: 100%; max-height: 100%; object-fit: contain; }
+.pvv-controls { padding: 14px 16px 0; }
+.pvv-scrub { --p: 0%; display: block; width: 100%; height: 28px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.pvv-scrub::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, #fff var(--p), rgba(255, 255, 255, 0.3) var(--p)); }
+.pvv-scrub::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }
+.pvv-scrub::-moz-range-progress { height: 4px; border-radius: 2px; background: #fff; }
+.pvv-scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+.pvv-scrub::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; }
+.pvv-scrub:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 4px; }
+.pvv-times { display: flex; justify-content: space-between; margin-top: 2px; font-size: 12px; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.72); }
+.pvv-transport { position: relative; display: flex; align-items: center; justify-content: center; gap: 28px; margin-top: 8px; }
+.pvv-transport .pvv-play { width: 56px; height: 56px; }
+.pvv-transport .pvv-full { position: absolute; right: -6px; }
+/* Post actions: their own row, 24 px below the transport, under a hairline. Same order and state as the card. */
+.pvv-post { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 16px 0; padding: 6px 0 calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(255, 255, 255, 0.16); }
+.pvv-author { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.ana-post-actions--viewer { position: static; display: flex; margin-right: -10px; color: rgba(255, 255, 255, 0.82); }
+.ana-post-actions--viewer button[aria-pressed='true'] { color: #fff; }
+.ana-post-actions--viewer button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+
+/* ---------------------------------------------------------------- Framing preview: the notch's safe area */
+.media-framing-notch { position: absolute; right: 0; bottom: 0; z-index: 2; width: 156px; height: 48px; border-top-left-radius: 16px; border: 1.5px dashed rgba(255, 255, 255, 0.9); border-right: 0; border-bottom: 0; background: rgba(0, 0, 0, 0.28); pointer-events: none; }

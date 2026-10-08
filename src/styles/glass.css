@@ -6,7 +6,8 @@
 
 .phone[data-dir='a'],
 .phone[data-dir='b'],
-.phone[data-dir='c'] {
+.phone[data-dir='c'],
+.phone[data-nav='glass'] {
   /* On paper and app surfaces */
   --glass-fill: rgba(255, 255, 255, 0.58);
   --glass-edge: rgba(255, 255, 255, 0.7);
@@ -24,7 +25,8 @@
 
 html[data-theme='dark'] .phone[data-dir='a'],
 html[data-theme='dark'] .phone[data-dir='b'],
-html[data-theme='dark'] .phone[data-dir='c'] {
+html[data-theme='dark'] .phone[data-dir='c'],
+html[data-theme='dark'] .phone[data-nav='glass'] {
   --glass-fill: rgba(40, 38, 35, 0.55);
   --glass-edge: rgba(255, 255, 255, 0.12);
   --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -229,7 +231,7 @@ html[data-theme='dark'] .phone[data-dir='c'] {
 
 /* ---------------------------------------------------------------- Bottom navigation (directions) */
 .phone[data-dir='a'] .tabbar-pill,
-.phone[data-dir='b'] .tabbar-pill,
+.phone[data-nav='glass'] .tabbar-pill,
 .phone[data-dir='c'] .tabbar-pill {
   background: var(--glass-fill);
   box-shadow: var(--glass-hi), inset 0 0 0 1px var(--glass-edge), var(--glass-shadow);
@@ -239,33 +241,52 @@ html[data-theme='dark'] .phone[data-dir='c'] {
 }
 /* Over a hero image the bar takes the darker media tint, so its labels stay readable on bright and busy pictures */
 .phone[data-dir='a'][data-chrome='light'] .tabbar-pill,
-.phone[data-dir='b'][data-chrome='light'] .tabbar-pill {
+.phone[data-nav='glass'][data-chrome='light'] .tabbar-pill {
   background: var(--glass-fill-media);
   box-shadow: var(--glass-hi-media), inset 0 0 0 1px var(--glass-edge-media), 0 10px 30px rgba(0, 0, 0, 0.25);
 }
-.phone[data-dir='a'][data-chrome='light'] .tab-item,
-.phone[data-dir='b'][data-chrome='light'] .tab-item { color: rgba(255, 255, 255, 0.78); }
-.phone[data-dir='a'][data-chrome='light'] .tab-item .tab-label,
-.phone[data-dir='b'][data-chrome='light'] .tab-item .tab-label { color: rgba(255, 255, 255, 0.82); }
+.phone[data-dir='a'][data-chrome='light'] .tab-item { color: rgba(255, 255, 255, 0.78); }
+.phone[data-dir='a'][data-chrome='light'] .tab-item .tab-label { color: rgba(255, 255, 255, 0.82); }
 
-.phone[data-dir] .tab-item { isolation: isolate; }
-.tab-lens { position: absolute; inset: 2px 0; z-index: -1; border-radius: 22px; }
+/* The lens is one element per bar, positioned from the selected tab (src/nav/TabBar.tsx). It sits under the tabs. */
+.phone[data-dir='a'] .tabbar-pill,
+.phone[data-nav='glass'] .tabbar-pill { position: relative; }
+.tab-lens { position: absolute; left: 0; top: 4px; bottom: 4px; border-radius: 999px; pointer-events: none; will-change: transform; }
 /* A: the selected tab is a solid white capsule (the reference's selected segment) */
 .phone[data-dir='a'] .tab-lens { background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); }
 html[data-theme='dark'] .phone[data-dir='a'] .tab-lens { background: rgba(255, 255, 255, 0.92); }
 .phone[data-dir='a'] .tab-item.is-on .tab-label,
 .phone[data-dir='a'][data-chrome='light'] .tab-item.is-on .tab-label { color: #141414; }
-/* B: the selected tab sits on a clear lens: brighter glass with a top highlight and a fine rim */
-.phone[data-dir='b'] .tab-lens {
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.75), 0 3px 10px rgba(0, 0, 0, 0.08);
+
+/* B (?nav=glass): the selected destination sits in a lens of the same glass, one step denser. It is a tint, not a
+   second panel: no rim of its own (the bar keeps the only edge), just a soft top highlight, so the two never read as
+   double outlines. Selected ink is full strength, the rest 62%; colour is never the only cue (lens, filled icon,
+   weight). Green stays with Create, the one action. */
+.phone[data-nav='glass'] {
+  --lens-fill: rgba(28, 24, 20, 0.1);
+  --lens-hi: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -0.5px 0 rgba(0, 0, 0, 0.04);
+  --nav-ink: var(--glass-ink);
+  --nav-ink-2: var(--glass-ink-2);
 }
-html[data-theme='dark'] .phone[data-dir='b'] .tab-lens,
-.phone[data-dir='b'][data-chrome='light'] .tab-lens {
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+html[data-theme='dark'] .phone[data-nav='glass'] {
+  --lens-fill: rgba(255, 255, 255, 0.13);
+  --lens-hi: inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
-.phone[data-dir='b'][data-chrome='light'] .tab-item.is-on .tab-label { color: #fff; }
+.phone[data-nav='glass'][data-chrome='light'] {
+  --lens-fill: rgba(255, 255, 255, 0.2);
+  --lens-hi: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  --nav-ink: #fff;
+  --nav-ink-2: rgba(255, 255, 255, 0.74);
+}
+.phone[data-nav='glass'] .tab-lens { background: var(--lens-fill); box-shadow: var(--lens-hi); }
+.phone[data-nav='glass'] .tab-item,
+.phone[data-nav='glass'] .tab-item .tab-label { color: var(--nav-ink-2); }
+.phone[data-nav='glass'] .tab-item.is-on,
+.phone[data-nav='glass'] .tab-item.is-on .tab-label { color: var(--nav-ink); }
+/* The lens is the selected state: no lift and no avatar ring on top of it. */
+.phone[data-nav='glass'] .tab-item.is-on .tab-icon { transform: none; }
+.phone[data-nav='glass'] .tab-item.is-on .tab-avatar-frame::after { opacity: 0; }
+.phone[data-nav='glass'] .tab-item:focus-visible { outline: 2px solid var(--nav-ink); outline-offset: -2px; border-radius: 999px; }
 /* C: a quieter frosted bar, nearly solid, with the existing colour-and-weight selected state */
 .phone[data-dir='c'] .tabbar-pill { background: color-mix(in srgb, var(--raised, #fff) 82%, transparent); }
 
@@ -281,8 +302,11 @@ html[data-theme='dark'] .phone[data-dir='b'] .tab-lens,
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  .phone[data-dir] .tabbar-pill { background: var(--raised, #fff); }
+  .phone[data-nav] .tabbar-pill { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .phone[data-dir] .tabbar-pill,
+  .phone[data-nav] .tabbar-pill { background: var(--raised, #fff); }
   .phone[data-dir][data-chrome='light'] .tabbar-pill,
+  .phone[data-nav][data-chrome='light'] .tabbar-pill,
   .phone[data-dir] .cta--glass,
   .phone[data-dir] .cta-icon--glass,
   .phone[data-dir] .glass-card,
@@ -291,7 +315,8 @@ html[data-theme='dark'] .phone[data-dir='b'] .tab-lens,
   .phone[data-dir] .phero-bar .icon-btn { background: rgba(22, 22, 24, 0.86); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .phone[data-dir] .tabbar-pill { background: var(--raised, #fff); }
+  .phone[data-dir] .tabbar-pill,
+  .phone[data-nav] .tabbar-pill { background: var(--raised, #fff); }
   .phone[data-dir] .cta--glass,
   .phone[data-dir] .glass-card,
   .phone[data-dir] .glass-group,

@@ -6,6 +6,8 @@ import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
 import { PostCard } from '../home/PostCard';
 import { IconButton } from '../../ui/primitives';
+import { NOTCH_SAMPLES } from '../../qa/notchSamples';
+import { POST_SAMPLES } from '../../ui/preview';
 
 /*
  * Discover → Posts, opened: the grid hides everything but the work; the stream shows the rest.
@@ -15,7 +17,7 @@ import { IconButton } from '../../ui/primitives';
  */
 export function PostStream({ ids, index }: { ids: string[]; index: number }) {
   const { pop, userPosts } = useStore();
-  const posts = ids.map((id) => userPosts.find((p) => p.id === id) ?? seed.posts.find((p) => p.id === id)).filter(Boolean) as Post[];
+  const posts = ids.map((id) => userPosts.find((p) => p.id === id) ?? seed.posts.find((p) => p.id === id) ?? (POST_SAMPLES ? NOTCH_SAMPLES.find((p) => p.id === id) : undefined)).filter(Boolean) as Post[];
   const ref = useRef<HTMLDivElement>(null);
 
   // Open at the selected post, not at the top of the stream.

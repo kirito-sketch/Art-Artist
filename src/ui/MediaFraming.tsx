@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { POST_NOTCH } from './preview';
 import type { Media, MediaSurface, PostPresentation } from '../data/types';
 import { mediaPresentation, postFrame, presentationRatio, withFraming } from '../domain/mediaPresentation';
 import { mediaRatio } from '../domain/mediaLayout';
@@ -26,6 +27,7 @@ export function MediaFramingEditor({ media, surface, onChange, ratio = presentat
       <Photo media={media} surface={surface} frameRatio={ratio} showPlay={false} alt={media.alt ?? 'Framing preview'} priority onImageLoad={image => {
         if (image.src === new URL(media.src, document.baseURI).href && image.naturalWidth && image.naturalHeight) setDimensions(old => old?.width === image.naturalWidth && old?.height === image.naturalHeight ? old : { width: image.naturalWidth, height: image.naturalHeight });
       }} />
+      {POST_NOTCH && surface === 'post' && <span className="media-framing-notch" aria-hidden />}
     </div>
     <div className="media-framing-controls" role="group" aria-label="Image framing"><button className="chip" aria-pressed={policy.fit === 'contain'} onClick={() => change('contain')}>Fit</button><button className="chip" aria-pressed={policy.fit === 'cover'} onClick={() => change('cover')}>Fill</button></div>
     <p className="meta">{policy.fit === 'contain' ? 'The complete image stays visible.' : 'Drag to reposition, or use the focus controls. This preview crops the view; your original stays unchanged.'}</p>

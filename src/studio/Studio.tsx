@@ -105,6 +105,15 @@ export function Studio() {
         </div>
       </Section>
 
+      <Section id="approved" title="Approved refinements, in preview" intro="Each has its own link. Neither is in the default app yet.">
+        <div className="st-list st-list--2">
+          <Item href="/?view=app&nav=glass" title="Glass navigation (Direction B)" hint="?nav=glass · floating glass bar with the selected lens" />
+          <Item href="/?view=app&actions=notch" title="Post actions notch (Option A)" hint="?actions=notch · corner cut-out, quiet feed video, expanded viewer" />
+          <Item href="/?view=app&actions=notch&samples" title="Post notch review samples" hint="Ratios, video states, failure, long caption" />
+          <Item href="/?view=app&nav=glass&actions=notch&samples" title="Both refinements together" hint="How the two materials sit side by side" />
+        </div>
+      </Section>
+
       <Section id="tools" title="Testing and research">
         <div className="st-list st-list--2">
           <Item href="/?lab" title="Edge Case Lab" hint={`Scenarios and automated checks · P0 remaining: ${P0_REMAINING}`} />

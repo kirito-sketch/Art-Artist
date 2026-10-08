@@ -1,4 +1,6 @@
 import { sourceOnly } from '../domain/mediaPresentation';
+import { POST_SAMPLES } from '../ui/preview';
+import { NOTCH_SAMPLE_IDS } from '../qa/notchSamples';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import * as seed from '../data/seed';
 import { RESEARCH } from '../research';
@@ -50,6 +52,8 @@ export type Route =
   | { name: 'composeCollab'; intent?: 'looking' | 'available' }
   | { name: 'media'; items: Media[]; index: number; what?: string; from?: string }
   | { name: 'posts'; ids: string[]; index: number }
+  /** Option A expanded post video (?actions=notch): opens at `time`, and plays if the feed was playing. */
+  | { name: 'postVideo'; post: import('../data/types').Post; index: number; time: number; play: boolean }
   | { name: 'saved' }
   | { name: 'reviews' }
   | { name: 'filmReviews'; id: string }
@@ -163,6 +167,7 @@ function useStoreValue() {
     const query = new URLSearchParams(location.search);
     const profileId = query.get('profile');
     if (profileId) return [{ name: 'profile', id: profileId }];
+    if (POST_SAMPLES) return [{ name: 'posts', ids: NOTCH_SAMPLE_IDS, index: 0 }];
     const postId = query.get('post');
     const posts = discoverPosts(viewer, DEFAULT_FOLLOWING, []);
     const index = posts.findIndex(post => post.id === postId);

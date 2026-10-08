@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { startTransition, useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { startTransition, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Plus } from 'lucide-react';
 import { useStore, type Tab } from '../state/store';
@@ -8,7 +8,7 @@ import { Avatar } from '../ui/primitives';
 import { shared, spring } from '../ui/motion';
 import { focusables, inertProps } from '../ui/a11y';
 import { TabIcon } from './TabIcon';
-import { DIRECTION } from '../ui/designDirection';
+import { NAV_LENS } from '../ui/preview';
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -34,11 +34,34 @@ export function TabBar() {
   const [shown, setShown] = useState(tab);
   useEffect(() => setShown(tab), [tab]);
 
+  // Review navigation (?nav=glass, ?dir=a|b): one lens for the whole bar, placed from the selected tab's layout box.
+  // offsetLeft and offsetWidth ignore transforms, so a tab pressed (scaled) at the moment of selection never skews it.
+  const pill = useRef<HTMLDivElement>(null);
+  const tabs = useRef<Partial<Record<Tab, HTMLElement | null>>>({});
+  const [lens, setLens] = useState<{ x: number; width: number } | null>(null);
+  const still = useReducedMotion();
+  useLayoutEffect(() => {
+    if (!NAV_LENS || !pill.current) return;
+    const place = () => {
+      const el = tabs.current[shown];
+      setLens((prev) => {
+        if (!el) return null;
+        const next = { x: el.offsetLeft - 2, width: el.offsetWidth + 4 };
+        return prev && prev.x === next.x && prev.width === next.width ? prev : next;
+      });
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(pill.current);
+    return () => observer.disconnect();
+  }, [shown, acting]);
+
   const item = (it: (typeof ITEMS)[number]) => {
     const active = shown === it.id;
     return (
       <motion.button
         key={it.id}
+        ref={(el) => void (tabs.current[it.id] = el)}
         className={`tab-item ${active ? 'is-on' : ''}`}
         whileTap={{ scale: 0.94 }}
         transition={spring.press}
@@ -52,8 +75,6 @@ export function TabBar() {
         {...inertProps(createOpen)}
         aria-current={active ? 'page' : undefined}
       >
-        {/* Review directions: the selected tab sits on a lens that glides between tabs (docs/PROFILE_GLASS_DIRECTIONS.md). */}
-        {active && DIRECTION !== 'current' && DIRECTION !== 'c' && <motion.span layoutId="tab-lens" className="tab-lens" transition={spring.settle} aria-hidden />}
         <span className="tab-icon">
           {it.id === 'profile' ? (
             // The ring frame stays put; inside it the avatar morphs when you switch who you act as.
@@ -74,7 +95,11 @@ export function TabBar() {
 
   return (
     <nav className="tabbar" aria-label="Main">
-      <div className="tabbar-pill">
+      <div className="tabbar-pill" ref={pill}>
+        {/* The lens glides between destinations; critically damped, so it lands without overshoot. Create never takes it. */}
+        {NAV_LENS && lens && (
+          <motion.span className="tab-lens" aria-hidden initial={false} animate={lens} transition={still ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 46, mass: 0.9 }} />
+        )}
         {ITEMS.slice(0, 2).map(item)}
         <motion.button
           className="tab-create"
