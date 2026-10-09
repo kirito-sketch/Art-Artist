@@ -400,5 +400,6 @@ save(d)
 pv = ['<!doctype html><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"><body style="margin:0;background:#f6f4f0;font-family:sans-serif">']
 for x in ALL:
     pv.append(f'<h3 style="margin:24px">{x.slug}</h3><div style="overflow-x:auto">' + x.render() + '</div>')
-open(os.path.join(OUT, "_preview.html"), "w").write("\n".join(pv))
+if os.environ.get("DD_PREVIEW"):
+    open(os.path.join(OUT, "_preview.html"), "w").write("\n".join(pv))
 print(len(ALL), "diagrams")
