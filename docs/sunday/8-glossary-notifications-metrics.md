@@ -24,15 +24,15 @@ The words people see in the app. One meaning each.
 
 ## Notifications
 
-Who gets told what. Push or in-app channels are proposed; push is new in the native app.
+Who gets told what. Everything in the first three columns works in the prototype (in-app only) unless marked proposed. The channel column is a proposal for the native app, where push is new.
 
-| Event | Who is notified | Where it opens | Proposed channel |
+| Event | Who is notified | Where it opens | Proposed channel (native app) |
 |---|---|---|---|
 | Someone shows interest in a role | The house | Review interest | In-app + push |
 | A house messages you | The person | Conversation | In-app + push |
 | A person messages a house | The house | Conversation | In-app + push |
-| A role you're interested in is filled | Everyone else who showed interest | Role page | In-app |
-| A role you're interested in changed dates or location | People who showed interest | Role page | In-app |
+| A role you're interested in is filled or closed | Everyone else who showed interest | Role page | In-app |
+| A role you're interested in changed dates or location | Not a notification today: the role page says "Updated since you showed interest" | Role page | In-app (proposed) |
 | You were added to a project | The person | Project you're on | In-app + push |
 | "This isn't right" on an association | The house | Workspace | In-app |
 | A credit was issued to you | The person | Waiting for you | In-app + push |
@@ -40,8 +40,8 @@ Who gets told what. Push or in-app channels are proposed; push is new in the nat
 | A corrected credit was issued | The person | Waiting for you | In-app + push |
 | A credit was accepted | The house | Workspace | In-app |
 | Someone followed you | The person | Their profile | In-app |
-| Terms changed | Everyone | Agreement screen at next sign-in | In-app |
-| House verified or needs more evidence | House owner | House settings | In-app + email |
+| Terms changed | Everyone, as an agreement screen at next sign-in (not a notification) | Agreement screen | In-app |
+| House verified or needs more evidence (proposed, not built) | House owner | House settings | In-app + email |
 
 Not notified: a withdrawn interest, "Not now", and anything about a person who has blocked you.
 

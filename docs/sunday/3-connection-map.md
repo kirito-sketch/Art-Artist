@@ -54,7 +54,7 @@ Solid arrows are the main path. Dotted arrows are branches.
 | 3 | House | Messages as the house | Person | Conversation from Konark Pictures; role page says "In conversation" |
 | 4 | House | Marks "Not now" | Person | Nothing (not told) |
 | 5 | House | Changes a role's location or dates | People who showed interest | "Updated since you showed interest: dates" |
-| 6 | House | Closes a role as filled | Everyone else interested | "Konark Pictures filled this role. Thanks for your interest." |
+| 6 | House | Closes a role (filled or closed) | Everyone else interested | "Konark Pictures filled (or closed) this role. Thanks for your interest." |
 | 7 | House | Adds someone to a project | Person | Notification; private "Project you're on" (not a credit) |
 | 8 | Person | "This isn't right" | House | Workspace shows the flag |
 | 9 | House | Issues a credit | Person | "Waiting for you" with Accept or Something's wrong |

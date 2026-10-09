@@ -56,7 +56,7 @@ Rules visible in the diagram:
 
 ## Who can do what
 
-| Action | Person | House member | Member who can issue credits | House owner | Moderator |
+| Action | Person | House member (no credit authority) | Member who can issue credits | House owner | Moderator |
 |---|---|---|---|---|---|
 | Edit own profile, post, Open to work | Yes | Yes (as themselves) | Yes (as themselves) | Yes (as themselves) | No |
 | Show interest in a role | Yes | Only as themselves | Only as themselves | Only as themselves | No |
@@ -69,9 +69,10 @@ Rules visible in the diagram:
 | Prepare a credit | No | Yes | Yes | Yes | No |
 | Issue a credit | No | No | Yes, if verified | Yes, if verified | No |
 | Share a project publicly | No | Yes, if verified | Yes, if verified | Yes, if verified | No |
-| Manage members and the house page | No | No | No | Yes | No |
-| Start an independent project | Yes (its credits show as not verified yet) | | | | |
-| Handle reports, restrict, suspend | No | No | No | No | Yes (high-impact actions need a senior moderator) |
+| Manage members and the house page | No | No | No | Yes (the owner's screens aren't built yet) | No |
+| Stop acting for the house | No | Yes | Yes | No | No |
+| Start an independent project | Yes (its credits show as not verified yet) | As themselves | As themselves | As themselves | No |
+| Handle reports: dismiss, warn, remove, restrict, suspend, escalate | No | No | No | No | Yes (restrict and suspend are marked high impact) |
 | Delete a credit | Nobody | Nobody | Nobody | Nobody | Nobody |
 
 **Unverified house:** can create its page, private projects and invite members, but can't publish public roles, issue credits, share projects or appear in search.

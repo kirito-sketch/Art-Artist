@@ -25,11 +25,11 @@ Status: **Built** (complete in the prototype) · **Partial** (works, with known 
 | Area | What it covers | Status |
 |---|---|---|
 | Welcome, sign-in, sign-up | Intro screens, Apple / Google / email with code, returning vs new account routing, resume an interrupted sign-up, Before you join (consent), Back works everywhere | Built (simulated providers) |
-| Onboarding | Name and craft, what you're here for, where you work, optional phone, add your work | Built |
-| Home | City header, tiles, This week spotlight, Opportunities for you, New work, People near you, events, network activity, first-run Home for new people | Built |
+| Onboarding | Name and craft, what you're here for, where you work, add your work (optional). People joining from a house invite get an optional phone step instead | Built |
+| Home | City header and tiles, then This week, a section that follows why you're here (Opportunities for you, Collaborations and roles, or People for your project), From your network, Events near you, Film talk, New work, People near you; a first-run Home for new people | Built |
 | Discover and search | Posts grid and stream, People, Opportunities, Projects, Events, Reviews; search across everything; craft filters | Built |
 | Profile | Hero, showreel, Selected work, verified credits, independent projects, professional information, availability, edit profile in sections, privacy, cover photo | Built |
-| Credits | Receive a credit, Accept or "Something's wrong", only accepted credits are public, no self-claiming anywhere | Built |
+| Credits | "Waiting for your confirmation" on your profile: Accept or "Something's wrong"; ask to amend an accepted credit; only accepted credits are public; no self-claiming anywhere | Built |
 | Opportunities and Interest | Role pages, Show interest with an optional note, withdraw with undo, status after a conversation starts | Built |
 | Posts and Create | Post composer (multiple photos and video, reorder, reposition, cover), collaboration posts, events, Open to work | Built |
 | Messaging | Inbox split by identity (you, each house, all), new message, conversations with chat heads, options (mute, report, block), send failure and retry | Built |
@@ -46,11 +46,11 @@ Status: **Built** (complete in the prototype) · **Partial** (works, with known 
 |---|---|---|
 | House access | Sales-assisted invite, self-serve setup, verification pending state | Built (verification is a placeholder) |
 | Acting as the house | Switch between yourself and the house; every action says who it comes from | Built |
-| House profile | Public page, work first | Built |
-| House Home | Task-oriented home for the house | Built |
+| House profile | Public page: Now making, Made by us, Hiring, Worked with, Upcoming events | Built |
+| House Home | Needs you, Your projects, Open roles, People for your roles, Your events, Your released films | Built |
 | Projects | Private projects, working titles, drafts, share on Ana, cinematic project page with trailer | Built |
 | Trailers | Upload and manage trailer and teaser versions by language; required for public projects in post-production or released | Built (upload is session-only) |
-| Roles | Publish, edit (limited fields), close with an outcome, reopen, Open a new role | Built |
+| Roles | Publish, edit location, dates and description (role, craft and project are fixed), close with an outcome, reopen a closed role, Open a new role after a filled one | Built |
 | Responses | Review interest, message as the house | Built |
 | Team and credits | Add people to a project, issue credits, corrections | Built |
 | Members | Who can act for the house, verification status, stop acting for a house | Partial: the owner's add and remove screens aren't built |
@@ -59,7 +59,7 @@ Status: **Built** (complete in the prototype) · **Partial** (works, with known 
 
 | Area | Status |
 |---|---|
-| Moderation console (reports queue, proportionate actions; moderators can't delete credits) | Built (prototype) |
+| Moderation console (reports queue; dismiss, warn, remove, restrict, suspend, escalate; moderators can't delete credits). Opens separately from the app (`?admin`) | Built (prototype) |
 | Legal documents and re-consent when terms change | Built (placeholder text, needs legal review) |
 | Research: /test participant mode and /research dashboard | Built and live on a real database |
 
@@ -133,11 +133,11 @@ The rules exist and are tested. We need agreement on the **goals and guardrails*
 
 | Surface | Proposed goal | Guardrails |
 |---|---|---|
-| Opportunities for you | Paid work you're qualified for, near you, before it closes | Never closed roles; never ranked by payment or company size |
-| This week (spotlight) | The few most relevant or time-sensitive things this week, mixed | At most 2 of a kind; never people; one card shared by everyone in your city |
-| People near you | Your department first, then related crafts, marked if available | Never minors; never blocked people |
-| New work | People you follow or worked with first, then your department, then wider | Avoid a single-craft bubble |
-| Events on Home | Relevant to you, by date | Never by organiser size or payment; diversity and a fair tie-break |
+| The section after This week | Follows why you're here: finding work shows open roles for your craft, best fit first; collaborating shows collaborations first; hiring shows people for your project | Only open roles; never your own; never from people or houses you blocked |
+| This week | The few most relevant or time-sensitive things this week, of mixed kinds (up to 5) | At most 2 of a kind; never people |
+| People near you | Your department first, then the departments you work beside; available people first in each | Never minors; never blocked people |
+| New work | People you follow or worked with first, then your department, then everyone | Not limited to one craft |
+| Events near you | The events most relevant to you | Never ranked by organiser size or payment; variety and a fair tie-break |
 
 **Ask on Sunday:** are these the right goals, and is anything missing from the guardrails?
 

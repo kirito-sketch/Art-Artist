@@ -86,12 +86,12 @@ flowchart TD
   S --> V["Verification pending"]
   E --> V
   V --> P["Prepare privately: page, private projects, members"]
-  V --> Q{"Ana verifies"}
+  V --> Q{"Ana verifies<br/>(outside the app; a placeholder in the prototype)"}
   Q -- Approved --> OK(["Verified: public roles, credits, sharing, search"])
-  Q -- "More evidence" --> V
 ```
 
-- Until verified, a house has no public label; it just can't publish.
+- Until verified, a house has no public label; it just can't publish. The prototype says Ana checks within 2 working days.
+- What evidence Ana asks for, and asking for more, isn't designed yet (brief item B3).
 - **Edge cases:** Production house onboarding (6), Production house verification (18). 7 need a product decision (verification evidence, revocation).
 
 ## J5. A house hires: publish a role and review interest
@@ -108,8 +108,9 @@ flowchart TD
   G --> H["Message as Konark Pictures"]
   E --> I["Edit: location, dates, description<br/>(title, craft and project are fixed)"]
   E --> J{"Close role"}
-  J -- "Filled through Ana" --> K["Choose who"] --> L(["Filled: others told; can't reopen"])
-  J -- "Filled another way / No longer needed / Paused" --> M(["Closed: can reopen"])
+  J -- "Filled through Art and Artist" --> K["Choose who"] --> L(["Filled: everyone else told; can't reopen"])
+  J -- "Filled another way" --> L
+  J -- "No longer needed / Project paused" --> M(["Closed: everyone told; can reopen"])
   L --> N["Open a new role (keeps the filled record)"]
 ```
 
@@ -164,9 +165,11 @@ flowchart TD
   D -- "fails" --> D2["Not delivered · Tap to retry"] --> D
   D --> E(["Delivered; the other side is notified"])
   C -- "One side blocks" --> F(["Closed both ways; history kept"])
+  C -- "Belongs to another identity" --> G["Switch to reply"] --> D
 ```
 
-- Members reply as the house and the composer says "Replying as Konark Pictures". A member acting as themselves can't reply as the house.
+- Members reply as the house and the composer says "Replying as Konark Pictures". A member acting as themselves can't reply as the house; the conversation offers a Switch instead.
+- The Inbox shows You, each house, and All. Conversations can be started from the Inbox, muted, reported or blocked.
 - **Edge cases:** Messaging (17), Notifications (17), Identity switching (18).
 
 ## J9. Staying safe: report and block

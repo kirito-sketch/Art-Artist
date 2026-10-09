@@ -9,7 +9,7 @@ flowchart LR
   Entry["Welcome<br/>intro, sign in,<br/>sign up, onboarding"] --> HOME
   subgraph HOME["Home"]
     direction TB
-    h1["Tiles: Events, Projects,<br/>People, Opportunities, Reviews"] ~~~ h2["This week"] ~~~ h3["Opportunities for you"] ~~~ h4["New work"] ~~~ h5["People near you"] ~~~ h6["Notifications"]
+    h1["Tiles: Opportunities, People,<br/>Projects, Events, Reviews"] ~~~ h2["This week"] ~~~ h3["Section that follows<br/>why you're here"] ~~~ h4["From your network"] ~~~ h5["Events near you"] ~~~ h6["Film talk"] ~~~ h7["New work"] ~~~ h8["People near you"] ~~~ h9["Notifications (bell)"]
   end
   subgraph DISC["Discover"]
     direction TB
@@ -25,7 +25,7 @@ flowchart LR
   end
   subgraph PROF["Profile"]
     direction TB
-    p1["Edit profile (sections)"] ~~~ p2["Credits · Waiting for you"] ~~~ p3["Saved"] ~~~ p4["Settings"] ~~~ p5["Your data"] ~~~ p6["Terms and privacy"]
+    p0["Your profile: showreel, selected work,<br/>verified credits, independent projects,<br/>about, skills, details, reviews"] ~~~ p2["Waiting for your confirmation ·<br/>Projects you're on"] ~~~ p1["Edit profile (sections)"] ~~~ p3["Saved"] ~~~ p4["Settings: account, privacy,<br/>notifications, help, your data"]
   end
   HOME -- "tiles and See all" --> DISC
   HOME ~~~ CREATE ~~~ INBOX ~~~ PROF
@@ -58,9 +58,9 @@ Switching identity (tap your avatar, or "Switch to Konark") changes three tabs.
 
 ```mermaid
 flowchart TB
-  Switch["Switch: you ⇄ Konark Pictures"] --> HHome["Home: the house's tasks<br/>(open roles, interest to review, projects)"]
+  Switch["Switch: you ⇄ Konark Pictures"] --> HHome["Home: Needs you, Your projects,<br/>Open roles, People for your roles,<br/>Your events, Your released films"]
   Switch --> HCreate["Create: Post as the house ·<br/>Open a role · New project · Event"]
-  Switch --> HProfile["Profile: the house page"]
+  Switch --> HProfile["Profile: the house page<br/>(Now making, Made by us, Hiring,<br/>Worked with, Upcoming events)"]
   HHome --> Workspace["Project workspace<br/>(private: team, roles, credits, trailers)"]
   Workspace --> Team["On this project: add people,<br/>edit role, remove"]
   Workspace --> IssueC["Issue or prepare credits"]
@@ -68,7 +68,7 @@ flowchart TB
   Workspace --> Share["Share on Ana"]
   HHome --> Review["Review interest"]
   Review --> MsgAs["Message as Konark Pictures"]
-  HProfile --> HSettings["House settings:<br/>page, verification, members"]
+  HProfile --> HSettings["House settings: page, verification,<br/>members, credit authority, notifications,<br/>stop acting for the house"]
 ```
 
 ## Sheets (open over the current screen)
