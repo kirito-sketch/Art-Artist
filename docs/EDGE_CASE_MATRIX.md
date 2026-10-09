@@ -2,7 +2,7 @@
 
 > Generated from `src/qa/scenarios` by `npm run test:edge`. Do not edit by hand: change the manifest and regenerate.
 
-Last automated run: 2026-10-03.
+Last automated run: 2026-10-09.
 
 **What should Art and Artist do?** is answered first for every scenario (the Expected behaviour column). Whether it then needs UI, an interaction test, a business rule, an automated test, a legal decision or user validation follows from that answer. Scenario IDs are permanent: numbers are only ever appended, never reused.
 
@@ -47,7 +47,7 @@ Status counts: Rule defined 100 · Needs product decision 118 · Implemented 107
 | AC-27 | A member who lost access receives none of the house's notifications | Pass | Scoped to current memberships. |
 | AC-28 | Every notification has exactly one owner | Pass | One owner each. |
 | AC-29 | Blocking never removes anyone from a film's credits | Pass | Records are independent of blocks. |
-| AC-30 | Every credit points to a real association and project | Pass | 30 credits, none orphaned. |
+| AC-30 | Every credit points to a real association and project | Pass | 34 credits, none orphaned. |
 | AC-31 | A house message reaches the person from the house, in one shared thread | Pass | One thread, Konark on one side, Tara on the other; the member is never named. |
 | AC-32 | Reviewing or withdrawing Interest never deletes the record | Pass | One record; the house sees "No longer interested". |
 | AC-33 | Filling a role tells everyone else, by public name only | Pass | Konark Pictures filled Script Supervisor on Untitled Telugu feature. Thanks for your interest. |
