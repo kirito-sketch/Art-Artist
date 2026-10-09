@@ -185,24 +185,34 @@ export function ConversationScreen({ id }: { id: string }) {
         </Pressable>
 
         <div className="bubbles">
-          {c.messages.map((m, i) => (
-            <motion.div
-              key={m.id}
-              className={`bubble-row ${m.from === 'me' ? 'is-me' : ''}`}
-              initial={i === c.messages.length - 1 ? { opacity: 0, y: 8 } : false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-            >
-              {m.senderName && m.from === 'them' && <p className="meta bubble-sender">{m.senderName.split(' · ')[0]}</p>}
-              <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`} lang={scriptLang(m.text)}>{m.text}</div>
-              {m.status === 'sending' && <p className="meta bubble-status">Sending…</p>}
-              {m.status === 'failed' && (
-                <button className="bubble-status bubble-retry" onClick={() => retryMessage(c.id, m.id)}>
-                  Not delivered · Tap to retry
-                </button>
-              )}
-            </motion.div>
-          ))}
+          {c.messages.map((m, i) => {
+            const mine = m.from === 'me';
+            const prev = c.messages[i - 1];
+            // Their messages carry a chat head on the first message of each run (a new run starts when the
+            // sender changes); later messages in the run keep its space so the bubbles stay aligned. Ours never do.
+            const head = !mine && (!prev || prev.from !== 'them' || prev.senderName !== m.senderName);
+            return (
+              <motion.div
+                key={m.id}
+                className={`bubble-row ${mine ? 'is-me' : 'is-them'}`}
+                initial={i === c.messages.length - 1 ? { opacity: 0, y: 8 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+              >
+                {!mine && <span className="bubble-head" aria-hidden="true">{head && <Avatar party={p} size={28} />}</span>}
+                <div className="bubble-body">
+                  {m.senderName && !mine && head && <p className="meta bubble-sender">{m.senderName.split(' · ')[0]}</p>}
+                  <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`} lang={scriptLang(m.text)}>{m.text}</div>
+                  {m.status === 'sending' && <p className="meta bubble-status">Sending…</p>}
+                  {m.status === 'failed' && (
+                    <button className="bubble-status bubble-retry" onClick={() => retryMessage(c.id, m.id)}>
+                      Not delivered · Tap to retry
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
           {c.messages.length === 0 && c.context.refId === 'direct' && (
             <p className="convo-hint meta">
               Messages go straight to {p.kind === 'org' ? p.name : p.name.split(' ')[0]}. About a role or collaboration? Show interest on it instead, and the person who posted it will decide whether to message you.

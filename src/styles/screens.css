@@ -1064,6 +1064,35 @@
   align-items: flex-end;
 }
 
+.bubble-body {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  min-width: 0;
+}
+
+/* Their messages: a 28px chat head on the first message of each run, its space kept for the rest. */
+.bubble-row.is-them {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: calc(80% + 36px);
+}
+
+.bubble-row.is-them .bubble-body {
+  align-items: flex-start;
+}
+
+.bubble-head {
+  flex: none;
+  width: 28px;
+  min-height: 1px;
+}
+
+.bubble-row.is-them .bubble-sender {
+  margin-left: 2px;
+}
+
 .bubble-sender {
   font-size: var(--t-5);
   margin: 0 0 4px 14px;

@@ -1015,3 +1015,10 @@ The `/test` research study is unchanged throughout (its two steps, intro, inline
 - **Status area (prototype frame):** it was a frosted strip in a slightly different colour from the page, so content scrolling under it on Home was sliced off at a hard edge. It is now the page's own ground (`--sb-ground`) with a 20px fade below it. Screens with a sticky header look the same as before; on open screens like Home, content dissolves into the top.
 - Screenshot: `docs/ux-refinement/auth/signin-statusbar.jpg` (Sign in before and after; Home dark before and after; Discover with its sticky header).
 - Checks: auth 56/0 (320, 375, 393, 393 dark), views 22/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, wt suites, fields and focusflow pass.
+
+## Conversation chat heads (client request)
+
+- The other side's messages now carry a 28px chat head (their avatar, or the house's when the conversation is with a house) on the first message of each run. Later messages in the same run keep its space, so bubbles stay aligned. Your own messages never show one.
+- A run restarts when the sender changes (for example a different house member), and the member's first name shows above that run.
+- The head is decorative for screen readers; the header already names who the conversation is with.
+- Screenshot: `docs/ux-refinement/chat-heads.jpg`. Checks: typecheck clean, test-flow mobile 39/0, test-a11y 127/0, launch 43/0, wt suites, fields, focusflow pass.
