@@ -28,24 +28,7 @@ One person can be several of these at once. Aditi has her own professional profi
 
 ## How they relate
 
-```mermaid
-flowchart LR
-  P[Person] -- "acts for (member)" --> H[Production house]
-  P -- "owns" --> IP[Independent project]
-  H -- "owns" --> PR[Project]
-  PR -- "has" --> R[Role]
-  P -- "shows interest in" --> R
-  H -- "adds to" --> A[Association: on this project]
-  A -- "belongs to" --> PR
-  P -- "is" --> A
-  H -- "issues" --> C[Credit]
-  C -- "for" --> A
-  P -- "accepts or corrects" --> C
-  P -- "follows / saves / messages" --> H
-  P -- "follows / messages" --> P2[Another person]
-  P -- "reports / blocks" --> X[Person or house]
-  M[Moderator] -- "reviews" --> X
-```
+![How people, houses and records relate](diagrams/ana-relations.svg)
 
 Rules visible in the diagram:
 

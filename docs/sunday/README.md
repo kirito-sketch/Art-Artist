@@ -20,6 +20,8 @@ The same content is on the meeting page, where each decision can be marked Agree
 
 Corrections made in the audit of 9 October: Home sections listed as they appear (From your network, Events near you and Film talk were missing; the section after This week changes with why you're here); "Filled another way" counts as Filled, not Closed; role edits show on the role page rather than as a notification; project cancel and unshare, verification restriction and revocation, asking a house for more evidence, and the house-verified notification are proposals, not built; ranking guardrails trimmed to what the code does; the house Home, house page, profile and settings contents listed as built; the moderation console's actions and how to open it; the onboarding phone step only applies to invites.
 
+Diagrams follow the [diagram-design](https://github.com/cathrynlavery/diagram-design) system (one idea per diagram, at most 9 boxes, right-angle connectors, one accent colour) in Ana's colours, and pass its geometry and accessibility checks. They live in `diagrams/` as SVG files that switch to dark mode with the viewer.
+
 Source material: `docs/EDGE_CASE_MATRIX.md` (520 cases, re-run 9 October 2026), `docs/PERSONA_BRIDGES.md`, `docs/DECISIONS.md`, and the prototype itself.
 
 After Sunday: outcomes go into `docs/DECISIONS.md`; agreed changes are made in the prototype first, then these documents are updated.

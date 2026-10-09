@@ -2,48 +2,9 @@
 
 Ana is a two-sided product. Most journeys start with one person and finish with another. This map shows the full chain from a house needing someone to that person's profile showing a verified credit, and every point where it can branch.
 
-```mermaid
-flowchart TB
-  subgraph HOUSE["Production house (acting as Konark Pictures)"]
-    H1["Create a private project"]
-    H2["Open a role"]
-    H4["Review interest"]
-    H5["Message as the house"]
-    H6["Close role: Filled / Closed"]
-    H7["Add person to the project"]
-    H8["Issue credit"]
-    H9["Issue corrected credit"]
-    H10["Share project publicly"]
-  end
-  subgraph PERSON["Person (Tara)"]
-    P1["Sees role on Home / Discover / project page"]
-    P2["Show interest (optional note)"]
-    P3["Withdraw (undo)"]
-    P4["Conversation"]
-    P5["'Project you're on' (private)"]
-    P6["'This isn't right'"]
-    P7["Waiting for you: Accept"]
-    P8["Something's wrong"]
-    P9["Credit on profile"]
-  end
-  subgraph EVERYONE["Everyone else"]
-    E1["Others who showed interest are told the outcome"]
-    E2["Public project page lists accepted credits"]
-  end
+![From an open role to a verified credit](diagrams/ana-connections.svg)
 
-  H1 --> H2 --> P1 --> P2 --> H4
-  P2 -.-> P3 -.-> H4
-  H4 --> H5 --> P4
-  H4 --> H6 --> E1
-  H6 --> H7 --> P5
-  P5 -.-> P6 -.-> H7
-  H7 --> H8 --> P7 --> P9
-  P7 -.-> P8 --> H9 --> P7
-  H10 --> E2
-  P9 --> E2
-```
-
-Solid arrows are the main path. Dotted arrows are branches.
+The main chain only. Branches (withdrawing, corrections, removing someone, amending an accepted credit) are in the table below.
 
 ## Every hand-off, and what the other side sees
 
