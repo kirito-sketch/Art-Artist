@@ -6,9 +6,9 @@ The words people see in the app. One meaning each.
 
 | Word | Means | Not to be confused with |
 |---|---|---|
-| **Person** | Anyone with an account. Every person has one professional profile | "User" (never shown) |
-| **House** (production house) | A company on Ana with its own page. People act for it | An account; a house isn't a login |
-| **Acting as** | Who you are doing things as right now: yourself or a house | |
+| **Person** | An individual with a personal account and one professional profile | "User" (never shown) |
+| **House** (production house) | A company on Ana with its own page and house account | A person who works there |
+| **House account** | The account Art and Artist creates for a production house; its team member signs in to it | A personal account (separate; nobody switches between them) |
 | **Project** | A film, series or other production. Shown as Film or Series | "Work" (internal data word, never shown) |
 | **Independent project** | A project with no production house behind it. Its credits show as "not verified yet" | |
 | **Role** | Someone a house is looking for on a project | "Need" (house-side wording under research) |

@@ -60,11 +60,10 @@
 <rect class="dd-tag" x="624" y="160" width="24" height="12" rx="2" fill="none" stroke="#55605b" stroke-opacity="0.5" stroke-width="0.8"/>
 <text x="636" y="169" class="dd-tagt" fill="#55605b" font-size="7" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" font-weight="500" letter-spacing="0.08em">TAB</text>
 <text x="628" y="190" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="start" font-weight="600">Inbox</text>
-<text x="628" y="210" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">You, each house, All</text>
-<text x="628" y="225" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">Conversations</text>
-<text x="628" y="240" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">New message</text>
-<text x="628" y="255" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">Mute, report, block</text>
-<text x="628" y="270" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">Review interest</text>
+<text x="628" y="210" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">Conversations</text>
+<text x="628" y="225" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">New message</text>
+<text x="628" y="240" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">Mute, report, block</text>
+<text x="628" y="255" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="start">Review interest</text>
 <rect class="dd-mask" x="808" y="152" width="176" height="196" rx="6" fill="#f6f4f0"/>
 <rect class="dd-node" x="808" y="152" width="176" height="196" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
 <rect class="dd-tag" x="816" y="160" width="24" height="12" rx="2" fill="none" stroke="#55605b" stroke-opacity="0.5" stroke-width="0.8"/>

@@ -2,6 +2,22 @@
 
 Decisions from stakeholders, newest first. These override anything older in other docs.
 
+## 9 Oct 2026
+
+1. **Production houses are separate accounts that Art and Artist creates.** Only individuals sign up and sign in
+   on their own. For a production house, Art and Artist's sales and marketing team visits the house, agrees the
+   house joins, and creates the house's account internally. A member of the house's team signs in to that house
+   account and uses it. There is no self-serve house setup and no switching between a personal profile and a
+   house in the live product.
+   - The prototype still shows houses by letting Aditi switch from her own profile into Konark Pictures. That is a
+     prototype convenience for demonstrating both sides, not the product.
+   - Superseded by this: the self-serve house setup and the "invite link, then act for the house" model
+     (FOUNDATION.md section 4 A and B), the identity switcher, and anything that depends on one person acting as two
+     identities (identity-filtered Inbox and Notifications, "Switch to reply", "Stop acting for the house").
+   - Still open (for Sunday): how many people at a house can sign in to its account, whether those people can also
+     have personal accounts, whether a house is verified when it's created, and who inside the house can issue
+     credits.
+
 ## 30 Sep 2026
 
 1. **Visual direction.** Bold and Doodle are archived. Their screens stay in the prototype (panel, "Archived,

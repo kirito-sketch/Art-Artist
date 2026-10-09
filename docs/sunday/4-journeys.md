@@ -11,7 +11,7 @@ How to read the diagrams: rectangles are screens or steps, diamonds are decision
 ![A new person joins](diagrams/ana-j1.svg)
 
 - Back always returns one step and never re-enters a code screen. A refresh keeps your place.
-- An invite link skips the intro and adds an optional phone step.
+- Only individuals use this journey; house accounts are created by Art and Artist (J4).
 - **Edge cases:** Authentication (20), Account linking (8), Age and eligibility (9), Individual onboarding (20), Terms and consent (12).
 
 ## J2. A returning person signs in
@@ -33,8 +33,9 @@ How to read the diagrams: rectangles are screens or steps, diamonds are decision
 
 ![A production house gets onto Ana](diagrams/ana-j4.svg)
 
-- Until verified, a house has no public label; it just can't publish. The prototype says Ana checks within 2 working days.
-- What evidence Ana asks for, and asking for more, isn't designed yet (brief item B3).
+- Houses never sign up themselves. The account, and who can sign in to it, is set up by Art and Artist's team (brief items B9 to B11).
+- The prototype still shows the earlier model (an invite link and a self-serve setup screen). Both are superseded.
+- The internal tool for creating house accounts isn't built yet.
 - **Edge cases:** Production house onboarding (6), Production house verification (18). 7 need a product decision (verification evidence, revocation).
 
 ## J5. A house hires: publish a role and review interest
@@ -43,7 +44,7 @@ How to read the diagrams: rectangles are screens or steps, diamonds are decision
 
 - No applicant tracking: no stages, shortlists or rejections.
 - While open, the house can edit location, dates and description; role, craft and project stay fixed. People who showed interest see "Updated since you showed interest".
-- **Edge cases:** Roles and opportunities (25), Interest (17), Identity switching (18).
+- **Edge cases:** Roles and opportunities (25), Interest (17).
 
 ## J6. Team and credits: from added to a verified credit
 
@@ -66,15 +67,16 @@ How to read the diagrams: rectangles are screens or steps, diamonds are decision
 
 ![Messaging between a person and a house](diagrams/ana-j8.svg)
 
-- Members reply as the house and the composer says "Replying as Konark Pictures". A member acting as themselves can't reply as the house; the conversation offers a Switch instead.
-- The Inbox shows You, each house, and All. Conversations can be started from the Inbox, muted, reported or blocked.
-- **Edge cases:** Messaging (17), Notifications (17), Identity switching (18).
+- A person messaging a house talks to the house account; whoever is signed in to it replies as the house.
+- Conversations can be started from the Inbox, muted, reported or blocked.
+- In the prototype, the Inbox also has You / house / All buttons and a "Switch to reply" step. Both exist only because the prototype switches identities.
+- **Edge cases:** Messaging (17), Notifications (17).
 
 ## J9. Staying safe: report and block
 
 ![Staying safe: report and block](diagrams/ana-j9.svg)
 
-- Blocking is personal, even while acting for a house. Undo it from Settings or the blocked profile.
+- Blocking belongs to the account that does it. Undo it from Settings or the blocked profile.
 - **Edge cases:** Report and Block (23), Moderation (24).
 
 ---

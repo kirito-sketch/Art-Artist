@@ -9,22 +9,19 @@ For approval on Sunday. Describes the prototype as it is today.
 | **Established professional** | A working crew member with real credits, such as a cinematographer | Be found for the right work, show a credible record, hear about paid work nearby before it closes | Kiran Varma, cinematographer |
 | **Early-career professional** | An actor or crew member with little or no verified work yet | Get noticed, find first opportunities, build a record | Tara Menon, actor, early career |
 | **New person** | Someone arriving for the first time | Understand what Ana is, sign up quickly, see value on the first Home | New person flow (Studio) |
-| **House member** | Someone who works at a production house and acts for it, such as a line producer | Publish roles, find and contact people, run a project's team and credits, without mixing in their personal account | Aditi, acting for Konark Pictures |
-| **Production house** | The company itself: its public identity, projects and authority to issue credits | A trusted public page, hiring, credible credits for its films | Konark Pictures (busy), Tidewater Films (smaller) |
-| **Ana moderator** | Ana staff, working in an internal console, never an app persona | Handle reports and verification fairly and quickly | Moderation console |
+| **Production house** | The company: its public page, projects, roles and authority to issue credits. Brought on by Art and Artist's sales team | A trusted public page, hiring, credible credits for its films | Konark Pictures (busy), Tidewater Films (smaller) |
+| **House team member** | Someone at the house, such as a line producer, who signs in to the house account and uses it | Publish roles, find and contact people, run a project's team and credits | Aditi (in the prototype she reaches Konark by switching; the live app signs in to the house account directly) |
+| **Art and Artist team** | Sales, who bring houses on and create their accounts; moderators, who handle reports. Internal tools, never app personas | Onboard houses correctly; handle reports fairly and quickly | Moderation console (the account-creation tool isn't built) |
 
-One person can be several of these at once. Aditi has her own professional profile and also acts for Konark. A person is never "an employee of" one house: profiles belong to people.
+## Account types
 
-## Account types and roles
+| Account | How it's created | Who uses it |
+|---|---|---|
+| **Personal account** | The individual signs up (Apple, Google or email) | That one person. Every person has exactly one account and one professional profile |
+| **House account** | Created internally by Art and Artist's team after the sales visit. Houses can't sign up themselves | The house's team member(s) who sign in to it (how many is open, brief item B9) |
+| **Art and Artist staff** | Internal | Sales (create house accounts), moderators (console). Moderators can't delete credits |
 
-| Account or role | What it is |
-|---|---|
-| **Person** | Every human has exactly one account and one professional profile |
-| **House** | An organisation with its own public page. It is not a login; people act for it |
-| **House owner** | A person who controls the house: members, page, verification |
-| **House member** | A person allowed to act for the house |
-| **Member who can issue credits** | A member the owner has given credit authority. Others can only prepare credits |
-| **Moderator** | Ana staff in the internal console. Cannot delete credits |
+Personal accounts and house accounts are separate. Nobody switches between a personal profile and a house in the live product. Whether a house team member may also have a personal account is open (brief item B10).
 
 ## How they relate
 
@@ -32,32 +29,27 @@ One person can be several of these at once. Aditi has her own professional profi
 
 Rules visible in the diagram:
 
-- A credit only ever starts at a house. A person can accept it or say "Something's wrong", never create, claim or request one.
+- A credit only ever starts at a house account. A person can accept it or say "Something's wrong", never create, claim or request one.
 - Being added to a project (an association) is private and is not a credit.
-- Follow, Save, Report and Block are always personal, even while acting for a house. A house never blocks; its members do, for themselves.
-- Messages between a person and a house are between identities: the person sees "Konark Pictures", members reply "as Konark Pictures".
+- Follow, Save, Report and Block belong to the account that does them.
+- A person messaging a house talks to the house account; replies come from the house.
 
 ## Who can do what
 
-| Action | Person | House member (no credit authority) | Member who can issue credits | House owner | Moderator |
-|---|---|---|---|---|---|
-| Edit own profile, post, Open to work | Yes | Yes (as themselves) | Yes (as themselves) | Yes (as themselves) | No |
-| Show interest in a role | Yes | Only as themselves | Only as themselves | Only as themselves | No |
-| Accept or correct own credit | Yes | Only as themselves | Only as themselves | Only as themselves | No |
-| Follow, save, report, block | Yes | Always personal | Always personal | Always personal | No |
-| Create a private project for the house | No | Yes | Yes | Yes | No |
-| Publish a public role | No | Yes, if the house is verified | Yes, if verified | Yes, if verified | No |
-| Review interest, message as the house | No | Yes | Yes | Yes | No |
-| Add people to a project | No | Yes | Yes | Yes | No |
-| Prepare a credit | No | Yes | Yes | Yes | No |
-| Issue a credit | No | No | Yes, if verified | Yes, if verified | No |
-| Share a project publicly | No | Yes, if verified | Yes, if verified | Yes, if verified | No |
-| Manage members and the house page | No | No | No | Yes (the owner's screens aren't built yet) | No |
-| Stop acting for the house | No | Yes | Yes | No | No |
-| Start an independent project | Yes (its credits show as not verified yet) | As themselves | As themselves | As themselves | No |
-| Handle reports: dismiss, warn, remove, restrict, suspend, escalate | No | No | No | No | Yes (restrict and suspend are marked high impact) |
-| Delete a credit | Nobody | Nobody | Nobody | Nobody | Nobody |
+| Action | Personal account | House account | Art and Artist team |
+|---|---|---|---|
+| Sign up | Yes | No: created by Art and Artist | Creates house accounts |
+| Edit profile or house page, post | Yes (own profile) | Yes (house page, posts as the house) | No |
+| Open to work, show interest in a role | Yes | No | No |
+| Accept or correct a credit | Yes (own credits) | No | No |
+| Follow, save, report, block | Yes | Yes, as the house | No |
+| Create private projects | Independent projects only (credits not verified yet) | Yes | No |
+| Publish a public role, share a project, appear in search | No | Yes, once verified | Verifies houses |
+| Review interest, message people | Message people | Yes | No |
+| Add people to a project, issue credits | No | Yes, once verified (who inside the house may issue is brief item B1) | No |
+| Handle reports: dismiss, warn, remove, restrict, suspend, escalate | No | No | Moderators (restrict and suspend are high impact) |
+| Delete a credit | Nobody | Nobody | Nobody |
 
-**Unverified house:** can create its page, private projects and invite members, but can't publish public roles, issue credits, share projects or appear in search.
+**In the prototype:** house actions are shown by Aditi switching into Konark Pictures, and the house settings list members, "who can act for this house" and "stop acting for the house". Those follow the switching model and will be replaced by the house-account model above.
 
-**For approval:** the persona list, the relationships, and this permission table. Open item B1 in the brief (who inside a house issues credits) changes the "Member who can issue credits" column.
+**For approval:** the personas, the account types, the relationships, and this permission table. Brief items B1, B9, B10 and B11 fill in the open details.

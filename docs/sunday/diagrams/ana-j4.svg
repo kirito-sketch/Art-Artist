@@ -1,62 +1,50 @@
-<svg id="ana-j4" class="dd" viewBox="0 0 820 700" width="820" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ana-j4-title ana-j4-desc" style="min-width:820px;max-width:none">
-<title id="ana-j4-title">A production house gets onto Ana</title><desc id="ana-j4-desc">Flowchart: a house arrives by sales-assisted invite, which must be accepted with the invited address, or by self-serve setup; it prepares privately until Ana verifies it, which unlocks public roles, credits and search.</desc>
+<svg id="ana-j4" class="dd" viewBox="0 0 760 680" width="760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ana-j4-title ana-j4-desc" style="min-width:760px;max-width:none">
+<title id="ana-j4-title">A production house gets onto Ana</title><desc id="ana-j4-desc">Flowchart: Art and Artist&#x27;s sales team visits a production house; if it agrees, the team checks its documents and creates the house account, a sign-in goes to the house&#x27;s team member, and they sign in to the house Home. Houses never sign up themselves.</desc>
 <style>#ana-j4 .dd-paper{fill:#f6f4f0}#ana-j4 .dd-mask{fill:#f6f4f0}#ana-j4 .dd-node{fill:#ffffff;stroke:#1f2422}#ana-j4 .dd-focal{fill:rgba(39,92,80,0.08);stroke:#275c50}#ana-j4 .dd-opt{fill:rgba(31,36,34,0.02);stroke:rgba(31,36,34,0.32)}#ana-j4 .dd-store{fill:rgba(31,36,34,0.05);stroke:#55605b}#ana-j4 .dd-lane{fill:rgba(31,36,34,0.025);stroke:rgba(31,36,34,0.14)}#ana-j4 .dd-rule{stroke:rgba(31,36,34,0.14)}#ana-j4 .dd-name{fill:#1f2422}#ana-j4 .dd-sub{fill:#55605b}#ana-j4 .dd-soft{fill:#6f7974}#ana-j4 .dd-acc{fill:#275c50}#ana-j4 .dd-tag{stroke:#55605b}#ana-j4 .dd-tagt{fill:#55605b}#ana-j4 .dd-edge{stroke:#55605b}#ana-j4 .dd-edge-acc{stroke:#275c50}#ana-j4 .dd-mk{fill:#55605b}#ana-j4 .dd-mk-acc{fill:#275c50}#ana-j4 .dd-dot{fill:#1f2422}#ana-j4 .dd-ring{stroke:#1f2422}@media (prefers-color-scheme: dark){:root:not([data-theme='light']) #ana-j4 .dd-paper,svg#ana-j4:root .dd-paper{fill:#171a19}:root:not([data-theme='light']) #ana-j4 .dd-mask,svg#ana-j4:root .dd-mask{fill:#171a19}:root:not([data-theme='light']) #ana-j4 .dd-node,svg#ana-j4:root .dd-node{fill:#1f2321;stroke:#eef0ee}:root:not([data-theme='light']) #ana-j4 .dd-focal,svg#ana-j4:root .dd-focal{fill:rgba(124,195,174,0.12);stroke:#7cc3ae}:root:not([data-theme='light']) #ana-j4 .dd-opt,svg#ana-j4:root .dd-opt{fill:rgba(238,240,238,0.03);stroke:rgba(238,240,238,0.34)}:root:not([data-theme='light']) #ana-j4 .dd-store,svg#ana-j4:root .dd-store{fill:rgba(238,240,238,0.06);stroke:#a9b2ad}:root:not([data-theme='light']) #ana-j4 .dd-lane,svg#ana-j4:root .dd-lane{fill:rgba(238,240,238,0.03);stroke:rgba(238,240,238,0.14)}:root:not([data-theme='light']) #ana-j4 .dd-rule,svg#ana-j4:root .dd-rule{stroke:rgba(238,240,238,0.14)}:root:not([data-theme='light']) #ana-j4 .dd-name,svg#ana-j4:root .dd-name{fill:#eef0ee}:root:not([data-theme='light']) #ana-j4 .dd-sub,svg#ana-j4:root .dd-sub{fill:#a9b2ad}:root:not([data-theme='light']) #ana-j4 .dd-soft,svg#ana-j4:root .dd-soft{fill:#8f9993}:root:not([data-theme='light']) #ana-j4 .dd-acc,svg#ana-j4:root .dd-acc{fill:#7cc3ae}:root:not([data-theme='light']) #ana-j4 .dd-tag,svg#ana-j4:root .dd-tag{stroke:#a9b2ad}:root:not([data-theme='light']) #ana-j4 .dd-tagt,svg#ana-j4:root .dd-tagt{fill:#a9b2ad}:root:not([data-theme='light']) #ana-j4 .dd-edge,svg#ana-j4:root .dd-edge{stroke:#a9b2ad}:root:not([data-theme='light']) #ana-j4 .dd-edge-acc,svg#ana-j4:root .dd-edge-acc{stroke:#7cc3ae}:root:not([data-theme='light']) #ana-j4 .dd-mk,svg#ana-j4:root .dd-mk{fill:#a9b2ad}:root:not([data-theme='light']) #ana-j4 .dd-mk-acc,svg#ana-j4:root .dd-mk-acc{fill:#7cc3ae}:root:not([data-theme='light']) #ana-j4 .dd-dot,svg#ana-j4:root .dd-dot{fill:#eef0ee}:root:not([data-theme='light']) #ana-j4 .dd-ring,svg#ana-j4:root .dd-ring{stroke:#eef0ee}}:root[data-theme='dark'] #ana-j4 .dd-paper{fill:#171a19}:root[data-theme='dark'] #ana-j4 .dd-mask{fill:#171a19}:root[data-theme='dark'] #ana-j4 .dd-node{fill:#1f2321;stroke:#eef0ee}:root[data-theme='dark'] #ana-j4 .dd-focal{fill:rgba(124,195,174,0.12);stroke:#7cc3ae}:root[data-theme='dark'] #ana-j4 .dd-opt{fill:rgba(238,240,238,0.03);stroke:rgba(238,240,238,0.34)}:root[data-theme='dark'] #ana-j4 .dd-store{fill:rgba(238,240,238,0.06);stroke:#a9b2ad}:root[data-theme='dark'] #ana-j4 .dd-lane{fill:rgba(238,240,238,0.03);stroke:rgba(238,240,238,0.14)}:root[data-theme='dark'] #ana-j4 .dd-rule{stroke:rgba(238,240,238,0.14)}:root[data-theme='dark'] #ana-j4 .dd-name{fill:#eef0ee}:root[data-theme='dark'] #ana-j4 .dd-sub{fill:#a9b2ad}:root[data-theme='dark'] #ana-j4 .dd-soft{fill:#8f9993}:root[data-theme='dark'] #ana-j4 .dd-acc{fill:#7cc3ae}:root[data-theme='dark'] #ana-j4 .dd-tag{stroke:#a9b2ad}:root[data-theme='dark'] #ana-j4 .dd-tagt{fill:#a9b2ad}:root[data-theme='dark'] #ana-j4 .dd-edge{stroke:#a9b2ad}:root[data-theme='dark'] #ana-j4 .dd-edge-acc{stroke:#7cc3ae}:root[data-theme='dark'] #ana-j4 .dd-mk{fill:#a9b2ad}:root[data-theme='dark'] #ana-j4 .dd-mk-acc{fill:#7cc3ae}:root[data-theme='dark'] #ana-j4 .dd-dot{fill:#eef0ee}:root[data-theme='dark'] #ana-j4 .dd-ring{stroke:#eef0ee}</style>
 <defs><marker id="ana-j4-a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="dd-mk" points="0 0, 8 3, 0 6" fill="#55605b"/></marker><marker id="ana-j4-aa" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon class="dd-mk-acc" points="0 0, 8 3, 0 6" fill="#275c50"/></marker></defs>
 <rect class="dd-paper" width="100%" height="100%" fill="#f6f4f0"/>
-<path class="dd-edge" d="M300,128 L300,176" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M388,84 L530,84" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M300,224 L300,256" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M300,304 L300,340" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M388,384 L530,384" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M640,356 L640,288 Q640,280 632,280 L410,280" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M300,428 L300,476" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M640,112 L640,152 Q640,160 648,160 L768,160 Q776,160 776,168 L776,496 Q776,504 768,504 L420,504" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge" d="M300,532 L300,564" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
-<path class="dd-edge-acc" d="M420,588 L530,588" fill="none" stroke="#275c50" stroke-width="1.2" marker-end="url(#ana-j4-aa)"/>
-<rect class="dd-mask" x="308" y="146" width="40" height="12" rx="2" fill="#f6f4f0"/>
-<text x="328" y="155" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">INVITE</text>
-<rect class="dd-mask" x="429" y="64" width="60" height="12" rx="2" fill="#f6f4f0"/>
-<text x="459" y="73" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">SELF-SERVE</text>
-<rect class="dd-mask" x="449" y="364" width="20" height="12" rx="2" fill="#f6f4f0"/>
-<text x="459" y="373" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
-<rect class="dd-mask" x="497" y="260" width="56" height="12" rx="2" fill="#f6f4f0"/>
-<text x="525" y="269" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">TRY AGAIN</text>
-<rect class="dd-mask" x="308" y="446" width="28" height="12" rx="2" fill="#f6f4f0"/>
-<text x="322" y="455" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
-<rect class="dd-mask" x="449" y="568" width="52" height="12" rx="2" fill="#f6f4f0"/>
-<text x="475" y="577" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">APPROVED</text>
-<polygon class="dd-mask" points="300.0,40.0 388.0,84.0 300.0,128.0 212.0,84.0" fill="#f6f4f0"/>
-<polygon class="dd-node" points="300.0,40.0 388.0,84.0 300.0,128.0 212.0,84.0" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="300" y="81" class="dd-name" fill="#1f2422" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">How the house</text>
-<text x="300" y="95" class="dd-name" fill="#1f2422" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">arrives</text>
-<rect class="dd-mask" x="190" y="176" width="220" height="48" rx="6" fill="#f6f4f0"/>
-<rect class="dd-node" x="190" y="176" width="220" height="48" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="300" y="196.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Invite link</text>
-<text x="300" y="211.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">sales-assisted</text>
-<rect class="dd-mask" x="190" y="256" width="220" height="48" rx="6" fill="#f6f4f0"/>
-<rect class="dd-node" x="190" y="256" width="220" height="48" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="300" y="284" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Sign in or sign up</text>
-<polygon class="dd-mask" points="300.0,340.0 388.0,384.0 300.0,428.0 212.0,384.0" fill="#f6f4f0"/>
-<polygon class="dd-node" points="300.0,340.0 388.0,384.0 300.0,428.0 212.0,384.0" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="300" y="381" class="dd-name" fill="#1f2422" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Invited</text>
-<text x="300" y="395" class="dd-name" fill="#1f2422" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">address?</text>
-<rect class="dd-mask" x="530" y="356" width="220" height="56" rx="6" fill="#f6f4f0"/>
-<rect class="dd-node" x="530" y="356" width="220" height="56" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="640" y="380.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Shows the invited</text>
-<text x="640" y="395.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">address; sign in again</text>
-<rect class="dd-mask" x="530" y="56" width="220" height="56" rx="6" fill="#f6f4f0"/>
-<rect class="dd-node" x="530" y="56" width="220" height="56" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="640" y="80.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Set up a house page</text>
-<text x="640" y="95.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">self-serve</text>
-<rect class="dd-mask" x="180" y="476" width="240" height="56" rx="6" fill="#f6f4f0"/>
-<rect class="dd-node" x="180" y="476" width="240" height="56" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
-<text x="300" y="500.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Verification pending</text>
-<text x="300" y="515.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">page, private projects, members</text>
-<rect class="dd-mask" x="180" y="564" width="240" height="48" rx="6" fill="#f6f4f0"/>
-<rect class="dd-opt" x="180" y="564" width="240" height="48" rx="6" fill="rgba(31,36,34,0.02)" stroke="rgba(31,36,34,0.32)" stroke-width="1" stroke-dasharray="4,3"/>
-<text x="300" y="584.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Ana verifies</text>
-<text x="300" y="599.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">outside the app</text>
-<rect class="dd-mask" x="530" y="568" width="220" height="40" rx="20" fill="#f6f4f0"/>
-<rect class="dd-focal" x="530" y="568" width="220" height="40" rx="20" fill="rgba(39,92,80,0.08)" stroke="#275c50" stroke-width="1.2"/>
-<text x="640" y="592" class="dd-acc" fill="#275c50" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Verified: public</text>
+<path class="dd-edge" d="M300,80 L300,116" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge" d="M384,160 L490,160" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge" d="M300,204 L300,256" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge" d="M300,312 L300,344" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge" d="M420,372 L490,372" fill="none" stroke="#55605b" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge" d="M300,400 L300,432" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge" d="M300,488 L300,520" fill="none" stroke="#55605b" stroke-width="1" marker-end="url(#ana-j4-a)"/>
+<path class="dd-edge-acc" d="M300,568 L300,600" fill="none" stroke="#275c50" stroke-width="1.2" marker-end="url(#ana-j4-aa)"/>
+<rect class="dd-mask" x="427" y="140" width="20" height="12" rx="2" fill="#f6f4f0"/>
+<text x="437" y="149" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<rect class="dd-mask" x="308" y="224" width="28" height="12" rx="2" fill="#f6f4f0"/>
+<text x="322" y="233" class="dd-soft" fill="#6f7974" font-size="8" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<rect class="dd-mask" x="180" y="40" width="240" height="40" rx="20" fill="#f6f4f0"/>
+<rect class="dd-node" x="180" y="40" width="240" height="40" rx="20" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="300" y="64" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Sales team visits</text>
+<polygon class="dd-mask" points="300.0,116.0 384.0,160.0 300.0,204.0 216.0,160.0" fill="#f6f4f0"/>
+<polygon class="dd-node" points="300.0,116.0 384.0,160.0 300.0,204.0 216.0,160.0" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="300" y="157" class="dd-name" fill="#1f2422" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">House</text>
+<text x="300" y="171" class="dd-name" fill="#1f2422" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">agrees?</text>
+<rect class="dd-mask" x="490" y="140" width="200" height="40" rx="20" fill="#f6f4f0"/>
+<rect class="dd-node" x="490" y="140" width="200" height="40" rx="20" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="590" y="164" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">No account</text>
+<rect class="dd-mask" x="180" y="256" width="240" height="56" rx="6" fill="#f6f4f0"/>
+<rect class="dd-node" x="180" y="256" width="240" height="56" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="300" y="280.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Documents checked</text>
+<text x="300" y="295.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">registration or GST, contact</text>
+<rect class="dd-mask" x="180" y="344" width="240" height="56" rx="6" fill="#f6f4f0"/>
+<rect class="dd-focal" x="180" y="344" width="240" height="56" rx="6" fill="rgba(39,92,80,0.08)" stroke="#275c50" stroke-width="1.2"/>
+<text x="300" y="368.5" class="dd-acc" fill="#275c50" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">House account created</text>
+<text x="300" y="383.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">by Art and Artist, internally</text>
+<rect class="dd-mask" x="490" y="344" width="200" height="56" rx="6" fill="#f6f4f0"/>
+<rect class="dd-opt" x="490" y="344" width="200" height="56" rx="6" fill="rgba(31,36,34,0.02)" stroke="rgba(31,36,34,0.32)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="590" y="368.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Verified at creation</text>
+<text x="590" y="383.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">proposed (B11)</text>
+<rect class="dd-mask" x="180" y="432" width="240" height="56" rx="6" fill="#f6f4f0"/>
+<rect class="dd-node" x="180" y="432" width="240" height="56" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="300" y="456.5" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Sign-in sent</text>
+<text x="300" y="471.5" class="dd-sub" fill="#55605b" font-size="9" font-family="'Geist Mono', ui-monospace, Menlo, monospace" text-anchor="middle">to the agreed team email</text>
+<rect class="dd-mask" x="180" y="520" width="240" height="48" rx="6" fill="#f6f4f0"/>
+<rect class="dd-node" x="180" y="520" width="240" height="48" rx="6" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="300" y="548" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">Team member signs in</text>
+<rect class="dd-mask" x="200" y="600" width="200" height="40" rx="20" fill="#f6f4f0"/>
+<rect class="dd-node" x="200" y="600" width="200" height="40" rx="20" fill="#ffffff" stroke="#1f2422" stroke-width="1"/>
+<text x="300" y="624" class="dd-name" fill="#1f2422" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle" font-weight="600">House Home</text>
 </svg>

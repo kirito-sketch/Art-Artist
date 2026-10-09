@@ -26,7 +26,7 @@ The main chain only. Branches (withdrawing, corrections, removing someone, amend
 | 14 | House | Shares the project | Everyone | Public project page with accepted credits |
 | 15 | House | Removes someone | Person | "Konark Pictures removed this association". An accepted credit can't be removed |
 | 16 | Person | Asks to amend an accepted credit | House | House proposes a revision or keeps it; the old version stays public until the person accepts the new one |
-| 17 | Person | Messages a house | House members acting as the house | One conversation, filed under the house |
+| 17 | Person | Messages a house | The house account | One conversation; replies come from the house |
 | 18 | Person | Blocks a house | House | Can't reply; interest refused; shared records unchanged |
 | 19 | Person | Reports a person or house | Moderators | A case in the console; the reported side isn't told who reported |
 | 20 | House | Adds someone not on Ana (by phone) | Nobody yet | Private placeholder. Linking when they join is not built |

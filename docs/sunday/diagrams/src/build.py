@@ -16,10 +16,10 @@ def save(d):
 
 # ============================================================ 1. People: how they relate (ER, conceptual)
 d = D("ana-relations", "How people, houses and records relate",
-      "Conceptual model: a person acts for houses, houses own projects with roles, a person shows interest in roles, is added to projects, and accepts credits the house issues.",
+      "Conceptual model: a house account (used by its team) owns projects with roles, a person shows interest in roles, is added to projects, and accepts credits the house issues.",
       848, 704)
 W, H = 176, 92
-d.box("house", 40, 40, W, H, "House", tag="entity", lines=["verified or pending", "members act for it"])
+d.box("house", 40, 40, W, H, "House account", tag="entity", lines=["created by Art and Artist", "team signs in to it"])
 d.box("project", 336, 40, W, H, "Project", tag="entity", lines=["private or shared", "working title"])
 d.box("role", 632, 40, W, H, "Role", tag="entity", lines=["open, filled, closed", "up to 3 questions"])
 d.box("person", 40, 288, W, H, "Person", tag="entity", lines=["one profile, many crafts", "18 or older"])
@@ -27,7 +27,7 @@ d.box("assoc", 336, 288, W, H, "On a project", tag="entity", lines=["private, no
 d.box("credit", 336, 520, W, H, "Credit", tag="entity", kind="focal", lines=["issued by the house", "public once accepted"])
 d.edge([(216, 86), (336, 86)], "owns")
 d.edge([(512, 86), (632, 86)], "has")
-d.edge([(128, 288), (128, 132)], "acts for")
+d.edge([(128, 288), (128, 132)], "team member", dashed=True)
 d.edge([(424, 132), (424, 288)], "adds people")
 d.edge([(216, 334), (336, 334)], "is on")
 d.edge([(424, 380), (424, 520)], "issues credit", accent=True)
@@ -43,7 +43,7 @@ TABS = [
     ("Home", ["City header and tiles", "This week", "Section for why you're here", "From your network", "Events near you", "Film talk", "New work", "People near you", "Notifications"]),
     ("Discover", ["Posts, People", "Opportunities, Projects", "Events, Reviews", "Search everything", "Craft filter", "Saved"]),
     ("Create", ["Post", "Looking for someone", "Open to work", "Event", "Independent project"]),
-    ("Inbox", ["You, each house, All", "Conversations", "New message", "Mute, report, block", "Review interest"]),
+    ("Inbox", ["Conversations", "New message", "Mute, report, block", "Review interest"]),
     ("Profile", ["Your profile", "Waiting for confirmation", "Projects you're on", "Edit profile", "Saved", "Settings"]),
 ]
 d.box("welcome", 40, 40, 200, 48, "Welcome and sign-up", kind="store")
@@ -58,10 +58,10 @@ for i, (name, lines) in enumerate(TABS):
 save(d)
 
 # ============================================================ 2b. IA, acting for a house (tree)
-d = D("ana-ia-house", "Acting for a house: what changes",
-      "Information architecture tree: switching to a house changes Home, Create and Profile; Home leads to each project's private workspace and the house page leads to house settings.",
+d = D("ana-ia-house", "A house account: what it holds",
+      "Information architecture tree: a house team member signs in to the house account, whose Home, Create and Profile hold house tasks; Home leads to each project's private workspace and the house page leads to house settings.",
       816, 548)
-d.box("root", 288, 40, 240, 48, "Acting for Konark Pictures", sub="switch from your avatar", kind="focal")
+d.box("root", 288, 40, 240, 48, "Konark Pictures account", sub="team member signs in", kind="focal")
 hx = [40, 296, 552]
 d.edge([(408, 88), (408, 120)], arrow=False)
 d.edge([(hx[0] + 112, 120), (hx[2] + 112, 120)], arrow=False)
@@ -74,7 +74,7 @@ for i, (name, lines) in enumerate(HT):
 d.edge([(152, 300), (152, 352)], "open project")
 d.box("ws", 40, 352, 224, 148, "Project workspace", tag="private", kind="store", lines=["Team on this project", "Roles and interest", "Issue or prepare credits", "Trailers", "Share on Ana"])
 d.edge([(664, 300), (664, 352)], "settings")
-d.box("hs", 552, 352, 224, 148, "House settings", tag="screen", kind="store", lines=["Page and verification", "Members", "Credit authority", "Notifications", "Stop acting for the house"])
+d.box("hs", 552, 352, 224, 148, "House settings", tag="screen", kind="store", lines=["Page and verification", "Who can sign in", "Credit authority", "Notifications", "Sign out"])
 save(d)
 
 # ============================================================ 3. Connection map (swimlane)
@@ -182,27 +182,25 @@ d.edge([(M - 84, 400), (L + 90, 400)], "filled, closed")
 save(d)
 
 # J4 House gets onto Ana
-d = flow("ana-j4", "A production house gets onto Ana", "Flowchart: a house arrives by sales-assisted invite, which must be accepted with the invited address, or by self-serve setup; it prepares privately until Ana verifies it, which unlocks public roles, credits and search.", 820, 700)
-M, L, R = 300, 0, 640
-d.diamond("how", M, 84, 176, 88, "How the house\narrives")
-d.box("link", M - 110, 176, 220, 48, "Invite link", sub="sales-assisted")
-d.box("sign", M - 110, 256, 220, 48, "Sign in or sign up")
-d.diamond("addr", M, 384, 176, 88, "Invited\naddress?")
-d.box("wrong", R - 110, 356, 220, 56, "Shows the invited", sub="address; sign in again")
-d.box("self", R - 110, 56, 220, 56, "Set up a house page", sub="self-serve")
-d.box("pend", M - 120, 476, 240, 56, "Verification pending", sub="page, private projects, members")
-d.box("verify", M - 120, 564, 240, 48, "Ana verifies", sub="outside the app", kind="opt")
-d.oval("ok", R - 110, 568, 220, 40, "Verified: public", kind="focal")
-d.edge([(M, 128), (M, 176)], "invite")
-d.edge([(M + 88, 84), (R - 110, 84)], "self-serve")
-d.edge([(M, 224), (M, 256)])
-d.edge([(M, 304), (M, 340)])
-d.edge([(M + 88, 384), (R - 110, 384)], "no")
-d.edge([(R, 356), (R, 280), (M + 110, 280)], "try again", seg=1)
-d.edge([(M, 428), (M, 476)], "yes")
-d.edge([(R, 112), (R, 160), (776, 160), (776, 504), (M + 120, 504)], seg=3)
-d.edge([(M, 532), (M, 564)])
-d.edge([(M + 120, 588), (R - 110, 588)], "approved", accent=True)
+d = flow("ana-j4", "A production house gets onto Ana", "Flowchart: Art and Artist's sales team visits a production house; if it agrees, the team checks its documents and creates the house account, a sign-in goes to the house's team member, and they sign in to the house Home. Houses never sign up themselves.", 760, 680)
+M, R = 300, 590
+d.oval("visit", M - 120, 40, 240, 40, "Sales team visits")
+d.diamond("agree", M, 160, 168, 88, "House\nagrees?")
+d.oval("no", R - 100, 140, 200, 40, "No account")
+d.box("docs", M - 120, 256, 240, 56, "Documents checked", sub="registration or GST, contact")
+d.box("create", M - 120, 344, 240, 56, "House account created", sub="by Art and Artist, internally", kind="focal")
+d.box("verified", R - 100, 344, 200, 56, "Verified at creation", sub="proposed (B11)", kind="opt")
+d.box("invite", M - 120, 432, 240, 56, "Sign-in sent", sub="to the agreed team email")
+d.box("sign", M - 120, 520, 240, 48, "Team member signs in")
+d.oval("home", M - 100, 600, 200, 40, "House Home")
+d.edge([(M, 80), (M, 116)])
+d.edge([(M + 84, 160), (R - 100, 160)], "no")
+d.edge([(M, 204), (M, 256)], "yes")
+d.edge([(M, 312), (M, 344)])
+d.edge([(M + 120, 372), (R - 100, 372)], dashed=True)
+d.edge([(M, 400), (M, 432)])
+d.edge([(M, 488), (M, 520)])
+d.edge([(M, 568), (M, 600)], accent=True)
 save(d)
 
 # J5 House hires
@@ -273,27 +271,22 @@ d.edge([(M - 88, 160), (L + 110, 160)], "looking")
 save(d)
 
 # J8 Messaging
-d = flow("ana-j8", "Messaging between a person and a house", "Flowchart: a conversation starts from a profile, a house page or New message; if it belongs to another identity the person switches first; sent messages are delivered or retried; a block closes the conversation both ways.", 840, 620)
-M, L, R = 400, 140, 680
+d = flow("ana-j8", "Messaging between a person and a house", "Flowchart: a conversation starts from a profile, a house page or New message; sent messages are delivered or retried; a block from either side closes the conversation while keeping its history.", 800, 520)
+M, L, R = 400, 140, 660
 d.box("start", M - 130, 40, 260, 56, "Message or New message", sub="profile, house page, Inbox")
-d.box("conv", M - 120, 128, 240, 48, "Conversation")
-d.diamond("id", M, 252, 176, 88, "Acting as its\nidentity?")
-d.box("switch", R - 100, 224, 200, 56, "Switch to reply", sub="never automatic")
-d.box("send", M - 120, 344, 240, 48, "Send")
-d.diamond("ok", M, 472, 176, 88, "Delivered?")
-d.oval("done", M - 100, 560, 200, 40, "Other side notified", kind="focal")
-d.box("retry", R - 100, 444, 200, 56, "Not delivered", sub="tap to retry")
-d.box("block", L - 110, 120, 220, 64, "Blocked either way", sub="closed, history kept", kind="opt")
+d.box("conv", M - 120, 128, 240, 48, "Conversation", sub="house replies as the house")
+d.box("send", M - 120, 208, 240, 48, "Send")
+d.diamond("ok", M, 336, 176, 88, "Delivered?")
+d.oval("done", M - 100, 432, 200, 40, "Other side notified", kind="focal")
+d.box("retry", R - 100, 308, 200, 56, "Not delivered", sub="tap to retry")
+d.box("block", L - 110, 124, 220, 56, "Blocked either way", sub="closed, history kept", kind="opt")
 d.edge([(M, 96), (M, 128)])
 d.edge([(M, 176), (M, 208)])
-d.edge([(M + 88, 252), (R - 100, 252)], "no")
-d.edge([(R, 280), (R, 356), (M + 120, 356)], seg=1)
-d.edge([(M, 296), (M, 344)], "yes")
-d.edge([(M, 392), (M, 428)])
-d.edge([(M + 88, 472), (R - 100, 472)], "no")
-d.edge([(M, 516), (M, 560)], "yes", accent=True)
+d.edge([(M, 256), (M, 292)])
+d.edge([(M + 88, 336), (R - 100, 336)], "no")
+d.edge([(M, 380), (M, 432)], "yes", accent=True)
 d.edge([(M - 120, 152), (L + 110, 152)], dashed=True)
-d.edge([(R - 40, 444), (R - 40, 380), (M + 120, 380)], "retry", seg=1, side="below", dashed=True)
+d.edge([(R, 308), (R, 232), (M + 120, 232)], "retry", seg=1, dashed=True)
 save(d)
 
 # J9 Report and block
@@ -375,9 +368,9 @@ d.edge([(552, 132), (640, 132)], "ask")
 d.edge([(640, 156), (552, 156)], "resolved", side="below")
 save(d)
 
-d = D("ana-l-verify", "House verification", "State machine: a house is pending until Ana verifies it; restricting and revoking verification are proposed, not built.", 760, 300)
+d = D("ana-l-verify", "House verification", "State machine: a house account is created by Art and Artist and is pending until verified (or verified at creation, which is open); restricting and revoking verification are proposed, not built.", 760, 300)
 d.start("s", 40, 92)
-st(d, "pend", 96, 70, 152, "Pending", "prepares privately")
+st(d, "pend", 96, 70, 152, "Pending", "account created")
 st(d, "ver", 352, 70, 152, "Verified", "public roles, credits", kind="focal")
 st(d, "res", 352, 208, 152, "Restricted", "proposed", kind="opt")
 st(d, "rev", 584, 70, 152, "Revoked", "proposed", kind="opt")

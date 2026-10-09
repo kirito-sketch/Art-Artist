@@ -8,7 +8,7 @@ The same content is on the meeting page, where each decision can be marked Agree
 |---|---|---|
 | 0 | [Brief](../SUNDAY_BRIEF.md) | Where Ana is, what's built, what's decided, the decisions needed |
 | 1 | [People, relationships and permissions](1-people-and-permissions.md) | Personas, account types, how people relate, who can do what |
-| 2 | [Information architecture](2-information-architecture.md) | Tabs, screens, and how acting for a house changes them |
+| 2 | [Information architecture](2-information-architecture.md) | Tabs and screens for a personal account and a house account |
 | 3 | [Connection map](3-connection-map.md) | How journeys hand off between people, and what each side sees |
 | 4 | [Journeys](4-journeys.md) | Nine core journeys with their branches and edge-case coverage |
 | 5 | [Lifecycles](5-lifecycles.md) | States of projects, roles, interest, credits, verification and accounts |

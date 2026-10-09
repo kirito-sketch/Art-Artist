@@ -30,7 +30,7 @@ Only Accepted credits are public. An accepted credit can't be deleted by anyone,
 
 ![House verification](diagrams/ana-l-verify.svg)
 
-In the prototype, verification is a placeholder: a house is either Pending or Verified, and nothing moves it between them inside the app. Revoked (proposed): new public roles and credits stop, open roles close with a neutral reason, accepted credits stay on the films.
+A house account is created by Art and Artist's team after the sales visit. Whether it starts Verified (documents checked during the visit) or Pending is open (brief item B11). In the prototype, verification is a placeholder: a house is either Pending or Verified, and nothing moves it between them inside the app. Revoked (proposed): new public roles and credits stop, open roles close with a neutral reason, accepted credits stay on the films.
 
 ## Person account
 
