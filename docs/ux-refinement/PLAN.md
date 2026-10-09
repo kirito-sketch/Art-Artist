@@ -561,7 +561,7 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 | 4 Project and trailers | Approved (with review feedback) | `0bede79` |
 | 5 Home, integration, QA | Done, awaiting review | `9bd0736` |
 | 6 Create flows, all personas | Done, awaiting review | `24d3527` |
-| A Auth and onboarding repair | Done, awaiting review | see below |
+| A Auth and onboarding repair | Done, awaiting review | `f002365`, refinements below |
 
 ### Stage 1 record
 
@@ -976,4 +976,27 @@ Screenshots of the full journey are in `docs/ux-refinement/stage6/`.
 - Apple, Google and email delivery are simulated (no SDKs, no email or SMS is sent). The routing, state and navigation are the real app code.
 - Accounts created in a session don't survive a full reload, because there is no backend. Seeded accounts do.
 - Updated-terms renewal reuses the existing policy-update sheet.
+
+**Refinements (the seven recommendations, approved):**
+
+1. **Sticky action bar.** Each onboarding step's Continue (with its "To continue, add…" hint) sits in a sticky bar at the bottom, clear of the home indicator, so it is in view without scrolling.
+2. **About you is shorter.**
+   - Six common crafts show first (Acting, Direction, Cinematography, Editing, Writing, Sound), with "More crafts (9)" for the rest.
+   - A chosen craft outside the six stays visible when collapsed.
+   - Reposition opens from a "Reposition photo" link instead of always showing.
+3. **Resume note.** A resumed sign-up says "Welcome back, Ravi. Pick up where you left off." on the step it resumes at.
+4. **Intro on the first visit only.** The intro shows on the first visit on a device (`localStorage`, a convenience only). Later visits go straight to Welcome.
+5. **Optional steps are labelled.** Optional steps show an "Optional" tag next to "Step n of N" and an open segment in the progress bar.
+6. **The mobile step only where it matters.**
+   - The mobile number is asked only in the house-invite flow, where it is checked.
+   - Individuals now have 4 steps (About you, What brings you here, Where you work, Show your work).
+   - They are asked for the number later from profile completion, where it is already the first suggestion (`state/profile.ts openSteps`).
+7. **Logo in the hero.** The logo moved into the hero's dark top corner (white), so the blended edge carries only the headline.
+
+The `/test` research study is unchanged throughout (its two steps, intro, inline buttons and craft grid).
+
+**Validation:**
+
+- Auth suite: 56/0 at 320, 375, 393, 430 and in dark.
+- Viewport suite: 20/0, including Continue in view on 320×568 and 375×667.
 

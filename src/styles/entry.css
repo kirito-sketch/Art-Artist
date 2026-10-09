@@ -87,3 +87,26 @@
 .phone .consent-required .check-box { width: 24px; height: 24px; }
 .phone .consent-optional { border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent); padding-top: 10px; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
 .phone .consent-optional .consent-h { margin: 0 0 2px; }
+
+/* ---- Refinements (approved recommendations) */
+/* 1. The primary action stays in reach: a sticky bar at the bottom of the step, clear of the home indicator. */
+.phone .ob--sticky .ob-body { padding-bottom: 0; }
+.phone .ob-footer {
+  position: sticky; bottom: 0; z-index: 2; margin: 6px -24px 0; padding: 14px 24px max(14px, env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 6px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface) 22%);
+}
+.phone .ob-footer .missing-hint { margin: 0; text-align: center; }
+/* 2. Six common crafts first; the rest behind one link. Photo actions stacked beside the avatar. */
+.phone .ob-more { align-self: flex-start; font-weight: 600; min-height: 44px; }
+.phone .ob-photo-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+/* 3. A resumed sign-up says where it picked up. */
+.phone .ob-note { margin: 2px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 550; background: color-mix(in srgb, var(--action, var(--text)) 10%, transparent); color: var(--text); }
+/* 5. Optional steps: labelled, and drawn as an open segment. */
+.phone .ob-opt { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text-2); }
+.phone .ob-progress span.is-opt { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 22%, transparent); }
+.phone .ob-progress span.is-opt.is-on { background: var(--action, var(--text)); box-shadow: none; }
+/* 7. The mark in the hero's dark top corner, white, so the blended edge carries only the headline. */
+.phone .entry-hero-logo { position: absolute; z-index: 2; top: calc(var(--status-bar, 12px) + 14px); left: 22px; pointer-events: none; }
+.phone .entry-hero-logo .logo img { height: 30px; filter: brightness(0) invert(1) drop-shadow(0 1px 6px rgba(0, 0, 0, 0.35)); }
+.phone .entry-hero-logo .wordmark { color: #fff; font-weight: 700; }

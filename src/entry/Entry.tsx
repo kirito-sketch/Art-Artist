@@ -44,6 +44,26 @@ type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'consent' | 'ver
 /** Screens that are passed through, never returned to with Back (a code that was already used, a notice). */
 const TRANSIENT: ReadonlySet<Step> = new Set<Step>(['splash', 'intro', 'verify', 'notfound']);
 const ONBOARDING: Step[] = ['you', 'mobile', 'now', 'where', 'work'];
+/** Steps that can be skipped: labelled Optional and drawn as an open segment in the progress bar. */
+const OPTIONAL: ReadonlySet<Step> = new Set<Step>(['mobile', 'work']);
+/** The crafts most people pick first; the rest are one tap away ("More crafts"). */
+const COMMON_CRAFTS: Craft[] = ['actor', 'director', 'cinematographer', 'editor', 'writing', 'sound'];
+/** The intro is for a first visit on this device; later visits go straight to Welcome. A per-device convenience only. */
+const INTRO_KEY = 'aa_intro_seen';
+const introSeen = () => {
+  try {
+    return localStorage.getItem(INTRO_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const markIntroSeen = () => {
+  try {
+    localStorage.setItem(INTRO_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+};
 
 /** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
@@ -89,7 +109,8 @@ export function EntryFlow() {
   // The installed app's launch splash is the splash: while it is still owed, onboarding starts under it, at
   // its first screen, instead of drawing a second mark. (Later entries, such as a house invite, keep theirs.)
   const launchOwed = launchSplashPending(isStandalone());
-  const firstStep: Step = entry?.mode === 'signin' ? 'entry' : launchOwed ? (entry?.mode === 'new' ? 'intro' : 'entry') : 'splash';
+  const showIntro = entry?.mode === 'new' && (TEST_MODE || !introSeen());
+  const firstStep: Step = entry?.mode === 'signin' ? 'entry' : launchOwed ? (showIntro ? 'intro' : 'entry') : 'splash';
   const nav = useEntryNav<Step>(resumed?.nav ?? { step: firstStep, history: [] }, TRANSIENT);
   const { step, go, back } = nav;
   const [provider, setProvider] = useState<null | 'apple' | 'google'>(null);
@@ -98,6 +119,10 @@ export function EntryFlow() {
   const [authIntent, setAuthIntent] = useState<AuthIntent>(resumed?.authIntent ?? 'continue');
   const [identity, setIdentity] = useState<Identity | null>(resumed?.identity ?? null);
   const [resuming, setResuming] = useState(resumed?.resuming ?? false);
+  // A resumed sign-up says so once, on the step it picks up at.
+  const [resumeNote, setResumeNote] = useState<{ step: Step; text: string } | null>(null);
+  const [allCrafts, setAllCrafts] = useState(false);
+  const [reposition, setReposition] = useState(false);
   // The email field holds only what this person typed in this sign-in: a provider's address never lands in it.
   const [email, setEmail] = useState(resumed?.email ?? (invite ? INVITE.email : ''));
   const [codeSentAt, setCodeSentAt] = useState(0);
@@ -147,7 +172,7 @@ export function EntryFlow() {
   // image is ready. A slow load holds the finished mark still (no replay); capped so it never hangs.
   const [markDone, setMarkDone] = useState(false);
   const [nextReady, setNextReady] = useState(false);
-  const after: Step = entry?.mode === 'new' ? 'intro' : 'entry';
+  const after: Step = showIntro ? 'intro' : 'entry';
   useEffect(() => {
     if (step !== 'splash') return;
     let live = true;
@@ -231,7 +256,9 @@ export function EntryFlow() {
     if (d.intents?.length) setSelectedIntents(d.intents as Intent[]);
     setResuming(true);
     if (r.needsTerms) return go('consent');
-    resumeAt(resumeStep(d));
+    const at = resumeStep(d);
+    setResumeNote({ step: at, text: `Welcome back${d.name ? `, ${d.name.split(' ')[0]}` : ''}. Pick up where you left off.` });
+    resumeAt(at);
   };
   const startNew = (id: Identity) => {
     setIdentity(id);
@@ -271,8 +298,14 @@ export function EntryFlow() {
   };
 
   // The /test study keeps the onboarding it was designed with (two screens); see docs/REVIEW_EVENTS_PROFILE.md §15.
-  const steps: Step[] = TEST_MODE ? ['you', 'now'] : invite ? ['you', 'mobile', 'where'] : ['you', 'mobile', 'now', 'where', 'work'];
+  // The mobile number is asked only where it does something now (a phone-checked house invite). Everyone else is asked
+  // later, from profile completion, where it is the first suggestion (state/profile.ts openSteps).
+  const steps: Step[] = TEST_MODE ? ['you', 'now'] : invite ? ['you', 'mobile', 'where'] : ['you', 'now', 'where', 'work'];
   const stepIndex = steps.indexOf(step);
+  const optionalSteps = steps.map((x) => OPTIONAL.has(x));
+  // The primary action sits in a sticky bar clear of the safe area (not in /test, whose study layout is frozen).
+  const sticky = !TEST_MODE;
+  const ob = { step: stepIndex, total: steps.length, optional: optionalSteps, note: resumeNote?.step === step ? resumeNote.text : undefined };
 
   const overImage = ['intro', 'entry', 'you', 'mobile', 'now', 'where', 'work', 'invite', 'inviteTip'].includes(step);
   return (
@@ -283,7 +316,7 @@ export function EntryFlow() {
       <AnimatePresence mode="wait">
         {step !== 'splash' && (
         <motion.div key={step} className="entry-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-          {step === 'intro' && <Intro onDone={() => go('entry')} />}
+          {step === 'intro' && <Intro onDone={() => (markIntroSeen(), go('entry'))} />}
 
           {step === 'entry' && (
             <div className="entry-home">
@@ -292,10 +325,11 @@ export function EntryFlow() {
                 <EntryArt name="chair" priority />
                 <div className="entry-fade" />
               </div>
+              {/* The mark sits in the hero's dark top corner, so the headline is the only thing on the blended edge. */}
+              <div className="entry-hero-logo">
+                <Logo />
+              </div>
               <div className="entry-body">
-                <div className="entry-logo">
-                  <Logo />
-                </div>
                 {invite && (
                   <div className="invite-banner">
                     <Avatar party={org(INVITE.orgId)} size={36} />
@@ -351,7 +385,11 @@ export function EntryFlow() {
               onAgree={() => {
                 recordConsent(['Terms of Service', 'Privacy Policy', 'Age 18 or older', ...(consent.marketing ? ['Product emails'] : [])], 'Signup');
                 // Email was already confirmed with its code before this screen.
-                if (resuming) return resumeAt(resumeStep({ name, craft: primary ?? undefined, intents: selectedIntents, city }));
+                if (resuming) {
+                  const at = resumeStep({ name, craft: primary ?? undefined, intents: selectedIntents, city });
+                  setResumeNote({ step: at, text: `Thanks${name ? `, ${name.split(' ')[0]}` : ''}. Pick up where you left off.` });
+                  return resumeAt(at);
+                }
                 go('you');
               }}
             />
@@ -389,41 +427,68 @@ export function EntryFlow() {
             </Form>
           )}
 
-          {step === 'you' && (
-            <Onboard step={stepIndex} total={steps.length} image="badge" title="About you" lede="The name you're credited by, and the craft you're known for." onBack={goBack}>
-              <div className="ob-photo">
-                <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo, avatarFraming }} size={88} />
-                <PhotoPicker onPick={src => { setPhoto(src); setAvatarFraming(undefined); }} has={!!photo} />
-              </div>
-              {photo && <MediaFramingEditor title="Reposition photo" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
-              <Field label="Your name">
-                <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoComplete="name" autoFocus />
-              </Field>
-              {TEST_MODE && <p className="meta">The name you work under. Productions credit you by it. Photo is optional.</p>}
-              <p className="field-label">Your main craft</p>
-              <div className="craft-grid" role="radiogroup" aria-label="Your main craft" onKeyDown={(e) => rovingKeys(e)}>
-                {CRAFTS.map((c, i) => (
-                  <button key={c.id} role="radio" aria-checked={primary === c.id} tabIndex={rovingIndex(primary === c.id, i, !!primary)} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => setPrimary(primary === c.id ? null : c.id)}>
-                    {c.label}
+          {step === 'you' && (() => {
+            const actions = (
+              <>
+                <Button block size="l" disabled={!name.trim() || !primary} aria-describedby="you-missing" onClick={() => go(invite ? 'mobile' : 'now')}>
+                  Continue
+                </Button>
+                <Missing id="you-missing" items={[!name.trim() && 'your name', !primary && 'your main craft']} />
+              </>
+            );
+            const crafts = TEST_MODE || allCrafts ? CRAFTS : CRAFTS.filter((c) => COMMON_CRAFTS.includes(c.id) || c.id === primary);
+            return (
+              <Onboard {...ob} image="badge" title="About you" lede="The name you're credited by, and the craft you're known for." onBack={goBack} footer={sticky ? actions : undefined}>
+                <div className="ob-photo">
+                  <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo, avatarFraming }} size={88} />
+                  <span className="ob-photo-actions">
+                    <PhotoPicker onPick={src => { setPhoto(src); setAvatarFraming(undefined); setReposition(false); }} has={!!photo} />
+                    {photo && !TEST_MODE && !reposition && (
+                      <button className="link" onClick={() => setReposition(true)}>
+                        Reposition photo
+                      </button>
+                    )}
+                  </span>
+                </div>
+                {photo && (TEST_MODE || reposition) && <MediaFramingEditor title="Reposition photo" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
+                <Field label="Your name">
+                  <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoComplete="name" autoFocus />
+                </Field>
+                {TEST_MODE && <p className="meta">The name you work under. Productions credit you by it. Photo is optional.</p>}
+                <p className="field-label">Your main craft</p>
+                <div className="craft-grid" role="radiogroup" aria-label="Your main craft" onKeyDown={(e) => rovingKeys(e)}>
+                  {crafts.map((c, i) => (
+                    <button key={c.id} role="radio" aria-checked={primary === c.id} tabIndex={rovingIndex(primary === c.id, i, !!primary)} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => setPrimary(primary === c.id ? null : c.id)}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+                {!TEST_MODE && (
+                  <button className="link ob-more" aria-expanded={allCrafts} onClick={() => setAllCrafts((v) => !v)}>
+                    {allCrafts ? 'Fewer crafts' : `More crafts (${CRAFTS.length - crafts.length})`}
                   </button>
-                ))}
-              </div>
-              {TEST_MODE && <p className="meta">Do more than one thing? Add other crafts from your profile later.</p>}
-              <Button block size="l" disabled={!name.trim() || !primary} aria-describedby="you-missing" onClick={() => go(TEST_MODE ? 'now' : 'mobile')}>
-                Continue
-              </Button>
-              <Missing id="you-missing" items={[!name.trim() && 'your name', !primary && 'your main craft']} />
-            </Onboard>
-          )}
+                )}
+                {TEST_MODE && <p className="meta">Do more than one thing? Add other crafts from your profile later.</p>}
+                {!sticky && actions}
+              </Onboard>
+            );
+          })()}
 
           {step === 'mobile' && (
-            <Onboard step={stepIndex} total={steps.length} image="file" title="Your mobile number" lede="Optional. It helps productions match your credits to you. It's never shown on your profile." onBack={goBack}>
+            <Onboard {...ob} image="file" title="Your mobile number" lede="Optional. It helps productions match your credits to you. It's never shown on your profile." onBack={goBack}>
               <PhoneStep value={phone} onChange={setPhone} draft={phoneDraft} onDraft={setPhoneDraft} onContinue={() => go(invite ? 'where' : 'now')} />
             </Onboard>
           )}
 
           {step === 'now' && (
-            <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={goBack}>
+            <Onboard {...ob} image="search" title="What brings you here?" onBack={goBack} footer={sticky && !TEST_MODE ? (
+              <>
+                <Button block size="l" disabled={!hasIntent} aria-describedby="now-missing" onClick={() => go('where')}>
+                  Continue
+                </Button>
+                <Missing id="now-missing" items={[!hasIntent && 'what brings you here']} />
+              </>
+            ) : undefined}>
               {TEST_MODE && <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>}
               {district && <p className="meta" id="intent-help" aria-live="polite">{selectedIntents.length === MAX_ONBOARDING_INTENTS ? '3 selected. Deselect one to change.' : 'Choose up to 3'}</p>}
               <div className={`intent-list ${district ? 'intent-list--multi' : ''}`} role={district ? 'group' : 'radiogroup'} aria-label="What are you looking to do right now?" aria-describedby={district ? 'intent-help' : undefined} onKeyDown={district ? undefined : (e) => rovingKeys(e)}>
@@ -471,19 +536,19 @@ export function EntryFlow() {
                   <Missing id="now-missing" items={[!intent && 'what brings you here', !city.trim() && 'where you are based']} />
                   <p className="meta ob-later">Your work, other crafts, languages and a bio can be added from your profile whenever you like.</p>
                 </>
-              ) : (
-                <>
-                  <Button block size="l" disabled={!hasIntent} aria-describedby="now-missing" onClick={() => go('where')}>
-                    Continue
-                  </Button>
-                  <Missing id="now-missing" items={[!hasIntent && 'what brings you here']} />
-                </>
-              )}
+              ) : null}
             </Onboard>
           )}
 
           {step === 'where' && (
-            <Onboard step={stepIndex} total={steps.length} image="valley" title="Where you work" lede="So productions near you, and in your languages, can find you." onBack={goBack}>
+            <Onboard {...ob} image="valley" title="Where you work" lede="So productions near you, and in your languages, can find you." onBack={goBack} footer={
+              <>
+                <Button block size="l" disabled={!city.trim()} aria-describedby="where-missing" onClick={() => (invite ? finishProfile() : go('work'))}>
+                  Continue
+                </Button>
+                <Missing id="where-missing" items={[!city.trim() && 'where you are based']} />
+              </>
+            }>
               <Field label="Where are you based?">
                 <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" autoComplete="address-level2" />
               </Field>
@@ -544,19 +609,16 @@ export function EntryFlow() {
                   {avail === 'from' && <DateField className="field" value={availFrom} onChange={setAvailFrom} label="Open to work from" placeholder="Choose a start date" />}
                 </>
               )}
-              <Button block size="l" disabled={!city.trim()} aria-describedby="where-missing" onClick={() => (invite ? finishProfile() : go('work'))}>
-                Continue
-              </Button>
-              <Missing id="where-missing" items={[!city.trim() && 'where you are based']} />
             </Onboard>
           )}
 
           {step === 'work' && primary && (
-            <Onboard className={district ? 'ana-show-work' : undefined} step={stepIndex} total={steps.length} image="moodboard" title={district ? 'Show your work' : 'Add your work'} onBack={goBack} onSkip={finishProfile} skipLabel={district ? 'Skip for now' : 'Skip'}>
-              {district ? <DistrictAddWork previewUrls={previewUrls.current} craft={primary} reel={showreel} draft={showreelDraft} setReel={setShowreel} setDraft={setShowreelDraft} work={work} setWork={setWork} link={link} setLink={setLink} /> : <AddWork craft={primary} reelUrl={reelUrl} setReelUrl={setReelUrl} work={work} setWork={setWork} link={link} setLink={setLink} />}
+            <Onboard className={district ? 'ana-show-work' : undefined} {...ob} image="moodboard" title={district ? 'Show your work' : 'Add your work'} onBack={goBack} onSkip={finishProfile} skipLabel={district ? 'Skip for now' : 'Skip'} footer={
               <Button block size="l" onClick={finishProfile}>
                 {showreel || showreelDraft || reelUrl || work.length || link ? 'Finish' : 'Show me Art and Artist'}
               </Button>
+            }>
+              {district ? <DistrictAddWork previewUrls={previewUrls.current} craft={primary} reel={showreel} draft={showreelDraft} setReel={setShowreel} setDraft={setShowreelDraft} work={work} setWork={setWork} link={link} setLink={setLink} /> : <AddWork craft={primary} reelUrl={reelUrl} setReelUrl={setReelUrl} work={work} setWork={setWork} link={link} setLink={setLink} />}
             </Onboard>
           )}
 
@@ -808,9 +870,10 @@ function TransientNotice({ text }: { text: string }) {
   );
 }
 
-function Onboard({ step, total, image, title, lede, onBack, onSkip, skipLabel = 'Skip', children, className }: { className?: string; step: number; total: number; image: string; title: string; lede?: string; onBack: () => void; onSkip?: () => void; skipLabel?: string; children: ReactNode }) {
+function Onboard({ step, total, optional = [], note, image, title, lede, onBack, onSkip, skipLabel = 'Skip', footer, children, className }: { className?: string; step: number; total: number; optional?: boolean[]; note?: string; image: string; title: string; lede?: string; onBack: () => void; onSkip?: () => void; skipLabel?: string; footer?: ReactNode; children: ReactNode }) {
+  const isOptional = !!optional[step];
   return (
-    <div className={`ob${className ? ` ${className}` : ''}`}>
+    <div className={`ob${footer ? ' ob--sticky' : ''}${className ? ` ${className}` : ''}`}>
       <div className="ob-top">
         <EntryArt name={image} priority />
         <div className="ob-nav">
@@ -825,17 +888,24 @@ function Onboard({ step, total, image, title, lede, onBack, onSkip, skipLabel = 
         </div>
       </div>
       <div className="ob-body">
-        <div className="ob-progress" role="progressbar" aria-label="Profile setup" aria-valuemin={1} aria-valuemax={total} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${total}`}>
+        <div className="ob-progress" role="progressbar" aria-label="Profile setup" aria-valuemin={1} aria-valuemax={total} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${total}${isOptional ? ', optional' : ''}`}>
           {Array.from({ length: total }).map((_, i) => (
-            <span key={i} className={i <= step ? 'is-on' : ''} />
+            <span key={i} className={`${i <= step ? 'is-on' : ''}${optional[i] ? ' is-opt' : ''}`} />
           ))}
         </div>
         <p className="ob-count" aria-hidden>
           Step {step + 1} of {total}
+          {isOptional && <span className="ob-opt">Optional</span>}
         </p>
+        {note && (
+          <p className="ob-note" role="status">
+            {note}
+          </p>
+        )}
         <h1 className="ob-title">{title}</h1>
         {lede && <p className="ob-lede">{lede}</p>}
         <div className="stack">{children}</div>
+        {footer && <div className="ob-footer">{footer}</div>}
       </div>
     </div>
   );
