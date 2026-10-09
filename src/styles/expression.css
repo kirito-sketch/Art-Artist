@@ -990,7 +990,7 @@
  * covers tab screens only; media-led detail screens keep their own status treatment.)
  */
 .phone-screen:has(> .tab-layer[aria-hidden='false'] .canvas):not(:has(> .route-layer)) > .status-bar--dark {
-  background: color-mix(in srgb, var(--base) 94%, transparent);
+  --sb-ground: var(--base);
 }
 
 /* =========================================== Title responsiveness */
@@ -1312,10 +1312,7 @@
 
 /* Routes that sit on the canvas ask for the paper status bar explicitly. */
 .status-bar--paper {
-  color: var(--text);
-  background: color-mix(in srgb, var(--base) 94%, transparent);
-  -webkit-backdrop-filter: saturate(1.4) blur(18px);
-  backdrop-filter: saturate(1.4) blur(18px);
+  --sb-ground: var(--base);
 }
 
 /* =========================================== First-run Home */

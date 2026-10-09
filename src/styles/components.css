@@ -717,13 +717,29 @@
   pointer-events: none;
 }
 
-/* Frosted, like iOS: over the page's own ground it looks like nothing, and whatever scrolls beneath it is
-   blurred instead of being sliced off at a hard edge. */
-.status-bar--dark {
+/* The status area is the page's own ground (--sb-ground), and instead of ending at a hard edge it melts into the
+   page over a short fade below it. Screens with a sticky header see no change (the header is the same ground);
+   on open screens like Home, content scrolling beneath dissolves rather than slicing off against a strip. */
+.status-bar--dark,
+.status-bar--paper {
+  --sb-ground: var(--surface);
   color: var(--text);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  -webkit-backdrop-filter: saturate(1.4) blur(18px);
-  backdrop-filter: saturate(1.4) blur(18px);
+}
+.status-bar--paper {
+  --sb-ground: var(--base);
+}
+.status-bar--dark::before,
+.status-bar--paper::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 -20px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--sb-ground) calc(100% - 26px),
+    color-mix(in srgb, var(--sb-ground) 0%, transparent) 100%
+  );
 }
 
 .status-bar--light {

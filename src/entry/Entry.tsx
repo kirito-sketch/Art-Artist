@@ -725,7 +725,8 @@ export function EntryFlow() {
 
 /* ------------------------------------------------------------ pieces */
 
-function Form({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {
+/** Account screens: Back, a title with an optional one-line lede, the form, and an optional footnote held at the bottom. */
+function Form({ title, lede, foot, onBack, children }: { title: string; lede?: ReactNode; foot?: ReactNode; onBack: () => void; children: ReactNode }) {
   return (
     <div className="auth">
       <header className="auth-bar">
@@ -733,8 +734,12 @@ function Form({ title, onBack, children }: { title: string; onBack: () => void; 
           <ChevronLeft size={26} />
         </button>
       </header>
-      <h1 className="ob-title">{title}</h1>
+      <div className="auth-head">
+        <h1 className="ob-title">{title}</h1>
+        {lede && <p className="auth-lede">{lede}</p>}
+      </div>
       <div className="stack">{children}</div>
+      {foot && <div className="auth-foot">{foot}</div>}
     </div>
   );
 }
@@ -1118,7 +1123,12 @@ function ProviderSheet({ kind, invite, onPick, onCancel }: { kind: 'apple' | 'go
 
 function SignIn({ email, onEmail, onBack, onSubmit, onProvider }: { email: string; onEmail: (s: string) => void; onBack: () => void; onSubmit: () => void; onProvider: (p: 'apple' | 'google') => void }) {
   return (
-    <Form title="Sign in" onBack={onBack}>
+    <Form
+      title="Sign in"
+      lede="Welcome back. Use the way you joined."
+      foot={<p className="provider-note">Prototype accounts: kiran@example.com, tara@example.com, aditi@example.com. Any other address shows the "no account" path.</p>}
+      onBack={onBack}
+    >
       <button className="auth-btn auth-btn--apple" onClick={() => onProvider('apple')}>
         <AppleMark /> Continue with Apple
       </button>
@@ -1127,7 +1137,6 @@ function SignIn({ email, onEmail, onBack, onSubmit, onProvider }: { email: strin
       </button>
       <p className="or">or</p>
       <EmailForm value={email} onChange={onEmail} onSubmit={onSubmit} />
-      <p className="provider-note">Prototype accounts: kiran@example.com, tara@example.com, aditi@example.com. Any other address shows the "no account" path.</p>
     </Form>
   );
 }

@@ -60,15 +60,16 @@
 }
 @media (prefers-reduced-motion: reduce) { .phone .ob-top { transition: none; } }
 
-/* ---- Account screens (sign in, email, code, consent): a soft echo of the welcome art at the top, so moving from
-   the immersive Welcome into a form is a continuation, not a jump to a blank page. */
-.phone .auth { position: relative; isolation: isolate; }
-.phone .auth::before {
-  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 200px; z-index: -1;
-  background: url('/images/brand/entry/chair.jpg') center 40% / cover no-repeat;
-  filter: blur(26px) saturate(1.1); opacity: 0.32;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
-}
+/* ---- Account screens (sign in, email, code, consent): a calm page, no artwork. Back sits in its own row, the title
+   gets room below it, and a footnote (the prototype accounts) rests at the bottom instead of trailing the button. */
+.phone .auth { display: flex; flex-direction: column; min-height: 100%; padding-bottom: max(34px, env(safe-area-inset-bottom, 0px)); }
+.phone .auth-bar { margin: 0 -8px 0; }
+.phone .auth-head { display: flex; flex-direction: column; gap: 6px; margin: 18px 0 24px; }
+.phone .auth-head .ob-title { margin: 0; text-wrap: balance; }
+.phone .auth-lede { margin: 0; font-size: 15.5px; line-height: 1.4; color: var(--text-2); }
+.phone .auth .or { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
+.phone .auth .or::before, .phone .auth .or::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--text) 12%, transparent); }
+.phone .auth-foot { margin-top: auto; padding-top: 24px; }
 .phone .provider-note { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; color: var(--text-2); background: color-mix(in srgb, var(--text) 5%, transparent); }
 .phone .provider-row { min-height: 60px; }
 .phone .provider-row:disabled { opacity: 0.6; }

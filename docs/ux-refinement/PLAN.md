@@ -1008,3 +1008,10 @@ The `/test` research study is unchanged throughout (its two steps, intro, inline
 - **The duplicate Save pill** in the momentum row is removed.
 - **Checks:** the Stage 4 project checks pass 20/0 (updated for this rule), and journeys pass 21/0.
 
+
+## Sign in layout and status area (review feedback)
+
+- **Sign in:** the blurred welcome-art smudge behind account screens is gone. Back sits in its own row, the title gets room with a one-line lede ("Welcome back. Use the way you joined."), "or" is a ruled divider, and the prototype-accounts note rests at the bottom of the screen instead of trailing the button. `Form` gained optional `lede` and `foot` props, so every account screen can use the same layout.
+- **Status area (prototype frame):** it was a frosted strip in a slightly different colour from the page, so content scrolling under it on Home was sliced off at a hard edge. It is now the page's own ground (`--sb-ground`) with a 20px fade below it. Screens with a sticky header look the same as before; on open screens like Home, content dissolves into the top.
+- Screenshot: `docs/ux-refinement/auth/signin-statusbar.jpg` (Sign in before and after; Home dark before and after; Discover with its sticky header).
+- Checks: auth 56/0 (320, 375, 393, 393 dark), views 22/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, wt suites, fields and focusflow pass.
