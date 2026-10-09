@@ -6,7 +6,7 @@ import { profiles, type Reel } from '../../state/profile';
 import { Button, Photo, Row } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { previewVideo } from '../../ui/showreelPreview';
-import { MediaPicker } from '../create/PostComposer';
+import { MediaPicker } from '../../ui/MediaPicker';
 
 export function ShowreelMedia({ reel, privateDraft = false, active = true, startPlaying = false }: { reel: Reel; privateDraft?: boolean; active?: boolean; startPlaying?: boolean }) {
   const [playing, setPlaying] = useState(startPlaying);
@@ -122,7 +122,7 @@ export function ShowreelManager({ value, draft, onChange, onDraftChange, preview
         {error && <p role="alert" className="meta">{error}</p>}
         <label className="ob-field"><span className="field-label">Display title</span><input className="field" value={edit.title} maxLength={200} onChange={(e) => { titleEdited.current = true; setEdit({ ...edit, title: e.target.value }); }} /></label>
         {edit.url && <ShowreelMedia reel={edit} privateDraft />}
-        {edit.cover && <MediaFramingEditor media={edit.cover} surface="showreel" onChange={cover => setEdit({ ...edit, cover })} title="Showreel cover framing" />}
+        {edit.cover && <MediaFramingEditor media={edit.cover} surface="showreel" onChange={cover => setEdit({ ...edit, cover })} title="Cover" />}
         <Button variant="secondary" onClick={() => setCover(true)}>{edit.cover ? 'Change cover' : 'Add cover'}</Button>
         <Button variant="secondary" onClick={() => setSources(true)}>Replace showreel</Button>
         <Button block size="l" disabled={loading || !edit.title.trim() || (edit.source?.kind === 'native' ? !edit.url : !link)} onClick={() => {

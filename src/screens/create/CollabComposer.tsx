@@ -6,7 +6,7 @@ import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { Avatar, Button, IconButton, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { MediaPicker } from './PostComposer';
+import { MediaPicker } from '../../ui/MediaPicker';
 import { MissingHint, RowField } from '../../ui/fields';
 import { DateField, fmtPay, fmtRange, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
 

@@ -72,7 +72,8 @@ export interface SavedItem {
 export type Sheet =
   | { name: 'create' }
   | { name: 'notifications' }
-  | { name: 'availability' }
+  /** `from: 'create'`: opened from Create › Open to work, so saving offers to share it as a post (Stage 6, C2). */
+  | { name: 'availability'; from?: 'create' }
   | { name: 'intent' }
   | { name: 'showInterest'; id: string }
   | { name: 'reviewInterest'; opportunityId?: string }
@@ -506,13 +507,16 @@ function useStoreValue() {
         { id, kind: 'post', label: draft.media.length ? `Posting ${draft.media.length} ${draft.media.length === 1 ? 'item' : 'items'}` : 'Posting', progress: 0, state: 'uploading', thumb: draft.media[0] },
         () => {
           setUserPosts((ps) => [{ id, authorId: acting !== 'self' ? acting : viewer.id, time: 'now', text: draft.text, media: draft.media, presentation: draft.presentation, likes: 0, comments: 0 }, ...ps]);
-          // One portfolio: what Edit Profile shows and orders (docs/REVIEW_EVENTS_PROFILE.md §7).
-          if (draft.addToPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image').map(sourceOnly), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
-          showToast({ text: draft.addToPortfolio ? 'Posted and added to your portfolio' : 'Posted', tone: 'success' });
+          // One portfolio: what Edit Profile shows and orders (docs/REVIEW_EVENTS_PROFILE.md §7). It belongs to the
+          // person, so a post made as a house never adds to it; it holds photos only and never implies a credit.
+          const toPortfolio = draft.addToPortfolio && acting === 'self' && draft.media.some((m) => m.kind === 'image');
+          if (toPortfolio) (seed.portfolio[viewer.id] = [...draft.media.filter((m) => m.kind === 'image').map(sourceOnly), ...(seed.portfolio[viewer.id] ?? [])]), setProfileVersion((v) => v + 1);
+          // Posts appear on Discover and the author's profile, not on Home, so the toast is the way to see it land.
+          showToast({ text: toPortfolio ? 'Posted and added to Selected work' : 'Posted', tone: 'success', action: { label: 'View', run: () => push({ name: 'posts', ids: [id], index: 0 }) } });
         },
       );
     },
-    [runUpload, showToast, viewer.id, acting],
+    [runUpload, showToast, viewer.id, acting, push],
   );
 
   const publishCollab = useCallback(

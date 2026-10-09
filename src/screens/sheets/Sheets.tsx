@@ -37,8 +37,8 @@ export function SheetHost() {
       <Sheet className={districtHouse ? 'dhouse-sheet' : undefined} open={is('notifications')} onClose={closeSheet} title="Notifications" size="tall">
         <Notifications />
       </Sheet>
-      <Sheet open={is('availability')} onClose={closeSheet} title="Work preferences">
-        <AvailabilityForm />
+      <Sheet open={is('availability')} onClose={closeSheet} title="Availability">
+        <AvailabilityForm fromCreate={sheet?.name === 'availability' && sheet.from === 'create'} />
       </Sheet>
       <Sheet open={is('intent')} onClose={closeSheet} title="What are you looking to do right now?">
         <IntentForm />
@@ -158,9 +158,9 @@ function CreateMenu() {
   if (acting !== 'self')
     return (
       <div className="group create-rows">
-        <Row icon={<Plus size={22} />} label="New project" onPress={() => openSheet({ name: 'newProject' })} />
-        <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => openSheet({ name: 'pickProject' })} />
         <Row icon={<PenLine size={22} />} label={`Post as ${org(acting).name}`} onPress={() => push({ name: 'composePost' })} />
+        <Row icon={<UserSearch size={22} />} label={`Open a role for ${org(acting).name}`} onPress={() => openSheet({ name: 'pickProject' })} />
+        <Row icon={<Plus size={22} />} label="New project" onPress={() => openSheet({ name: 'newProject' })} />
         {eventRow}
       </div>
     );
@@ -168,9 +168,9 @@ function CreateMenu() {
     <div className="group create-rows">
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
       <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
-      <Row icon={<CircleCheck size={22} />} label="Open to work" onPress={() => push({ name: 'composeCollab', intent: 'available' })} />
-      <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
+      <Row icon={<CircleCheck size={22} />} label="Open to work" onPress={() => openSheet({ name: 'availability', from: 'create' })} />
       {eventRow}
+      <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />
     </div>
   );
 }
@@ -409,8 +409,12 @@ function IntentForm() {
   );
 }
 
-function AvailabilityForm() {
-  const { availability, setAvailability, closeSheet, scenario, setScenario } = useStore();
+/**
+ * Availability has one source (docs/ux-refinement/PLAN.md, Stage 6, C2): this sheet, opened from your profile, Edit
+ * profile, the profile checklist or Create › Open to work. From Create, saving offers to tell people in a post.
+ */
+function AvailabilityForm({ fromCreate = false }: { fromCreate?: boolean }) {
+  const { availability, setAvailability, closeSheet, scenario, setScenario, showToast, push } = useStore();
   const [open, setOpen] = useState(availability.open || scenario.newUser);
   const [later, setLater] = useState(availability.from !== 'Now');
   const [fromDay, setFromDay] = useState(() => parseDays(availability.from).start);
@@ -447,6 +451,7 @@ function AvailabilityForm() {
           setAvailability({ open, from, scope });
           if (scenario.newUser) setScenario({ newUser: false });
           closeSheet();
+          if (fromCreate && open) showToast({ text: "You're open to work", tone: 'success', action: { label: 'Share as a post', run: () => push({ name: 'composePost' }) } });
         }}
       >
         Save

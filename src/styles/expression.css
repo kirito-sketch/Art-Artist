@@ -2041,8 +2041,6 @@
 .nrow--action .row-chevron { color: var(--text-3); flex: none; }
 
 /* Media limits are said before you reach them. */
-.picker-limit { margin: 0 0 10px; }
-
 /* Bottom navigation: labelled tabs of one fixed width; icon, then the label on one shared baseline.
    The selected state (green, filled icon, slight lift, semibold label) lives in src/styles/refine.css. */
 .tab-item {

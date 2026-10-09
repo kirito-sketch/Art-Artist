@@ -241,11 +241,6 @@ html[data-input='keyboard'] .press-card:has(> .pc-hit:focus-visible) {
   text-align: center;
 }
 
-.composer-label {
-  display: block;
-  margin: 4px 0 6px;
-}
-
 /* ---------------------------------------------------------------- confirming a removal */
 .confirm-remove {
   padding: 14px 16px;

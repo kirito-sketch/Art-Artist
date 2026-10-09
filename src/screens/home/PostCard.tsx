@@ -40,8 +40,12 @@ function PostVideo({ src, label, fit, position, onMetadata, poster }: { poster?:
   return <video ref={ref} src={src} poster={poster} controls playsInline preload="metadata" onLoadedMetadata={e => onMetadata(e.currentTarget)} aria-label={label} style={{ objectFit: fit, objectPosition: position }} />;
 }
 
-/** One post presentation for Home, Discover, Profile and public Project pages. */
-export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolean }) {
+/**
+ * One post presentation for Home, Discover, Profile and public Project pages. `preview` is the composer's preview
+ * (docs/ux-refinement/PLAN.md, Stage 6): the same frame, slides and caption, without actions, links or likes, so
+ * what you review is exactly what the feed will show.
+ */
+export function PostCard({ post, anchor = false, preview, startIndex = 0, onPageChange }: { post: Post; anchor?: boolean; preview?: boolean; startIndex?: number; onPageChange?: (index: number) => void }) {
   const { push, viewer } = useStore();
   // Double-tap Likes on every post type, through the same Like state as the button; it never unlikes.
   const [liked, toggleLike] = usePostLike(viewer.id, post.id);
@@ -55,7 +59,8 @@ export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolea
   const author = party(post.authorId)!;
   const work = postWork(post);
   const [expanded, setExpanded] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(startIndex);
+  useEffect(() => onPageChange?.(page), [page]); // eslint-disable-line react-hooks/exhaustive-deps
   const track = useRef<HTMLDivElement>(null);
   const [frame, setFrame] = useState({ width: 0, height: 0 });
   const [geometry, setGeometry] = useState<Record<string, { width: number; height: number }>>({});
@@ -66,6 +71,11 @@ export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolea
     observer.observe(node);
     return () => observer.disconnect();
   }, [post.id, post.media.length]);
+  // A preview opens at the item that was tapped.
+  useEffect(() => {
+    const node = track.current;
+    if (node && startIndex) node.scrollLeft = startIndex * node.clientWidth;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const rememberGeometry = (id: string, width: number, height: number) => {
     if (width && height) setGeometry(previous => previous[id]?.width === width && previous[id]?.height === height ? previous : { ...previous, [id]: { width, height } });
   };
@@ -79,16 +89,19 @@ export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolea
   const actionPlacement = POST_NOTCH ? { bottom: 0, side: 'right' as const } : postActionPlacement(current ? { ...current, ...geometry[current.id], focal: policy?.focal } : undefined, frame, video, policy?.fit);
   // Single tap on a video pauses or resumes it (the video listens); on a still it does nothing, so a double tap is quick.
   const stageTap = useTapGestures({
-    onDouble: likeAt,
+    onDouble: preview ? undefined : likeAt,
     onSingle: video ? () => track.current?.querySelector(`.ana-post-slide[data-index="${page}"] [data-reel]`)?.dispatchEvent(new Event('reel-toggle')) : undefined,
   });
-  const textTap = useTapGestures({ onDouble: likeAt });
-  const identity = <Pressable className="ana-post-author" onClick={() => push(author.kind === 'org' ? { name: 'org', id: author.id } : { name: 'profile', id: author.id })} scale={0.98} aria-label={`View ${author.name}'s profile`}>
+  const textTap = useTapGestures({ onDouble: preview ? undefined : likeAt });
+  const identity = preview ? <span className="ana-post-author">
+    <Avatar party={author} size={32} />
+    <span><strong>{author.name}</strong><small>{author.kind === 'person' ? author.role : 'Production house'} · Preview</small></span>
+  </span> : <Pressable className="ana-post-author" onClick={() => push(author.kind === 'org' ? { name: 'org', id: author.id } : { name: 'profile', id: author.id })} scale={0.98} aria-label={`View ${author.name}'s profile`}>
     <Avatar party={author} size={32} />
     <span><strong>{author.name}</strong><small>{author.kind === 'person' ? author.role : 'Production house'} · {post.time === 'now' ? 'Just now' : post.time}</small></span>
   </Pressable>;
   return <article className={`ana-post ${hasMedia ? '' : 'ana-post--text'}`} data-post={post.id}>
-    <header className="ana-post-head">{identity}<PostMore post={post} /></header>
+    <header className="ana-post-head">{identity}{!preview && <PostMore post={post} />}</header>
     {hasMedia ? <motion.div className={`ana-post-stage ${video ? 'ana-post-stage--video' : ''} ${POST_NOTCH ? 'ana-post-stage--notch' : ''} ${ROW ? 'ana-post-stage--row' : ''} ${actionPlacement.side === 'left' ? 'ana-post-stage--actions-left' : ''}`} layoutId={anchor ? shared.post(post.id) : undefined} transition={spring.push} style={POST_ACTIONS === 'pill' ? { '--post-action-bottom': `${actionPlacement.bottom}px` } as import('react').CSSProperties : undefined} onClick={ROW ? stageTap : undefined}>
       <div className="ana-post-track" ref={track} style={{ aspectRatio: ratio }} tabIndex={post.media.length > 1 ? 0 : undefined} role={post.media.length > 1 ? 'region' : undefined} aria-label={post.media.length > 1 ? 'Post media. Swipe or use left and right arrow keys.' : undefined}
         onKeyDown={e => { if (e.target !== e.currentTarget || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return; e.preventDefault(); const next = Math.max(0, Math.min(post.media.length - 1, page + (e.key === 'ArrowRight' ? 1 : -1))); track.current?.scrollTo({ left: next * track.current.clientWidth, behavior: 'smooth' }); }}
@@ -98,15 +111,15 @@ export function PostCard({ post, anchor = false }: { post: Post; anchor?: boolea
         </div>)}
       </div>
       {post.media.length > 1 && <span className="ana-post-index" aria-live="polite">{page + 1} / {post.media.length}</span>}
-      {!ROW && <PostActions post={post} variant={POST_ACTIONS} />}
+      {!ROW && !preview && <PostActions post={post} variant={POST_ACTIONS} />}
       {ROW && <AnimatePresence>{hearts.map((h) => <TapHeart key={h.id} x={h.x} y={h.y} />)}</AnimatePresence>}
     </motion.div> : null}
-    {hasMedia && ROW && <PostActions post={post} variant="row" />}
+    {hasMedia && ROW && !preview && <PostActions post={post} variant="row" />}
 
     {post.text && <div className={`ana-post-copy ${!hasMedia && ROW ? 'ana-post-copy--tap' : ''}`} onClick={!hasMedia && ROW ? textTap : undefined}>{!hasMedia && ROW && <AnimatePresence>{hearts.map((h) => <TapHeart key={h.id} x={h.x} y={h.y} />)}</AnimatePresence>}<p className={`ana-post-caption ${long && !expanded ? 'is-clamped' : ''}`} lang={scriptLang(post.text)}>{post.text}</p>
       {long && !expanded && <button className="link ana-post-expand" onClick={() => setExpanded(true)} aria-label={`Read more of ${author.name}'s post`}>More</button>}
     </div>}
     {work ? <Pressable className="ana-post-context" onClick={() => push({ name: 'work', id: work.id })} scale={.98}><small>Project</small><strong>{work.title}</strong></Pressable> : post.project ? <p className="ana-post-context"><small>Project</small><strong>{post.project}</strong></p> : null}
-    {!hasMedia && <PostActions post={post} variant={POST_ACTIONS} />}
+    {!hasMedia && !preview && <PostActions post={post} variant={POST_ACTIONS} />}
   </article>;
 }

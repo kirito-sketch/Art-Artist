@@ -7,7 +7,7 @@ import { useStore } from '../../state/store';
 import { org } from '../../state/selectors';
 import { Avatar, Button } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { MediaPicker } from '../create/PostComposer';
+import { MediaPicker } from '../../ui/MediaPicker';
 
 const WORK = ['Features', 'Series', 'Ads', 'Documentary', 'Music videos', 'Shorts'];
 const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata'];

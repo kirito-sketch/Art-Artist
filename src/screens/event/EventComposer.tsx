@@ -1,16 +1,15 @@
-import { MediaFramingEditor } from '../../ui/MediaFraming';
-import { CalendarDays, Check, Clock, ImagePlus, Link2, MapPin, X } from 'lucide-react';
+import { CoverField } from '../../ui/CoverField';
+import { CalendarDays, Check, Clock, Link2, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 import type { Craft, EventType, IndustryEvent, Media } from '../../data/types';
 import { CRAFTS } from '../../data/crafts';
 import { AUDITION_MESSAGE, EVENT_TYPES, validateDraft, type EventDraft } from '../../domain/events';
-import { MediaPicker } from '../create/PostComposer';
 import { hostFacts } from '../../state/events';
 import { party } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { work } from '../../state/world';
 import { DateField, RowField } from '../../ui/fields';
-import { Avatar, Button, EmptyState, IconButton, Photo, Row } from '../../ui/primitives';
+import { Avatar, Button, EmptyState, IconButton, Row } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { useFeatures } from '../../ui/features';
 const IST = '+05:30';
@@ -40,7 +39,6 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
   const [joiningUrl, setJoiningUrl] = useState(editing?.joiningUrl ?? '');
   const [capacity, setCapacity] = useState(editing?.capacity?.toString() ?? '');
   const [cover, setCover] = useState<Media | undefined>(editing?.cover);
-  const [coverPick, setCoverPick] = useState(false);
   const [link, setLink] = useState(editing?.link ?? '');
   const [summary, setSummary] = useState(editing?.summary ?? '');
   const [audience, setAudience] = useState<Craft[]>(Array.isArray(editing?.audience) ? editing.audience : []);
@@ -319,27 +317,7 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
           />
           {err('summary') && <p className="field-error">{err('summary')}</p>}
         </div>
-        {cover && <MediaFramingEditor media={cover} surface="event-hero" onChange={setCover} title="Event cover framing" />}
-        <div>
-          <span className="field-label">Cover (optional)</span>
-          {cover ? (
-            <div className="ev-cover">
-              <Photo surface="event-hero" media={cover} showPlay={false} />
-              <span className="ev-cover-actions">
-                <Button size="s" variant="secondary" onClick={() => setCoverPick(true)}>
-                  Change
-                </Button>
-                <Button size="s" variant="secondary" onClick={() => setCover(undefined)}>
-                  Remove
-                </Button>
-              </span>
-            </div>
-          ) : (
-            <Button variant="secondary" icon={<ImagePlus size={16} />} onClick={() => setCoverPick(true)}>
-              Add a cover
-            </Button>
-          )}
-        </div>
+        <CoverField label="Cover (optional)" media={cover} surface="event-hero" onChange={setCover} />
         <details className="ev-extra">
           <summary>Who this is for · {audience.length ? `${audience.length} crafts` : 'Everyone'}</summary>
           <p className="meta">Helps people understand relevance. Anyone can request a place.</p>
@@ -406,17 +384,6 @@ export function EventComposer({ projectId, editId }: { projectId?: string; editI
           {editing ? 'Save changes' : 'Publish event'}
         </Button>
       </div>
-      <Sheet open={coverPick} onClose={() => setCoverPick(false)} title="Cover" size="tall">
-        <MediaPicker
-          kind="image"
-          single
-          selected={[]}
-          onDone={(ms: Media[]) => {
-            if (ms[0]?.kind === 'image') setCover(ms[0]);
-            setCoverPick(false);
-          }}
-        />
-      </Sheet>
       <Sheet open={discard} onClose={() => setDiscard(false)} title="Discard changes?" close={false}>
         <div className="stack">
           <Button block variant="danger" onClick={pop}>

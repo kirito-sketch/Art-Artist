@@ -578,40 +578,6 @@
   line-height: 1.45;
 }
 
-.composer-media {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.composer-thumb {
-  position: relative;
-  flex: none;
-  width: 120px;
-  height: 150px;
-  border-radius: var(--r-m);
-  overflow: hidden;
-}
-
-.composer-thumb .photo {
-  position: absolute;
-  inset: 0;
-}
-
-.composer-remove {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-}
-
 .composer-tools {
   display: flex;
   align-items: center;
@@ -714,41 +680,6 @@
   gap: 3px;
   border-radius: var(--r-m);
   overflow: hidden;
-}
-
-.picker-item {
-  position: relative;
-  aspect-ratio: 1;
-}
-
-.picker-item .photo {
-  position: absolute;
-  inset: 0;
-  transition: transform 0.2s var(--ease-out);
-}
-
-.picker-item.is-on .photo {
-  transform: scale(0.88);
-  border-radius: 8px;
-}
-
-.picker-check {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  border: 2px solid #fff;
-  background: rgba(0, 0, 0, 0.2);
-  color: #fff;
-}
-
-.picker-item.is-on .picker-check {
-  background: var(--accent);
-  border-color: var(--accent);
 }
 
 .notif {
@@ -1686,10 +1617,6 @@ button.large-title.org-name--switch { font-size: var(--large-title, 34px); font-
 .ws-pad { margin-left: var(--gutter); margin-right: var(--gutter); }
 .ws-announce { margin: 4px var(--gutter) 8px; padding: 16px; border-radius: 16px; border: 1px dashed color-mix(in srgb, var(--text) 25%, transparent); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .ph-state--added { color: var(--text-2, #666); background: color-mix(in srgb, var(--text) 8%, transparent); }
-.art-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.art-thumb { aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; border: 0; padding: 0; background: none; outline: 2px solid transparent; outline-offset: 2px; }
-.art-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.art-thumb.is-on { outline-color: var(--accent); }
 .share-lists { display: grid; gap: 14px; }
 .ap-who, .credit-preview, .assoc-card { display: flex; gap: 12px; align-items: center; }
 .ap-who > span:last-child, .credit-preview > span:last-child, .assoc-card > span:last-child { display: flex; flex-direction: column; }

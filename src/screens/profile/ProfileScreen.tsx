@@ -14,7 +14,7 @@ import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
 import { useFeatures } from '../../ui/features';
 import { FeaturedWorkSection } from './WorkPortfolio';
-import { Ban, Bookmark, Camera, Check, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, Check, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, PenLine, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
@@ -294,7 +294,15 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
             </span>
           </p>
           {/* Availability is what someone hiring checks first, so it sits with the identity, not at the bottom. */}
-          {preferences.configured && preferences.open && <p className="pid-available">{availableLabel(preferences.from)}</p>}
+          {/* Your own availability is edited right here, in the availability sheet (Stage 6, C2). */}
+          {own && isTab ? (
+            <button className={`pid-available pid-available--edit${preferences.configured && preferences.open ? '' : ' is-off'}`} onClick={() => openSheet({ name: 'availability' })} aria-label={`Availability: ${preferences.configured ? (preferences.open ? availableLabel(preferences.from) : 'not taking work') : 'not set'}. Edit`}>
+              {preferences.configured ? (preferences.open ? availableLabel(preferences.from) : 'Not taking work') : 'Set availability'}
+              <PenLine size={13} aria-hidden />
+            </button>
+          ) : (
+            preferences.configured && preferences.open && <p className="pid-available">{availableLabel(preferences.from)}</p>
+          )}
         </header>
           {selectedCover.showreel && <button className="profile-play" onClick={() => setReelOpen(true)}><Play size={16} fill="currentColor" /> Play showreel</button>}
           <div className={`profile-actions${own ? ' profile-actions--self' : ''}`}>

@@ -1,0 +1,98 @@
+/* ================================================================ Create (docs/ux-refinement/PLAN.md, Stage 6)
+ * The device picker control, the media tray, the shared picker sheet, the post composer and its preview.
+ * Class names are new (mtray, mpick, device-pick) so nothing older (.picker is a settings list) can restyle them.
+ */
+
+/* Device picker: a label that looks like whatever it sits in (a primary button, a tool, a tray tile). */
+.phone .device-pick { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.phone .device-pick.is-disabled { opacity: 0.45; pointer-events: none; }
+.phone .device-pick:has(input:focus-visible) { outline: 2px solid var(--text); outline-offset: 2px; }
+.phone .device-pick-busy { font-size: var(--t-5, 13px); }
+
+/* Tray: compact square thumbnails, four across, wrapping. Order number top left, remove top right. */
+.phone .mtray { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.phone .mtray-item { position: relative; aspect-ratio: 1; border-radius: var(--r-s); overflow: hidden; background: var(--fill); }
+.phone .mtray-item.is-dragging { z-index: 2; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28); transform: scale(1.06); }
+.phone .mtray-open { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; touch-action: pan-y; -webkit-touch-callout: none; user-select: none; }
+.phone .mtray-open .photo { position: absolute; inset: 0; }
+.phone .mtray-order {
+  position: absolute; left: 5px; top: 5px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--action); color: var(--on-action, #fff);
+}
+.phone .mtray-video {
+  position: absolute; left: 5px; bottom: 5px; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px;
+  border-radius: 999px; font-size: 10px; font-weight: 600; background: rgba(0, 0, 0, 0.6); color: #fff;
+}
+/* 22 px visual in a 30 px corner target: large enough to hit, small enough that the tile's centre (preview, drag)
+   stays clear even on 67 px tiles at 320 px. */
+.phone .mtray-remove { position: absolute; right: 0; top: 0; width: 30px; height: 30px; display: grid; place-items: center; color: #fff; }
+.phone .mtray-remove::before { content: ''; position: absolute; right: 4px; top: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0, 0, 0, 0.62); }
+.phone .mtray-remove svg { position: relative; margin: -4px -4px 0 0; }
+.phone .mtray-item--add { background: transparent; }
+.phone .mtray-add { width: 100%; height: 100%; border-radius: var(--r-s); background: var(--fill); color: var(--text-2); }
+
+/* Shared picker sheet: device first, then the selection, then the labelled samples. */
+.phone .mpick { display: flex; flex-direction: column; gap: 10px; }
+.phone .mpick-note { margin: 0; }
+.phone .mpick-error { margin: 0; color: var(--danger-ink, var(--danger)); }
+.phone .mpick-selected { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.phone .mpick-selected .meta { margin: 0; }
+.phone .mpick-samples { margin-top: 10px; }
+.phone .mpick-title { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: var(--t-4, 15px); font-weight: 600; }
+.phone .mpick-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-radius: var(--r-s); overflow: hidden; }
+.phone .mpick-item { position: relative; aspect-ratio: 1; padding: 0; }
+.phone .mpick-item .photo { position: absolute; inset: 0; transition: transform 0.18s var(--ease-out, ease-out); }
+.phone .mpick-item.is-on .photo { transform: scale(0.86); border-radius: 6px; }
+.phone .mpick-item:disabled { opacity: 0.4; }
+.phone .mpick-check {
+  position: absolute; right: 5px; top: 5px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; border: 2px solid #fff; background: rgba(0, 0, 0, 0.25); color: #fff;
+}
+.phone .mpick-check-off { opacity: 0; }
+.phone .mpick-item.is-on .mpick-check { background: var(--action); border-color: var(--action); }
+
+/* Post composer */
+.phone .composer--post .composer-bar { display: grid; grid-template-columns: 1fr auto 1fr; }
+.phone .composer--post .composer-bar > :last-child { justify-self: end; }
+.phone .composer--post .composer-bar > :first-child { justify-self: start; }
+.phone .composer-title { margin: 0; font-size: var(--t-4, 16px); font-weight: 600; }
+.phone .composer-who-text { display: flex; flex-direction: column; min-width: 0; }
+.phone .composer--post .composer-text { min-height: 96px; margin-top: 12px; }
+.phone .composer-media-v2 { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.phone .composer-media-v2 .meta, .phone .composer--post .composer-body > .meta { margin: 0; }
+.phone .composer-option { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.phone .composer-option-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.phone .composer--post .composer-tools { padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+.phone .tool--text { width: auto; padding: 0 12px; gap: 6px; display: inline-flex; border-radius: 999px; font-size: var(--t-5, 14px); font-weight: 550; color: var(--text); }
+.phone .tool--text:disabled { opacity: 0.4; }
+.phone .tool--danger { color: var(--danger-ink, var(--danger)); }
+.phone .composer-preview-link { margin-left: auto; }
+
+/* Preview: a full-screen layer over the composer with the feed's own post card, then the item controls. */
+.phone .composer-preview { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; background: var(--bg); }
+.phone .composer-bar-spacer { width: 44px; }
+.phone .composer-preview-body { flex: 1; overflow-y: auto; padding: 4px 0 16px; }
+.phone .composer-preview-tools {
+  display: flex; align-items: center; justify-content: space-between; gap: 4px; flex-wrap: wrap;
+  padding: 8px 12px max(12px, env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line);
+}
+
+/* Reposition (ui/MediaFraming.tsx): a title, the frame, one hint line with Reset. */
+.phone .media-framing-title { margin: 12px 0 0; font-size: var(--t-4, 15px); font-weight: 600; }
+.phone .media-framing-preview.is-fill:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.phone .media-framing-hint { margin: 0; text-align: center; }
+
+/* Your own availability pill on your profile opens the availability sheet (C2). */
+.phone .pid-available--edit { min-height: 32px; cursor: pointer; }
+.phone .pid-available--edit svg { flex: none; opacity: 0.8; }
+.phone .v-profile--immersive .pid-available--edit.is-off::before { background: rgba(255, 255, 255, 0.55); }
+.phone .pid-available--edit:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* One cover on a create form (ui/CoverField.tsx): the frame once, then Change and Remove. */
+.phone .cover-field { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.phone .cover-field .media-framing { width: 100%; }
+.phone .cover-field .media-framing-title { display: none; }
+.phone .cover-field .media-framing-preview { margin: 0; width: 100% !important; }
+.phone .cover-field .media-framing-hint { text-align: left; }
+.phone .cover-field-actions { display: flex; gap: 8px; }
+.phone .composer--post .composer-text { overflow: hidden; }

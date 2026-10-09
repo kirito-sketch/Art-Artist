@@ -1,7 +1,6 @@
 import { TrailerManager } from './TrailerManager';
 import { trailerGate } from '../../domain/trailers';
-import { MediaFramingEditor } from '../../ui/MediaFraming';
-import { MediaPicker } from '../create/PostComposer';
+import { CoverField } from '../../ui/CoverField';
 import { CreditSeal } from '../../ui/CreditSeal';
 import { scriptLang } from '../../ui/compose';
 import { ChevronLeft, Globe2, Lock, Plus } from 'lucide-react';
@@ -11,7 +10,7 @@ import type { Media } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org, person } from '../../state/selectors';
 import { DEPTS, FORMATS, LANGUAGES, STAGES, creditState, project, publicName, world, type Format } from '../../state/world';
-import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Pressable, Row, SectionHeader, Verified } from '../../ui/primitives';
+import { Avatar, Button, EmptyState, IconButton, Photo, PressCard, Row, SectionHeader, Verified } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { DateField, fmtPay, fmtRange, MissingHint, MoneyField, PAY_UNITS, type PayUnit } from '../../ui/fields';
 import { useFeatures } from '../../ui/features';
@@ -428,7 +427,6 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
   const [logline, setLogline] = useState(p.logline ?? '');
   const [stage, setStage] = useState(p.stage);
   const [art, setArt] = useState<Media | undefined>(p.artwork);
-  const [artPicker, setArtPicker] = useState(false);
   const [releaseDate, setReleaseDate] = useState(p.releaseDate ?? '');
   return (
     <div className="stack">
@@ -450,19 +448,7 @@ function ProjectDetails({ id, done }: { id: string; done: () => void }) {
           ))}
         </div>
       </div>
-      <div>
-        <span className="field-label">Artwork</span>
-        <div className="art-pick">
-          {seed.cameraRoll.slice(0, 8).map((m) => (
-            <Pressable key={m.id} className={`art-thumb ${art?.id === m.id ? 'is-on' : ''}`} onClick={() => setArt(art?.id === m.id ? undefined : m)} scale={0.95}>
-              <Photo surface="project-card" media={m} showPlay={false} />
-            </Pressable>
-          ))}
-        </div>
-      </div>
-      <Button variant="secondary" onClick={() => setArtPicker(true)}>Choose project image</Button>
-      <Sheet open={artPicker} onClose={() => setArtPicker(false)} title="Project image" size="tall"><MediaPicker single kind="image" selected={[]} onDone={items => { setArt(items[0]); setArtPicker(false); }} /></Sheet>
-      {art && <MediaFramingEditor media={art} surface="project-hero" onChange={setArt} title="Project hero framing" />}
+      <CoverField label="Project image" media={art} surface="project-hero" onChange={setArt} addLabel="Add a project image" />
       {district && <div><span className="field-label">Release date</span><DateField label="Release date" value={releaseDate} onChange={setReleaseDate} clearable /></div>}
       {trailerGate(p, { stage }) && <p className="field-error" role="alert">{trailerGate(p, { stage })}</p>}
       <Button

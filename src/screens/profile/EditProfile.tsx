@@ -14,7 +14,7 @@ import { project as wproject } from '../../state/world';
 import { MobileVerify } from '../../ui/MobileVerify';
 import { Avatar, Button, Chip, IconButton, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { MediaPicker } from '../create/PostComposer';
+import { MediaPicker } from '../../ui/MediaPicker';
 
 /*
  * Edit Profile (docs/REVIEW_EVENTS_PROFILE.md §6): an overview of sections, each a focused page. Onboarding,
@@ -202,7 +202,7 @@ function IdentityPage() {
           {photo ? 'Change photo' : 'Add photo'}
         </button>
       </div>
-      {photo && <MediaFramingEditor title="Profile photo framing" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
+      {photo && <MediaFramingEditor title="Reposition photo" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
       <Field label="Name as credited">
         <input className="field" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" aria-label="Name as credited" />
       </Field>

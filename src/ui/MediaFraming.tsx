@@ -1,45 +1,93 @@
-import { useRef, useState } from 'react';
-import { POST_NOTCH } from './preview';
-import type { Media, MediaSurface, PostPresentation } from '../data/types';
-import { mediaPresentation, postFrame, presentationRatio, withFraming } from '../domain/mediaPresentation';
+import { useRef, useState, type KeyboardEvent } from 'react';
+import type { Media, MediaSurface } from '../data/types';
+import { mediaPresentation, presentationRatio, withFraming } from '../domain/mediaPresentation';
 import { mediaRatio } from '../domain/mediaLayout';
 import { Photo } from './primitives';
 
-/** Metadata-only editor: dragging has equivalent labelled keyboard controls. */
-export function MediaFramingEditor({ media, surface, onChange, ratio = presentationRatio(media, surface), title = 'Adjust framing' }: { media: Media; surface: MediaSurface; onChange: (media: Media) => void; ratio?: number; title?: string }) {
+/*
+ * Reposition (docs/ux-refinement/PLAN.md, Stage 6). Where a surface has a fixed frame that must crop (a round
+ * profile photo, an event or project banner), this is the one control: drag the picture, or use the arrow keys on
+ * it, to choose what stays in frame, and Reset to centre it. It writes the same nondestructive metadata as before
+ * (`media.presentations[surface].focal`); the original file is never changed. Surfaces that show the whole image
+ * (Fit) have nothing to reposition, so they get the preview only. Fit/Fill, focus sliders and the content select
+ * were removed from the UI; saved values on existing media still render.
+ */
+const STEP = 5;
+const clamp = (n: number) => Math.max(0, Math.min(100, n));
+
+export function MediaFramingEditor({ media, surface, onChange, ratio = presentationRatio(media, surface), title = 'Reposition' }: { media: Media; surface: MediaSurface; onChange: (media: Media) => void; ratio?: number; title?: string }) {
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>();
   const resolved = dimensions ? { ...media, ...dimensions } : media;
   const policy = mediaPresentation(resolved, surface, ratio);
   const focal = policy.focal ?? { x: 50, y: 50 };
   const drag = useRef<{ x: number; y: number; focal: typeof focal }>();
-  const change = (fit = policy.fit, focus = focal) => onChange(withFraming(resolved, surface, { fit, focal: focus }));
-  const clamp = (n: number) => Math.max(0, Math.min(100, n));
-  return <section className="media-framing"><h3>{title}</h3>
-    <div className={`media-framing-preview ${policy.fit === 'cover' ? 'is-fill' : ''}`} style={{ aspectRatio: ratio, width: `min(100%, 340px, ${55 * ratio}dvh)` }} onPointerDown={e => {
-      if (policy.fit !== 'cover') return;
-      e.currentTarget.setPointerCapture(e.pointerId); drag.current = { x: e.clientX, y: e.clientY, focal };
-    }} onPointerMove={e => {
-      if (!drag.current) return;
-      const rect = e.currentTarget.getBoundingClientRect(); const r = mediaRatio(resolved);
-      const width = Math.max(rect.width, rect.height * r), height = Math.max(rect.height, rect.width / r);
-      change('cover', { x: width - rect.width > 1 ? clamp(drag.current.focal.x - (e.clientX - drag.current.x) / (width - rect.width) * 100) : focal.x, y: height - rect.height > 1 ? clamp(drag.current.focal.y - (e.clientY - drag.current.y) / (height - rect.height) * 100) : focal.y });
-    }} onPointerUp={() => { drag.current = undefined; }} onPointerCancel={() => { drag.current = undefined; }}>
-      <Photo media={media} surface={surface} frameRatio={ratio} showPlay={false} alt={media.alt ?? 'Framing preview'} priority onImageLoad={image => {
-        if (image.src === new URL(media.src, document.baseURI).href && image.naturalWidth && image.naturalHeight) setDimensions(old => old?.width === image.naturalWidth && old?.height === image.naturalHeight ? old : { width: image.naturalWidth, height: image.naturalHeight });
-      }} />
-      {POST_NOTCH && surface === 'post' && <span className="media-framing-notch" aria-hidden />}
-    </div>
-    <div className="media-framing-controls" role="group" aria-label="Image framing"><button className="chip" aria-pressed={policy.fit === 'contain'} onClick={() => change('contain')}>Fit</button><button className="chip" aria-pressed={policy.fit === 'cover'} onClick={() => change('cover')}>Fill</button></div>
-    <p className="meta">{policy.fit === 'contain' ? 'The complete image stays visible.' : 'Drag to reposition, or use the focus controls. This preview crops the view; your original stays unchanged.'}</p>
-    {policy.fit === 'cover' && <div className="media-framing-focus"><label>Horizontal focus<input aria-label="Horizontal focus" type="range" min="0" max="100" value={focal.x} onChange={e => change('cover', { ...focal, x: +e.target.value })} /></label><label>Vertical focus<input aria-label="Vertical focus" type="range" min="0" max="100" value={focal.y} onChange={e => change('cover', { ...focal, y: +e.target.value })} /></label></div>}
-    <label className="media-content-type">Image content<select aria-label="Image content" value={media.contentType ?? 'photo'} onChange={e => onChange(e.target.value === 'artwork' ? withFraming({ ...media, contentType: 'artwork' }, surface, { fit: 'contain', focal }) : { ...media, contentType: e.target.value as Media['contentType'] })}><option value="photo">Photography / still</option><option value="portrait">Portrait</option><option value="artwork">Artwork / poster with text</option></select></label>
-  </section>;
-}
-export function PostFramingEditor({ media, presentation, onMediaChange, onPresentationChange }: { media: Media[]; presentation: PostPresentation; onMediaChange: (media: Media[]) => void; onPresentationChange: (choice: PostPresentation) => void }) {
-  const [index, setIndex] = useState(0); const active = Math.min(index, media.length - 1);
-  if (!media[active]) return null;
-  return <div className="stack"><div className="media-framing-controls" role="group" aria-label="Post presentation">{(['original', 'portrait', 'square', 'landscape'] as const).map(choice => <button key={choice} className="chip" aria-pressed={presentation === choice} onClick={() => onPresentationChange(choice)}>{choice[0].toUpperCase() + choice.slice(1)}</button>)}</div>
-    {media.length > 1 && <><p className="meta">One frame for the set. Adjust each image separately.</p><div className="media-framing-controls" role="group" aria-label="Choose image to frame">{media.map((m,i) => <button key={m.id} className="chip" aria-pressed={i === active} onClick={() => setIndex(i)}>Image {i + 1}</button>)}</div></>}
-    <MediaFramingEditor key={media[active].id} media={media[active]} surface="post" ratio={postFrame(media, presentation)} onChange={next => onMediaChange(media.map((m,i) => i === active ? next : m))} />
-  </div>;
+  const frame = useRef<HTMLDivElement>(null);
+  const fill = policy.fit === 'cover';
+  // How far the picture overflows the frame on each axis, in px; zero means that axis can't move.
+  const overflow = () => {
+    const rect = frame.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    const r = mediaRatio(resolved);
+    return { x: Math.max(0, Math.max(rect.width, rect.height * r) - rect.width), y: Math.max(0, Math.max(rect.height, rect.width / r) - rect.height) };
+  };
+  const set = (next: { x: number; y: number }) => onChange(withFraming(resolved, surface, { fit: 'cover', focal: { x: clamp(next.x), y: clamp(next.y) } }));
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const by = { ArrowLeft: [-STEP, 0], ArrowRight: [STEP, 0], ArrowUp: [0, -STEP], ArrowDown: [0, STEP] }[e.key];
+    if (!by) return;
+    e.preventDefault();
+    const o = overflow();
+    set({ x: o.x > 1 ? focal.x + by[0] : focal.x, y: o.y > 1 ? focal.y + by[1] : focal.y });
+  };
+  const moved = Math.abs(focal.x - 50) > 0.5 || Math.abs(focal.y - 50) > 0.5;
+
+  return (
+    <section className="media-framing">
+      <h3 className="media-framing-title">{title}</h3>
+      <div
+        ref={frame}
+        className={`media-framing-preview ${fill ? 'is-fill' : ''}`}
+        style={{ aspectRatio: ratio, width: `min(100%, 340px, ${55 * ratio}dvh)` }}
+        tabIndex={fill ? 0 : undefined}
+        role={fill ? 'group' : undefined}
+        aria-label={fill ? `${title}. Drag, or use the arrow keys, to choose what stays in frame.` : undefined}
+        onKeyDown={fill ? onKeyDown : undefined}
+        onPointerDown={(e) => {
+          if (!fill) return;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = { x: e.clientX, y: e.clientY, focal };
+        }}
+        onPointerMove={(e) => {
+          if (!drag.current) return;
+          const o = overflow();
+          const d = drag.current;
+          set({ x: o.x > 1 ? d.focal.x - ((e.clientX - d.x) / o.x) * 100 : focal.x, y: o.y > 1 ? d.focal.y - ((e.clientY - d.y) / o.y) * 100 : focal.y });
+        }}
+        onPointerUp={() => (drag.current = undefined)}
+        onPointerCancel={() => (drag.current = undefined)}
+      >
+        <Photo
+          media={media}
+          surface={surface}
+          frameRatio={ratio}
+          showPlay={false}
+          alt={media.alt ?? 'Preview'}
+          priority
+          onImageLoad={(image) => {
+            if (image.src === new URL(media.src, document.baseURI).href && image.naturalWidth && image.naturalHeight) setDimensions((old) => (old?.width === image.naturalWidth && old?.height === image.naturalHeight ? old : { width: image.naturalWidth, height: image.naturalHeight }));
+          }}
+        />
+      </div>
+      <p className="meta media-framing-hint">
+        {fill ? 'Drag to choose what stays in frame. Your original isn’t changed.' : 'The whole image is shown.'}
+        {fill && moved && (
+          <>
+            {' '}
+            <button type="button" className="link" onClick={() => set({ x: 50, y: 50 })}>
+              Reset
+            </button>
+          </>
+        )}
+      </p>
+    </section>
+  );
 }

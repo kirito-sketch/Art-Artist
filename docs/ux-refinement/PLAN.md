@@ -292,7 +292,7 @@ Acceptance:
 - All journeys pass.
 - Regression shows no new failures versus the known baseline (section 9).
 
-**Stage 6. Create flows, all personas (planned, not authorised).** A separate scope item added after Stage 5. Stage 5's integration QA has already run, so Stage 6 ends with its own integration QA re-run (6.7) rather than reopening Stage 5.
+**Stage 6. Create flows, all personas (authorised).** A separate scope item added after Stage 5. Stage 5's integration QA has already run, so Stage 6 ends with its own integration QA re-run (6.7) rather than reopening Stage 5.
 
 *Depends on:*
 
@@ -401,11 +401,43 @@ Acceptance:
   Screenshots of each journey go in `docs/ux-refinement/stage6/`.
 - **6.7 Integration QA re-run:** the Stage 5 journeys plus regression versus section 9. Then record, commit and stop for review.
 
-*Decisions needed before 6.2:*
+*6.1 audit (verified in the running app, 393 px, as Kiran and as Konark):*
 
-- **C1. A single image taller than 3:4.** Recommend showing it whole inside the feed's 3:4 frame (Fit, quiet bands) instead of today's centre crop, so nothing is cut unexpectedly.
-- **C2. "Open to work".** Recommend keeping it as a collab post, but having it also turn on Availability, so there's one source of truth.
-- **C3. Reordering.** Recommend drag in the tray plus Move earlier and Move later buttons in the preview.
+| Capability | Works? | What it really does |
+|---|---|---|
+| Presentation (Original, Portrait, Square, Landscape) | Yes | Sets one frame ratio for the whole set. A mixed set defaults to square. |
+| Fit / Fill | Yes | Fill crops (`object-fit: cover`). Fit shows the whole image. Back to Fit resets the focus. |
+| Drag to reposition | Yes | Only in Fill, and only along the axis that overflows. Writes `presentations.post.focal`. |
+| Horizontal and vertical focus sliders | Yes | The same focal point as drag (the keyboard alternative). |
+| "Image content" select | Partly | Artwork forces Fit; the other choices only label the image. |
+| Image editing | No | Nothing edits pixels. Framing is metadata only and the source is untouched. |
+| Picker | Partly | A bare "Choose Files" control, then 12 seeded images as 353 px tiles in one column. No demo label. Device files are added to the same list. |
+| Multi-select | Yes | Up to 10. The limit is stated. No order numbers. |
+| Media preview | No | 3 small thumbnails in a row that scrolls sideways. No full preview. |
+| Reorder | No | Order is fixed by pick order. |
+| Video | Yes | Reads on the device (WebM in tests), becomes a session-only `blob:`, and gets a poster frame. Framing chips are offered for it too. |
+| Add to portfolio | Partly | Adds images only, to the person's own portfolio. **Bug:** shown and applied when posting as a house. Videos are dropped silently. |
+| Publish | Yes | Closes at once, then "Posting…" on Home, then the toast. The post is on Discover and your profile, not on Home, so you never see it land. |
+| Discard | Yes | Asks only when there is text or media. |
+
+Worth keeping: the framing metadata model (`media.presentations`, read by the feed), the honest session-only file reading, the limit message and the discard rule. The UI around them is what's removed. Screenshots are in the session scratchpad (`s6/audit`).
+
+*Decisions (approved):*
+
+- **C1. Tall images are not cropped.** A single image taller than 3:4 shows whole inside the feed's 3:4 frame (Fit, quiet bands). Existing saved framing still renders.
+- **C2. Availability has one source.**
+  - On your own profile, the availability line is tappable and opens the existing availability sheet. When it isn't set, a "Set availability" chip opens it.
+  - Create → Open to work opens the same sheet, not a separate collab form. After saving, a toast offers "Share as a post", which opens the composer.
+  - Existing "available" collab posts keep rendering.
+- **C3. Reordering:** drag in the tray, plus Move earlier and Move later in the preview.
+
+*Engineering rules (so the feature is easy to extend later):*
+
+- Selection logic lives in a pure, unit-tested module (`domain/mediaSelection.ts`): add, remove, move, limit, order.
+- UI components only render it.
+- One shared `MediaTray` and one native file-input helper are used by every surface. Each surface states its kind and limit; it never forks the picker.
+- File reading stays in `ui/imagePreview.ts` and `ui/trailerPreview.ts`. A future storage backend replaces only that layer (D6).
+- The post model and publish action keep their types. Old framing metadata stays readable and is no longer written by Post.
 
 *Out of scope:*
 
@@ -528,7 +560,7 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 | 3 Detail pages | Approved (with review feedback) | `f3768b1` |
 | 4 Project and trailers | Approved (with review feedback) | `0bede79` |
 | 5 Home, integration, QA | Done, awaiting review | `9bd0736` |
-| 6 Create flows, all personas | Planned, awaiting authorisation | |
+| 6 Create flows, all personas | Done, awaiting review | see below |
 
 ### Stage 1 record
 
@@ -799,3 +831,61 @@ The Stage 3 check now waits for the event hero image; it read the image before t
 **Known limitations:** trailer uploads are session-only (D6); the automated upload check uses WebM because headless Chromium can't decode H.264.
 
 Screenshots are in `docs/ux-refinement/stage5/`.
+
+### Stage 6 record
+
+**Built:**
+
+- **One post composer** (`screens/create/PostComposer.tsx`).
+  - Top bar: Cancel, "New post", Post.
+  - The identity line ("Posting as you" or "Posting as the house") and one caption field ("What are you working on?") that grows with the text.
+  - The photo tool opens the device's own picker directly, and the choice lands in a tray under the caption. "Samples" opens the shared sheet with the labelled prototype media.
+  - No framing step.
+- **Shared media layer** (used by every create surface):
+  - `domain/mediaSelection.ts` (unit-tested): add, remove, move, the 10-item limit, single-item replace, kind filter, the portfolio split and the session-media test.
+  - `ui/DeviceMedia.tsx`: one native file input with honest file reading (an unreadable file gives a reason and keeps the rest).
+  - `ui/MediaTray.tsx`: a 4-column grid with order numbers, remove, tap to preview, and drag to reorder (a short press on touch, so swipes still scroll).
+  - `ui/MediaPicker.tsx`: device first, then the selection tray, then "Sample media · Prototype only" in a compact grid. Same props as before, so all 9 other call sites work unchanged.
+- **Preview** is the feed's own `PostCard` in a new `preview` mode (no actions, links or likes), inside the feed's `post-stream` wrapper, so it matches the feed exactly. Under it: Earlier, Later and Remove (the keyboard and switch-control way to reorder, decision C3).
+- **Publishing:** Post is disabled when empty and while files are read. It shows a pending state, then the existing Home progress bar. Failure shows "Couldn't post" with Retry and Cancel. Success shows a toast with View, which opens the new post (posts live on Discover and your profile, not Home).
+- **Portfolio fix:** "Also add photos to Selected work" is for individuals only. It explains it isn't a credit and that videos stay in the post. The store also refuses it when acting as a house, so the old bug can't come back.
+- **Reposition** (`ui/MediaFraming.tsx`) replaces the framing editor on the profile photo (onboarding and Edit profile), Selected work images, the showreel cover, the event cover and the project image. It is drag or arrow keys plus Reset. The same metadata is written and the original is never changed. Fit surfaces show the preview only.
+- **`ui/CoverField.tsx`:** one cover pattern for the event and project forms. It replaces two hand-rolled versions; the event form had shown the cover twice, and the project form had an unlabelled grid of demo images.
+- **Create menu:** Post leads for every persona. The house order is Post as the house, Open a role, New project, Event.
+- **Availability (C2):**
+  - Create → Open to work opens the availability sheet. After saving, a toast offers "Share as a post".
+  - On your own profile, the availability pill opens the same sheet ("Set availability" when not set).
+
+**Removed:**
+
+- Post framing: the presentation chips, per-image chips, Fit/Fill, focus sliders and the "Image content" select.
+- The unlabelled demo grid in the project form.
+- The `.picker` collision that made the picker one long column.
+- Dead CSS.
+
+**Verification:**
+
+- **Create suite: 48/0 at each of 320, 375, 393 and 430 px.** It covers:
+  - the menus for each persona, one prompt, the empty, pending and closed states, text-only publish with View
+  - device pick (portrait, landscape, tall, WebM video), order numbers, remove, add more, drag reorder
+  - preview: no actions, feed frame, every slide shown whole, video inline, Earlier, Later, Remove
+  - the samples sheet with its 4-column grid, the 10-item limit, the portfolio copy and toast
+  - the published post in the chosen order, uncropped
+  - discard, an unreadable file, a failed publish with Retry
+  - a house post (no portfolio, authored by the house)
+  - availability from Create and from the profile pill
+  - the event cover with Reposition only (keyboard moves it, Reset appears)
+  - the profile photo picker
+- **Other surfaces: 6/0.** Collab cover, and Selected work (device photos land in order; Reposition with no sliders). Onboarding reaches "add your work", uses the shared picker, and the image lands.
+- **Unit tests** (including `mediaSelection`), typecheck and build all pass.
+- **Regression:** wt12, wt5, wt346, wth, launch, test-a11y, test-flow mobile and focusflow pass. The Stage 2–5 checks pass (64, 240, 20, 7, 21, 21 / 0), and wtx and wtr pass.
+- **`fields` changed with C2:** its first section moved from the old "available" collab form to "Looking for someone", so it now runs 20/0 (one publish check dropped).
+
+Screenshots of the full journey are in `docs/ux-refinement/stage6/`.
+
+**Follow-ups (not done):**
+
+- The "available" branch of `CollabComposer` can no longer be reached from the UI. Existing available posts still render. It can be removed with its store branch in a later clean-up.
+- Uploads stay session-only (D6) until `TRAILER_STORAGE.md` (which covers media storage) is approved. `readDeviceFiles` is the one place a storage backend plugs in.
+- The house setup logo picker uses the shared picker but has no automated check.
+

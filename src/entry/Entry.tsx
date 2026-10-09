@@ -20,7 +20,7 @@ import { isStandalone } from '../dev/viewMode';
 import { StatusBar } from '../ui/chrome';
 import { Sheet } from '../ui/Sheet';
 import { DateField, fmtDay } from '../ui/fields';
-import { MediaPicker } from '../screens/create/PostComposer';
+import { MediaPicker } from '../ui/MediaPicker';
 import { research } from '../research-data/client';
 import { TEST_MODE } from '../research-data/surface';
 import { INTENTS, type Intent } from '../domain/relevance';
@@ -282,7 +282,7 @@ export function EntryFlow() {
                 <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo, avatarFraming }} size={88} />
                 <PhotoPicker onPick={src => { setPhoto(src); setAvatarFraming(undefined); }} has={!!photo} />
               </div>
-              {photo && <MediaFramingEditor title="Profile photo framing" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
+              {photo && <MediaFramingEditor title="Reposition photo" surface="avatar" media={{ id: 'avatar', kind: 'image', src: photo, contentType: 'portrait', presentations: { avatar: avatarFraming } }} onChange={m => setAvatarFraming(m.presentations?.avatar)} />}
               <Field label="Your name">
                 <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="As it appears in credits" autoComplete="name" autoFocus />
               </Field>

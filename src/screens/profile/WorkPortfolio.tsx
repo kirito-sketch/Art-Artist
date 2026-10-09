@@ -12,7 +12,7 @@ import { person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { Button, IconButton, Photo, Row, SectionHeader } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { MediaPicker } from '../create/PostComposer';
+import { MediaPicker } from '../../ui/MediaPicker';
 import { ShowreelManager } from './Showreel';
 
 const move = <T,>(items: T[], index: number, change: number) => {
@@ -80,8 +80,8 @@ export function WorkPortfolioPage() {
       {(words.reel || words.images) && featuredSection}
     </div>
     <Sheet className="ana-work-sheet" open={imagePicker} onClose={() => setImagePicker(false)} title="Add portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { setImages((old) => [...old, ...ms.filter((m) => m.kind === 'image' && !old.some((o) => o.id === m.id))]); setImagePicker(false); }} /></Sheet>
-    <Sheet className="ana-work-sheet" open={framingImage !== null} onClose={() => setFramingImage(null)} title="Portfolio framing" size="tall">{framingImage !== null && images[framingImage] && <MediaFramingEditor media={images[framingImage]} surface="portfolio-thumbnail" onChange={next => setImages(old => old.map((m,i) => i === framingImage ? next : m))} />}<Button block onClick={() => setFramingImage(null)}>Done</Button></Sheet>
-    <Sheet className="ana-work-sheet" open={imageMenu !== null} onClose={() => setImageMenu(null)} title="Portfolio image"><Button variant="secondary" onClick={() => { setFramingImage(imageMenu); setImageMenu(null); }}>Adjust framing</Button>
+    <Sheet className="ana-work-sheet" open={framingImage !== null} onClose={() => setFramingImage(null)} title="Reposition" size="tall">{framingImage !== null && images[framingImage] && <MediaFramingEditor media={images[framingImage]} surface="portfolio-thumbnail" onChange={next => setImages(old => old.map((m,i) => i === framingImage ? next : m))} />}<Button block onClick={() => setFramingImage(null)}>Done</Button></Sheet>
+    <Sheet className="ana-work-sheet" open={imageMenu !== null} onClose={() => setImageMenu(null)} title="Portfolio image"><Button variant="secondary" onClick={() => { setFramingImage(imageMenu); setImageMenu(null); }}>Reposition</Button>
       {imageMenu !== null && <div className="group">{imageMenu > 0 && <><Row icon={<Check size={18} />} label="Make cover" onPress={() => { setImages((old) => move(old, imageMenu, -imageMenu)); setImageMenu(null); }} /><Row icon={<ArrowUp size={18} />} label="Move earlier" onPress={() => { setImages((old) => move(old, imageMenu, -1)); setImageMenu(null); }} /></>}{imageMenu < images.length - 1 && <Row icon={<ArrowDown size={18} />} label="Move later" onPress={() => { setImages((old) => move(old, imageMenu, 1)); setImageMenu(null); }} />}<Row icon={<Trash2 size={18} />} label="Remove image" onPress={() => { setImages((old) => old.filter((_, i) => i !== imageMenu)); setImageMenu(null); }} /></div>}
     </Sheet>
     <Sheet className="ana-work-sheet" open={workPicker} onClose={() => setWorkPicker(false)} title="Add featured work" size="tall"><div className="stack"><Button variant="secondary" onClick={() => { setWorkPicker(false); setExternal({ id: crypto.randomUUID(), title: '', url: '' }); }}>Add external work link</Button><p className="field-label">Your public projects and accepted credits</p><div className="group">{eligible.filter((p) => !featured.some((f) => f.kind === 'project' && f.projectId === p.id)).map((p) => <Row key={p.id} label={publicName(p)} onPress={() => { setFeatured((old) => [...old, { id: crypto.randomUUID(), kind: 'project', projectId: p.id }]); setWorkPicker(false); }} />)}</div>{!eligible.length && <p className="meta">Shared independent projects and credits accepted on public projects appear here.</p>}</div></Sheet>
