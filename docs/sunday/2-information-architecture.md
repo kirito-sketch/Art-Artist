@@ -21,7 +21,7 @@ flowchart LR
   end
   subgraph INBOX["Inbox"]
     direction TB
-    i1["Conversations"]
+    i0["You · each house · All<br/>(house members only)"] ~~~ i1["Conversations"] ~~~ i2["New message"] ~~~ i3["Conversation options:<br/>mute, report, block"]
   end
   subgraph PROF["Profile"]
     direction TB

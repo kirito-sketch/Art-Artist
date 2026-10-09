@@ -680,6 +680,17 @@ function useStoreValue() {
       setSheet(null);
       if (!keepTab) setTabState('home');
     },
+    /** Stop acting for a house. Its projects, roles and credits stay with the house; you lose access at once. */
+    leaveHouse: (id: string) => {
+      setMemberMap((m) => ({ ...m, [viewer.id]: (m[viewer.id] ?? []).filter((x) => x !== id) }));
+      if (acting === id) {
+        setActing('self');
+        setInterestsReceived(seed.interests[viewer.id] ?? []);
+        setStack([]);
+      }
+      setSheet(null);
+      showToast({ text: `You no longer act for ${(seed.parties[id] as { name: string }).name}` });
+    },
     /** Who the signed-in person blocked. Personal, even while acting for a house. */
     blocked: world.blocks.filter((b) => b.by === viewer.id).map((b) => b.target),
     /** Whether the identity in use and this party can't reach each other, because either person blocked the other. */

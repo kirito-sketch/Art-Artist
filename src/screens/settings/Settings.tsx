@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
 import { org, party, person } from '../../state/selectors';
 import { usePref } from '../../state/settingsPrefs';
+import { ACCOUNTS, type Provider } from '../../domain/accounts';
 import { originOf, setAppearance, useAppearance, type Appearance } from '../../ui/theme';
 import { rovingKeys } from '../../ui/a11y';
 import { useFeatures } from '../../ui/features';
@@ -141,34 +142,21 @@ function Personal() {
 }
 
 function PersonalPage({ page }: { page: SettingsPage }) {
-  const { viewer, blocked, unblock, memberships, setActing, push } = useStore();
-  const me = person(viewer.id);
+  const { blocked, unblock, memberships, setActing, push } = useStore();
   const [who, setWho] = usePref<string>('who-can-message', 'everyone');
-  const [sheet, setSheet] = useState<'message' | 'blocked' | null>(null);
+  const [sheet, setSheet] = useState<'message' | 'blocked' | 'problem' | null>(null);
+  const { showToast } = useStore();
+  const copySupport = () => {
+    const done = () => showToast({ text: 'Support email copied' });
+    try {
+      navigator.clipboard.writeText('support@artandartist.film').then(done, done);
+    } catch {
+      done();
+    }
+  };
   const whoLabel: Record<string, string> = { everyone: 'Everyone', known: 'People I know' };
 
-  if (page === 'account')
-    return (
-      <div className="settings">
-        <Group title="Account">
-          <Row label="Name" value={me.name} onPress={() => push({ name: 'editProfile' })} />
-          <Row label="Phone" value="+91 98••• ••210" chevron={false} />
-          <Row label="Email" value={`${me.name.split(' ')[0].toLowerCase()}@••••.in`} chevron={false} />
-        </Group>
-        <Group title="Security">
-          <Row label="Two-step verification" value="On" chevron={false} />
-          <Row label="Signed-in devices" value="2" chevron={false} />
-        </Group>
-        <Group title="Your data">
-          <Row label="Agreements and download" onPress={() => push({ name: 'yourData' })} />
-        </Group>
-        <section className="settings-group settings-group--end">
-          <div className="group">
-            <Row label={<span className="danger-text">Delete account</span>} chevron={false} onPress={() => push({ name: 'yourData', step: 'delete' })} />
-          </div>
-        </section>
-      </div>
-    );
+  if (page === 'account') return <AccountPage />;
 
   if (page === 'houses')
     return (
@@ -253,9 +241,11 @@ function PersonalPage({ page }: { page: SettingsPage }) {
     return (
       <div className="settings">
         <Group>
-          <Row label="Contact support" value="support@artandartist.film" chevron={false} />
+          <Row label="Contact support" value="support@artandartist.film" chevron={false} onPress={copySupport} />
+          <Row label="Report a problem" onPress={() => setSheet('problem')} />
           <Row label="Community guidelines" onPress={() => push({ name: 'legal', doc: 'conduct' })} />
         </Group>
+        <ProblemSheet open={sheet === 'problem'} onClose={() => setSheet(null)} />
       </div>
     );
 
@@ -301,6 +291,174 @@ function AppearancePage() {
 }
 
 /* Hypothesis: owner plus members; credit permission is a separate grant. Needs validation with houses. */
+
+/* ---------------------------------------------------------------- Account: every row does something. */
+
+const mask = {
+  phone: (v: string) => v.replace(/\D/g, '').replace(/^(?:91)?(\d{2})\d{6}(\d{2})$/, '+91 $1••• •••$2'),
+  email: (v: string) => v.replace(/^(.).*?(@.+)$/, '$1•••$2'),
+};
+
+/** Change phone or email: enter it, confirm the code sent to it, done. Nothing changes until the code is confirmed. */
+function ChangeSheet({ kind, open, onClose, onSaved }: { kind: 'phone' | 'email'; open: boolean; onClose: () => void; onSaved: (v: string) => void }) {
+  const [step, setStep] = useState<'enter' | 'code'>('enter');
+  const [value, setValue] = useState('');
+  const [code, setCode] = useState('');
+  const [tried, setTried] = useState(false);
+  const valid = kind === 'phone' ? /^\+?[\d\s-]{10,15}$/.test(value.trim()) : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  const close = () => (setStep('enter'), setValue(''), setCode(''), setTried(false), onClose());
+  const noun = kind === 'phone' ? 'phone number' : 'email address';
+  return (
+    <Sheet open={open} onClose={close} title={kind === 'phone' ? 'Change phone number' : 'Change email'}>
+      {step === 'enter' ? (
+        <form className="set-form" noValidate onSubmit={(e) => (e.preventDefault(), setTried(true), valid && setStep('code'))}>
+          <label className="field-label" htmlFor={`chg-${kind}`}>New {noun}</label>
+          <input id={`chg-${kind}`} className="field" type={kind === 'phone' ? 'tel' : 'email'} inputMode={kind === 'phone' ? 'tel' : 'email'} value={value} onChange={(e) => setValue(e.target.value)} placeholder={kind === 'phone' ? '+91 98765 43210' : 'you@example.com'} aria-invalid={tried && !valid ? true : undefined} />
+          {tried && !valid && <p className="meta danger-text" role="alert">Enter a valid {noun}.</p>}
+          <p className="meta">{kind === 'phone' ? "We'll text a 6-digit code to the new number. Projects waiting on your old number aren't moved automatically." : "We'll email a 6-digit code to the new address. You'll sign in with it from then on."}</p>
+          <Button block type="submit">Send code</Button>
+        </form>
+      ) : (
+        <form className="set-form" noValidate onSubmit={(e) => (e.preventDefault(), code.length === 6 && (onSaved(mask[kind](value.trim())), close()))}>
+          <label className="field-label" htmlFor={`chg-${kind}-code`}>Code sent to {value.trim()}</label>
+          <input id={`chg-${kind}-code`} className="field code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="••••••" />
+          <p className="meta">Prototype: any 6 digits work.</p>
+          <div className="set-actions">
+            <Button block type="submit" disabled={code.length !== 6}>Confirm</Button>
+            <Button block variant="plain" type="button" onClick={() => setStep('enter')}>Use a different {noun}</Button>
+          </div>
+        </form>
+      )}
+    </Sheet>
+  );
+}
+
+const PROVIDERS: { id: Provider; label: string }[] = [
+  { id: 'apple', label: 'Apple' },
+  { id: 'google', label: 'Google' },
+  { id: 'email', label: 'Email' },
+];
+
+function AccountPage() {
+  const { viewer, push, showToast } = useStore();
+  const me = person(viewer.id);
+  const record = ACCOUNTS.find((a) => a.viewerId === viewer.id);
+  const [phone, setPhone] = usePref<string>('acct-phone', '+91 98••• ••210');
+  const [email, setEmail] = usePref<string>('acct-email', `${me.name.split(' ')[0].toLowerCase()}@••••.in`);
+  const [apple, setApple] = usePref<boolean>('signin-apple', !!record?.identities.some((i) => i.provider === 'apple'));
+  const [google, setGoogle] = usePref<boolean>('signin-google', !!record?.identities.some((i) => i.provider === 'google'));
+  const [mail, setMail] = usePref<boolean>('signin-email', record ? record.identities.some((i) => i.provider === 'email') : true);
+  const [twoStep, setTwoStep] = usePref<boolean>('acct-2sv', true);
+  const [othersOut, setOthersOut] = usePref<boolean>('acct-devices-out', false);
+  const [sheet, setSheet] = useState<'phone' | 'email' | 'twostep' | 'devices' | Provider | null>(null);
+  const on: Record<Provider, [boolean, (v: boolean) => void]> = { apple: [apple, setApple], google: [google, setGoogle], email: [mail, setMail] };
+  const connected = PROVIDERS.filter((p) => on[p.id][0]).length;
+  const prov = sheet === 'apple' || sheet === 'google' || sheet === 'email' ? PROVIDERS.find((p) => p.id === sheet)! : null;
+
+  return (
+    <div className="settings">
+      <Group title="Account">
+        <Row label="Name" value={me.name} onPress={() => push({ name: 'editProfile' })} />
+        <Row label="Phone" value={phone} onPress={() => setSheet('phone')} />
+        <Row label="Email" value={email} onPress={() => setSheet('email')} />
+      </Group>
+      <Group title="Ways to sign in" note="Art and Artist never links sign-in methods on its own. Connecting one asks you to sign in with it once.">
+        {PROVIDERS.map((p) => (
+          <Row key={p.id} label={p.label} value={on[p.id][0] ? 'Connected' : 'Connect'} onPress={() => setSheet(p.id)} />
+        ))}
+      </Group>
+      <Group title="Security">
+        <Row label="Two-step verification" value={twoStep ? 'On' : 'Off'} onPress={() => setSheet('twostep')} />
+        <Row label="Signed-in devices" value={othersOut ? '1' : '2'} onPress={() => setSheet('devices')} />
+      </Group>
+      <Group title="Your data">
+        <Row label="Agreements and download" onPress={() => push({ name: 'yourData' })} />
+      </Group>
+      <section className="settings-group settings-group--end">
+        <div className="group">
+          <Row label={<span className="danger-text">Delete account</span>} chevron={false} onPress={() => push({ name: 'yourData', step: 'delete' })} />
+        </div>
+      </section>
+
+      <ChangeSheet kind="phone" open={sheet === 'phone'} onClose={() => setSheet(null)} onSaved={(v) => (setPhone(v), showToast({ text: 'Phone number updated' }))} />
+      <ChangeSheet kind="email" open={sheet === 'email'} onClose={() => setSheet(null)} onSaved={(v) => (setEmail(v), showToast({ text: 'Email updated' }))} />
+
+      <Sheet open={!!prov} onClose={() => setSheet(null)} title={prov ? (on[prov.id][0] ? prov.label : `Connect ${prov.label}`) : ''}>
+        {prov && (
+          <div className="set-form">
+            {on[prov.id][0] ? (
+              <>
+                <p className="meta">You can sign in with {prov.label}.</p>
+                {connected > 1 ? (
+                  <Button block variant="outline" onClick={() => (on[prov.id][1](false), setSheet(null), showToast({ text: `${prov.label} removed` }))}>
+                    Remove {prov.label}
+                  </Button>
+                ) : (
+                  <p className="meta">This is your only way to sign in, so it can't be removed. Connect another one first.</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="meta">Sign in with {prov.label} once to connect it to this account. You'll be able to use either from then on.</p>
+                <Button block onClick={() => (on[prov.id][1](true), setSheet(null), showToast({ text: `${prov.label} connected` }))}>
+                  Continue with {prov.label}
+                </Button>
+                <p className="meta">Prototype: the provider is simulated.</p>
+              </>
+            )}
+          </div>
+        )}
+      </Sheet>
+
+      <Sheet open={sheet === 'twostep'} onClose={() => setSheet(null)} title="Two-step verification">
+        <div className="set-form">
+          <div className="group">
+            <Row label="Ask for a code on new devices">
+              <Toggle on={twoStep} onChange={(v) => (setTwoStep(v), showToast({ text: v ? 'Two-step verification on' : 'Two-step verification off' }))} label="Two-step verification" />
+            </Row>
+          </div>
+          <p className="meta">When you sign in on a new device, we also send a code to {phone}. Accepting credits and acting for a house always ask for it.</p>
+        </div>
+      </Sheet>
+
+      <Sheet open={sheet === 'devices'} onClose={() => setSheet(null)} title="Signed-in devices">
+        <div className="set-form">
+          <div className="group">
+            <Row label={<span className="settings-label"><span>iPhone · this device</span><span className="meta">Hyderabad · Active now</span></span>} chevron={false} />
+            {!othersOut && (
+              <Row label={<span className="settings-label"><span>iPad</span><span className="meta">Hyderabad · 3 days ago</span></span>} chevron={false}>
+                <Button size="s" variant="outline" onClick={() => (setOthersOut(true), showToast({ text: 'Signed out of iPad' }))}>Sign out</Button>
+              </Row>
+            )}
+          </div>
+          {!othersOut ? (
+            <Button block variant="outline" onClick={() => (setOthersOut(true), showToast({ text: 'Signed out of all other devices' }))}>Sign out of all other devices</Button>
+          ) : (
+            <p className="meta">Only this device is signed in.</p>
+          )}
+          <p className="meta">Don't recognise a device? Sign it out, then change your password for that sign-in method.</p>
+        </div>
+      </Sheet>
+    </div>
+  );
+}
+
+/** Report a problem with the app. Goes to support; the reply comes by email. */
+function ProblemSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { showToast } = useStore();
+  const [text, setText] = useState('');
+  return (
+    <Sheet open={open} onClose={onClose} title="Report a problem">
+      <form className="set-form" noValidate onSubmit={(e) => (e.preventDefault(), text.trim() && (setText(''), onClose(), showToast({ text: "Sent. We'll reply by email within 2 working days." })))}>
+        <label className="field-label" htmlFor="problem-text">What went wrong?</label>
+        <textarea id="problem-text" className="field" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="What you were doing, and what happened" />
+        <p className="meta">We include your app version ({ANA_PROTOTYPE_VERSION}) and device. To report a person or post, use Report on it instead.</p>
+        <Button block type="submit" disabled={!text.trim()}>Send</Button>
+      </form>
+    </Sheet>
+  );
+}
+
 const MEMBERS: Record<string, { name: string; role: string; credits: boolean; you?: boolean }[]> = {
   konark: [
     { name: 'Rajeev Menon', role: 'Owner', credits: true },
@@ -313,17 +471,24 @@ const MEMBERS: Record<string, { name: string; role: string; credits: boolean; yo
 };
 
 function House({ id }: { id: string }) {
-  const { push, canIssue } = useStore();
+  const { push, canIssue, leaveHouse } = useStore();
   const o = org(id);
   const members = (MEMBERS[id] ?? []).map((m) => (m.you ? { ...m, credits: canIssue } : m));
+  const owner = members.find((m) => m.role === 'Owner');
+  const youOwn = members.some((m) => m.you && m.role === 'Owner');
+  const [sheet, setSheet] = useState<'verify' | 'leave' | null>(null);
   return (
     <div className="settings">
       <Group title="Page">
         <Row icon={<Avatar party={o} size={32} />} label={o.name} value="View" onPress={() => push({ name: 'org', id })} />
-        <Row label="Verification" value={<span className="inline-verified">Verified <Verified size={13} /></span>} chevron={false} />
+        <Row
+          label="Verification"
+          value={o.verified ? <span className="inline-verified">Verified <Verified size={13} /></span> : <span className="set-pending">Pending</span>}
+          onPress={() => setSheet('verify')}
+        />
       </Group>
 
-      <Group title="Who can act for this house" note="Members can open roles, review interest and message as the house. Only the owner can change members.">
+      <Group title="Who can act for this house" note={`Members can open roles, review interest and message as the house. ${youOwn ? 'You' : `Only the owner${owner ? `, ${owner.name},` : ''}`} can add or remove people.`}>
         {members.map((m) => (
           <Row
             key={m.name}
@@ -357,6 +522,38 @@ function House({ id }: { id: string }) {
       <Group title="This device">
         <AppearanceRow />
       </Group>
+
+      {!youOwn && (
+        <section className="settings-group settings-group--end">
+          <div className="group">
+            <Row label={<span className="danger-text">Stop acting for {o.name}</span>} chevron={false} onPress={() => setSheet('leave')} />
+          </div>
+        </section>
+      )}
+
+      <Sheet open={sheet === 'verify'} onClose={() => setSheet(null)} title={o.verified ? 'Verified house' : 'Verification pending'}>
+        <div className="set-form">
+          {o.verified ? (
+            <p className="meta">Art and Artist checked {o.name}'s company documents. The house can publish roles, issue credits, share projects and appear in search.</p>
+          ) : (
+            <>
+              <p className="meta">Art and Artist is checking {o.name}'s company documents. Until then the house can prepare privately: its page, private projects and members.</p>
+              <p className="meta">Public roles, credits, sharing and search unlock once it's verified. We'll tell you here and by email.</p>
+            </>
+          )}
+        </div>
+      </Sheet>
+
+      <Sheet open={sheet === 'leave'} onClose={() => setSheet(null)} title={`Stop acting for ${o.name}?`}>
+        <div className="set-form">
+          <p className="meta">You'll no longer be able to open roles, review interest, message or issue credits as {o.name}. Everything you did for the house stays with the house. Your own profile and credits don't change.</p>
+          <p className="meta">To act for it again, {owner ? owner.name : 'the owner'} has to add you.</p>
+          <div className="set-actions">
+            <Button block variant="danger" onClick={() => leaveHouse(id)}>Stop acting for {o.name}</Button>
+            <Button block variant="plain" onClick={() => setSheet(null)}>Cancel</Button>
+          </div>
+        </div>
+      </Sheet>
     </div>
   );
 }

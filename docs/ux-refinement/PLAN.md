@@ -1022,3 +1022,21 @@ The `/test` research study is unchanged throughout (its two steps, intro, inline
 - A run restarts when the sender changes (for example a different house member), and the member's first name shows above that run.
 - The head is decorative for screen readers; the header already names who the conversation is with.
 - Screenshot: `docs/ux-refinement/chat-heads.jpg`. Checks: typecheck clean, test-flow mobile 39/0, test-a11y 127/0, launch 43/0, wt suites, fields, focusflow pass.
+
+## Messaging and Settings: finishing the partial areas
+
+Both were marked Partial in the Sunday brief. What was missing, and what was built:
+
+**Messaging**
+- The Inbox mixed personal and house conversations. It now opens on the identity in use and, for people who act for a house, shows You · each house · All (house names shortened to their first word when there are two or more). In All, house threads say "For Konark Pictures". Interest to review shows only under the identity it belongs to.
+- Opening a conversation that belongs to another identity never changes who you're acting as: the reply box is replaced by "This conversation belongs to Konark Pictures. Switch to reply" with a Switch button (the same rule as Notifications).
+- New message: a compose button on the Inbox opens a search over people (the same rules as people search: never minors or blocked people) and houses, and starts a direct conversation as the identity in use.
+- Conversation options (the … in the header): view profile or house page, mute or unmute (shown as "Muted" in the Inbox), report, block or unblock. Report and block are labelled as personal.
+
+**Settings**
+- Account: change phone or email with a 6-digit code (nothing changes until the code is confirmed); ways to sign in (Apple, Google, Email) with connect and remove, never removing the last one; two-step verification on or off; signed-in devices with sign out per device and "Sign out of all other devices".
+- Help: copy the support email; Report a problem (sends with app version).
+- House settings: verification shows the real status (Verified or Pending) with what each means; the members note names the owner; a member can stop acting for a house (confirm, access removed at once, switched back to yourself, the house keeps everything they did).
+- Still not built: the owner's own add and remove members screens (the prototype persona is a member, not an owner).
+
+Checks: new flow suite 15/0 (inbox identity filter, switch gate, new message, options, mute, phone change, devices, leaving a house); auth 56/0, views 22/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, unit tests, wt suites, fields and focusflow pass; typecheck clean. Screenshot: `docs/ux-refinement/messaging-settings.jpg`.

@@ -1,13 +1,17 @@
 import { useFeatures } from '../../ui/features';
 import { motion } from 'framer-motion';
 import { scriptLang } from '../../ui/compose';
-import { ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUp, BellOff, ChevronLeft, ChevronRight, MoreHorizontal, Search, SquarePen } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { Conversation } from '../../data/types';
+import type { Conversation, Party } from '../../data/types';
 import { useStore } from '../../state/store';
-import { findOpportunity, party, person } from '../../state/selectors';
+import { findOpportunity, org, party, person } from '../../state/selectors';
+import * as seed from '../../data/seed';
+import { searchablePeople } from '../../domain/discovery';
+import { usePref } from '../../state/settingsPrefs';
+import { Sheet } from '../../ui/Sheet';
 import { stagger } from '../../ui/motion';
-import { Avatar, Button, Chip, EmptyState, IconButton, PressCard, Photo, Pressable, Verified } from '../../ui/primitives';
+import { Avatar, Button, Chip, EmptyState, IconButton, PressCard, Photo, Pressable, Row, Verified } from '../../ui/primitives';
 
 type Filter = 'all' | 'productions' | 'collabs';
 
@@ -26,21 +30,46 @@ function ThreadThumb({ c }: { c: Conversation }) {
 
 export function InboxScreen() {
   const districtFeature = useFeatures().home === 'district';
-  const { conversations, interestsReceived: allInterest, push, openSheet, userCollabs, sendMessage, showToast, acting } = useStore();
+  const { conversations, interestsReceived: allInterest, push, openSheet, userCollabs, sendMessage, showToast, acting, memberships } = useStore();
   const district = districtFeature && acting !== 'self';
   const [filter, setFilter] = useState<Filter>('all');
+  // Personal and house conversations never mix: the Inbox opens on the identity in use, like Notifications.
+  // "All" shows everything, each house thread labelled with the house it belongs to.
+  const [who, setWho] = useState<string>(acting);
+  useEffect(() => setWho(acting), [acting]);
+  const [composing, setComposing] = useState(false);
+  const ownerOf = (c: Conversation) => c.asId ?? 'self';
+  const identities = memberships.length ? ['self', ...memberships, 'all'] : [];
+  const unreadFor = (id: string) => conversations.filter((c) => c.unread && (id === 'all' || ownerOf(c) === id)).length;
+  const whoLabel = (id: string) => (id === 'all' ? 'All' : id === 'self' ? 'You' : org(id).name);
+  // Two or more houses: their first word fits the row ("Konark", "Tidewater"); the full name stays the accessible name.
+  const shortLabel = (id: string) => (memberships.length > 1 && id !== 'all' && id !== 'self' ? org(id).name.split(' ')[0] : whoLabel(id));
   const [done, setDone] = useState<string[]>([]);
   // Only Interest nobody has reviewed yet. Reviewed records stay in the review sheet.
   const interestsReceived = allInterest.filter((i) => !i.withdrawn && !i.review);
 
-  const list = conversations.filter((c) => (filter === 'productions' ? c.orgOwned : filter === 'collabs' ? c.context.kind === 'collab' : true));
+  const mine = identities.length && who !== 'all' ? conversations.filter((c) => ownerOf(c) === who) : conversations;
+  const list = mine.filter((c) => (filter === 'productions' ? c.orgOwned : filter === 'collabs' ? c.context.kind === 'collab' : true));
   const interestFor = interestsReceived[0] ? findOpportunity(interestsReceived[0].opportunityId, userCollabs) : null;
 
   return (
     <div className={`screen${district ? ' dhouse-page' : ''}`} data-scroll="inbox">
-      <div className="title-block title-block--top">
+      <div className="title-block title-block--top inbox-title">
         <h1 className="large-title">Inbox</h1>
+        <IconButton label={acting === 'self' ? 'New message' : `New message as ${org(acting).name}`} onClick={() => setComposing(true)}>
+          <SquarePen size={22} />
+        </IconButton>
       </div>
+      {identities.length > 0 && (
+        <div className="inbox-who" role="group" aria-label="Whose conversations">
+          {identities.map((id) => (
+            <button key={id} type="button" className={`inbox-who-btn${who === id ? ' is-on' : ''}`} aria-pressed={who === id} aria-label={whoLabel(id)} onClick={() => setWho(id)}>
+              {shortLabel(id)}
+              {unreadFor(id) > 0 && id !== who && <span className="dot dot--inline" aria-label={`${unreadFor(id)} unread`} />}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="chips chips--pad">
         <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
           All
@@ -54,7 +83,7 @@ export function InboxScreen() {
       </div>
 
       <div className="list">
-        {filter !== 'productions' && interestsReceived.length > 0 && interestFor && (
+        {filter !== 'productions' && (who === acting || who === 'all' || !identities.length) && interestsReceived.length > 0 && interestFor && (
           <PressCard className="thread" onPress={() => openSheet({ name: 'reviewInterest' })} scale={0.99}>
             <span className="thumb">
               <Photo surface="search-thumbnail" media={interestFor.media} className="thumb-image" showPlay={false} />
@@ -103,7 +132,9 @@ export function InboxScreen() {
                         <span className="sr-only">Unread</span>
                       </>
                     )}
+                    {who === 'all' && ownerOf(c) !== 'self' && <span className="thread-for">For {org(ownerOf(c)).name} · </span>}
                     {c.context.label} · {c.context.detail.split(' · ').pop()}
+                    <MutedMark id={c.id} />
                   </p>
                   {showAction && (
                     <Button
@@ -126,14 +157,62 @@ export function InboxScreen() {
           );
         })}
       </div>
-      {!list.length && <EmptyState title="No conversations" />}
+      {!list.length && <EmptyState title="No conversations" body={who !== 'self' && who !== 'all' && identities.length ? `Messages to ${org(who).name} appear here.` : 'Message someone from their profile, or start one here.'} />}
+      <NewMessage open={composing} onClose={() => setComposing(false)} />
     </div>
+  );
+}
+
+function MutedMark({ id }: { id: string }) {
+  const [muted] = usePref<boolean>(`mute-${id}`, false);
+  return muted ? (
+    <span className="thread-muted">
+      {' '}
+      · <BellOff size={12} aria-hidden /> Muted
+    </span>
+  ) : null;
+}
+
+/** Start a conversation from the Inbox: anyone on Art and Artist you can reach, people first, then houses. */
+function NewMessage({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { viewer, acting, startConversation, push, cannotReach, memberships, blocked } = useStore();
+  const [q, setQ] = useState('');
+  const own = new Set([viewer.id, acting, ...memberships]);
+  // The same people search shows (never minors or blocked people), plus houses.
+  const all: Party[] = [...searchablePeople(viewer.id, blocked), ...seed.orgs].filter((p) => !own.has(p.id) && !cannotReach(p.id));
+  const term = q.trim().toLowerCase();
+  const found = all
+    .filter((p) => !term || p.name.toLowerCase().includes(term) || (p.kind === 'person' && (p.role ?? '').toLowerCase().includes(term)))
+    .sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'person' ? -1 : 1))
+    .slice(0, 30);
+  const start = (id: string) => {
+    const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+    if (!cid) return;
+    onClose();
+    setQ('');
+    push({ name: 'conversation', id: cid });
+  };
+  return (
+    <Sheet open={open} onClose={onClose} title={acting === 'self' ? 'New message' : `New message as ${org(acting).name}`} size="tall">
+      <label className="new-msg-search">
+        <Search size={18} aria-hidden />
+        <input id="new-msg-q" className="field" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people and houses" aria-label="Search people and houses" />
+      </label>
+      <div className="group new-msg-list">
+        {found.map((p) => (
+          <Row key={p.id} icon={<Avatar party={p} size={36} />} label={<span className="settings-label"><span>{p.name}</span><span className="meta">{p.kind === 'org' ? 'Production house' : p.role}</span></span>} onPress={() => start(p.id)} />
+        ))}
+        {!found.length && <p className="meta new-msg-empty">No one matches "{q}".</p>}
+      </div>
+    </Sheet>
   );
 }
 
 export function ConversationScreen({ id }: { id: string }) {
   const districtFeature = useFeatures().home === 'district';
-  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage, cannotReach, blocked, unblock, acting } = useStore();
+  const { conversations, pop, push, sendMessage, markConversationRead, scenario, userCollabs, memberships, viewer, retryMessage, cannotReach, blocked, unblock, acting, setActing, openSheet } = useStore();
+  const [menu, setMenu] = useState(false);
+  const [muted, setMuted] = usePref<boolean>(`mute-${id}`, false);
   const c = conversations.find((x) => x.id === id);
   const district = districtFeature && acting !== 'self';
   const [text, setText] = useState('');
@@ -170,7 +249,24 @@ export function ConversationScreen({ id }: { id: string }) {
           <span className="meta">{p.kind === 'org' ? 'Production team' : p.role}</span>
         </button>
         <Avatar party={p} size={36} />
+        <IconButton label="Conversation options" onClick={() => setMenu(true)}>
+          <MoreHorizontal size={22} />
+        </IconButton>
       </header>
+
+      <Sheet open={menu} onClose={() => setMenu(false)} label="Conversation options">
+        <div className="group">
+          <Row label={p.kind === 'org' ? 'View house page' : 'View profile'} onPress={() => (setMenu(false), push(p.kind === 'person' ? { name: 'profile', id: p.id } : { name: 'org', id: p.id }))} />
+          <Row label={muted ? 'Unmute notifications' : 'Mute notifications'} chevron={false} onPress={() => (setMuted(!muted), setMenu(false))} />
+          <Row label={`Report ${p.name}`} onPress={() => (setMenu(false), openSheet({ name: 'report', subject: p.name, partyId: p.id }))} />
+          {blocked.includes(c.withId) ? (
+            <Row label={`Unblock ${p.name}`} chevron={false} onPress={() => (setMenu(false), unblock(c.withId))} />
+          ) : (
+            <Row label={<span className="danger-text">Block {p.name}</span>} chevron={false} onPress={() => (setMenu(false), openSheet({ name: 'block', id: c.withId }))} />
+          )}
+        </div>
+        <p className="meta settings-note">{p.kind === 'org' ? 'Reporting and blocking are personal: they come from you, not from a house you act for.' : 'Reporting and blocking are personal, even while you act for a house.'}</p>
+      </Sheet>
 
       <div className="convo-scroll" ref={scrollRef}>
         <Pressable className="convo-context" onClick={() => ref && push({ name: 'opportunity', id: ref.id })} scale={0.99}>
@@ -234,6 +330,14 @@ export function ConversationScreen({ id }: { id: string }) {
           ) : (
             <p className="meta">You can't reply to this conversation.</p>
           )}
+        </div>
+      ) : (c.asId ?? 'self') !== acting ? (
+        // Opening a conversation never changes who you're acting as. To reply, switch to the identity it belongs to.
+        <div className="convo-closed convo-switch">
+          <p className="meta">{c.asId && c.asId !== 'self' ? `This conversation belongs to ${org(c.asId).name}.` : 'This is your personal conversation.'} Switch to reply.</p>
+          <Button size="s" variant="outline" onClick={() => setActing(c.asId ?? 'self', true, true)}>
+            {c.asId && c.asId !== 'self' ? `Switch to ${org(c.asId).name}` : 'Switch to you'}
+          </Button>
         </div>
       ) : (
       <>

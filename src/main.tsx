@@ -35,6 +35,7 @@ import './styles/profile-stage2.css';
 import './styles/project-cinema.css';
 import './styles/create.css';
 import './styles/entry.css';
+import './styles/messaging-settings.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';

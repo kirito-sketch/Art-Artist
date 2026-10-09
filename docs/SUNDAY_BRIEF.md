@@ -32,12 +32,12 @@ Status: **Built** (complete in the prototype) · **Partial** (works, with known 
 | Credits | Receive a credit, Accept or "Something's wrong", only accepted credits are public, no self-claiming anywhere | Built |
 | Opportunities and Interest | Role pages, Show interest with an optional note, withdraw with undo, status after a conversation starts | Built |
 | Posts and Create | Post composer (multiple photos and video, reorder, reposition, cover), collaboration posts, events, Open to work | Built |
-| Messaging | Inbox, conversations, send failure and retry | Partial: personal and house conversations aren't separated |
+| Messaging | Inbox split by identity (you, each house, all), new message, conversations with chat heads, options (mute, report, block), send failure and retry | Built |
 | Notifications | Needs you, Earlier, mark all as read, filtered by who you're acting as | Built |
 | Saved | Saved posts, roles, projects and people | Built |
 | Events | Event pages, attendance requests, capacity, reminders, create an event | Built (free events only) |
 | Film reviews | Rate and review released films, person and film review pages | Built |
-| Settings and your data | Account, privacy and discoverability, notifications, blocked people, your data | Partial: several rows are read-only |
+| Settings and your data | Account (change phone or email with a code, ways to sign in, two-step verification, signed-in devices), privacy, notifications, blocked people, help and report a problem, your data | Built |
 | Trust and safety | Report (reason, promise, offer to block), Block (both sides hidden everywhere) | Built |
 
 ### Production houses
@@ -53,7 +53,7 @@ Status: **Built** (complete in the prototype) · **Partial** (works, with known 
 | Roles | Publish, edit (limited fields), close with an outcome, reopen, Open a new role | Built |
 | Responses | Review interest, message as the house | Built |
 | Team and credits | Add people to a project, issue credits, corrections | Built |
-| Members | Who can act for the house | Partial: ending a membership isn't built |
+| Members | Who can act for the house, verification status, stop acting for a house | Partial: the owner's add and remove screens aren't built |
 
 ### Behind the scenes
 
@@ -65,7 +65,7 @@ Status: **Built** (complete in the prototype) · **Partial** (works, with known 
 
 ### Known gaps
 
-Not built: linking a person who was added before they joined Ana · bulk credits (deliberately) · ending a house membership · guardian flow for minors (18+ at launch) · a separate inbox for house conversations · persistent media storage.
+Not built: linking a person who was added before they joined Ana · bulk credits (deliberately) · the house owner's add and remove members screens · guardian flow for minors (18+ at launch) · persistent media storage.
 
 ## 3. Already decided (for confirmation, not re-discussion)
 
