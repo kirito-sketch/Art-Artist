@@ -1,4 +1,4 @@
-import { AudioLines, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Play, Share, Star, Volume2, VolumeX } from 'lucide-react';
+import { AudioLines, Bookmark, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Play, Share, Star, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Work } from '../../data/works';
 import type { Media } from '../../data/types';
@@ -99,14 +99,20 @@ export function WorkCinema({ w }: { w: Work }) {
   const when = released ? (w.releaseDate ? `Released ${releaseLabel(w.releaseDate).replace(/^\w+, /, '')}` : `Released ${w.year}`) : w.releaseDate ? `Releasing ${releaseLabel(w.releaseDate)}` : undefined;
   const scrollToRoles = () => scroller.current?.querySelector('#wp-roles')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
 
-  // One primary action, by what this viewer can do here.
-  const cta: { label: string; run: () => void; on?: boolean } = isLead
+  // A fixed action only when this viewer has a real next step here. Saving is a quiet utility, so it lives with
+  // Share in the top bar; it never fills the primary slot just to have one.
+  const cta: { label: string; run: () => void } | null = isLead
     ? { label: 'Open in your workspace', run: () => push({ name: 'hproject', id }) }
     : roles.length && !credit && acting === 'self'
       ? { label: `See open roles · ${roles.length}`, run: scrollToRoles }
       : canRate && !mine
         ? { label: 'Rate and review', run: () => openSheet({ name: 'review', projectId: id }) }
-        : { label: saved ? 'Saved' : 'Save project', run: () => toggleSave(id, 'project'), on: saved };
+        : null;
+  const saveBtn = (
+    <IconButton label={saved ? `Saved. Remove ${w.title} from Saved` : `Save ${w.title}`} className={`wp-btn${saved ? ' is-on' : ''}`} aria-pressed={saved} onClick={() => toggleSave(id, 'project')}>
+      <Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />
+    </IconButton>
+  );
 
   const share = () => openSheet({ name: 'share', label: w.title });
   const depth = Math.min(1, Math.max(0, scrollY) / heroH);
@@ -118,7 +124,7 @@ export function WorkCinema({ w }: { w: Work }) {
           {backdrop && <span className="wp-compact-bg" aria-hidden><Photo media={backdrop} surface="project-card" showPlay={false} alt="" /></span>}
           <IconButton label="Back" className="wp-btn" onClick={pop}><ChevronLeft size={22} /></IconButton>
           <span className="wp-compact-title" lang={scriptLang(w.title)}>{w.title}</span>
-          <IconButton label={`Share ${w.title}`} className="wp-btn" onClick={share}><Share size={18} /></IconButton>
+          <span className="wp-actions">{saveBtn}<IconButton label={`Share ${w.title}`} className="wp-btn" onClick={share}><Share size={18} /></IconButton></span>
         </header>
       </div>
 
@@ -134,7 +140,7 @@ export function WorkCinema({ w }: { w: Work }) {
           ) : (
             <span className="wp-lang wp-lang--static"><AudioLines size={15} aria-hidden /> {t.language}</span>
           )) : <span aria-hidden />}
-          <IconButton label={`Share ${w.title}`} className="wp-btn" onClick={share}><Share size={18} /></IconButton>
+          <span className="wp-actions">{saveBtn}<IconButton label={`Share ${w.title}`} className="wp-btn" onClick={share}><Share size={18} /></IconButton></span>
         </div>
       </div>
 
@@ -173,8 +179,6 @@ export function WorkCinema({ w }: { w: Work }) {
           ) : (
             <>
               <p className="wp-hype-text">{w.releaseDate && !released ? countdown(releaseAt(w.releaseDate)) : released ? 'Reviews open on release day' : `In ${w.stage.toLowerCase()}`}</p>
-              {/* Save lives here only when the fixed action is something else. */}
-              {cta.on === undefined && <button className={`wp-pill${saved ? ' is-on' : ''}`} aria-pressed={saved} onClick={() => toggleSave(id, 'project')}>{saved ? 'Saved' : 'Save'}</button>}
             </>
           )}
         </div>
@@ -261,9 +265,11 @@ export function WorkCinema({ w }: { w: Work }) {
 
         <button className="wp-report" onClick={() => openSheet({ name: 'report', subject: w.title })}>Report this project</button>
 
-        <div className="wp-cta-bar">
-          <button className={`wp-cta${cta.on ? ' is-on' : ''}`} aria-pressed={cta.on} onClick={cta.run}>{cta.label}</button>
-        </div>
+        {cta && (
+          <div className="wp-cta-bar">
+            <button className="wp-cta" onClick={cta.run}>{cta.label}</button>
+          </div>
+        )}
       </div>
 
       <Sheet open={picker} onClose={() => setPicker(false)} title="Choose a version">

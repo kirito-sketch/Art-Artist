@@ -1000,3 +1000,11 @@ The `/test` research study is unchanged throughout (its two steps, intro, inline
 - Auth suite: 56/0 at 320, 375, 393, 430 and in dark.
 - Viewport suite: 20/0, including Continue in view on 320×568 and 375×667.
 
+### Project page: Save moves to the top bar (review feedback)
+
+- **Before:** "Save project" was the fixed bottom action whenever the viewer had nothing else to do (for example, credited on a released film, so they can't rate it). It was a filler in the primary slot.
+- **Now:** Save is an icon beside Share in the hero bar and the compact header, in the same glass circle. A filled bookmark shows it's saved, and the toast offers View.
+- **The fixed bottom action appears only for a real next step:** Open in your workspace, See open roles, or Rate and review. Otherwise there is no bar.
+- **The duplicate Save pill** in the momentum row is removed.
+- **Checks:** the Stage 4 project checks pass 20/0 (updated for this rule), and journeys pass 21/0.
+

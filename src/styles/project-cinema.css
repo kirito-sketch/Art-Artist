@@ -119,3 +119,9 @@
 .wp-version.is-on { border-color: var(--action); box-shadow: inset 0 0 0 1px var(--action); }
 .wp-card:not(.wp-card--press) { grid-template-columns: auto minmax(0, 1fr); }
 .phone .screen.wp { padding: 0; }
+
+/* Save sits with Share (same glass circle); the sides hold one or two buttons. A filled bookmark is the saved state. */
+.phone .wp-top { grid-template-columns: auto 1fr auto; }
+.phone .wp-compact { grid-template-columns: auto 1fr auto; }
+.phone .wp-actions { display: inline-flex; gap: 8px; justify-self: end; }
+.phone .wp-btn.is-on { color: #fff; background: rgba(18, 18, 20, 0.62); }
