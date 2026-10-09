@@ -70,6 +70,9 @@
 .phone .auth .or { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
 .phone .auth .or::before, .phone .auth .or::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--text) 12%, transparent); }
 .phone .auth-foot { margin-top: auto; padding-top: 24px; }
+/* Sign in: title and choices settle into the lower part of the screen (thumb reach), clear of the bottom edge. */
+.phone .auth--low .auth-head { margin-top: auto; }
+.phone .auth--low { padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 0px) + 32px)); }
 .phone .provider-note { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; color: var(--text-2); background: color-mix(in srgb, var(--text) 5%, transparent); }
 .phone .provider-row { min-height: 60px; }
 .phone .provider-row:disabled { opacity: 0.6; }

@@ -725,10 +725,11 @@ export function EntryFlow() {
 
 /* ------------------------------------------------------------ pieces */
 
-/** Account screens: Back, a title with an optional one-line lede, the form, and an optional footnote held at the bottom. */
-function Form({ title, lede, foot, onBack, children }: { title: string; lede?: ReactNode; foot?: ReactNode; onBack: () => void; children: ReactNode }) {
+/** Account screens: Back, a title with an optional one-line lede, the form, and an optional footnote held at the bottom.
+ * `low` sits the title and form in the lower part of the screen, so the actions are in thumb reach. */
+function Form({ title, lede, foot, low, onBack, children }: { title: string; lede?: ReactNode; foot?: ReactNode; low?: boolean; onBack: () => void; children: ReactNode }) {
   return (
-    <div className="auth">
+    <div className={`auth${low ? ' auth--low' : ''}`}>
       <header className="auth-bar">
         <button className="icon-btn" aria-label="Back" onClick={onBack}>
           <ChevronLeft size={26} />
@@ -1126,7 +1127,7 @@ function SignIn({ email, onEmail, onBack, onSubmit, onProvider }: { email: strin
     <Form
       title="Sign in"
       lede="Welcome back. Use the way you joined."
-      foot={<p className="provider-note">Prototype accounts: kiran@example.com, tara@example.com, aditi@example.com. Any other address shows the "no account" path.</p>}
+      low
       onBack={onBack}
     >
       <button className="auth-btn auth-btn--apple" onClick={() => onProvider('apple')}>
