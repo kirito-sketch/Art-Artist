@@ -12,12 +12,20 @@ import { canManageEvent, confirmedCount, eventForActor, eventState, requestsOpen
 import { eventRequests, accountEmails } from './eventAttendance';
 import { listable, validateDraft } from '../domain/events';
 import { hostFacts } from './events';
+import { restoredEntry, restoredSession, saveSession } from './session';
 import { defaultIntent, type Intent } from '../domain/relevance';
 
 /** Research sessions start as Aditi acting for Konark; an edge-case scenario starts where it says; everything else starts as Kiran. */
 // Participant Test Mode (/test) is the Individual Creative study: always Kiran, always the seed state.
-const START = TEST_MODE ? 'kiran' : RESEARCH ? 'aditi' : BOOT?.persona ?? 'kiran';
-const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? 'self';
+// A refresh keeps the session (who you are, the house you act for, or that you signed out). Research sessions and
+// edge-case boots never use it, so their starting state is exactly as before (src/state/session.ts).
+const SESSION_OK = !TEST_MODE && !RESEARCH && !BOOT;
+const RESTORED = restoredSession(SESSION_OK);
+const RESTORED_ENTRY = restoredEntry<{ mode: 'new' | 'invite' | 'signin' }>(SESSION_OK);
+const RESTORED_VIEWER = RESTORED && 'viewer' in RESTORED && ['kiran', 'tara', 'aditi'].includes(RESTORED.viewer) ? RESTORED : null;
+const START = TEST_MODE ? 'kiran' : RESEARCH ? 'aditi' : BOOT?.persona ?? RESTORED_VIEWER?.viewer ?? 'kiran';
+const START_ACTING = TEST_MODE ? 'self' : RESEARCH ? 'konark' : BOOT?.acting ?? RESTORED_VIEWER?.acting ?? 'self';
+const START_ENTRY = RESTORED_ENTRY ? { mode: RESTORED_ENTRY.mode } : RESTORED && 'signedOut' in RESTORED ? { mode: 'signin' as const } : null;
 // A scenario's blocks belong to the person it starts as. Blocks live with the shared records, so both sides see their effect.
 BOOT?.blocked?.forEach((target) => world.blocks.push({ by: START, target }));
 import { discoverPosts, party } from './selectors';
@@ -238,7 +246,11 @@ function useStoreValue() {
   const actorRef = useRef(actor);
   actorRef.current = actor;
   /** Entry layer: splash → entry → auth → consent → onboarding (and a house invite). Null means the app. */
-  const [entry, setEntry] = useState<null | { mode: 'new' | 'invite' | 'signin'; notice?: string }>(BOOT?.entry ? { mode: BOOT.entry } : null);
+  const [entry, setEntry] = useState<null | { mode: 'new' | 'invite' | 'signin'; notice?: string }>(BOOT?.entry ? { mode: BOOT.entry } : START_ENTRY);
+  // Remember the session for a refresh (src/state/session.ts): signed out while entry is showing, else who and as whom.
+  useEffect(() => {
+    if (SESSION_OK) saveSession(entry ? { signedOut: true } : { viewer: viewerId, acting });
+  }, [entry, viewerId, acting]);
   /** Consent records: which document, which version, when. */
   const [consents, setConsents] = useState<{ doc: string; version: string; at: string; method: string }[]>([
     { doc: 'Terms of Service', version: 'Draft 0.3', at: '12 Mar 2026', method: 'Signup' },

@@ -27,7 +27,11 @@ import { INTENTS, type Intent } from '../domain/relevance';
 import { MAX_ONBOARDING_INTENTS, needsAvailability, toggleOnboardingIntent } from '../domain/onboardingIntents';
 import { CITY_LANGUAGES, craftProfile, LANGUAGES } from '../data/profileSchema';
 import { type ProfileExtra, type Reel } from '../state/profile';
-import { MobileVerify } from '../ui/MobileVerify';
+import { TEST_CODE as MOBILE_TEST_CODE } from '../ui/MobileVerify';
+import { maskedPhone, normalisePhone, validPhone } from '../state/profile';
+import { maskIdentity, normaliseEmail, registerAccount, resumeStep, routeAfterAuth, type AuthIntent, type Identity } from '../domain/accounts';
+import { useEntryNav, type NavState } from './entryNav';
+import { clearEntry, restoredEntry, saveEntry } from '../state/session';
 
 /*
  * How someone enters Art and Artist. One splash (only as long as loading), one entry screen, then account,
@@ -36,59 +40,108 @@ import { MobileVerify } from '../ui/MobileVerify';
  * skippable (docs/REVIEW_EVENTS_PROFILE.md §5).
  */
 
-type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'consent' | 'verify' | 'you' | 'mobile' | 'now' | 'where' | 'work' | 'invite' | 'inviteTip';
+type Step = 'splash' | 'intro' | 'entry' | 'email' | 'signin' | 'consent' | 'verify' | 'notfound' | 'you' | 'mobile' | 'now' | 'where' | 'work' | 'invite' | 'inviteTip';
+/** Screens that are passed through, never returned to with Back (a code that was already used, a notice). */
+const TRANSIENT: ReadonlySet<Step> = new Set<Step>(['splash', 'intro', 'verify', 'notfound']);
+const ONBOARDING: Step[] = ['you', 'mobile', 'now', 'where', 'work'];
 
 /** The demo invitation: Art and Artist's team set up Saffron Reel Studios and invited Meena by work email. */
 const INVITE = { orgId: 'saffron', email: 'meena@saffronreel.in', name: 'Meena Iyer', invitedBy: 'the Art and Artist team', canIssue: true };
-const KNOWN: Record<string, string> = { kiran: 'kiran', tara: 'tara', aditi: 'aditi' };
-/** A provider account that belongs to an existing person who acts for a production house: signs in as the house. */
-type ProviderAccount = { name: string; email: string; house?: { viewer: string; acting: string; label: string } };
-const HOUSE_ACCOUNT = (email: string): ProviderAccount => ({ name: 'Aditi Ghosh', email, house: { viewer: 'aditi', acting: 'konark', label: 'Konark Pictures' } });
+/** A simulated provider account: the provider's stable id, what it shares, and (prototype only) a hint for testers. */
+type ProviderAccount = { name: string; subject: string; email: string; hint?: string };
 const CITIES = ['Hyderabad', 'Mumbai', 'Chennai', 'Kochi', 'Bengaluru', 'Kolkata'];
-const art = (n: string): Media => ({ id: `entry-${n}`, kind: 'image', src: `images/brand/entry/${n}.jpg` });
+/** One-time codes expire after ten minutes, like a real sign-in code. */
+const CODE_TTL = 10 * 60 * 1000;
+
+/** Everything typed during sign-up, kept across Back and Forward and across a refresh (sessionStorage only). */
+interface Snapshot {
+  mode: string;
+  nav: NavState<Step>;
+  authIntent: AuthIntent;
+  identity: Identity | null;
+  resuming: boolean;
+  email: string;
+  name: string;
+  photo?: string;
+  primary: Craft | null;
+  intent: Intent | null;
+  selectedIntents: Intent[];
+  city: string;
+  avail: 'now' | 'from';
+  availFrom: string;
+  phone: { number: string; verified: boolean } | null;
+  phoneDraft: string;
+  langs: string[];
+  travel: boolean;
+  link: string;
+  consent: ConsentDraft;
+}
+type ConsentDraft = { terms: boolean; age: boolean; marketing: boolean };
+const SESSION = !TEST_MODE;
 
 export function EntryFlow() {
   const store = useStore();
-  const { entry, endEntry, recordConsent, createPerson, switchViewer, setActing, addMembership, showToast } = store;
+  const { entry, endEntry, recordConsent, createPerson, switchViewer, setActing, addMembership, showToast, setPolicyUpdate, attempt } = store;
   const invite = entry?.mode === 'invite';
+  // A refresh mid-sign-up comes back to the same step with everything typed so far (never on a fresh visit).
+  const saved = useRef(restoredEntry<Snapshot>(SESSION && !invite)).current;
+  const resumed = saved && saved.mode === entry?.mode ? saved : null;
   // The installed app's launch splash is the splash: while it is still owed, onboarding starts under it, at
   // its first screen, instead of drawing a second mark. (Later entries, such as a house invite, keep theirs.)
   const launchOwed = launchSplashPending(isStandalone());
-  const [step, setStep] = useState<Step>(entry?.mode === 'signin' ? 'entry' : launchOwed ? (entry?.mode === 'new' ? 'intro' : 'entry') : 'splash');
-  const [history, setHistory] = useState<Step[]>([]);
+  const firstStep: Step = entry?.mode === 'signin' ? 'entry' : launchOwed ? (entry?.mode === 'new' ? 'intro' : 'entry') : 'splash';
+  const nav = useEntryNav<Step>(resumed?.nav ?? { step: firstStep, history: [] }, TRANSIENT);
+  const { step, go, back } = nav;
   const [provider, setProvider] = useState<null | 'apple' | 'google'>(null);
   const [legal, setLegal] = useState<DocId | null>(null);
-  // Account
-  const [email, setEmail] = useState(invite ? INVITE.email : '');
+  // Account: how this person came in ("Continue with…" or an explicit "Sign in") and the identity it produced.
+  const [authIntent, setAuthIntent] = useState<AuthIntent>(resumed?.authIntent ?? 'continue');
+  const [identity, setIdentity] = useState<Identity | null>(resumed?.identity ?? null);
+  const [resuming, setResuming] = useState(resumed?.resuming ?? false);
+  // The email field holds only what this person typed in this sign-in: a provider's address never lands in it.
+  const [email, setEmail] = useState(resumed?.email ?? (invite ? INVITE.email : ''));
+  const [codeSentAt, setCodeSentAt] = useState(0);
+  const [consent, setConsent] = useState<ConsentDraft>(resumed?.consent ?? { terms: false, age: false, marketing: false });
   // Profile
-  const [name, setName] = useState('');
-  const [photo, setPhoto] = useState<string | undefined>();
+  const [name, setName] = useState(resumed?.name ?? '');
+  const [photo, setPhoto] = useState<string | undefined>(resumed?.photo);
   const [avatarFraming, setAvatarFraming] = useState<MediaFraming>();
   // V30: onboarding asks only what personalises the first Home (identity, craft, intent, city, and
   // availability when it matters). Everything else is profile completion, later. Every choice is
   // kept when you go Back, and can be changed or cleared.
-  const [primary, setPrimary] = useState<Craft | null>(invite ? 'production' : null);
-  const [intent, setIntent] = useState<Intent | null>(invite ? 'hire' : null);
+  const [primary, setPrimary] = useState<Craft | null>(resumed?.primary ?? (invite ? 'production' : null));
+  const [intent, setIntent] = useState<Intent | null>(resumed?.intent ?? (invite ? 'hire' : null));
   const district = !TEST_MODE && getFeatures().home === 'district';
-  const [selectedIntents, setSelectedIntents] = useState<Intent[]>(invite ? ['hire'] : []);
+  const [selectedIntents, setSelectedIntents] = useState<Intent[]>(resumed?.selectedIntents ?? (invite ? ['hire'] : []));
   const hasIntent = district ? selectedIntents.length > 0 : !!intent;
-  const [city, setCity] = useState('');
-  const [avail, setAvail] = useState<'now' | 'from'>('now');
-  const [availFrom, setAvailFrom] = useState('');
+  const [city, setCity] = useState(resumed?.city ?? '');
+  const [avail, setAvail] = useState<'now' | 'from'>(resumed?.avail ?? 'now');
+  const [availFrom, setAvailFrom] = useState(resumed?.availFrom ?? '');
   const [personId, setPersonId] = useState<string | null>(null);
   const asksAvailability = district ? needsAvailability(selectedIntents) : intent === 'work' || intent === 'collaborate';
   // Approved direction (docs/REVIEW_EVENTS_PROFILE.md §4): the rest is recommended and skippable, and all of it
   // lands in the same profile fields Edit Profile uses.
-  const [phone, setPhone] = useState<{ number: string; verified: boolean } | null>(null);
-  const [langs, setLangs] = useState<string[]>([]);
-  const [travel, setTravel] = useState(false);
+  const [phone, setPhone] = useState<{ number: string; verified: boolean } | null>(resumed?.phone ?? null);
+  const [phoneDraft, setPhoneDraft] = useState(resumed?.phoneDraft ?? '');
+  const [langs, setLangs] = useState<string[]>(resumed?.langs ?? []);
+  const [travel, setTravel] = useState(resumed?.travel ?? false);
   const [reelUrl, setReelUrl] = useState('');
   const [showreel, setShowreel] = useState<Reel | undefined>();
   const [showreelDraft, setShowreelDraft] = useState<Reel | undefined>();
   const previewUrls = useRef(new Set<string>());
   useEffect(() => { const urls = previewUrls.current; return () => releaseUnusedShowreelPreviews(urls); }, []);
   const [work, setWork] = useState<Media[]>([]);
-  const [link, setLink] = useState('');
+  const [link, setLink] = useState(resumed?.link ?? '');
+
+  // Keep the sign-up draft for a refresh, from the account step onward (session only; device photos, which can't
+  // survive a reload, are dropped).
+  useEffect(() => {
+    if (!SESSION || invite) return;
+    if (!['consent', 'notfound', ...ONBOARDING].includes(step)) return;
+    const snap: Snapshot = { mode: entry?.mode ?? 'new', nav: { step, history: nav.history }, authIntent, identity, resuming, email, name, photo: photo?.startsWith('blob:') ? undefined : photo, primary, intent, selectedIntents, city, avail, availFrom, phone, phoneDraft, langs, travel, link, consent };
+    saveEntry(snap);
+  });
+  useEffect(() => clearEntry, []);
 
   // Splash: the mark draws itself once (about 1.2s), then the next screen follows as soon as its first
   // image is ready. A slow load holds the finished mark still (no replay); capped so it never hangs.
@@ -101,7 +154,7 @@ export function EntryFlow() {
     const ready = () => live && setNextReady(true);
     const img = new Image();
     img.onload = img.onerror = ready;
-    img.src = art(after === 'intro' ? INTRO[0].art : 'chair').src;
+    img.src = artSrc(after === 'intro' ? INTRO[0].art : 'chair');
     if (img.complete) ready();
     const cap = window.setTimeout(ready, 4000);
     return () => {
@@ -110,7 +163,7 @@ export function EntryFlow() {
     };
   }, [step]);
   useEffect(() => {
-    if (step === 'splash' && markDone && nextReady) setStep(after);
+    if (step === 'splash' && markDone && nextReady) go(after);
   }, [step, markDone, nextReady]);
   const [splashGone, setSplashGone] = useState(step !== 'splash');
   useEffect(() => {
@@ -141,23 +194,56 @@ export function EntryFlow() {
     };
   }, [step]);
 
-  const go = (s: Step) => {
-    setHistory((h) => [...h, step]);
-    setStep(s);
-  };
-  const back = () => {
-    const h = [...history];
-    const prev = h.pop();
-    if (prev) research.track('onboarding_step_back', { metadata: { from: step } });
-    setHistory(h);
-    if (prev) setStep(prev);
+  const goBack = () => {
+    if (nav.canGoBack) research.track('onboarding_step_back', { metadata: { from: step } });
+    back();
   };
 
   const signInAs = (id: string, acting = 'self') => {
+    clearEntry();
     endEntry();
     switchViewer(id);
     setActing(acting);
-    showToast({ text: `Welcome back, ${id[0].toUpperCase()}${id.slice(1)}` });
+    const first = seed.parties[id]?.name.split(' ')[0] ?? id;
+    showToast({ text: acting !== 'self' ? `Welcome back, ${first}. You're acting for ${org(acting).name}.` : `Welcome back, ${first}` });
+  };
+
+  /**
+   * After Apple, Google or an email code: the one routing decision (domain/accounts.ts). Existing accounts go
+   * straight in; only a genuinely new or unfinished account sees consent and onboarding.
+   */
+  const afterAuth = (id: Identity, how: AuthIntent) => {
+    const r = routeAfterAuth(how, id);
+    if (r.kind === 'signed-in') {
+      if (invite) return startNew(id); // the invite demo always creates the invited person
+      signInAs(r.account.viewerId!, r.account.house?.acting);
+      if (r.renewTerms) setPolicyUpdate(true); // only the updated agreement, nothing else
+      return;
+    }
+    setIdentity(id);
+    if (r.kind === 'not-found') return go('notfound');
+    if (r.kind === 'new-account') return startNew(id);
+    // An unfinished sign-up: what it saved comes back, and it continues from its first missing step.
+    const d = r.account.draft ?? {};
+    if (d.name) setName(d.name);
+    if (d.craft) setPrimary(d.craft);
+    if (d.city) setCity(d.city);
+    if (d.intents?.length) setSelectedIntents(d.intents as Intent[]);
+    setResuming(true);
+    if (r.needsTerms) return go('consent');
+    resumeAt(resumeStep(d));
+  };
+  const startNew = (id: Identity) => {
+    setIdentity(id);
+    setResuming(false);
+    if (id.name && !name) setName(id.name);
+    go('consent');
+  };
+  const resumeAt = (to: Step) => {
+    const before = steps.slice(0, Math.max(0, steps.indexOf(to)));
+    // Back from the resumed step walks through the steps already done (prefilled), then the screen you came from.
+    const base = [...nav.history, ...(TRANSIENT.has(step) ? [] : [step])];
+    nav.reset({ step: to, history: [...base, ...before].filter((x, i, a) => a.indexOf(x) === i) });
   };
 
   const finishProfile = () => {
@@ -171,8 +257,11 @@ export function EntryFlow() {
       ...(district ? { reelDraft: showreelDraft, featuredWork: validLink(link) ? [{ id: 'w-onboard', kind: 'external' as const, title: 'Selected work', url: link.trim() }] : [] } : {}),
       workLinks: validLink(link) ? [{ id: 'w-onboard', label: words.links, url: link.trim() }] : [],
     };
-    const id = createPerson({ name: name.trim(), photo, avatarFraming, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
+    const id = createPerson({ name: name.trim(), photo, avatarFraming, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email: identity?.provider === 'email' ? identity.subject : email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
+    // The identity now belongs to this account: signing in with it again goes straight to Home, never a second sign-up.
+    registerAccount(identity ?? { provider: 'email', subject: email }, id);
     setPersonId(id);
+    clearEntry();
     if (invite) return go('invite');
     endEntry();
     setActing('self');
@@ -194,19 +283,19 @@ export function EntryFlow() {
       <AnimatePresence mode="wait">
         {step !== 'splash' && (
         <motion.div key={step} className="entry-page" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-          {step === 'intro' && <Intro onDone={() => setStep('entry')} />}
+          {step === 'intro' && <Intro onDone={() => go('entry')} />}
 
           {step === 'entry' && (
             <div className="entry-home">
-              <div className="entry-art">
-                <Photo surface="portfolio-thumbnail" media={art('chair')} className="splash-art" showPlay={false} />
+              {/* Full-bleed hero: the artwork runs under the status bar and melts into the page colour (both themes). */}
+              <div className="entry-art" aria-hidden>
+                <EntryArt name="chair" priority />
                 <div className="entry-fade" />
               </div>
               <div className="entry-body">
                 <div className="entry-logo">
                   <Logo />
                 </div>
-                {entry?.notice && <p className="inline-note">{entry.notice}</p>}
                 {invite && (
                   <div className="invite-banner">
                     <Avatar party={org(INVITE.orgId)} size={36} />
@@ -217,19 +306,19 @@ export function EntryFlow() {
                 )}
                 <h1 className="entry-line">Where film people find each other and build a record of their work.</h1>
                 <div className="entry-actions">
-                  <button className="auth-btn auth-btn--apple" onClick={() => setProvider('apple')}>
+                  <button className="auth-btn auth-btn--apple" onClick={() => (setAuthIntent('continue'), setProvider('apple'))}>
                     <AppleMark /> Continue with Apple
                   </button>
-                  <button className="auth-btn" onClick={() => setProvider('google')}>
+                  <button className="auth-btn" onClick={() => (setAuthIntent('continue'), setProvider('google'))}>
                     <span className="g-mark">G</span> Continue with Google
                   </button>
-                  <button className="auth-btn" onClick={() => go('email')}>
+                  <button className="auth-btn" onClick={() => (setAuthIntent('continue'), go('email'))}>
                     <Mail size={17} /> Continue with email
                   </button>
                 </div>
                 <p className="entry-signin">
                   Already on Art and Artist?{' '}
-                  <button className="link" onClick={() => go('signin')}>
+                  <button className="link" onClick={() => (setAuthIntent('signin'), go('signin'))}>
                     Sign in
                   </button>
                 </p>
@@ -237,27 +326,32 @@ export function EntryFlow() {
                   <button onClick={() => setLegal('terms')}>Terms</button> · <button onClick={() => setLegal('privacy')}>Privacy</button> · <button onClick={() => setLegal('conduct')}>Community guidelines</button>
                 </p>
               </div>
+              {entry?.notice && <TransientNotice text={entry.notice} />}
             </div>
           )}
 
-          {/* Email is passwordless, the industry standard (a one-time code): the same flow signs up and signs in. */}
+          {/* Email is passwordless, the industry standard (a one-time code). The account, not this screen, decides
+              whether it signs in or creates an account (domain/accounts.ts). */}
           {step === 'email' && (
-            <Form title="Continue with email" onBack={back}>
-              <EmailForm value={email} onChange={setEmail} onSubmit={() => go('verify')} />
+            <Form title="Continue with email" onBack={goBack}>
+              <EmailForm value={email} onChange={setEmail} onSubmit={() => (setCodeSentAt(Date.now()), go('verify'))} />
             </Form>
           )}
 
           {step === 'signin' && (
-            <SignIn email={email} onEmail={setEmail} onBack={back} onSubmit={() => go('verify')} onProvider={setProvider} />
+            <SignIn email={email} onEmail={setEmail} onBack={goBack} onSubmit={() => (setCodeSentAt(Date.now()), go('verify'))} onProvider={(p) => (setAuthIntent('signin'), setProvider(p))} />
           )}
 
           {step === 'consent' && (
             <Consent
-              onBack={back}
+              value={consent}
+              onChange={setConsent}
+              onBack={goBack}
               openDoc={setLegal}
-              onAgree={(marketing) => {
-                recordConsent(['Terms of Service', 'Privacy Policy', 'Age 18 or older', ...(marketing ? ['Product emails'] : [])], 'Signup');
+              onAgree={() => {
+                recordConsent(['Terms of Service', 'Privacy Policy', 'Age 18 or older', ...(consent.marketing ? ['Product emails'] : [])], 'Signup');
                 // Email was already confirmed with its code before this screen.
+                if (resuming) return resumeAt(resumeStep({ name, craft: primary ?? undefined, intents: selectedIntents, city }));
                 go('you');
               }}
             />
@@ -266,18 +360,37 @@ export function EntryFlow() {
           {step === 'verify' && (
             <Verify
               email={email}
-              onBack={back}
-              onDone={() => {
-                // A known address signs in; any other address continues to create an account.
-                const k = Object.keys(KNOWN).find((x) => email.toLowerCase().includes(x));
-                if (k && !invite) return signInAs(KNOWN[k]);
-                go('consent');
-              }}
+              sentAt={codeSentAt}
+              onResend={() => setCodeSentAt(Date.now())}
+              onBack={goBack}
+              onDone={(done, fail) =>
+                attempt(
+                  'auth-email',
+                  () => (done(), afterAuth({ provider: 'email', subject: normaliseEmail(email), email: normaliseEmail(email) }, authIntent)),
+                  () => fail("Couldn't check your code. Nothing was changed. Try again."),
+                  400,
+                )
+              }
             />
           )}
 
+          {step === 'notfound' && identity && (
+            <Form title="No account yet" onBack={goBack}>
+              <p className="body">
+                We couldn't find an Art and Artist account for <b>{maskIdentity(identity)}</b>. Nothing was created.
+              </p>
+              <p className="meta">If you've used Art and Artist before, try the way you signed up the first time: Apple, Google or another email.</p>
+              <Button block size="l" onClick={() => startNew(identity)}>
+                Create an account
+              </Button>
+              <Button block size="l" variant="secondary" onClick={goBack}>
+                Try another way
+              </Button>
+            </Form>
+          )}
+
           {step === 'you' && (
-            <Onboard step={stepIndex} total={steps.length} image="badge" title="About you" onBack={back}>
+            <Onboard step={stepIndex} total={steps.length} image="badge" title="About you" lede="The name you're credited by, and the craft you're known for." onBack={goBack}>
               <div className="ob-photo">
                 <Avatar party={{ id: 'draft', kind: 'person', name: name || 'You', role: '', craft: 'actor', city: '', tone: 3, photo, avatarFraming }} size={88} />
                 <PhotoPicker onPick={src => { setPhoto(src); setAvatarFraming(undefined); }} has={!!photo} />
@@ -304,16 +417,13 @@ export function EntryFlow() {
           )}
 
           {step === 'mobile' && (
-            <Onboard step={stepIndex} total={steps.length} image="file" title="Your mobile number" onBack={back} onSkip={() => go(invite ? 'where' : 'now')} skipLabel="Skip for now">
-              <MobileVerify value={phone} onChange={setPhone} checkOnly />
-              <Button block size="l" disabled={!phone?.verified} onClick={() => go(invite ? 'where' : 'now')}>
-                Continue
-              </Button>
+            <Onboard step={stepIndex} total={steps.length} image="file" title="Your mobile number" lede="Optional. It helps productions match your credits to you. It's never shown on your profile." onBack={goBack}>
+              <PhoneStep value={phone} onChange={setPhone} draft={phoneDraft} onDraft={setPhoneDraft} onContinue={() => go(invite ? 'where' : 'now')} />
             </Onboard>
           )}
 
           {step === 'now' && (
-            <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={back}>
+            <Onboard step={stepIndex} total={steps.length} image="search" title="What brings you here?" onBack={goBack}>
               {TEST_MODE && <p className="meta">This shapes what Art and Artist shows you first. Change it any time from Home.</p>}
               {district && <p className="meta" id="intent-help" aria-live="polite">{selectedIntents.length === MAX_ONBOARDING_INTENTS ? '3 selected. Deselect one to change.' : 'Choose up to 3'}</p>}
               <div className={`intent-list ${district ? 'intent-list--multi' : ''}`} role={district ? 'group' : 'radiogroup'} aria-label="What are you looking to do right now?" aria-describedby={district ? 'intent-help' : undefined} onKeyDown={district ? undefined : (e) => rovingKeys(e)}>
@@ -373,7 +483,7 @@ export function EntryFlow() {
           )}
 
           {step === 'where' && (
-            <Onboard step={stepIndex} total={steps.length} image="valley" title="Where you work" onBack={back}>
+            <Onboard step={stepIndex} total={steps.length} image="valley" title="Where you work" lede="So productions near you, and in your languages, can find you." onBack={goBack}>
               <Field label="Where are you based?">
                 <input className="field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Your base city" autoComplete="address-level2" />
               </Field>
@@ -442,7 +552,7 @@ export function EntryFlow() {
           )}
 
           {step === 'work' && primary && (
-            <Onboard className={district ? 'ana-show-work' : undefined} step={stepIndex} total={steps.length} image="moodboard" title={district ? 'Show your work' : 'Add your work'} onBack={back} onSkip={finishProfile} skipLabel={district ? 'Skip for now' : 'Skip'}>
+            <Onboard className={district ? 'ana-show-work' : undefined} step={stepIndex} total={steps.length} image="moodboard" title={district ? 'Show your work' : 'Add your work'} onBack={goBack} onSkip={finishProfile} skipLabel={district ? 'Skip for now' : 'Skip'}>
               {district ? <DistrictAddWork previewUrls={previewUrls.current} craft={primary} reel={showreel} draft={showreelDraft} setReel={setShowreel} setDraft={setShowreelDraft} work={work} setWork={setWork} link={link} setLink={setLink} /> : <AddWork craft={primary} reelUrl={reelUrl} setReelUrl={setReelUrl} work={work} setWork={setWork} link={link} setLink={setLink} />}
               <Button block size="l" onClick={finishProfile}>
                 {showreel || showreelDraft || reelUrl || work.length || link ? 'Finish' : 'Show me Art and Artist'}
@@ -470,7 +580,7 @@ export function EntryFlow() {
 
           {step === 'inviteTip' && personId && (
             <div className="ob">
-              <Photo surface="portfolio-thumbnail" media={art('badge')} className="ob-art" showPlay={false} />
+              <div className="ob-top"><EntryArt name="badge" /></div>
               <div className="ob-body">
                 <h1 className="ob-title">You can now act for {org(INVITE.orgId).name}</h1>
                 <p className="body">Switch between yourself and {org(INVITE.orgId).name} from your name at the top of your profile, or from the house name on its Home. Your own profile and credits always stay yours.</p>
@@ -527,17 +637,20 @@ export function EntryFlow() {
           <ProviderSheet
             kind={provider}
             invite={invite}
-            onPick={(acct) => {
-              setProvider(null);
-              // An existing account that acts for a production house: straight into the house, whichever screen this came from.
-              if (acct.house) return signInAs(acct.house.viewer, acct.house.acting);
-              setEmail(acct.email);
-              setName(acct.name);
-              // A known account signs in; any other account creates one (never a dead end).
-              const k = Object.keys(KNOWN).find((x) => acct.email.includes(x));
-              if (k && !invite) return signInAs(KNOWN[k]);
-              go('consent');
-            }}
+            onPick={(acct, done, fail) =>
+              attempt(
+                `auth-${provider}`,
+                () => {
+                  done();
+                  setProvider(null);
+                  // The provider's stable id identifies the person; its email never fills the email field.
+                  afterAuth({ provider, subject: acct.subject, email: acct.email, name: acct.name }, authIntent);
+                },
+                () => fail(`Couldn't sign in with ${provider === 'apple' ? 'Apple' : 'Google'}. Nothing was changed. Try again.`),
+                400,
+              )
+            }
+            onCancel={() => setProvider(null)}
           />
         )}
       </Sheet>
@@ -663,11 +776,43 @@ function DistrictAddWork({ craft, reel, draft, setReel, setDraft, work, setWork,
   </div>;
 }
 
-function Onboard({ step, total, image, title, onBack, onSkip, skipLabel = 'Skip', children, className }: { className?: string; step: number; total: number; image: string; title: string; onBack: () => void; onSkip?: () => void; skipLabel?: string; children: ReactNode }) {
+/*
+ * Entry and onboarding artwork (docs/ux-refinement/PLAN.md, Auth and onboarding repair). These are illustrations,
+ * not user media, so they don't go through the media framing rules (which show unknown-size images whole on a grey
+ * fill: that is what turned them into narrow strips with gutters after the media system landed). They always fill
+ * their frame (cover), each with a focal point that keeps its subject in view at any width.
+ */
+const artSrc = (n: string) => `images/brand/entry/${n}.jpg`;
+const ART_FOCUS: Record<string, string> = { chair: '50% 38%', badge: '50% 62%', file: '50% 58%', search: '50% 56%', valley: '50% 52%', moodboard: '50% 48%', star: '50% 55%', camera: '50% 50%' };
+function EntryArt({ name, priority }: { name: string; priority?: boolean }) {
+  return <img className="entry-art-img" src={artSrc(name)} alt="" width={640} height={990} decoding="async" loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} style={{ objectPosition: ART_FOCUS[name] ?? '50% 50%' }} />;
+}
+
+/** Brief, announced, then gone: a sign-out confirmation never takes permanent space on Welcome. */
+function TransientNotice({ text }: { text: string }) {
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const t = window.setTimeout(() => setShown(false), 4000);
+    return () => window.clearTimeout(t);
+  }, []);
+  return (
+    <div className="entry-notice-host" role="status" aria-live="polite">
+      <AnimatePresence>
+        {shown && (
+          <motion.p className="entry-notice" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+            <Check size={15} strokeWidth={2.6} aria-hidden /> {text.replace(/\.$/, '')}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function Onboard({ step, total, image, title, lede, onBack, onSkip, skipLabel = 'Skip', children, className }: { className?: string; step: number; total: number; image: string; title: string; lede?: string; onBack: () => void; onSkip?: () => void; skipLabel?: string; children: ReactNode }) {
   return (
     <div className={`ob${className ? ` ${className}` : ''}`}>
       <div className="ob-top">
-        <Photo surface="portfolio-thumbnail" media={art(image)} className="ob-art" showPlay={false} />
+        <EntryArt name={image} priority />
         <div className="ob-nav">
           <button className="icon-btn icon-btn--float" aria-label="Back" onClick={onBack}>
             <ChevronLeft size={24} />
@@ -685,10 +830,125 @@ function Onboard({ step, total, image, title, onBack, onSkip, skipLabel = 'Skip'
             <span key={i} className={i <= step ? 'is-on' : ''} />
           ))}
         </div>
+        <p className="ob-count" aria-hidden>
+          Step {step + 1} of {total}
+        </p>
         <h1 className="ob-title">{title}</h1>
+        {lede && <p className="ob-lede">{lede}</p>}
         <div className="stack">{children}</div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The optional mobile step: one primary action at a time (Send code, then Verify, then Continue) with Skip for now
+ * always beside it. The number is kept across Back and Forward. Phone-based invitations keep their own check.
+ */
+function PhoneStep({ value, onChange, draft, onDraft, onContinue }: { value: { number: string; verified: boolean } | null; onChange: (v: { number: string; verified: boolean } | null) => void; draft: string; onDraft: (s: string) => void; onContinue: () => void }) {
+  const { verifyPhone } = useStore();
+  const [sentAt, setSentAt] = useState(0);
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [wait, setWait] = useState(0);
+  const id = useId();
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = window.setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [wait]);
+  const valid = validPhone(draft);
+  const invalid = touched && draft.trim() !== '' && !valid;
+  const send = () => {
+    setSentAt(Date.now());
+    setWait(30);
+    setCode('');
+    setError('');
+  };
+  const verify = () => {
+    if (Date.now() - sentAt > CODE_TTL) return setError('This code has expired. Send a new one.');
+    if (code !== MOBILE_TEST_CODE) return setError("That code didn't match. Check it and try again.");
+    const r = verifyPhone(draft, true);
+    if (r === 'taken') return setError('This number is already verified on another account. Sign in there, or skip for now.');
+    if (r === 'invalid') return setError('Enter a 10-digit mobile number.');
+    onChange({ number: normalisePhone(draft), verified: true });
+  };
+  const skip = (
+    <button className="btn btn--l btn--block btn--plain ob-secondary" onClick={onContinue}>
+      Skip for now
+    </button>
+  );
+  if (value?.verified)
+    return (
+      <>
+        <div className="ob-verified" role="status">
+          <Check size={18} aria-hidden />
+          <span>
+            <b>{maskedPhone(value.number)}</b> verified
+          </span>
+          <button className="link link--small" onClick={() => (onChange(null), setSentAt(0), setCode(''))}>
+            Change
+          </button>
+        </div>
+        <Button block size="l" onClick={onContinue}>
+          Continue
+        </Button>
+      </>
+    );
+  return (
+    <>
+      <div>
+        <label className="field-label" htmlFor={`${id}-n`}>
+          Mobile number
+        </label>
+        <div className="ob-phone">
+          <span className="ob-phone-cc" aria-hidden>
+            +91
+          </span>
+          <input id={`${id}-n`} className="field" type="tel" inputMode="tel" value={draft} readOnly={!!sentAt} onChange={(e) => (onDraft(e.target.value), setError(''))} onBlur={() => setTouched(true)} placeholder="10-digit number" autoComplete="tel-national" aria-invalid={invalid || undefined} aria-describedby={`${id}-h`} />
+        </div>
+        <p className={invalid ? 'field-error' : 'meta field-hint'} id={`${id}-h`} role={invalid ? 'alert' : undefined}>
+          {invalid ? 'Enter a 10-digit mobile number.' : 'Never shown on your profile or shared automatically.'}
+        </p>
+      </div>
+      {sentAt ? (
+        <>
+          <div className="test-code" role="note">
+            <p>
+              <b>This is a test version, so no text message is sent.</b> Use this code:
+            </p>
+            <button type="button" className="test-code-btn" onClick={() => (setCode(MOBILE_TEST_CODE), setError(''))} aria-label={`Use code ${MOBILE_TEST_CODE.split('').join(' ')}`}>
+              <span className="test-code-digits">
+                {MOBILE_TEST_CODE.slice(0, 3)} {MOBILE_TEST_CODE.slice(3)}
+              </span>
+              <span className="test-code-use">Use code</span>
+            </button>
+          </div>
+          <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => (setCode(e.target.value.replace(/\D/g, '')), setError(''))} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" aria-invalid={error ? true : undefined} />
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+          <p className="meta ob-code-links">
+            {wait > 0 ? `Resend code in ${wait}s` : <button className="link" onClick={send}>Resend code</button>}
+            {' · '}
+            <button className="link" onClick={() => (setSentAt(0), setCode(''), setError(''))}>
+              Change number
+            </button>
+          </p>
+          <Button block size="l" disabled={code.length !== 6} onClick={verify}>
+            Verify
+          </Button>
+        </>
+      ) : (
+        <Button block size="l" disabled={!valid} onClick={send}>
+          Send code
+        </Button>
+      )}
+      {skip}
+    </>
   );
 }
 
@@ -715,39 +975,73 @@ function PhotoPicker({ onPick, has }: { onPick: (src: string) => void; has: bool
   );
 }
 
-/** Apple / Google account chooser (simulated system sheet). */
-function ProviderSheet({ kind, invite, onPick }: { kind: 'apple' | 'google'; invite: boolean; onPick: (a: ProviderAccount) => void }) {
-  const accounts: ProviderAccount[] =
-    kind === 'google'
-      ? invite
-        ? [
-            { name: INVITE.name, email: INVITE.email },
-            { name: INVITE.name, email: 'meena.iyer@gmail.com' },
-          ]
-        : [
-            { name: 'Nila Varghese', email: 'nila.varghese@gmail.com' },
-            { name: 'Kiran Varma', email: 'kiran.varma@gmail.com' },
-            HOUSE_ACCOUNT('aditi@konarkpictures.in'),
-          ]
-      : invite
-        ? [{ name: INVITE.name, email: 'x7p2k@privaterelay.appleid.com' }]
-        : [{ name: 'Nila Varghese', email: 'x7p2k@privaterelay.appleid.com' }, HOUSE_ACCOUNT('m4q9d@privaterelay.appleid.com')];
+/**
+ * Apple / Google account chooser. Simulated: there is no Apple or Google SDK in this prototype, so this sheet stands
+ * in for the system one and says so. Each account carries the provider's stable id; Apple shares a private relay
+ * address, which is used only as an address and never compared with anything else.
+ */
+const PROVIDER_ACCOUNTS: Record<'apple' | 'google', ProviderAccount[]> = {
+  apple: [
+    { name: 'Kiran Varma', subject: 'apple-1001', email: 'k3n8w@privaterelay.appleid.com', hint: 'Has an account' },
+    { name: 'Aditi Ghosh', subject: 'apple-1003', email: 'm4q9d@privaterelay.appleid.com', hint: 'Has an account · acts for Konark Pictures' },
+    { name: 'Nila Varghese', subject: 'apple-5000', email: 'x7p2k@privaterelay.appleid.com', hint: 'New to Art and Artist' },
+  ],
+  google: [
+    { name: 'Kiran Varma', subject: 'google-1001', email: 'kiran.varma@gmail.com', hint: 'Has an account' },
+    { name: 'Aditi Ghosh', subject: 'google-1003', email: 'aditi@konarkpictures.in', hint: 'Has an account · acts for Konark Pictures' },
+    { name: 'Tara Menon', subject: 'google-1002', email: 'tara.menon@gmail.com', hint: 'Has an account · Terms updated since' },
+    { name: 'Ravi Kumar', subject: 'google-1004', email: 'ravi.kumar@gmail.com', hint: 'Started signing up, didn’t finish' },
+    { name: 'Nila Varghese', subject: 'google-5001', email: 'nila.varghese@gmail.com', hint: 'New to Art and Artist' },
+  ],
+};
+const INVITE_ACCOUNTS: Record<'apple' | 'google', ProviderAccount[]> = {
+  apple: [{ name: INVITE.name, subject: 'apple-inv-1', email: 'r8t2v@privaterelay.appleid.com' }],
+  google: [
+    { name: INVITE.name, subject: 'google-inv-1', email: INVITE.email },
+    { name: INVITE.name, subject: 'google-inv-2', email: 'meena.iyer@gmail.com' },
+  ],
+};
+
+function ProviderSheet({ kind, invite, onPick, onCancel }: { kind: 'apple' | 'google'; invite: boolean; onPick: (a: ProviderAccount, done: () => void, fail: (msg: string) => void) => void; onCancel: () => void }) {
+  const accounts = (invite ? INVITE_ACCOUNTS : PROVIDER_ACCOUNTS)[kind];
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState('');
   return (
-    <div className="stack">
+    <div className="stack provider-sheet">
       <p className="title-2">{kind === 'google' ? 'Choose an account' : 'Sign in with Apple'}</p>
       <p className="meta">to continue to Art and Artist</p>
+      <p className="provider-note">Prototype: a simulated {kind === 'apple' ? 'Apple' : 'Google'} sign-in. Pick an account to see each path.</p>
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
       <div className="list list--flush">
         {accounts.map((a) => (
-          <button key={a.email} className="prow provider-row" onClick={() => onPick(a)}>
+          <button
+            key={a.subject}
+            className="prow provider-row"
+            disabled={!!busy}
+            aria-busy={busy === a.subject || undefined}
+            onClick={() => {
+              setBusy(a.subject);
+              setError('');
+              onPick(a, () => setBusy(null), (msg) => (setBusy(null), setError(msg)));
+            }}
+          >
             <span className="ph-initial">{a.name[0]}</span>
             <span className="prow-text">
               <span className="item-title">{a.name}</span>
               <span className="meta">{kind === 'apple' ? 'Hide my email' : a.email}</span>
-              {a.house && <span className="meta provider-house">Production house · {a.house.label}</span>}
+              {a.hint && <span className="meta provider-house">{a.hint}</span>}
             </span>
+            {busy === a.subject && <span className="spinner" aria-hidden />}
           </button>
         ))}
       </div>
+      <button className="btn btn--l btn--block btn--plain" onClick={onCancel}>
+        Cancel
+      </button>
     </div>
   );
 }
@@ -763,6 +1057,7 @@ function SignIn({ email, onEmail, onBack, onSubmit, onProvider }: { email: strin
       </button>
       <p className="or">or</p>
       <EmailForm value={email} onChange={onEmail} onSubmit={onSubmit} />
+      <p className="provider-note">Prototype accounts: kiran@example.com, tara@example.com, aditi@example.com. Any other address shows the "no account" path.</p>
     </Form>
   );
 }
@@ -826,10 +1121,12 @@ const KNOW: { d: DocId; icon: ReactNode; h: string; line: string; full: string }
   },
 ];
 
-function Consent({ onBack, openDoc, onAgree }: { onBack: () => void; openDoc: (d: DocId) => void; onAgree: (marketing: boolean) => void }) {
-  const [terms, setTerms] = useState(false);
-  const [age, setAge] = useState(false);
-  const [marketing, setMarketing] = useState(false);
+function Consent({ value, onChange, onBack, openDoc, onAgree }: { value: ConsentDraft; onChange: (v: ConsentDraft) => void; onBack: () => void; openDoc: (d: DocId) => void; onAgree: () => void }) {
+  // Held by the flow, so going Back and returning keeps what was ticked. Required boxes are never pre-ticked.
+  const { terms, age, marketing } = value;
+  const setTerms = (v: boolean) => onChange({ ...value, terms: v });
+  const setAge = (v: boolean) => onChange({ ...value, age: v });
+  const setMarketing = (v: boolean) => onChange({ ...value, marketing: v });
   const [topic, setTopic] = useState<(typeof KNOW)[number] | null>(null);
   const link = (d: DocId, label: string) => (
     <button
@@ -845,43 +1142,52 @@ function Consent({ onBack, openDoc, onAgree }: { onBack: () => void; openDoc: (d
   );
   return (
     <Form title="Before you join" onBack={onBack}>
-      <p className="meta consent-lede">A few things to know about how Art and Artist works.</p>
+      <p className="consent-lede">A few things to know about how Art and Artist works.</p>
 
-      <div className="know-list" role="group" aria-label="What to know">
-        {KNOW.map((k) => (
-          <button key={k.d} type="button" className="know-row" onClick={() => setTopic(k)} aria-haspopup="dialog">
-            <span className="know-icon" aria-hidden>
-              {k.icon}
-            </span>
-            <span className="know-text">
-              <span className="item-title">{k.h}</span>
-              <span className="meta">{k.line}</span>
-            </span>
-            <ChevronRight size={18} className="know-chevron" aria-hidden />
-          </button>
-        ))}
-      </div>
+      <section className="consent-group" aria-labelledby="consent-know">
+        <h2 className="consent-h" id="consent-know">What to know</h2>
+        <div className="know-list">
+          {KNOW.map((k) => (
+            <button key={k.d} type="button" className="know-row" onClick={() => setTopic(k)} aria-haspopup="dialog">
+              <span className="know-icon" aria-hidden>
+                {k.icon}
+              </span>
+              <span className="know-text">
+                <span className="item-title">{k.h}</span>
+                <span className="meta">{k.line}</span>
+              </span>
+              <ChevronRight size={18} className="know-chevron" aria-hidden />
+            </button>
+          ))}
+        </div>
+      </section>
 
-      <div className="consent-required" role="group" aria-label="Required to join">
+      <section className="consent-group consent-required" aria-labelledby="consent-req">
+        <h2 className="consent-h" id="consent-req">
+          To join, confirm <span className="consent-tag">Required</span>
+        </h2>
         <CheckRow on={terms} set={setTerms} id="consent-terms">
           I agree to the {link('terms', 'Terms of Service')} and have read the {link('privacy', 'Privacy Policy')}
         </CheckRow>
         <CheckRow on={age} set={setAge} id="consent-age">
           I'm 18 or older
         </CheckRow>
-      </div>
+      </section>
 
-      <div className="consent-optional">
+      <section className="consent-group consent-optional" aria-labelledby="consent-opt">
         <span className="consent-optional-text">
-          <span className="consent-optional-label">Optional</span>
-          <span className="meta">Occasional emails about new features</span>
+          <span className="consent-h" id="consent-opt">
+            Product emails <span className="consent-tag consent-tag--quiet">Optional</span>
+          </span>
+          <span className="meta">Occasional emails about new features. Off unless you turn it on.</span>
         </span>
         <Toggle on={marketing} onChange={setMarketing} label="Product emails (optional)" />
-      </div>
+      </section>
 
-      <Button block size="l" disabled={!terms || !age} onClick={() => onAgree(marketing)}>
+      <Button block size="l" disabled={!terms || !age} onClick={onAgree} aria-describedby="consent-missing">
         Agree and continue
       </Button>
+      <Missing id="consent-missing" items={[!terms && 'agreement to the Terms', !age && 'confirmation that you\'re 18 or older']} />
 
       <Sheet open={!!topic} onClose={() => setTopic(null)} title="" label={topic?.h ?? 'What to know'} size="tall">
         {topic && (
@@ -920,23 +1226,31 @@ function Check2({ on, set, children }: { on: boolean; set: (v: boolean) => void;
 /** The one-time code shown on the code screen. This is a test version: no email is ever sent. */
 const TEST_CODE = '246810';
 
-function Verify({ email, onBack, onDone }: { email: string; onBack: () => void; onDone: () => void }) {
+function Verify({ email, sentAt, onResend, onBack, onDone }: { email: string; sentAt: number; onResend: () => void; onBack: () => void; onDone: (done: () => void, fail: (msg: string) => void) => void }) {
   const [code, setCode] = useState('');
   const [wait, setWait] = useState(30);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => {
     if (wait <= 0) return;
     const t = window.setTimeout(() => setWait((w) => w - 1), 1000);
     return () => window.clearTimeout(t);
   }, [wait]);
-  // Like the real thing: the sixth digit verifies, no extra tap. Any six digits work in the test version.
+  // Like the real thing: the sixth digit verifies, no extra tap. Only the shown code works, and only for ten minutes.
+  const check = (d: string) => {
+    if (busy) return;
+    // The /test research study keeps its original rule (any six digits), so the frozen study behaves as before.
+    if (!TEST_MODE && Date.now() - sentAt > CODE_TTL) return setError('This code has expired. Send a new one.');
+    if (!TEST_MODE && d !== TEST_CODE) return setError("That code didn't match. Check it and try again.");
+    setBusy(true);
+    setError('');
+    onDone(() => setBusy(false), (msg) => (setBusy(false), setError(msg)));
+  };
   const enter = (v: string) => {
     const d = v.replace(/\D/g, '').slice(0, 6);
     setCode(d);
-    if (d.length === 6 && !busy) {
-      setBusy(true);
-      window.setTimeout(onDone, 500);
-    }
+    setError('');
+    if (d.length === 6) check(d);
   };
   return (
     <Form title="Check your email" onBack={onBack}>
@@ -953,15 +1267,20 @@ function Verify({ email, onBack, onDone }: { email: string; onBack: () => void; 
           <span className="test-code-use">Use code</span>
         </button>
       </div>
-      <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => enter(e.target.value)} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" autoFocus />
-      <Button block size="l" loading={busy} disabled={code.length !== 6} onClick={() => enter(code)}>
+      <input className="field code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => enter(e.target.value)} placeholder="••••••" aria-label="6-digit code" autoComplete="one-time-code" autoFocus aria-invalid={error ? true : undefined} />
+      {error && (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
+      <Button block size="l" loading={busy} disabled={code.length !== 6} onClick={() => check(code)}>
         Verify
       </Button>
       <p className="meta">
         {wait > 0 ? (
           `Resend code in ${wait}s`
         ) : (
-          <button className="link" onClick={() => setWait(30)}>
+          <button className="link" onClick={() => (onResend(), setWait(30), setCode(''), setError(''))}>
             Resend code
           </button>
         )}
@@ -983,7 +1302,7 @@ function Invitation({ accountEmail, onSwitchEmail, onAccept, onDecline }: { acco
   return (
     <div className="ob">
       <div className="ob-top">
-        <Photo surface="portfolio-thumbnail" media={art('badge')} className="ob-art" showPlay={false} />
+        <EntryArt name="badge" />
       </div>
       <div className="ob-body">
         <div className="invite-card">
@@ -1073,7 +1392,7 @@ function Intro({ onDone }: { onDone: () => void }) {
             if (info.offset.x > 60 && i > 0) setI(i - 1);
           }}
         >
-          <Photo surface="portfolio-thumbnail" media={art(s.art)} className="splash-art" showPlay={false} />
+          <EntryArt name={s.art} priority />
         </motion.div>
       </AnimatePresence>
       <div className="intro-shade" />

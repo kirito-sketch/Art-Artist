@@ -1,0 +1,89 @@
+/* ================================================================ Entry, sign-in and onboarding
+ * docs/ux-refinement/PLAN.md, Auth and onboarding repair. Restores the full-bleed direction the entry screens had
+ * before the media system (commit 65ecd75) put their artwork through framing rules meant for user media, and
+ * strengthens it: the art fills its frame (cover, per-image focal point), runs under the status bar, and melts
+ * into the page colour of the active theme (--surface), so it reads as part of the page, never a separate strip.
+ * Sizes are relative to the entry container (cq units), so the device frame and a real phone behave the same.
+ */
+.phone .entry { container-type: size; }
+.phone .entry-art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---- Welcome: the hero takes the top ~60% and the headline sits on its blended lower edge. */
+.phone .entry-home { position: relative; min-height: 100%; }
+.phone .entry-art { position: relative; height: clamp(340px, 60cqh, 600px); min-height: 0; margin-bottom: -120px; overflow: hidden; }
+.phone .entry-fade {
+  position: absolute; inset: 0; height: auto;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.32) 0%,
+    rgba(0, 0, 0, 0) 16%,
+    rgba(0, 0, 0, 0) 42%,
+    color-mix(in srgb, var(--surface) 35%, transparent) 62%,
+    color-mix(in srgb, var(--surface) 82%, transparent) 80%,
+    var(--surface) 96%
+  );
+}
+.phone .entry-body { position: relative; z-index: 1; padding: 0 24px max(24px, env(safe-area-inset-bottom, 0px)); gap: 14px; }
+.phone .entry-logo .logo img { height: 36px; }
+.phone .entry-line { font-size: clamp(24px, 7.2cqw, 29px); line-height: 1.16; margin: 0 0 4px; text-wrap: balance; }
+.phone .entry-actions { gap: 10px; }
+.phone .auth-btn { min-height: 52px; height: auto; }
+.phone .entry-legal { margin-top: 6px; }
+
+/* Signed-out confirmation: a brief pill over the hero, announced, then gone. Never part of the layout. */
+.phone .entry-notice-host { position: absolute; top: calc(var(--status-bar, 12px) + 12px); left: 0; right: 0; z-index: 4; display: flex; justify-content: center; pointer-events: none; }
+.phone .entry-notice {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 9px 14px; border-radius: 999px;
+  background: rgba(20, 20, 22, 0.78); color: #fff; font-size: 14px; font-weight: 600;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+/* ---- Onboarding: one frame for every illustration. Full width, cover, a top scrim for the controls, and a fade
+   into the page that the form overlaps slightly, so art, progress and form read as one screen. */
+.phone .ob-top { height: clamp(200px, 34cqh, 320px); transition: height 0.25s ease; }
+.phone .ob-top::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.26) 0%, rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0) 58%, color-mix(in srgb, var(--surface) 70%, transparent) 84%, var(--surface) 100%);
+}
+.phone .ob-nav { z-index: 2; }
+.phone .ob-body { position: relative; z-index: 1; margin-top: -26px; padding: 0 24px max(28px, env(safe-area-inset-bottom, 0px)); gap: 10px; }
+.phone .ob-count { margin: 2px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--text-2); }
+.phone .ob-title { margin: 0; }
+.phone .ob-lede { margin: -2px 0 6px; font-size: 15px; line-height: 1.4; color: var(--text-2); }
+.phone .ob-progress span { height: 4px; }
+.phone .ob-progress span.is-on { background: var(--action, var(--text)); }
+.phone .ob-secondary { color: var(--text-2); font-weight: 600; }
+.phone .ob-code-links { margin: -2px 0 0; }
+/* With the keyboard up on a short screen, the art steps back so the field and its button stay in view. */
+@container (max-height: 700px) {
+  .phone .ob:has(.ob-body :is(input[type='text'], input[type='tel'], input[type='email'], input:not([type]), .code-input):focus) .ob-top { height: 120px; }
+}
+@media (prefers-reduced-motion: reduce) { .phone .ob-top { transition: none; } }
+
+/* ---- Account screens (sign in, email, code, consent): a soft echo of the welcome art at the top, so moving from
+   the immersive Welcome into a form is a continuation, not a jump to a blank page. */
+.phone .auth { position: relative; isolation: isolate; }
+.phone .auth::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 200px; z-index: -1;
+  background: url('/images/brand/entry/chair.jpg') center 40% / cover no-repeat;
+  filter: blur(26px) saturate(1.1); opacity: 0.32;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+.phone .provider-note { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; color: var(--text-2); background: color-mix(in srgb, var(--text) 5%, transparent); }
+.phone .provider-row { min-height: 60px; }
+.phone .provider-row:disabled { opacity: 0.6; }
+.phone .provider-row .spinner { margin-left: auto; }
+
+/* ---- Before you join: three labelled groups, one level of grouping, no nested cards. */
+.phone .consent-lede { margin: -4px 0 4px; font-size: 15px; line-height: 1.4; color: var(--text-2); }
+.phone .consent-group { display: flex; flex-direction: column; gap: 4px; }
+.phone .consent-h { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--text); }
+.phone .consent-tag { padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--action, var(--text)) 14%, transparent); color: var(--action-ink, var(--text)); }
+.phone .consent-tag--quiet { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text-2); }
+.phone .know-list { background: none; border-radius: 0; }
+.phone .know-row { padding: 12px 0; min-height: 56px; }
+.phone .know-row + .know-row { border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+.phone .consent-required .check-row { min-height: 44px; padding: 10px 0; align-items: center; }
+.phone .consent-required .check-box { width: 24px; height: 24px; }
+.phone .consent-optional { border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent); padding-top: 10px; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+.phone .consent-optional .consent-h { margin: 0 0 2px; }

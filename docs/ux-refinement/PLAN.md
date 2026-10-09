@@ -560,7 +560,8 @@ These QA scripts live in the session scratchpad, not the repository. Their check
 | 3 Detail pages | Approved (with review feedback) | `f3768b1` |
 | 4 Project and trailers | Approved (with review feedback) | `0bede79` |
 | 5 Home, integration, QA | Done, awaiting review | `9bd0736` |
-| 6 Create flows, all personas | Done, awaiting review | see below |
+| 6 Create flows, all personas | Done, awaiting review | `24d3527` |
+| A Auth and onboarding repair | Done, awaiting review | see below |
 
 ### Stage 1 record
 
@@ -888,4 +889,91 @@ Screenshots of the full journey are in `docs/ux-refinement/stage6/`.
 - The "available" branch of `CollabComposer` can no longer be reached from the UI. Existing available posts still render. It can be removed with its store branch in a later clean-up.
 - Uploads stay session-only (D6) until `TRAILER_STORAGE.md` (which covers media storage) is approved. `readDeviceFiles` is the one place a storage backend plugs in.
 - The house setup logo picker uses the shared picker but has no automated check.
+
+### Auth and onboarding repair (focused task)
+
+**Scope:** welcome, sign-in, account and session state, routing, consent, onboarding, and their styles and assets. No other screens.
+
+**Acceptance:**
+
+- Existing accounts reach their account without sign-up.
+- New accounts get consent, then onboarding.
+- Every Back (in-app and browser) goes exactly one step without losing input.
+- The mobile number is optional, with one primary action per state.
+- Welcome and onboarding art is full-bleed, in light and dark.
+- Before you join is routed correctly and readable.
+- House permissions, the research baseline and unrelated screens are unchanged.
+
+**Root causes:**
+
+1. **Returning users routed through sign-up.**
+   - `Entry.tsx` decided "existing account" with `email.includes('kiran'|'tara'|'aditi')`: a name match on the address.
+   - Apple private-relay addresses never contain a name, so every returning Apple user (other than a hard-coded house shortcut) went to Before you join and onboarding.
+   - Sign in and "Continue with…" shared one path, so an explicit Sign in silently created an account.
+   - Picking a provider also wrote the provider's address into the email field, which is how a relay address appeared in a fresh Sign in.
+2. **Back.**
+   - The step history was copied in a closure, so it could be stale during the 0.25 s exit animation.
+   - The code screen was stacked, so Back from Before you join re-opened it.
+   - Consent ticks and the unverified phone number lived inside the step components, so they were lost on Back.
+   - Nothing was tied to browser history, so system Back left the app.
+3. **Visual regression.**
+   - Commit `65ecd75` (centralised media presentation) sent the entry and onboarding illustrations through `Photo surface="portfolio-thumbnail"`.
+   - With no known pixel size, the media rules show an image whole (`contain`) on a grey fill. That produced the narrow strips and grey gutters.
+   - The pre-`65ecd75` build was run and captured: the art was full-bleed `cover` there. That direction is restored and strengthened; nothing else is claimed about earlier designs.
+
+**Fixes:**
+
+- **`domain/accounts.ts` (unit-tested):** one post-authentication decision, `routeAfterAuth`, for Apple, Google and email.
+  - Apple and Google are matched by the provider's stable subject only. Email is matched by the verified address, exactly.
+  - Never by name, and providers are never linked automatically.
+  - Existing and complete: signed in, restoring the house acting identity.
+  - Older agreement: signed in, plus only the policy-update sheet.
+  - Unfinished sign-up: resumes at its first missing step, prefilled, consent only if still owed.
+  - No account: "Continue with…" creates one; Sign in shows "No account yet" (nothing created) with Create an account or Try another way.
+  - `registerAccount` links the identity to the new person, so the next sign-in is direct and never a duplicate.
+- **`entry/entryNav.ts` (unit-tested):**
+  - A reducer for the step and its history.
+  - Transient screens (code, notice, intro, splash) are replaced, not stacked.
+  - Every stacked step is a browser history entry: in-app Back calls `history.back()` and `popstate` performs it, so both behave the same.
+  - Browser Forward is undone, and leaving entry removes its entries.
+- **State kept across Back and Forward:** name, photo, craft, intents, city, languages, travel, availability, link, consent ticks, the phone draft and the verified phone.
+- **`state/session.ts`:** on a real reload only (never a new visit, `/test` or `/research`):
+  - the signed-in person and house come back
+  - signed-out stays signed out
+  - an onboarding in progress resumes at the same step with its input (device photos excepted)
+- **Codes:** email codes must match and expire after 10 minutes, with Resend and Change email. The `/test` study keeps its original any-six-digits rule. Failures (the "Actions fail once" test state) explain and retry.
+- **Mobile step:** one primary action per state (Send code, then Verify, then Continue), with Skip for now always secondary.
+  - Inline validation; wrong or expired code, Resend and Change number.
+  - The number is never shown publicly.
+  - The sample "98480 12345" was placeholder text and is now "10-digit number".
+- **Sign-out:** the message is a 4-second announced pill over the hero, never a section. It isn't shown on first entry.
+- **Visual:**
+  - `EntryArt`: a plain `cover` image with a per-illustration focal point, for illustrations rather than user media.
+  - **Welcome:** a full-bleed hero (about 60% of the screen) under the status bar. A theme-aware gradient (`--surface`) blends into the page, with the headline on its edge; the buttons stay on a plain surface.
+  - **Onboarding:** full-width art frames (34% of the screen) with a top scrim and a fade the form overlaps. Progress bars plus "Step n of 5", one-line ledes, and art that steps back when the keyboard is up on short screens.
+  - **Account screens:** a soft blurred echo of the welcome art at the top.
+  - **Before you join:** three labelled groups (What to know; To join, confirm (Required); Product emails (Optional)), no nested card, 44 px checkbox rows, and a hint of what is missing. Legal content and versioning are unchanged; marketing is off by default.
+- **Simulated providers are labelled** as such. The sheets list accounts covering each path: existing, house member, older terms, unfinished, and new. Each has a stable subject and a Cancel.
+
+**Validation:**
+
+- **Auth suite: 44/0 at 320, 375, 393 and 430, and in dark.**
+- **Viewport suite: 20/0** (320×568, 375×667, 430×932, including keyboard focus and every step's art).
+- **Unit tests:** `accounts` and `entryNav`.
+- **Regression:**
+  - Unit tests, typecheck and build pass.
+  - launch 43, wt12 13, wt5 14, wt346 34, wth 24, fields 20, test-a11y 127, focusflow 18 (all /0).
+  - test-flow mobile 39/0 and desktop 37/0 (the `/test` study, unchanged), old-session 4/0, resume 7/0.
+  - Journeys 21/0, create 48/0, picker surfaces 6/0, the Stage 2 checks 64/0 and the Stage 4 checks 20/0, views 22/0, wtx 5/0, wtr 1/0.
+  - Smoke shows its 4 known combos and axe2 its 1 known item (baseline).
+- **Screenshots** are in `docs/ux-refinement/auth/`:
+  - `before-*` (current state before the fix) and `after-*` (light, with `after-dark-*`)
+  - `recovered-65ecd75-parent-*` (the last full-bleed build)
+  - `before-after.jpg`
+
+**Limitations:**
+
+- Apple, Google and email delivery are simulated (no SDKs, no email or SMS is sent). The routing, state and navigation are the real app code.
+- Accounts created in a session don't survive a full reload, because there is no backend. Seeded accounts do.
+- Updated-terms renewal reuses the existing policy-update sheet.
 
