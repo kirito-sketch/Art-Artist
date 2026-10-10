@@ -5,8 +5,8 @@
 
 export type ContentType = 'post' | 'person' | 'role' | 'project' | 'event' | 'review';
 
-/** Discover's chips in the District version, in order. Posts is the default. */
-export type DiscoverChip = 'posts' | 'people' | 'roles' | 'projects' | 'events' | 'reviews';
+/** Discover's tabs in the District version, in order. All (an overview of every kind) is the default. */
+export type DiscoverChip = 'all' | 'posts' | 'people' | 'roles' | 'projects' | 'events' | 'reviews';
 
 export interface ContentTypeDef {
   type: ContentType;
@@ -28,5 +28,8 @@ export const CONTENT_TYPES: ContentTypeDef[] = [
   { type: 'review', chip: 'reviews', label: 'Reviews', search: 'Search films' },
 ];
 
-export const chipDef = (c: DiscoverChip) => CONTENT_TYPES.find((t) => t.chip === c)!;
-export const DISCOVER_CHIP_DEFAULT: DiscoverChip = 'posts';
+/** The overview tab: titled rails of every kind. Not a content type itself. */
+export const ALL_TAB = { chip: 'all' as const, label: 'All', search: 'Search people, projects, events' };
+export const DISCOVER_TABS: { chip: DiscoverChip; label: string; flag?: 'events' }[] = [ALL_TAB, ...CONTENT_TYPES];
+export const chipDef = (c: DiscoverChip) => (c === 'all' ? ALL_TAB : CONTENT_TYPES.find((t) => t.chip === c)!);
+export const DISCOVER_CHIP_DEFAULT: DiscoverChip = 'all';

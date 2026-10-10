@@ -3,7 +3,7 @@ import { isOutThisWeek, reviewsOpen, stats, topRated } from '../../domain/review
 import { reviewsOf } from '../../state/world';
 import { ScoreLine } from '../reviews/reviewUnits';
 import { PostGrid } from './PostGrid';
-import { BadgeCheck, Bookmark, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { BadgeCheck, Bookmark, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, LayoutGrid, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
@@ -21,7 +21,10 @@ import { EVENT_TYPES, typeLabel } from '../../domain/events';
 import type { EventType } from '../../data/types';
 import { visibleEvents } from '../../state/events';
 import { useFeatures } from '../../ui/features';
-import { CONTENT_TYPES, chipDef, type DiscoverChip } from '../../domain/contentTypes';
+import { DISCOVER_TABS, chipDef, type DiscoverChip } from '../../domain/contentTypes';
+import { PersonCard } from '../../ui/PersonCard';
+
+const TAB_ART: Record<string, string | undefined> = { people: 'people', roles: 'crews', projects: 'projects', events: 'events', reviews: 'reviews' };
 import { ReviewsBody } from '../reviews/ReviewsScreen';
 import { peopleForHouseRoles } from '../../domain/house';
 import { TAXONOMY } from '../../data/taxonomy';
@@ -364,11 +367,17 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
         </div>
         {district && (
           <div className="dchips" role="tablist" aria-label="Show">
-            {CONTENT_TYPES.filter((t) => !t.flag || features[t.flag]).map((t) => (
-              <button key={t.chip} role="tab" aria-selected={scope === t.chip && !(searchAll && q)} className={`chip dchip ${scope === t.chip && !(searchAll && q) ? 'is-on' : ''}`} onClick={() => pickChip(t.chip)}>
-                {t.label}
-              </button>
-            ))}
+            {DISCOVER_TABS.filter((t) => !t.flag || features[t.flag]).map((t) => {
+              const on = scope === t.chip && !(searchAll && q);
+              return (
+                <button key={t.chip} role="tab" aria-selected={on} className={`dtab ${on ? 'is-on' : ''}`} onClick={() => pickChip(t.chip)}>
+                  <span className="dtab-obj" aria-hidden>
+                    {TAB_ART[t.chip] ? <img src={`/images/tiles/${TAB_ART[t.chip]}.webp`} alt="" draggable={false} /> : t.chip === 'all' ? <LayoutGrid size={26} strokeWidth={1.75} /> : <Newspaper size={26} strokeWidth={1.75} />}
+                  </span>
+                  <span className="dtab-label">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
         )}
         {!grouped && !variant && <Tabs
@@ -491,6 +500,54 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
               </span>
               <ChevronRight size={17} aria-hidden />
             </button>
+          )}
+          {scope === 'all' && (
+            <div className="dall">
+              {people.length > 0 && (
+                <section className="dh-sec" aria-label="People">
+                  <SectionHeader title="People" action="See all" onAction={() => pickChip('people')} className="dh-pad" />
+                  <div className="pcards" role="group" aria-label="People">{people.slice(0, 8).map((p) => <PersonCard key={p.id} p={p} />)}</div>
+                </section>
+              )}
+              {posts.length > 0 && (
+                <section className="dh-sec" aria-label="Posts">
+                  <SectionHeader title="Posts" action="See all" onAction={() => pickChip('posts')} className="dh-pad" />
+                  <div className="arail" role="group" aria-label="Posts">
+                    {posts.slice(0, 8).map((x, i) => (
+                      <Pressable key={x.id} className="arail-post" onClick={() => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} scale={0.97} aria-label={`${party(x.authorId)?.name ?? 'Post'}: ${x.text.slice(0, 80)}`}>
+                        {x.media[0] ? <Photo media={x.media[0]} surface="search-thumbnail" showPlay={false} /> : <span className="arail-text">{x.text}</span>}
+                      </Pressable>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {projects.length > 0 && (
+                <section className="dh-sec" aria-label="Projects">
+                  <SectionHeader title="Projects" action="See all" onAction={() => pickChip('projects')} className="dh-pad" />
+                  <div className="arail">
+                    {projects.slice(0, 8).map((w) => (
+                      <Pressable key={w.id} className="arail-project" onClick={() => push({ name: 'work', id: w.id })} scale={0.97}>
+                        <Photo surface="search-thumbnail" media={w.media} className="poster" />
+                        <p className="item-title">{w.title}</p>
+                        <p className="meta">{w.ownerId ? person(w.ownerId).name : org(w.orgIds[0]).name}</p>
+                      </Pressable>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {allEvents.length > 0 && (
+                <section className="dh-sec" aria-label="Events">
+                  <SectionHeader title="Events" action="See all" onAction={() => pickChip('events')} className="dh-pad" />
+                  <div className="ev-list ev-list--discover">{allEvents.slice(0, 2).map((e) => <EventTicket key={e.id} e={e} />)}</div>
+                </section>
+              )}
+              {shownRoles.length > 0 && (
+                <section className="dh-sec" aria-label="Opportunities">
+                  <SectionHeader title="Opportunities" action="See all" onAction={() => pickChip('roles')} className="dh-pad" />
+                  <div className="list list--flush">{shownRoles.slice(0, 3).map((o) => <RoleRow key={o.id} o={o} />)}</div>
+                </section>
+              )}
+            </div>
           )}
           {scope === 'reviews' && <ReviewsBody q={q} />}
           {scope === 'roles' && (
