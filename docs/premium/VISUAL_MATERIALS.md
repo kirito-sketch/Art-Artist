@@ -54,7 +54,7 @@ Six steps: `--r-xs` 6 (tags, small thumbnails), `--r-s` 10 (inputs, small cards)
 
 ### Type
 
-The five sizes stay (34, 22, 17, 15, 13) plus one label size (12, uppercase, tracked +4%) for kickers like "CREW JOB". Weights: regular, semibold, bold. No half-pixel sizes, nothing below 12. Tabular figures wherever numbers line up (counts, dates, money).
+The five sizes stay for now (they are under review: the 10 October feedback found them too big, see `docs/feedback/2026-10-10/README.md`). **No all-caps, letter-spaced labels anywhere**: kickers like "Crew job" are sentence case at normal spacing, distinguished by size, weight and colour. Weights: regular, semibold, bold. No half-pixel sizes, nothing below 12. Tabular figures wherever numbers line up (counts, dates, money).
 
 ## Applied in this pass
 

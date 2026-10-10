@@ -60,6 +60,15 @@ Collected by Arun after the client review. Recorded as said, with our reading of
 | `ref-netflix-rails.jpg` (from 60fps.design) | Netflix Home | Dark, poster-first. The recording shows the top poster rail being swiped back and forth: fluid momentum, settling exactly on a poster, while the rail below stays put. Small section titles (about 16 px semibold), posters carry their own title art and badges ("Emmy Nominee"), glass tab bar with the profile avatar as the last tab |
 | `ref-atlys-onboarding.jpg` (from 60fps.design) | Atlys first-run intro | A continuous motion sequence on one screen, not slides with Next: soft grey ripple rings behind a centred mark; short lines replace each other ("now, it's so much more" → "a new era of travel is here"); a gradient ring loads round the mark; a light flash reveals the logo; "meet your personal AI travel agent"; "Search anything" while photo cards fly in at angles in 3D; one pastel-gradient Continue button throughout. Calm grey ground, tiny lower-case type, all the richness in motion |
 
+## Typography rule: no all-caps tracked labels (Arun)
+
+The small labels set in capitals with wide letter spacing above titles, such as "TIDEWATER FILMS · FOR 2 DAYS" in green on the This week card (`ref-no-caps-labels.webp`), are not to appear anywhere in the app. They read as a generic, machine-made pattern, not as Ana.
+
+- Labels are sentence case, normal letter spacing, set by size, weight and colour alone (for example "Tidewater Films · for 2 days" in a smaller, quieter style above the title).
+- Applies to every surface: cards, kickers, frame labels on photos, section labels, badges, the moderation console and /test included.
+- Today there are 28 `text-transform: uppercase` rules across 9 stylesheets, nearly all with added letter spacing. All of them go when typography is reworked.
+- Exceptions only where capitals are the content itself (a film's own title art, an abbreviation like "AC" or "DoP").
+
 ## Not yet asked
 
 - What the Flow and Wabi references are meant for exactly (our reading above is an assumption).
