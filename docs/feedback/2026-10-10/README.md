@@ -108,3 +108,31 @@ Why amber: cool slate shadows with warm amber highlights is the classic "teal an
 `ref-airbnb-explore-tabs.webp`, with the category tabs highlighted. What it is: a large white pill search bar; category tabs as raised pills, each with a small 3D icon (All, Homes, Experiences, Services), the selected one pressed in (inset, slightly darker); below, sections with a title, a grey subtitle and a round arrow button instead of "See all", each a rail of large rounded image cards with a small badge pill ("Original"), a save heart, a two-line title, place and one detail line.
 
 Proposed for Discover: the same structure. Search pill on top; raised 3D-icon tabs for All, Posts, People, Opportunities, Projects, Events, Reviews (adds **All**, a new curated overview, as the default instead of Posts); under All, titled rails per type with a subtitle and arrow ("Verified productions hiring · Roles from houses Ana has checked", "Crew in Hyderabad", "Releasing this month"); choosing a tab shows that type's full results as today. Cards follow the Airbnb card: rounded image, a badge pill ("Verified", "Open role", "Premiere"), save, two-line title, place, one detail.
+
+## Discover posts by type, and the credit celebration post (Arun)
+
+**Problem.** The Discover grid is a bento: fixed-shape slots, media cropped to fit, post text never shown, and text-only posts squeezed into a square "note". It only suits image-only posts. People can post image only, image with text, video only, video with text, and text only.
+
+**Proposal: a two-column masonry instead of the bento.** Every tile keeps its media's own shape (within limits), so nothing is cropped into a slot, and each post type has a tile made for it:
+
+| Post | Tile |
+|---|---|
+| Image only | The image at its own shape (between 4:5 tall and 1.91:1 wide), the author's face and name small in the corner |
+| Image with text | The image, then the first two lines of the text below it on the card |
+| Video only | The cover frame with a duration chip; the tile nearest the middle of the screen plays muted, one at a time |
+| Video with text | As video, with two lines of text below |
+| Text only | A typographic tile: the words set in the editorial serif on a soft tinted panel (blush, slate or amber tint), up to about six lines, then "…" |
+| Several images | The first image with a small stack mark |
+| Credit celebration | A full-width cinematic tile across both columns (below) |
+
+Ordering stays in feed order, each tile going to the shorter column; two text tiles never sit side by side; a full-width moment breaks the grid every so often.
+
+**Credit celebration post.** When someone accepts a credit, Ana creates a celebratory post, like LinkedIn's new-job posts.
+
+- **When:** the credit is accepted and the project is public. For a private project it waits and appears when the house shares the project. Never for a private "added to a project" association.
+- **Consent:** the accept step shows a preview with "Share with your network", on by default; the person can add a line and can hide or delete the post later. Deleting the post never touches the credit.
+- **Look:** the one dark, cinematic card in a light feed. The project's key art full-bleed (or its trailer, muted), a dark gradient; the person's portrait in a circle with the verified seal; a serif headline ("Kiran Varma is credited as Director of Photography on Kaaval"); the house logo with its verified mark; stage or release date; faces of other people you know on the same film.
+- **Motion:** on first view the seal stamps in (the existing credit-accepted moment) and a slow light sweep crosses the poster. No confetti.
+- **Response:** a single "Congratulate" reaction with a count, plus Message.
+- **Grouping:** several people credited on the same film in a week become one card ("6 crew credited on Kaaval this week") with their faces.
+- **Where:** a full-width tile in Discover, and the lead item in Home's From your network.
