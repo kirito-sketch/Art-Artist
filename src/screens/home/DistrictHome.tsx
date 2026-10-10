@@ -241,7 +241,7 @@ export function DistrictHome({ go }: { go: Go }) {
         {net.length > 0 ? (
           <section className="dh-sec" aria-label="From your network">
             <SectionHeader title="From your network" className="dh-pad" action="See all" onAction={() => push({ name: 'network' })} />
-            <NetworkCollections events={net} onOpenAll={() => push({ name: 'network' })} />
+            <NetworkCollections events={net} posts={posts} onOpenAll={() => push({ name: 'network' })} onOpenPosts={() => go.discover('posts')} />
           </section>
         ) : peopleRail}
 
@@ -259,27 +259,17 @@ export function DistrictHome({ go }: { go: Go }) {
           </section>
         )}
 
-        {posts.length === 3 && (
-          <section className="dh-sec dh-pad" aria-label="New work">
-            <SectionHeader title="New work" action="See all" onAction={() => go.discover('posts')} />
-            <div className="dh-mosaic">
-              {posts.map((p, i) => {
-                const a = party(p.authorId);
-                return (
-                  <Pressable key={p.id} className={`dh-mos ${i === 0 ? 'dh-mos--big' : ''}`} onClick={() => push({ name: 'posts', ids: posts.map((x) => x.id), index: i })} scale={0.98} aria-label={`Post by ${a?.name ?? 'someone'}`}>
-                    <Photo surface="discover-bento" media={p.media[0]} showPlay={false} />
-                    {a && <span className="dh-by"><Avatar party={a} size={20} />{i === 0 ? a.name : first(a.name)}</span>}
-                  </Pressable>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
         {net.length > 0 && peopleRail}
 
         <section className="dh-end" aria-labelledby="dh-end-title">
-          <h2 id="dh-end-title">You're up to date.</h2>
+          <h2 id="dh-end-title">Keep exploring</h2>
+          <div className="dh-end-chips">
+            {tiles.slice(0, 4).map((t) => (
+              <button key={t.key} className="chip" onClick={t.open}>
+                {t.label}
+              </button>
+            ))}
+          </div>
         </section>
       </div>
       </>

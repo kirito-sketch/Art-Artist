@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import type { NetworkEvent } from '../../data/types';
+import type { NetworkEvent, Post } from '../../data/types';
 import { useStore } from '../../state/store';
-import { findOpportunity, person } from '../../state/selectors';
+import { findOpportunity, party, person } from '../../state/selectors';
 import { publicProjects } from '../../domain/discovery';
 import { stagger } from '../../ui/motion';
 import { Avatar, PressCard, Photo } from '../../ui/primitives';
@@ -72,7 +72,7 @@ export function NetworkRow({ e, index = 0, quiet = false }: { e: NetworkEvent; i
  * "From your network" as collection cards: what people you know have done, grouped by theme, four to a card.
  * A new project or portfolio piece leads with its picture; people and availability lead with a face.
  */
-export function NetworkCollections({ events, onOpenAll }: { events: NetworkEvent[]; onOpenAll: () => void }) {
+export function NetworkCollections({ events, posts = [], onOpenAll, onOpenPosts }: { events: NetworkEvent[]; posts?: Post[]; onOpenAll: () => void; onOpenPosts?: () => void }) {
   const { push, userCollabs } = useStore();
   const toRow = (e: NetworkEvent): CollectionRow => {
     const first = person(e.actorIds[0]);
@@ -97,8 +97,19 @@ export function NetworkCollections({ events, onOpenAll }: { events: NetworkEvent
   };
   const work = events.filter((e) => e.kind === 'credit' || e.kind === 'project' || e.kind === 'portfolio' || e.kind === 'reel').slice(0, 4);
   const crew = events.filter((e) => e.kind === 'collab' || e.kind === 'available').slice(0, 4);
+  const postRows: CollectionRow[] = posts.map((p, i) => {
+    const a = party(p.authorId);
+    return {
+      key: `post-${p.id}`,
+      lead: p.media[0] ? <Photo surface="search-thumbnail" media={p.media[0]} showPlay={false} /> : a ? <Avatar party={a} size={48} /> : null,
+      title: p.text ? p.text : 'Shared new work',
+      meta: a ? a.name : undefined,
+      onPress: () => push({ name: 'posts', ids: posts.map((x) => x.id), index: i }),
+    };
+  });
   return (
     <CollectionRail label="From your network">
+      {postRows.length > 0 && <CollectionCard title="New work" subtitle="Fresh from people you know" onOpen={onOpenPosts} openLabel="See all new work" rows={postRows} />}
       {work.length > 0 && <CollectionCard title="New credits and work" subtitle="Added by people you know" onOpen={onOpenAll} openLabel="See all from your network" rows={work.map(toRow)} />}
       {crew.length > 0 && <CollectionCard title="Hiring and availability" subtitle="Who needs crew, who is free" onOpen={onOpenAll} openLabel="See all from your network" rows={crew.map(toRow)} />}
     </CollectionRail>
