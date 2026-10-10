@@ -180,7 +180,8 @@
 .poster-rail > .poster-card { flex: 0 0 calc((100% + var(--gutter) - 24px) / 2.4); }
 
 /* ---------------------------------------------------------------- Posts: a compact grid, the stream on tap */
-.phone .v-profile--immersive .profile-posts .post-grid { margin: 0 calc(-1 * var(--gutter)); padding-bottom: 0; }
+.phone .v-profile--immersive .profile-posts .post-grid { margin: 0; padding-bottom: 0; gap: 8px; }
+.phone .v-profile--immersive .profile-posts .post-tile { border-radius: 14px; }
 
 /* ---------------------------------------------------------------- Professional information: compact facts */
 .pf-pair { display: contents; }
