@@ -1,11 +1,16 @@
 import { useSyncExternalStore } from 'react';
-import { isThemedSurface } from '../themeCore';
+// import { isThemedSurface } from '../themeCore'; // used by useAtmosphere when the atmosphere is on
 
 /*
  * Cinematic atmosphere is the one background, behind Home in both versions. It belongs to the normal app
  * only: never on /test, /research or the internal pages.
  */
-export const useAtmosphere = () => isThemedSurface();
+/**
+ * Off since the October 2026 redesign: the atmosphere tinted the ground darker than the cards, so cards read as a
+ * different colour from the page. The ground is now one flat colour (docs/feedback/2026-10-10/README.md).
+ * Set back to `isThemedSurface()` to restore it.
+ */
+export const useAtmosphere = () => false;
 
 /* ------------------------------------------------------------ device state */
 
