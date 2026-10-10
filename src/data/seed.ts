@@ -809,6 +809,73 @@ export const portfolio: Record<string, Media[]> = {
     m('tpf-2', { caption: 'Two Rooms · stage' }),
     m('tpf-3', { caption: 'Home Loan Film · test' }),
   ],
+  sameer: [
+    m('sameer-1', { caption: 'Charminar night · key light' }),
+    m('pf-3', { caption: 'Fault Lines · night interiors' }),
+    m('chairain', { caption: 'Chai in rain · practicals' }),
+  ],
+  sana: [
+    m('pf-5', { caption: 'Kaaval · focus test' }),
+    m('pf-6', { caption: 'Kaaval · desert unit' }),
+    m('pf-2', { caption: 'Monsoon Letters · 2nd unit' }),
+  ],
+  rhea: [
+    m('neela', { caption: 'Neeli Raat · grade' }),
+    m('neonmonsoon', { caption: 'Neon Monsoon · look' }),
+    m('saltwater', { caption: 'Salt · final grade' }),
+  ],
+  devika: [
+    m('rushikonda', { caption: 'Rushikonda · recce' }),
+    m('coastline', { caption: 'Coastline · still' }),
+    m('quiet', { caption: 'Quiet Hours · frame' }),
+  ],
+  ishaan: [
+    m('set-1', { caption: 'Set build · day 3' }),
+    m('set-2', { caption: 'Set dressing · interior' }),
+    m('homeloan', { caption: 'Home Loan · set' }),
+  ],
+  nandini: [
+    m('kaaval-1', { caption: 'Kaaval · wardrobe' }),
+    m('journalist', { caption: 'Journalist · costume test' }),
+    m('paperboats', { caption: 'Paper Boats · look book' }),
+  ],
+  farhan: [
+    m('backwaters', { caption: 'Backwaters · location sound' }),
+    m('chai', { caption: 'Morning Ritual · foley' }),
+  ],
+  meera: [
+    m('paperboats', { caption: 'Paper Boats · cut' }),
+    m('backwaters', { caption: 'Backwaters · assembly' }),
+    m('quiet', { caption: 'Quiet Hours · grade review' }),
+  ],
+  arjun: [
+    m('faultlines', { caption: 'Fault Lines · frame' }),
+    m('salt2', { caption: 'Salt · opening' }),
+    m('neela', { caption: 'Neeli Raat · test' }),
+  ],
+  vikram: [
+    m('vikramreel', { caption: 'Showreel frame' }),
+    m('salt', { caption: 'Salt · night exterior' }),
+    m('pf-4', { caption: 'Salt · opening' }),
+  ],
+  zoya: [
+    m('zoya-v', { caption: 'Edit suite' }),
+    m('neonmonsoon', { caption: 'Neon Monsoon · cut' }),
+  ],
+  anvi: [
+    m('quiet', { caption: 'Quiet Hours · frame' }),
+    m('coastline', { caption: 'Coastline · dawn' }),
+    m('saltwater', { caption: 'Salt · water' }),
+  ],
+  raghu: [
+    m('pf-6', { caption: 'Kaaval · handheld' }),
+    m('pf-3', { caption: 'Fault Lines · operator' }),
+    m('salt2', { caption: 'Salt · tracking' }),
+  ],
+  kabir: [
+    m('journalist', { caption: 'Journalist · frame' }),
+    m('chai', { caption: 'Morning Ritual · frame' }),
+  ],
 };
 
 export const about: Record<string, string> = {
@@ -817,6 +884,20 @@ export const about: Record<string, string> = {
     'Cinematographer working across Telugu and Hindi features, series and brand films. I like available light, long lenses and crews that talk to each other. Most at home on nights and monsoon exteriors.',
   tara:
     'Mumbai-based actor trained at a theatre repertory in Kochi. Four years on stage, two in series. Hindi, Malayalam and English. Comfortable with physical, dialogue-light work.',
+  sameer: 'Gaffer for twelve years, mostly Telugu features and ad films. I light for the lens the DP chose, keep the set quiet and the cables tidy, and can rig a night exterior in an hour.',
+  sana: 'First AC on features and series. Focus is a trust job; I check marks twice and keep the camera team calm on long days. Comfortable on Alexa and Venice.',
+  rhea: 'Colourist in Hyderabad. I grade features, series and brand films, and like to start from the DP\'s intent rather than a preset look.',
+  devika: 'Director working in Telugu and Hindi. Short films first, now a first feature in development. I rehearse a lot and shoot fast.',
+  ishaan: 'Production designer for period and contemporary work. I build sets that actors can live in, and keep a tight art department.',
+  nandini: 'Costume designer for features and series. I research each character\'s wardrobe from the script outward and keep continuity notes for every look.',
+  farhan: 'Location sound recordist. Clean dialogue first, then atmospheres. Own kit, own boom operator, available for travel.',
+  meera: 'Film editor based in Kochi. Narrative features and documentaries; I like to cut early and show rough assemblies often.',
+  arjun: 'Director in Mumbai. Two features and a run of commercials. I work closely with the DP from the first location visit.',
+  vikram: 'Cinematographer with a bias for natural light and handheld. Features, music videos and branded films across South India.',
+  zoya: 'Editor for series and shorts. Fast turnarounds, tidy project files, and a good ear for dialogue.',
+  anvi: 'Cinematographer early in her feature career. Documentary roots, so I am comfortable with small crews and changing light.',
+  raghu: 'Camera operator, handheld and gimbal. Ten years on commercials and features; I move with the actor, not around them.',
+  kabir: 'Writer-director. I write for specific locations and keep scripts short enough to shoot.',
 };
 
 /* ----------------------------------------------------------------- inbox */

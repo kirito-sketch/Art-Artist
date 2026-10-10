@@ -1,0 +1,7 @@
+/* ===================================================== Profile (Layer 3 of docs/feedback/2026-10-10/IMPLEMENTATION_PLAN.md)
+ * One layout for everyone's profile; the owner's tools are the only difference. */
+
+/* A credit waiting for you is the most valuable thing on your own profile, so it leads. */
+.profile-pending { padding: 16px 16px 4px; margin: 0 0 8px; border-radius: 20px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline), 0 8px 18px -10px rgba(var(--ink-shadow), 0.14); }
+.profile-pending .section-head { margin-bottom: 8px; }
+.profile-pending .pending-credit { box-shadow: none; background: transparent; padding-left: 0; padding-right: 0; }
