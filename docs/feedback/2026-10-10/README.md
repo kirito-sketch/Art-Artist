@@ -73,3 +73,13 @@ The small labels set in capitals with wide letter spacing above titles, such as 
 
 - What the Flow and Wabi references are meant for exactly (our reading above is an assumption).
 - Any brand-colour direction they already like.
+
+## Third round (Arun's answers and the client's palettes)
+
+- **Ground colour:** not pure white; like Atlys. Measured from the recording: a cool, very light grey (about `#F2F2F3`, a hint of lilac at the top) that deepens towards the bottom of the screen.
+- **This week:** auto-advance is fine (District has no pause button); only the button goes.
+- **Pick up where you left off:** not convinced; dropped from the proposal.
+- **Film Talk and New work:** both need a real presentation, including what happens with several films, and New work needs a clear purpose.
+- **Buttons:** in the references buttons aren't one flat brand colour (Atlys: pastel gradient; Airbnb: pink to magenta gradient; Wabi: black and white). Explore that route.
+- **Client palettes** (`ref-client-palettes.png`, a suggestion to consider, not a decision): a cool slate scale `#06141B #11212D #253745 #4A5C6A #9BA8AB #CCD0CF`, and a warm earth scale `#2A0800 #775144 #C09891 #BEA8A7 #F4DBD8`.
+- **Profile monotony:** use District and Airbnb as references. Airbnb's listing detail (`ref-airbnb-listing-1.jpg`, `-2.jpg`) stays rich all the way down: a centred rating moment with laurels, a raised host card with a stats column, facts as icon rows, long text cut at four lines with "Show more", review cards in a sideways rail, thin dividers, and a sticky bar with the price and a gradient Reserve button.
