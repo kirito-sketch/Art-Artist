@@ -44,3 +44,24 @@
 .arail-project .poster { width: 128px; height: 190px; border-radius: 14px; margin-bottom: 6px; }
 .dall .ev-list { padding: 0 var(--gutter); }
 .dall .list { padding: 0 var(--gutter); }
+
+/* Posts masonry: two columns, a tile per kind of post. */
+.pmason { display: flex; gap: 10px; padding: 4px var(--gutter) var(--tabbar-clearance, 96px); align-items: flex-start; }
+.pmason-col { flex: 1 1 0; min-width: 0; display: grid; gap: 10px; }
+.pm-tile { display: grid; gap: 6px; border-radius: 16px; text-align: left; }
+.pm-media { position: relative; display: block; width: 100%; border-radius: 16px; overflow: hidden; background: var(--tint); box-shadow: inset 0 0 0 1px var(--hairline); }
+.pm-media > * { width: 100%; height: 100%; }
+.pm-media--set { box-shadow: 4px -4px 0 -1px var(--sand), 8px -8px 0 -2px var(--tint); margin-top: 6px; width: calc(100% - 8px); }
+.pm-mark { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: rgba(var(--ink-shadow), .55); color: #fff; }
+.pm-caption { font-size: 13px; line-height: 1.35; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; padding: 0 2px; }
+.pm-text { display: grid; gap: 12px; align-content: space-between; padding: 16px; border-radius: 16px; min-height: 150px; box-shadow: inset 0 0 0 1px var(--hairline); }
+.pm-quote { font-family: var(--serif); font-size: 21px; line-height: 1.18; color: var(--text); display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+.pm-by { font-size: 12px; color: var(--text-2); }
+.panel-0 { background: linear-gradient(160deg, #e8e6f4, #f1eef6); }
+.panel-1 { background: linear-gradient(160deg, #f6e3df, #f5ece8); }
+.panel-2 { background: linear-gradient(160deg, #dfe8ea, #ecf1f2); }
+.panel-3 { background: linear-gradient(160deg, #e9e9ed, #f3f3f5); }
+html[data-theme='dark'] .panel-0 { background: linear-gradient(160deg, #26283f, #1b2133); }
+html[data-theme='dark'] .panel-1 { background: linear-gradient(160deg, #3a2a2e, #251f26); }
+html[data-theme='dark'] .panel-2 { background: linear-gradient(160deg, #1f3440, #172630); }
+html[data-theme='dark'] .panel-3 { background: linear-gradient(160deg, #22313c, #182632); }

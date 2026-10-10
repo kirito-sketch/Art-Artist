@@ -2,7 +2,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { isOutThisWeek, reviewsOpen, stats, topRated } from '../../domain/reviews';
 import { reviewsOf } from '../../state/world';
 import { ScoreLine } from '../reviews/reviewUnits';
-import { PostGrid } from './PostGrid';
 import { BadgeCheck, Bookmark, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, LayoutGrid, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
@@ -23,6 +22,7 @@ import { visibleEvents } from '../../state/events';
 import { useFeatures } from '../../ui/features';
 import { DISCOVER_TABS, chipDef, type DiscoverChip } from '../../domain/contentTypes';
 import { PersonCard } from '../../ui/PersonCard';
+import { PostMasonry } from './PostMasonry';
 
 const TAB_ART: Record<string, string | undefined> = { people: 'people', roles: 'crews', projects: 'projects', events: 'events', reviews: 'reviews' };
 import { ReviewsBody } from '../reviews/ReviewsScreen';
@@ -656,7 +656,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
               <FilterBar label="Post filters">
                 <Facet label="Craft" any="Any craft" value={craftLabel(postCraft)} onOpen={() => setPicker('postCraft')} />
               </FilterBar>
-              {posts.length ? <PostGrid posts={posts} bento onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
+              {posts.length ? <PostMasonry posts={posts} onOpen={(i) => push({ name: 'posts', ids: posts.map((p) => p.id), index: i })} /> : <EmptyState title={postCraft ? `No posts in ${(CRAFTS.find((c) => c.id === postCraft)?.label ?? 'this craft').toLowerCase()} yet` : 'No posts yet'} />}
             </>
           )}
           {scope === 'events' && (
