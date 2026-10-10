@@ -196,12 +196,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const portrait = profilePortrait(p);
   const selectedCover = resolveProfileCover(coverChoice, work, eligibleFeaturedProjects(id), reel, portrait);
   const identityRegion = coverChoice?.identityRegion === 'centre-lower' ? 'centre-lower' : 'lower';
-  const scrollToWork = () => {
-    const el = scrollRef.current;
-    const sheet = el?.querySelector<HTMLElement>('.psheet');
-    if (el && sheet) el.scrollTo({ top: sheet.offsetTop - 64, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
-  };
-
   const shareProfile = async () => {
     if (id.startsWith('you-')) { showToast({ text: 'This prototype profile is only available in this session.' }); return; }
     const url = new URL(location.pathname, location.origin); url.searchParams.set('profile', id);
@@ -330,7 +324,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           )}
         </div>
         </div>}
-        {district && DIRECTION === 'current' && <button className="profile-scroll-cue" onClick={scrollToWork}>Explore work <ChevronDown size={17} /></button>}
       </div>
 
       <div className="psheet">
@@ -642,14 +635,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
 
       </div>
-      {district && DIRECTION === 'current' && !own && (
-        <div className="profile-bar" data-visible={!overHero} aria-hidden={overHero} {...(overHero ? { inert: '' } as Record<string, string> : {})}>
-          <FollowButton block size="m" primary on={isFollowing} onToggle={() => toggleFollow(id)} name={p.name} />
-          <Button block variant="secondary" onClick={() => { const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' }); cid && push({ name: 'conversation', id: cid }); }}>
-            {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
-          </Button>
-        </div>
-      )}
       {district && <Sheet open={reelOpen} onClose={() => setReelOpen(false)} title="Showreel">{reelOpen && reel && <ShowreelMedia reel={reel} active={profileActive} startPlaying />}</Sheet>}
     </div>
   );
