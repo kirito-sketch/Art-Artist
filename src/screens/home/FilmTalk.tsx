@@ -1,5 +1,4 @@
 import { Star } from 'lucide-react';
-import type { Person } from '../../data/types';
 import type { Work } from '../../data/works';
 import { party } from '../../state/selectors';
 import { useStore } from '../../state/store';
@@ -34,7 +33,6 @@ function FilmCard({ w, wide }: { w: Work; wide: boolean }) {
                 <Avatar party={p} size={22} />
                 <span>
                   {p.name}
-                  {p.kind === 'person' ? `, ${(p as Person).role}` : ''}
                 </span>
               </span>
             </>
@@ -49,11 +47,11 @@ function FilmCard({ w, wide }: { w: Work; wide: boolean }) {
       )}
       {canRate && (
         <div className="fcard-rate" role="group" aria-label={`Rate ${w.title}`}>
-          <span className="fcard-rate-l">Seen it? Rate it</span>
+          <span className="fcard-rate-l">Rate it</span>
           <span className="fcard-rate-s">
             {[1, 2, 3, 4, 5].map((n) => (
               <button key={n} type="button" aria-label={`${n} ${n === 1 ? 'star' : 'stars'}`} onClick={() => openSheet({ name: 'review', projectId: w.id, stars: n })}>
-                <Star size={22} aria-hidden />
+                <Star size={20} aria-hidden />
               </button>
             ))}
           </span>
