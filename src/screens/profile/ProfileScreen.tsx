@@ -639,6 +639,14 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
 
       </div>
+      {district && DIRECTION === 'current' && !own && (
+        <div className="profile-bar" data-visible={!overHero} aria-hidden={overHero} {...(overHero ? { inert: '' } as Record<string, string> : {})}>
+          <FollowButton block size="m" primary on={isFollowing} onToggle={() => toggleFollow(id)} name={p.name} />
+          <Button block variant="secondary" onClick={() => { const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' }); cid && push({ name: 'conversation', id: cid }); }}>
+            {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
+          </Button>
+        </div>
+      )}
       {district && <Sheet open={reelOpen} onClose={() => setReelOpen(false)} title="Showreel">{reelOpen && reel && <ShowreelMedia reel={reel} active={profileActive} startPlaying />}</Sheet>}
     </div>
   );
