@@ -150,9 +150,13 @@ export function DistrictHome({ go }: { go: Go }) {
   const near = useMemo(() => {
     const close = nearCrafts(me.craft);
     const tier = (p: Person) => (family.crafts.includes(p.craft) || myCrafts.includes(p.craft) ? 0 : close.includes(p.craft) ? 1 : 2);
-    return searchablePeople(me.id, blocked)
+    const list = searchablePeople(me.id, blocked)
       .filter((p) => p.city === me.city && tier(p) < 2)
       .sort((a, b) => tier(a) - tier(b) || Number(!!b.availableFrom) - Number(!!a.availableFrom));
+    // A rail of two reads as the end of the list; top it up with others in the city, then elsewhere, so it always peeks.
+    const rest = searchablePeople(me.id, blocked).filter((p) => !list.some((x) => x.id === p.id))
+      .sort((a, b) => Number(b.city === me.city) - Number(a.city === me.city));
+    return list.length >= 5 ? list : [...list, ...rest].slice(0, 8);
   }, [me.id, me.city, me.craft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [spot, setSpot] = useState(0);
