@@ -313,8 +313,9 @@ function Phone({ app = false }: { app?: boolean }) {
     setHousePeopleFocus((f) => ({ roleId, n: f.n + 1 }));
     setTab('discover');
   };
-  const openDistrict = (c?: DiscoverChip) => {
+  const openDistrict = (c?: DiscoverChip, craft?: string) => {
     setDistrictChip(c ?? DISTRICT_CHIP_DEFAULT);
+    if (craft) setPostFocus((f) => ({ craft, n: f.n + 1 }));
     setTab('discover');
   };
   // A craft to open Discover › Posts in (Home's posts tray), with a counter so the same craft re-applies.
@@ -456,7 +457,7 @@ function Phone({ app = false }: { app?: boolean }) {
                 {store.acting !== 'self' ? features.home === 'district' ? <DistrictHouseHome discover={openHouseDiscover} /> : <ProductionHome /> : features.home === 'district' ? <DistrictHome go={{ discover: openDistrict }} /> : features.home === 'next' ? <HomeNext goDiscover={goDiscover} /> : <HomeScreen goDiscover={goDiscover} />}
               </motion.div>
             )}
-            {t === 'discover' && (features.home === 'district' ? <DiscoverScreen key={store.acting} scope={store.acting === 'self' ? districtChip : houseChip} setScope={store.acting === 'self' ? setDistrictChip : setHouseChip} houseFocus={housePeopleFocus} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={(s) => setDiscoverScope(s as Scope)} postFocus={postFocus} />)}
+            {t === 'discover' && (features.home === 'district' ? <DiscoverScreen key={store.acting} scope={store.acting === 'self' ? districtChip : houseChip} setScope={store.acting === 'self' ? setDistrictChip : setHouseChip} houseFocus={housePeopleFocus} postFocus={postFocus} variant="district" /> : <DiscoverScreen scope={discoverScope} setScope={(s) => setDiscoverScope(s as Scope)} postFocus={postFocus} />)}
             {t === 'inbox' && <InboxScreen />}
             {t === 'profile' && (store.acting !== 'self' ? <OrgScreen id={store.acting} isTab /> : <ProfileScreen id={viewer.id} isTab active={tab === 'profile'} />)}
           </motion.section>

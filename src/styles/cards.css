@@ -91,3 +91,19 @@
 .fcard--wide .fcard-t { padding: 16px 14px 10px; }
 .fcard--wide .fcard-q { -webkit-line-clamp: 5; }
 .fcard--wide .fcard-rate, .fcard--wide .fcard-mine { flex: 1 1 100%; margin: 0 14px; }
+
+/* ------------------------------------------------------------ explore by craft */
+.xcrafts { display: flex; gap: 12px; overflow-x: auto; padding: 2px var(--gutter) 6px; scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); scrollbar-width: none; }
+.xcrafts::-webkit-scrollbar { display: none; }
+.xcraft { flex: 0 0 148px; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; align-items: center; height: 188px; padding: 14px 10px 0; border-radius: 22px; overflow: hidden; text-align: center;
+  box-shadow: inset 0 0 0 1px var(--hairline), 0 1px 2px rgba(var(--ink-shadow), 0.04), 0 8px 18px -10px rgba(var(--ink-shadow), 0.1); }
+.xcraft--0 { background: linear-gradient(180deg, #f3f3f5 0%, #dfe6ea 100%); }
+.xcraft--1 { background: linear-gradient(180deg, #f3f3f5 0%, #e5e1ee 100%); }
+.xcraft--2 { background: linear-gradient(180deg, #f3f3f5 0%, #e2ebe6 100%); }
+.xcraft--3 { background: linear-gradient(180deg, #f3f3f5 0%, #efe3e1 100%); }
+.xcraft-name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.xcraft-obj { position: absolute; left: 0; right: 0; bottom: 6px; display: grid; place-items: center; }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--0 { background: linear-gradient(180deg, #11212d 0%, #1b3140 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--1 { background: linear-gradient(180deg, #11212d 0%, #25253f 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--2 { background: linear-gradient(180deg, #11212d 0%, #1a3234 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--3 { background: linear-gradient(180deg, #11212d 0%, #33252b 100%); }

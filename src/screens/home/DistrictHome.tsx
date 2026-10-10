@@ -30,6 +30,7 @@ import { WeekSpotlight } from './WeekSpotlight';
 import { NetworkCollections } from './NetworkActivity';
 import { PersonCard } from '../../ui/PersonCard';
 import { FilmTalk } from './FilmTalk';
+import { ExploreCrafts } from './ExploreCrafts';
 import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
 import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
 import { Sheet } from '../../ui/Sheet';
@@ -42,7 +43,7 @@ import { Sheet } from '../../ui/Sheet';
  * is left out of the shelves below it.
  */
 
-type Go = { discover: (chip?: DiscoverChip) => void };
+type Go = { discover: (chip?: DiscoverChip, craft?: string) => void };
 
 const first = (name: string) => name.split(' ')[0];
 const CLIPS = new Set(['neela', 'kaaval', 'backwaters', 'monsoon', 'faultlines', 'neeliraat']);
@@ -231,6 +232,11 @@ export function DistrictHome({ go }: { go: Go }) {
         <div className="dh-pad">
           <FirstStep />
         </div>
+
+        <section className="dh-sec" aria-label="Explore by craft">
+          <SectionHeader title="Explore by craft" className="dh-pad" />
+          <ExploreCrafts onOpen={(craft) => go.discover('posts', craft)} />
+        </section>
 
         {net.length > 0 ? (
           <section className="dh-sec" aria-label="From your network">
