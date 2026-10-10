@@ -1,7 +1,7 @@
 import { useFeatures } from '../../ui/features';
 import { ShowreelMedia } from './Showreel';
 import { craftDef } from '../../data/crafts';
-import { ExternalLink, Play } from 'lucide-react';
+import { Aperture, Briefcase, Camera, ExternalLink, Film, Layers, MapPin, Play, Plane, Sparkles, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
 import { categoryOf, craftProfile, EXPERIENCE, setsFor, skillDef, VISIBILITY_LABEL, type FieldDef } from '../../data/profileSchema';
@@ -49,6 +49,30 @@ export function ReelCard({ person, active = true }: { person: Person; active?: b
 }
 
 /** Craft details and skills, each detail shown only to whoever its visibility allows. */
+/** One quiet icon per kind of fact, picked from its label: rows read at a glance instead of as a table. */
+function factIcon(label: string): LucideIcon {
+  const l = label.toLowerCase();
+  if (/camera|kit|gear|lens/.test(l)) return Camera;
+  if (/format|work$|^work/.test(l)) return Film;
+  if (/experience|years/.test(l)) return Briefcase;
+  if (/craft/.test(l)) return Layers;
+  if (/where|location/.test(l)) return MapPin;
+  if (/travel/.test(l)) return Plane;
+  if (/special/.test(l)) return Sparkles;
+  return Aperture;
+}
+
+/** A fact as an icon row (district profiles); the plain term/definition pair elsewhere. */
+export function FactRow({ label, district, children }: { label: string; district: boolean; children: React.ReactNode }) {
+  const Icon = factIcon(label);
+  return (
+    <div className="pf-pair">
+      <dt>{district && <span className="pf-ico" aria-hidden><Icon size={18} /></span>}<span>{label}</span></dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
 export function ProfileDetails({ person }: { person: Person }) {
   const district = useFeatures().home === 'district';
   const who = useViewerKind(person.id);
@@ -83,22 +107,19 @@ export function ProfileDetails({ person }: { person: Person }) {
           <SectionHeader title="Professional details" />
           <dl className="pf-details">
             {/* The immersive profile already says the craft, languages and years under the name: no repeats here. */}
-            {!district && <div className="pf-pair"><dt>Primary craft</dt><dd>{person.role || craftDef(person.craft)?.label}</dd></div>}
-            {!!person.crafts?.length && <div className="pf-pair"><dt>Other crafts</dt><dd>{person.crafts.map(c => craftDef(c)?.label ?? c).join(', ')}</dd></div>}
-            {!district && !!person.languages?.length && <div className="pf-pair"><dt>Languages</dt><dd>{person.languages.join(', ')}</dd></div>}
-            {person.specialisation && <div className="pf-pair"><dt>Specialisation</dt><dd>{person.specialisation}</dd></div>}
-            {!district && !!person.years && <div className="pf-pair"><dt>Years active</dt><dd>{person.years}</dd></div>}
-            {exp && <div className="pf-pair"><dt>Experience</dt><dd>{exp}</dd></div>}
+            {!district && <FactRow label="Primary craft" district={district}>{person.role || craftDef(person.craft)?.label}</FactRow>}
+            {!!person.crafts?.length && <FactRow label="Other crafts" district={district}>{person.crafts.map(c => craftDef(c)?.label ?? c).join(', ')}</FactRow>}
+            {!district && !!person.languages?.length && <FactRow label="Languages" district={district}>{person.languages.join(', ')}</FactRow>}
+            {person.specialisation && <FactRow label="Specialisation" district={district}>{person.specialisation}</FactRow>}
+            {!district && !!person.years && <FactRow label="Years active" district={district}>{person.years}</FactRow>}
+            {exp && <FactRow label="Experience" district={district}>{exp}</FactRow>}
             {rows.map(({ f, v }) => (
-              <div key={f.id} className="pf-pair">
-                <dt>{f.label}</dt>
-                <dd>
+              <FactRow key={f.id} label={f.label} district={district}>
                   {show(f, v)}
                   {who === 'self' && visibilityOf(x, f.id) !== 'public' && <span className="meta"> · {VISIBILITY_LABEL[visibilityOf(x, f.id)]}</span>}
-                </dd>
-              </div>
+              </FactRow>
             ))}
-            {x.workTypes.length > 0 && <div className="pf-pair"><dt>Work</dt><dd>{x.workTypes.join(', ')}</dd></div>}
+            {x.workTypes.length > 0 && <FactRow label="Work" district={district}>{x.workTypes.join(', ')}</FactRow>}
           </dl>
         </section>
       )}

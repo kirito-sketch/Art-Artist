@@ -32,7 +32,7 @@ import { useHeroParallax } from '../../ui/useHeroParallax';
 import { EventsSection } from '../event/eventUnits';
 import { eventsOfHost, speakingAt } from '../../state/events';
 import { ProfileReviewsSection } from '../reviews/ReviewsScreen';
-import { ProfileDetails, ReelCard, WaysToBeFound, WorkLinks } from './profileUnits';
+import { FactRow, ProfileDetails, ReelCard, WaysToBeFound, WorkLinks } from './profileUnits';
 import { profileOf } from '../../state/profile';
 import { craftProfile } from '../../data/profileSchema';
 
@@ -75,7 +75,7 @@ function AboutText({ text }: { text: string }) {
   }, [text, open]);
   return <>
     <p ref={ref} className={`body profile-about${open ? '' : ' profile-about--clamped'}`}>{text}</p>
-    {long && <button className="link profile-about-more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? 'Less' : 'More'}</button>}
+    {long && <button className="link profile-about-more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? 'Show less' : 'Show more'}</button>}
   </>;
 }
 
@@ -509,9 +509,9 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         {preferences.configured && (!district || !preferences.open || preferences.scope || preferences.travel) && <section className="section section--flush profile-preferences"><div className="section-head"><h2>Work preferences</h2>{own && <button className="section-all" aria-label="Edit work preferences" onClick={() => openSheet({ name: 'availability' })}>Edit</button>}</div>
           <dl className="pf-details">
             {/* Open to work is already under the name on the immersive profile. */}
-            {(!district || !preferences.open) && <div className="pf-pair"><dt>Professional availability</dt><dd>{preferences.open ? availableLabel(preferences.from) : 'Not taking work'}</dd></div>}
-            {preferences.scope && <div className="pf-pair"><dt>Where</dt><dd>{preferences.scope.replace(/\s*·\s*will travel/i, '')}</dd></div>}
-            {preferences.travel && <div className="pf-pair"><dt>Travel</dt><dd>Open to travel</dd></div>}
+            {(!district || !preferences.open) && <FactRow label="Professional availability" district={district}>{preferences.open ? availableLabel(preferences.from) : 'Not taking work'}</FactRow>}
+            {preferences.scope && <FactRow label="Where" district={district}>{preferences.scope.replace(/\s*·\s*will travel/i, '')}</FactRow>}
+            {preferences.travel && <FactRow label="Travel" district={district}>Open to travel</FactRow>}
           </dl>
         </section>}
 
