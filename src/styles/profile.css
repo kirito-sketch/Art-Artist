@@ -94,7 +94,7 @@
 
 .ep-head-t b {
   font-family: var(--display);
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .ep-row {
@@ -107,7 +107,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-2);
 }
 
@@ -255,8 +255,8 @@
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .ep-img-btn {
@@ -348,7 +348,7 @@
   padding: 6px 11px;
   border-radius: var(--r-pill);
   background: var(--fill);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
 }
 

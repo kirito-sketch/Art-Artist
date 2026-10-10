@@ -9,7 +9,7 @@ import { useStore, type Sheet as SheetRoute } from '../../state/store';
 import { useTheme } from '../../ui/theme';
 
 /** Create surface colours (framer-motion interpolates hex, not tokens): the action green and the raised surface. */
-const CREATE_COLOURS = { light: { from: '#275c50', to: '#ffffff' }, dark: { from: '#2f7565', to: '#1e1c1a' } } as const;
+const CREATE_COLOURS = { light: { from: '#f0b24a', to: '#f8f8f9' }, dark: { from: '#f0b24a', to: '#11212d' } } as const;
 import { findOpportunity, firstName, networkFor, org, party, person } from '../../state/selectors';
 import { NetworkRow } from '../home/NetworkActivity';
 import { Avatar, Button, EmptyState, HowItWorks, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';
@@ -523,6 +523,7 @@ function InterestForm({ id }: { id: string }) {
       <Button
         block
         size="l"
+        variant="signature"
         loading={state === 'sending'}
         onClick={() => {
           setState('sending');

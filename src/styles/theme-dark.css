@@ -21,42 +21,44 @@ html[data-theme='dark'] .phone[data-look='minimal'] {
   color: var(--text);
 
   /* Grounds, darkest to lightest: page, quiet section, raised object, sheet, fill, strong fill */
-  --base: #121110;
-  --bg: #141312;
-  --tint: #191816;
-  --raised: #1e1c1a;
-  --surface: #1d1b19;
-  --grouped: #211f1c;
-  --fill: #262421;
-  --fill-strong: #322f2b;
-  --surface-2: #2a2724;
-  --sand: #2b261f;
-  --dark: #0b0a09;
-  --line: rgba(255, 244, 230, 0.12);
-  --hairline: rgba(255, 244, 230, 0.1);
+  --base: #06141b;
+  --bg: #06141b;
+  --tint: #0b1b24;
+  --raised: #11212d;
+  --surface: #11212d;
+  --grouped: #162a37;
+  --fill: #1a2e3b;
+  --fill-strong: #253745;
+  --surface-2: #1f3240;
+  --sand: #162733;
+  --dark: #030c11;
+  --line: rgba(204, 208, 207, 0.12);
+  --hairline: rgba(204, 208, 207, 0.1);
   --scrim: rgba(0, 0, 0, 0.6);
 
   /* Type */
-  --text: #f3efe9;
-  --text-2: #b4ada3;
-  --text-3: #9a948b;
+  --text: #e8ecec;
+  --text-2: #9ba8ab;
+  --text-3: #7e8c91;
   --on-dark: #ffffff;
-  --primary: #f3efe9;
-  --on-primary: #141312;
+  --primary: #e8ecec;
+  --on-primary: #06141b;
 
-  /* Brand action: green fills (white text 5.4:1), lifted green ink (10:1 on the page) */
-  --action: #2f7565;
-  --action-pressed: #276355;
-  --action-hover: #2b6c5d;
-  --action-ink: #8fcab8;
-  --accent: #2f7565;
-  --accent-ink: #8fcab8;
-  --action-tint: rgba(110, 190, 168, 0.14);
-  --action-tint-strong: rgba(110, 190, 168, 0.24);
-  --accent-soft: rgba(110, 190, 168, 0.14);
-  --action-disabled: rgba(110, 190, 168, 0.3);
-  --focus-ring: rgba(143, 202, 184, 0.6);
-  --focus-color: #8fcab8;
+  /* Action: a slate fill with white text for checked states and pills; amber for marks and text (8.7:1 on the surface) */
+  --action: #3a5266;
+  --action-pressed: #2c4152;
+  --action-hover: #33495c;
+  --on-action: #ffffff;
+  --action-ink: #f0b24a;
+  --accent: #f0b24a;
+  --accent-ink: #f0b24a;
+  --on-accent: #06141b;
+  --action-tint: rgba(240, 178, 74, 0.16);
+  --action-tint-strong: rgba(240, 178, 74, 0.26);
+  --accent-soft: rgba(240, 178, 74, 0.16);
+  --action-disabled: rgba(240, 178, 74, 0.3);
+  --focus-ring: rgba(240, 178, 74, 0.7);
+  --focus-color: #f0b24a;
 
   /* State */
   --verified: #7fa6ff;
@@ -66,13 +68,13 @@ html[data-theme='dark'] .phone[data-look='minimal'] {
   --danger-ink: #f0675b;
 
   /* Chrome */
-  --float-bg: rgba(28, 26, 24, 0.82);
-  --float-fg: #f3efe9;
-  --bar-bg: rgba(30, 28, 26, 0.9);
-  --btn-edge: rgba(255, 244, 230, 0.16);
+  --float-bg: rgba(17, 33, 45, 0.82);
+  --float-fg: #e8ecec;
+  --bar-bg: rgba(17, 33, 45, 0.84);
+  --btn-edge: rgba(204, 208, 207, 0.16);
 
   /* Depth: shadows read as darkness under objects; a hairline edge does the separating */
-  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 244, 230, 0.06);
+  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(204, 208, 207, 0.06);
   --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.45);
   --shadow-2: 0 18px 36px -18px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
   --shadow-3: 0 10px 30px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -82,7 +84,7 @@ html[data-theme='dark'] .phone[data-look='minimal'] {
 html[data-theme='dark'] .phone[data-look='minimal'] .canvas {
   --filter-bg: var(--tint);
   --chip-bg: var(--raised);
-  --chip-edge: rgba(255, 244, 230, 0.14);
+  --chip-edge: rgba(204, 208, 207, 0.14);
 }
 
 /* ------------------------------------------------------------ components with fixed light values */
@@ -90,7 +92,7 @@ html[data-theme='dark'] .phone[data-look='minimal'] .canvas {
 html[data-theme='dark'] .phone[data-look='minimal'] :is(.icon-btn--float, .save--floating) {
   background: var(--float-bg);
   color: var(--float-fg);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 244, 230, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(204, 208, 207, 0.08);
 }
 html[data-theme='dark'] .phone[data-look='minimal'] .skeleton {
   background: linear-gradient(100deg, var(--fill) 30%, var(--fill-strong) 50%, var(--fill) 70%);
@@ -98,16 +100,16 @@ html[data-theme='dark'] .phone[data-look='minimal'] .skeleton {
 }
 /* Rings that separate a dot or avatar from the tab bar take the bar's own colour. */
 html[data-theme='dark'] .phone[data-look='minimal'] .tab-dot {
-  box-shadow: 0 0 0 2px #1e1c1a;
+  box-shadow: 0 0 0 2px #11212d;
 }
 html[data-theme='dark'] .phone[data-look='minimal'] .tab-avatar.is-on {
-  box-shadow: 0 0 0 2px #1e1c1a, 0 0 0 3.5px var(--text);
+  box-shadow: 0 0 0 2px #11212d, 0 0 0 3.5px var(--text);
 }
 html[data-theme='dark'] .phone[data-look='minimal'] .tabbar-pill {
   box-shadow: var(--shadow-float);
 }
 html[data-theme='dark'] .phone[data-look='minimal'] .toggle-knob {
-  background: #f3efe9;
+  background: #e8ecec;
 }
 html[data-theme='dark'] .phone[data-look='minimal'] .rail-poster-wrap > .credit-seal {
   background: var(--raised);
@@ -146,7 +148,7 @@ html[data-theme='dark'].view-app,
 html[data-theme='dark'].view-app body,
 html[data-theme='dark'].view-app #root,
 html[data-theme='dark'] .app-shell {
-  background: #121110;
+  background: #06141b;
 }
 html[data-theme='dark'].view-app {
   color-scheme: dark;
@@ -168,18 +170,18 @@ html.theme-fade .phone *::after {
 /* Production house monograms: a graphite tile in both themes (the inverted --primary would be a glaring
    light square on a dark page). */
 html[data-theme='dark'] .phone[data-look='minimal'] .avatar--org {
-  background: #3a3632;
-  color: #f3efe9;
+  background: #2c4152;
+  color: #e8ecec;
 }
 /* Paper labels on photos ("Closes in 4 days", stages): dark glass in dark, like the floating controls. */
 html[data-theme='dark'] .phone[data-look='minimal'] :is(.frame-label--paper, .frame-label--urgent) {
-  background: rgba(20, 19, 18, 0.8);
+  background: rgba(6, 20, 27, 0.8);
 }
 /* Toasts: an elevated dark surface with a hairline edge, not the inverted (light) primary. */
 html[data-theme='dark'] .phone[data-look='minimal'] .toast {
-  background: #2e2b28;
+  background: #1f3240;
   color: var(--text);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 244, 230, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(204, 208, 207, 0.1);
 }
 
 /* The theme switch: the new theme opens as a circle from the control (src/ui/theme.ts). The old picture

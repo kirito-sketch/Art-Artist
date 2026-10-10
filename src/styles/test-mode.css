@@ -441,7 +441,7 @@
   background: var(--base, #f6f4f0);
   border-top: 1px solid var(--hairline);
   border-radius: 20px 20px 0 0;
-  box-shadow: 0 -12px 32px -18px rgba(40, 30, 20, 0.35);
+  box-shadow: 0 -12px 32px -18px rgba(6, 20, 27, 0.35);
   pointer-events: auto;
 }
 

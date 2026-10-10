@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 17px;
+  font-size: 15px;
 }
 .dhouse-identity .meta {
   font-size: 12px;
@@ -166,7 +166,7 @@
   padding: 6px;
 }
 .dhouse-role .title-card-title {
-  font-size: 11px;
+  font-size: 12px;
 }
 .dhouse-person {
   flex: 0 0 180px;
@@ -218,7 +218,7 @@
   gap: 12px;
 }
 .dhouse-empty h2 {
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1.2;
 }
 .dhouse .dh-end {
@@ -238,8 +238,7 @@
   background: var(--bg);
 }
 .dhouse-page .section-head h2 {
-  font-size: 20px;
-  letter-spacing: -0.025em;
+  font-size: 18px;
 }
 .dhouse-page .section {
   margin-top: 28px;
@@ -352,8 +351,8 @@
   border-radius: 26px 26px 0 0;
 }
 .dhouse-sheet .sheet-title {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
 }
 .dhouse-sheet .sheet-body {
   padding-inline: 20px;
@@ -410,7 +409,7 @@
   padding: 16px;
 }
 .dhouse-share-preview .item-title {
-  font-size: 22px;
+  font-size: 18px;
 }
 .dhouse-privacy {
   border: 1px solid var(--hairline);

@@ -185,6 +185,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
       );
     action = (
       <Button
+        variant="signature"
         onClick={() => {
           setWithdrew(false);
           openSheet({ name: 'showInterest', id: o.id });

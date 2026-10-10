@@ -16,8 +16,8 @@ body {
   color: var(--text);
   font-family: var(--font);
   font-size: var(--t-3);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  line-height: 1.4;
+  word-spacing: 0.04em; /* Plus Jakarta Sans sets narrow word gaps at small sizes */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -25,7 +25,6 @@ body {
 button {
   font: inherit;
   color: inherit;
-  letter-spacing: inherit;
   background: none;
   border: 0;
   padding: 0;
@@ -42,7 +41,6 @@ textarea,
 select {
   font: inherit;
   color: inherit;
-  letter-spacing: inherit;
 }
 
 p,

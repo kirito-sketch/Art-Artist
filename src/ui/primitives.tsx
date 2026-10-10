@@ -101,8 +101,8 @@ export function PressCard({ scale = 0.98, className = '', onPress, children, 'ar
 /* ---------------------------------------------------------------- Button */
 
 type ButtonProps = HTMLMotionProps<'button'> & {
-  /** See docs/CTA_SYSTEM.md. primary = graphite; secondary (outline is the same) = raised with an edge; selected = tonal state; plain = tertiary; danger = destructive confirmation only; light = on media. */
-  variant?: 'primary' | 'secondary' | 'selected' | 'plain' | 'danger' | 'outline' | 'light';
+  /** See docs/CTA_SYSTEM.md. primary = ink; signature = the one gradient, for moments that matter; secondary (outline is the same) = raised with an edge; selected = tonal state; plain = tertiary; danger = destructive confirmation only; light = on media. */
+  variant?: 'primary' | 'signature' | 'secondary' | 'selected' | 'plain' | 'danger' | 'outline' | 'light';
   size?: 'l' | 'm' | 's';
   icon?: ReactNode;
   block?: boolean;

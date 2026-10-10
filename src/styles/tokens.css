@@ -7,59 +7,61 @@
   color-scheme: light;
 
   /* Grounds */
-  --bg: #ffffff;
-  --grouped: #f2f2f7;
-  --fill: #f2f2f7;
-  --fill-strong: #e5e5ea;
-  --line: #e5e5ea;
-  --scrim: rgba(0, 0, 0, 0.32);
+  --bg: #f2f2f4;
+  --grouped: #eaeaee;
+  --fill: #eaeaee;
+  --fill-strong: #dedde0;
+  --line: #e0e0e4;
+  --scrim: rgba(6, 20, 27, 0.36);
 
   /* Text */
-  --text: #111111;
-  --text-2: #6e6e73;
-  --text-3: #aeaeb2;
+  --text: #06141b;
+  --text-2: #4a5c6a;
+  --text-3: #6f7e88;
   --on-dark: #ffffff;
 
   /* Art and Artist action: the one interaction colour (docs/CTA_SYSTEM.md). Never hard-code the hex. */
-  --action: #275c50;
-  --action-pressed: #1e4a40;
-  --action-hover: #22534a;
-  --action-tint: rgba(39, 92, 80, 0.1); /* selected surfaces: Following, filters, saved */
-  --action-tint-strong: rgba(39, 92, 80, 0.18);
-  --action-disabled: rgba(39, 92, 80, 0.35);
+  --action: #06141b; /* ink: the fill of checked states and pills; white text sits on it */
+  --action-pressed: #000000;
+  --action-hover: #11212d;
+  --action-tint: rgba(240, 178, 74, 0.2); /* selected surfaces: Following, filters, saved */
+  --action-tint-strong: rgba(240, 178, 74, 0.34);
+  --action-disabled: rgba(6, 20, 27, 0.32);
   --on-action: #ffffff;
-  --focus-ring: rgba(39, 92, 80, 0.55);
+  --focus-ring: rgba(6, 20, 27, 0.6);
   /* Ink: the action colour when it is text or an icon (fills keep --action). Same green in light; lifted in
      dark so links and selected states stay readable (src/styles/theme-dark.css). */
-  --action-ink: var(--action);
+  --action-ink: #8f5300; /* amber as text and icons: 5.5:1 on the ground */
 
   /* State. Accent is the Art and Artist action colour used as a mark (dots, rules, active tab). Red is not a
      brand colour: it is --danger, for destructive actions and genuine errors only. */
-  --accent: var(--action);
+  --accent: #f0b24a; /* amber fill: strips, badges, the + button; ink text sits on it */
+  --on-accent: #06141b;
   --accent-soft: var(--action-tint);
   --verified: #1f5af6;
   --available: #1e9e5a;
   --danger: #d83a2e;
-  --accent-ink: var(--accent);
+  --accent-ink: #8f5300;
   --danger-ink: var(--danger);
-  --surface-2: #ececec; /* quiet placeholder ground (initials, empty posters) */
-  --primary: #111111;
+  --surface-2: #e6e6ea; /* quiet placeholder ground (initials, empty posters) */
+  --primary: #06141b;
   --on-primary: #ffffff;
 
   /* Surfaces the looks restyle */
-  --surface: #ffffff;             /* sheets, footers, page cards */
-  --float-bg: rgba(255, 255, 255, 0.95); /* controls floating on photos */
-  --float-fg: #111111;
-  --bar-bg: rgba(255, 255, 255, 0.9);    /* tab bar, solid headers */
+  --surface: #f8f8f9;             /* sheets, footers, page cards */
+  --float-bg: rgba(248, 248, 249, 0.95); /* controls floating on photos */
+  --float-fg: #06141b;
+  --bar-bg: rgba(248, 248, 249, 0.82);    /* tab bar, solid headers */
   --display: var(--font);         /* display face for big titles */
   --title-case: none;
 
-  /* Type: SF on Apple devices, Inter elsewhere. Five sizes, nothing below 13. */
-  --font: -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Inter Variable', 'Inter', 'Noto Sans Telugu', system-ui, sans-serif;
-  --t-1: 34px; /* screen or object title, once per screen */
-  --t-2: 22px; /* section */
-  --t-3: 17px; /* item title, body */
-  --t-4: 15px; /* secondary */
+  /* Type: SF on Apple devices, Inter elsewhere. Five sizes, nothing below 12. */
+  --font: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --serif: 'Instrument Serif', 'Noto Serif', Georgia, serif; /* editorial moments only */
+  --t-1: 26px; /* screen or object title, once per screen */
+  --t-2: 18px; /* section */
+  --t-3: 15px; /* item title, body */
+  --t-4: 14px; /* secondary */
   --t-5: 13px; /* meta */
 
   /* Spacing */
@@ -74,8 +76,8 @@
   --r-pill: 999px;
 
   /* Elevation: only floating chrome and image objects */
-  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 2px 6px rgba(6, 20, 27, 0.08), 0 14px 36px rgba(6, 20, 27, 0.14);
+  --shadow-card: 0 1px 2px rgba(6, 20, 27, 0.06), 0 2px 8px rgba(6, 20, 27, 0.05);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --status-bar: 54px;

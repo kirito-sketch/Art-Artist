@@ -568,7 +568,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
                     <p className="meta">You asked: {c.note ?? 'a correction'}. {org(c.orgId).name} will send a corrected credit.</p>
                   ) : (
                     <div className="pending-credit-actions">
-                      <Button size="s" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)} aria-label={`Accept credit on ${c.title}`}>
+                      <Button size="s" variant="signature" loading={creditBusy === c.id} onClick={() => acceptCredit(c.id)} aria-label={`Accept credit on ${c.title}`}>
                         Accept
                       </Button>
                       <Button size="s" variant="plain" onClick={() => (c.revision ? push({ name: 'association', id: c.associationId }) : openSheet({ name: 'reportCredit', title: c.title, creditId: c.id }))}>

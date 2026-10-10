@@ -56,6 +56,6 @@ html.aa-launch #aa-boot { display: flex; }
 
 /* Dark appearance (normal app only, src/ui/themeCore.ts): the same mark on the dark page ground, so a dark
    phone never opens on a white flash. Ink lightens; the red drop is unchanged. */
-html[data-theme='dark'] .launch-splash { background: #121110; }
+html[data-theme='dark'] .launch-splash { background: #06141b; }
 html[data-theme='dark'] .splash-mark [stroke='#29313a'] { stroke: #ece6dc; }
 html[data-theme='dark'] .splash-mark-fill { fill: #ece6dc; }

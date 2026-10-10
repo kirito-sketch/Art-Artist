@@ -2,10 +2,10 @@
  * District's movie-page structure in Ana's design: a pinned trailer, a sheet that slides over it, one fixed action.
  * Always dark, whatever the app theme: the page is a cinema. */
 .wp {
-  --base: #0e0d0c; --bg: #121110; --surface: #171614; --raised: #1e1c1a; --fill: #24221f; --fill-strong: #302d29; --surface-2: #2a2724;
-  --line: rgba(255, 244, 230, 0.12); --hairline: rgba(255, 244, 230, 0.1);
-  --text: #f3efe9; --text-2: #b4ada3; --text-3: #9a948b;
-  --action: #2f7565; --action-pressed: #276355; --action-ink: #8fcab8; --accent-ink: #8fcab8; --focus-color: #8fcab8;
+  --base: #030c11; --bg: #06141b; --surface: #0b1b24; --raised: #11212d; --fill: #1a2e3b; --fill-strong: #253745; --surface-2: #1f3240;
+  --line: rgba(204, 208, 207, 0.12); --hairline: rgba(204, 208, 207, 0.1);
+  --text: #e8ecec; --text-2: #9ba8ab; --text-3: #7e8c91;
+  --action: #3a5266; --action-pressed: #2c4152; --action-ink: #f0b24a; --accent-ink: #f0b24a; --focus-color: #f0b24a;
   --verified: #7fa6ff; --warm: #f2b46b;
   color-scheme: dark;
   color: var(--text);
@@ -28,11 +28,11 @@
 .wp-trailer { position: absolute; inset: 0; }
 .wp-trailer:fullscreen video { object-fit: contain; background: #000; }
 .wp-paused { position: absolute; left: 50%; top: 45%; width: 58px; height: 58px; margin: -29px 0 0 -29px; display: grid; place-items: center; padding-left: 3px; border-radius: 50%; color: #fff; background: rgba(18, 18, 20, 0.4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); pointer-events: none; z-index: 3; }
-.wp-tag { position: absolute; z-index: 3; left: 50%; top: calc(var(--status-bar, 44px) + 60px); transform: translateX(-50%); padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: #fff; background: rgba(18, 18, 20, 0.55); white-space: nowrap; pointer-events: none; }
+.wp-tag { position: absolute; z-index: 3; left: 50%; top: calc(var(--status-bar, 44px) + 60px); transform: translateX(-50%); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(18, 18, 20, 0.55); white-space: nowrap; pointer-events: none; }
 /* Sound bottom-left, Watch full trailer bottom-right, above where the sheet starts. */
 .wp-sound, .wp-watch { position: absolute; z-index: 3; bottom: 44px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(18, 18, 20, 0.45); color: #fff; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); cursor: pointer; }
 .wp-sound { left: 16px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; padding: 0; }
-.wp-watch { right: 16px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; font: inherit; font-size: 14.5px; font-weight: 650; }
+.wp-watch { right: 16px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; }
 .wp-sound:focus-visible, .wp-watch:focus-visible, .wp-lang:focus-visible, .wp-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @media (prefers-reduced-transparency: reduce) {
   .wp-btn.icon-btn, .wp-lang, .wp-sound, .wp-watch, .wp-paused { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(18, 18, 20, 0.85); }
@@ -44,40 +44,40 @@
 .wp-compact[aria-hidden='true'] { opacity: 0; visibility: hidden; pointer-events: none; }
 .wp-compact-bg { position: absolute; inset: -20px; z-index: -1; filter: blur(18px) brightness(0.45); }
 .wp-compact-bg .photo, .wp-compact-bg img { width: 100%; height: 100%; object-fit: cover; }
-.wp-compact-title { justify-self: center; font-size: 17px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.wp-compact-title { justify-self: center; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) { .wp-compact { transition: none; } }
 
 /* ---------------------------------------------------------------- The sheet */
 .wp-sheet { position: relative; z-index: 3; margin-top: -26px; padding: 12px var(--gutter) 0; border-radius: 22px 22px 0 0; background: var(--bg); box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.35); min-height: 60vh; }
 .wp-handle { display: block; width: 44px; height: 4px; margin: 0 auto 18px; border-radius: 2px; background: rgba(255, 255, 255, 0.25); }
-.wp-title { margin: 0; font-size: clamp(26px, 7.6vw, 32px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; text-wrap: balance; overflow-wrap: break-word; }
+.wp-title { margin: 0; font-size: clamp(26px, 7.6vw, 32px); line-height: 1.1; font-weight: 750; text-wrap: balance; overflow-wrap: break-word; }
 .wp-meta { margin: 6px 0 0; font-size: 15px; color: var(--text-2); font-weight: 500; }
-.wp-when { margin: 2px 0 0; font-size: 14.5px; color: var(--text-3); }
+.wp-when { margin: 2px 0 0; font-size: 14px; color: var(--text-3); }
 .wp-by { margin: 6px 0 0; font-size: 14px; color: var(--text-2); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .wp-by > span { display: inline-flex; align-items: center; gap: 4px; }
 .wp-by-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--text); cursor: pointer; }
 .wp-by .verified { color: var(--verified); }
 /* Momentum: one line, one pill, between hairlines (District's "fans are hyped" row). */
 .wp-hype { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 0; border-block: 1px solid var(--line); }
-.wp-hype-text { margin: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--warm); }
-.wp-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--raised); color: var(--text); font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer; flex: none; }
+.wp-hype-text { margin: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--warm); }
+.wp-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--raised); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; flex: none; }
 .wp-pill.is-on { background: var(--action); border-color: transparent; color: #fff; }
-.wp-logline { position: relative; margin: 16px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--text-2); }
+.wp-logline { position: relative; margin: 16px 0 0; font-size: 15px; line-height: 1.5; color: var(--text-2); }
 .wp-logline.is-clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.wp-more { padding: 0; border: 0; background: none; font: inherit; font-weight: 650; color: var(--text); cursor: pointer; }
+.wp-more { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--text); cursor: pointer; }
 /* Cards for what you can act on (District's offers row). */
 .wp-cards { display: grid; gap: 10px; margin-top: 18px; }
 .wp-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--raised); color: var(--text); text-align: left; }
 .wp-card .verified { color: var(--verified); }
 .wp-card-text { display: grid; gap: 2px; min-width: 0; }
-.wp-card-text b { font-size: 15.5px; font-weight: 650; }
+.wp-card-text b { font-size: 15px; font-weight: 600; }
 .wp-card-text span { font-size: 13px; color: var(--text-2); }
 .wp-card-link { justify-self: start; margin-top: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-2); text-decoration: underline; cursor: pointer; }
-.wp-card-badge { display: grid; place-items: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; background: var(--action); color: #fff; font-weight: 700; font-size: 14px; }
+.wp-card-badge { display: grid; place-items: center; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 999px; background: var(--action); color: #fff; font-weight: 600; font-size: 14px; }
 /* Sections */
 .wp-section { padding-top: 30px; }
 .wp-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.wp-h2 { margin: 0 0 14px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.wp-h2 { margin: 0 0 14px; font-size: 18px; font-weight: 600; }
 .wp-section-head .wp-h2 { margin: 0; }
 .wp-section-all { padding: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--action-ink); cursor: pointer; }
 .wp-note { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 12px; color: var(--text-3); }
@@ -86,15 +86,15 @@
 .wp-rail::-webkit-scrollbar { display: none; }
 /* Buzz: tall cards, an icon, a bold line, a quieter line. */
 .wp-buzz-card { flex: 0 0 min(260px, 68%); display: grid; align-content: start; gap: 8px; min-height: 172px; padding: 18px; border-radius: 18px; background: var(--raised); box-shadow: inset 0 0 0 1px var(--hairline); color: var(--text); text-align: left; scroll-snap-align: start; }
-.wp-buzz-card b { font-size: 16px; line-height: 1.3; font-weight: 650; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-.wp-buzz-card > span:last-child { font-size: 13.5px; line-height: 1.4; color: var(--text-2); }
+.wp-buzz-card b { font-size: 15px; line-height: 1.3; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.wp-buzz-card > span:last-child { font-size: 13px; line-height: 1.4; color: var(--text-2); }
 .wp-buzz-icon { color: var(--warm); }
-.wp-buzz-stars { color: var(--warm); font-size: 18px; letter-spacing: 2px; }
+.wp-buzz-stars { color: var(--warm); font-size: 18px; }
 /* Cast and crew: avatar with the name beside it, about two and a half on screen. */
 .wp-person { flex: 0 0 auto; max-width: 70%; display: grid; grid-template-columns: 52px auto; align-items: center; gap: 12px; padding-right: 16px; color: var(--text); text-align: left; scroll-snap-align: start; }
 .wp-person-text { display: grid; gap: 2px; min-width: 0; }
 .wp-person-text b { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wp-person-text span { font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wp-person-text span { font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Posters and stills: a large lead tile with two beside it, then rows of three. */
 .wp-bento { display: grid; gap: 10px; grid-template-columns: 2fr 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); aspect-ratio: 1.08; }
 .wp-bento--2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; aspect-ratio: 1.5; }
@@ -108,7 +108,7 @@
 .wp-report { display: block; margin: 28px 0 0; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--text-3); text-decoration: underline; cursor: pointer; }
 /* One fixed action. */
 .wp-cta-bar { position: sticky; bottom: 0; z-index: 5; margin: 24px calc(-1 * var(--gutter)) 0; padding: 14px var(--gutter) max(18px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg) 30%); }
-.wp-cta { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; border: 0; border-radius: 999px; background: var(--action); color: #fff; font: inherit; font-size: 17px; font-weight: 650; cursor: pointer; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35); }
+.wp-cta { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 54px; border: 0; border-radius: 999px; background: var(--action); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35); }
 .wp-cta:active { background: var(--action-pressed); }
 .wp-cta.is-on { background: var(--raised); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
 .wp-cta:focus-visible { outline: 3px solid var(--focus-color); outline-offset: 3px; }

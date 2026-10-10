@@ -17,11 +17,11 @@
 .phone .mtray-open .photo { position: absolute; inset: 0; }
 .phone .mtray-order {
   position: absolute; left: 5px; top: 5px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
-  display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--action); color: var(--on-action, #fff);
+  display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--action); color: var(--on-action, #fff);
 }
 .phone .mtray-video {
   position: absolute; left: 5px; bottom: 5px; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px;
-  border-radius: 999px; font-size: 10px; font-weight: 600; background: rgba(0, 0, 0, 0.6); color: #fff;
+  border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(0, 0, 0, 0.6); color: #fff;
 }
 /* 22 px visual in a 30 px corner target: large enough to hit, small enough that the tile's centre (preview, drag)
    stays clear even on 67 px tiles at 320 px. */
@@ -46,7 +46,7 @@
 .phone .mpick-item:disabled { opacity: 0.4; }
 .phone .mpick-check {
   position: absolute; right: 5px; top: 5px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px; display: grid; place-items: center;
-  font-size: 11px; font-weight: 700; border: 2px solid #fff; background: rgba(0, 0, 0, 0.25); color: #fff;
+  font-size: 12px; font-weight: 600; border: 2px solid #fff; background: rgba(0, 0, 0, 0.25); color: #fff;
 }
 .phone .mpick-check-off { opacity: 0; }
 .phone .mpick-item.is-on .mpick-check { background: var(--action); border-color: var(--action); }

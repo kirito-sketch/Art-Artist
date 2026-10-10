@@ -76,14 +76,13 @@
 }
 
 .ev-stub-month {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .ev-stub-day {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -99,11 +98,11 @@
 }
 
 .ev-stub--small .ev-stub-month {
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .ev-stub--small .ev-stub-day {
-  font-size: 17px;
+  font-size: 15px;
 }
 
 .ev-body {
@@ -120,14 +119,13 @@
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.02em;
+  font-weight: 600;
   color: var(--accent-ink);
 }
 
 .ev-title {
-  font-size: 16px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.25;
   color: var(--text);
 }
@@ -202,9 +200,9 @@
 
 .ev-hero-day {
   font-size: 180px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 0.8;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.01em;
   color: var(--accent-ink);
   opacity: 0.22;
   margin: 0 12px -10px 0;
@@ -345,7 +343,7 @@
 /* Free events with native, organiser-approved attendance. */
 .ev-hero--branded { background: radial-gradient(ellipse at 30% 25%, var(--accent-soft), transparent 70%), var(--surface); }
 .ev-hero-fallback { display: grid; place-content: center; justify-items: center; height: 100%; gap: 12px; color: var(--text-2); }
-.ev-hero-fallback > span { font-size: 13px; letter-spacing: .1em; }
+.ev-hero-fallback > span { font-size: 13px; }
 .ev-attendance, .ev-host-controls { display: grid; gap: 8px; margin: 20px 0; }
 .ev-attendance-note { text-align: center; }
 .ev-request-status { display: grid; gap: 6px; padding: 16px; border-radius: 14px; background: var(--surface); color: var(--text); }

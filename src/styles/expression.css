@@ -7,24 +7,24 @@
 
 :root {
   /* Surfaces: Level 0 base is warm paper; Level 1 content sits on it unboxed; Level 2 is raised white. */
-  --base: #f6f4f0;
-  --raised: #ffffff;
-  --tint: #efebe4; /* quiet section */
-  --sand: #e8dfcf; /* the one expressive field per screen, never a page ground */
-  --dark: #151413; /* rare cinematic surface: title cards, media */
-  --hairline: rgba(40, 30, 20, 0.1);
+  --base: #f2f2f4; /* the ground: a cool light grey, like Atlys */
+  --raised: #f8f8f9; /* cards: one step lighter, defined by a hairline, not by a different colour */
+  --tint: #ebebef; /* quiet section */
+  --sand: #e4e4e9; /* the one expressive field per screen, never a page ground */
+  --dark: #06141b; /* rare cinematic surface: title cards, media */
+  --hairline: rgba(6, 20, 27, 0.09);
 
   /* Radius: the Figma family's xs, used only by frame labels. */
   --r-xs: 6px;
 
   /* Depth: one shadow per level. Warm-tinted so it sits in the paper, not on it. */
-  --shadow-2: 0 18px 36px -18px rgba(46, 30, 12, 0.42), 0 2px 6px rgba(30, 20, 10, 0.06);
-  --shadow-3: 0 10px 30px rgba(20, 14, 8, 0.16), 0 1px 3px rgba(20, 14, 8, 0.08);
+  --shadow-2: 0 18px 36px -18px rgba(6, 20, 27, 0.34), 0 2px 6px rgba(6, 20, 27, 0.06);
+  --shadow-3: 0 10px 30px rgba(6, 20, 27, 0.14), 0 1px 3px rgba(6, 20, 27, 0.08);
 
   /* Type additions on the same SF family: one display size and one caps label. */
-  --t-display: 40px;
-  --label: 11.5px;
-  --label-track: 0.09em;
+  --t-display: 36px;
+  --label: 12.5px;
+  --label-track: 0;
 }
 
 /* ---------------------------------------------------------------- canvas */
@@ -88,9 +88,7 @@
   padding: 0 10px;
   border-radius: var(--r-xs);
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   white-space: nowrap;
   line-height: 1;
 }
@@ -127,7 +125,7 @@
 
 .canvas .feature-title {
   font-size: 36px;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.01em;
 }
 
 /* --------------------------------------------------------- portrait card */
@@ -206,7 +204,7 @@
 .person-photo-initials {
   font-family: var(--display);
   font-size: 30px;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
   color: var(--text-2);
 }
 
@@ -307,9 +305,8 @@
 }
 
 .poster-tile--lead .poster-tile-title {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 /* ------------------------------------------------------------- title card */
@@ -333,9 +330,8 @@
 }
 
 .title-card-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.05;
   text-wrap: balance;
 }
@@ -345,9 +341,7 @@
   align-items: center;
   gap: 5px;
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   color: rgba(244, 239, 230, 0.6);
 }
 
@@ -410,7 +404,7 @@
   bottom: 5%;
   height: 11%;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(46, 30, 12, 0.3), rgba(46, 30, 12, 0));
+  background: radial-gradient(closest-side, rgba(6, 20, 27, 0.3), rgba(6, 20, 27, 0));
   opacity: var(--object-shadow);
   transition: opacity var(--object-duration) var(--ease-out);
 }
@@ -567,16 +561,14 @@
 
 .v-home .greeting-kicker {
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-2);
 }
 
 .v-home .greeting-title {
   font-size: var(--t-1);
-  font-weight: 800;
-  letter-spacing: -0.035em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1.05;
   margin-top: 6px;
 }
@@ -640,8 +632,8 @@
 
 .slate-lead-title {
   font-size: var(--t-display);
-  font-weight: 800;
-  letter-spacing: -0.045em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1;
   margin: 0 0 14px;
   text-wrap: balance;
@@ -784,13 +776,12 @@
 
 .v-profile .pid .large-title {
   font-size: var(--t-display);
-  letter-spacing: -0.045em;
+  letter-spacing: -0.01em;
 }
 
 .v-profile .pid-role {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.015em;
   margin-top: 4px;
 }
 
@@ -846,7 +837,7 @@
 
 .v-role .large-title {
   font-size: var(--t-display);
-  letter-spacing: -0.045em;
+  letter-spacing: -0.01em;
 }
 
 .v-role .detail-by {
@@ -896,9 +887,7 @@
 
 .call-sheet dt {
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-2);
   margin-bottom: 4px;
 }
@@ -907,7 +896,6 @@
   margin: 0;
   font-size: var(--t-3);
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .role-decides {
@@ -952,9 +940,8 @@
 }
 
 .poster-tile:not(.poster-tile--lead) .frame-label {
-  font-size: 10.5px;
+  font-size: 12px;
   padding: 0 8px;
-  letter-spacing: 0.07em;
 }
 
 .v-profile .pid-stats span {
@@ -1017,7 +1004,6 @@
 
 .display-title[data-display='32'],
 .display-title[data-display='30'] {
-  letter-spacing: -0.035em !important;
 }
 
 /* Rail titles: two lines, then an ellipsis, on every poster size. */
@@ -1050,20 +1036,17 @@
 .greeting-kicker:lang(te),
 .label-caps:lang(te) {
   text-transform: none;
-  letter-spacing: 0;
   font-size: calc(var(--label) + 1px);
 }
 
 .display-title:lang(te),
 .title-card-title:lang(te) {
-  letter-spacing: 0 !important;
   line-height: 1.24;
 }
 
 .item-title:lang(te),
 .meta:lang(te),
 .pid-role:lang(te) {
-  letter-spacing: 0;
   line-height: 1.4;
 }
 
@@ -1195,7 +1178,7 @@
 
 .stream-bar-title {
   font-size: var(--t-3);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .stream-bar-spacer {
@@ -1269,10 +1252,9 @@
 
 .stream-note p {
   margin: 0;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.35;
-  letter-spacing: -0.01em;
 }
 
 .stream-body {
@@ -1296,9 +1278,7 @@
 
 .stream-context-label {
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-2);
 }
 
@@ -1358,9 +1338,7 @@
   margin-top: 0;
   margin-bottom: 0;
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-2);
 }
 
@@ -1368,8 +1346,8 @@
   margin-top: 6px;
   margin-bottom: 0;
   font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1.08;
 }
 
@@ -1396,13 +1374,13 @@
   padding: 6px 12px;
   border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(40, 30, 20, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(6, 20, 27, 0.1);
   font-size: var(--t-5);
   color: var(--text);
 }
 
 .world-count b {
-  font-weight: 800;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1444,7 +1422,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.94);
   color: var(--text);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(40, 30, 20, 0.06);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(6, 20, 27, 0.06);
 }
 
 .save--floating.is-on {
@@ -1474,8 +1452,7 @@
   flex: none;
   padding: 8px 0 12px;
   font-size: var(--t-3);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
 }
 
 .v-discover .tab-underline {
@@ -1486,9 +1463,7 @@
 /* Role Detail kicker: the format as a production line, set in caps like the call sheet. */
 .v-role .kicker {
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
@@ -1539,16 +1514,14 @@
 }
 
 .identity-shift-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
   color: rgba(244, 239, 230, 0.66);
 }
 
 .identity-shift-name {
   font-size: var(--t-4);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Bottom navigation: a tonal well slides to the active tab; the icon lifts into it. */
@@ -1577,7 +1550,7 @@
   position: absolute;
   inset: 0;
   background: var(--accent);
-  box-shadow: 0 6px 16px rgba(39, 92, 80, 0.32);
+  box-shadow: 0 6px 16px rgba(240, 178, 74, 0.38);
 }
 
 .tab-create-icon {
@@ -1613,9 +1586,7 @@
 .create-title {
   margin: 0 12px 8px;
   font-size: var(--label);
-  font-weight: 700;
-  letter-spacing: var(--label-track);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text-2);
 }
 
@@ -1746,8 +1717,8 @@
 }
 
 @keyframes record-steady {
-  from { opacity: 0.55; outline: 1.5px dashed rgba(40, 30, 20, 0.35); outline-offset: -1.5px; }
-  to { opacity: 1; outline: 1.5px dashed rgba(40, 30, 20, 0); outline-offset: -1.5px; }
+  from { opacity: 0.55; outline: 1.5px dashed rgba(6, 20, 27, 0.35); outline-offset: -1.5px; }
+  to { opacity: 1; outline: 1.5px dashed rgba(6, 20, 27, 0); outline-offset: -1.5px; }
 }
 
 .credit-sealed {
@@ -1769,7 +1740,7 @@
 .canvas {
   --filter-bg: var(--tint);
   --chip-bg: var(--raised);
-  --chip-edge: rgba(40, 30, 20, 0.14);
+  --chip-edge: rgba(6, 20, 27, 0.14);
 }
 
 /* ===================================================== Saved */
@@ -1998,7 +1969,7 @@
 .intent-chip, .filter-pill {
   display: inline-flex; align-items: center; gap: 4px; flex: none;
   height: 30px; padding: 0 10px 0 12px; border-radius: 999px;
-  font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .intent-chip { background: var(--action-tint); color: var(--action-ink); border: 0; }
 .filter-pill { background: transparent; color: var(--text); border: 1px solid var(--line); padding: 0 12px; }
@@ -2021,7 +1992,7 @@
   cursor: pointer;
 }
 .intent-option.is-on { border-color: var(--action); box-shadow: inset 0 0 0 1px var(--action); background: var(--action-tint); }
-.intent-option-label { font-size: 15px; font-weight: 650; }
+.intent-option-label { font-size: 15px; font-weight: 600; }
 .ob-later { margin-top: 2px; text-align: center; }
 
 /* Waiting on you: actions you owe come first, set apart by an icon instead of a face. */
@@ -2050,7 +2021,7 @@
   gap: 4px;
   color: var(--text-2);
 }
-.tab-label { position: relative; font-size: 10.5px; font-weight: 550; line-height: 1; letter-spacing: 0.01em; }
+.tab-label { position: relative; font-size: 12px; font-weight: 550; line-height: 1; }
 .tab-item .tab-icon { height: 30px; }
 .tab-dot { top: 4px; right: 12px; }
 .tabbar-pill { padding: 5px 8px; }
@@ -2065,7 +2036,7 @@
 
 /* Show interest: what happens next, as three short numbered steps. */
 .next-steps { margin: 0; padding: 12px 14px 12px 32px; border-radius: 12px; background: var(--action-tint); display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; color: var(--text); }
-.next-steps b { font-weight: 650; }
+.next-steps b { font-weight: 600; }
 
 /* Conversation: how direct messages work, shown once in an empty thread. */
 .convo-hint { margin: 8px 16px; padding: 10px 12px; border-radius: 12px; background: var(--fill); text-align: center; }
@@ -2092,7 +2063,7 @@
 /* Projects and production houses: one card, one size. Richness from imagery and content, not from a featured first item. */
 .project-rail .poster-tile { width: 168px; align-self: flex-start; }
 .project-rail .poster-tile-media { aspect-ratio: 4 / 5; border-radius: var(--r-m); }
-.project-rail .poster-tile-title { font-size: 15px; font-weight: 650; }
+.project-rail .poster-tile-title { font-size: 15px; font-weight: 600; }
 .project-rail .poster-tile-sub { color: var(--text-2); }
 /* Home: the first section starts right under the header, so its cards are the first thing seen. */
 .v-home .home-sheet { padding-top: 0; }

@@ -46,7 +46,7 @@
   background: var(--action-tint, color-mix(in srgb, var(--action) 12%, transparent));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--action) 30%, transparent);
 }
-.ana-post .ana-post-actions--row .ana-post-likes { font-size: 13.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.ana-post .ana-post-actions--row .ana-post-likes { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ana-post .ana-post-actions--row button:focus-visible { outline: 2px solid var(--focus-color, var(--action-ink)); outline-offset: 2px; }
 /* Text posts: the row sits under the text in the same place. */
 .ana-post--text .ana-post-actions--row { margin: 12px 0 0; width: auto; }

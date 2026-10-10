@@ -80,7 +80,7 @@
 
 .phone .pending-credit-title {
   font-size: var(--t-3);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -148,7 +148,7 @@
 
 .phone .credit-rail .item-title {
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -412,7 +412,7 @@
 
 .phone .tab-item.is-on .tab-label {
   color: var(--action-ink);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Profile: the same avatar, full strength in both states; selected adds a 2px green ring (on a frame
@@ -559,8 +559,6 @@
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-2);
 }
 .phone .notif-head {
@@ -580,7 +578,7 @@
   font-weight: 500;
 }
 .phone .notif.is-unread .notif-who {
-  font-weight: 650;
+  font-weight: 600;
 }
 .phone .notif-context {
   font-size: var(--t-5);
@@ -711,8 +709,8 @@
   border-radius: 9px;
   background: var(--action);
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 18px;
   text-align: center;
 }
@@ -762,8 +760,6 @@
   margin: 0 0 2px;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-2);
 }
 .phone .picker-row {

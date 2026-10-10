@@ -5,7 +5,7 @@
  * these tokens; the remaining one-off shadows are listed in the doc and move here as screens are touched. */
 
 :root {
-  --ink-shadow: 28, 22, 14;
+  --ink-shadow: 6, 20, 27;
   /* 1 resting: cards that sit on the page */
   --elev-1: 0 1px 2px rgba(var(--ink-shadow), 0.06), 0 2px 8px rgba(var(--ink-shadow), 0.05);
   /* 2 raised: controls floating on photography */

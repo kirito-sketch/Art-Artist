@@ -47,7 +47,7 @@
 }
 .phone .ob-nav { z-index: 2; }
 .phone .ob-body { position: relative; z-index: 1; margin-top: -26px; padding: 0 24px max(28px, env(safe-area-inset-bottom, 0px)); gap: 10px; }
-.phone .ob-count { margin: 2px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--text-2); }
+.phone .ob-count { margin: 2px 0 0; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .phone .ob-title { margin: 0; }
 .phone .ob-lede { margin: -2px 0 6px; font-size: 15px; line-height: 1.4; color: var(--text-2); }
 .phone .ob-progress span { height: 4px; }
@@ -66,14 +66,14 @@
 .phone .auth-bar { margin: 0 -8px 0; }
 .phone .auth-head { display: flex; flex-direction: column; gap: 6px; margin: 18px 0 24px; }
 .phone .auth-head .ob-title { margin: 0; text-wrap: balance; }
-.phone .auth-lede { margin: 0; font-size: 15.5px; line-height: 1.4; color: var(--text-2); }
+.phone .auth-lede { margin: 0; font-size: 15px; line-height: 1.4; color: var(--text-2); }
 .phone .auth .or { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
 .phone .auth .or::before, .phone .auth .or::after { content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--text) 12%, transparent); }
 .phone .auth-foot { margin-top: auto; padding-top: 24px; }
 /* Sign in: title and choices settle into the lower part of the screen (thumb reach), clear of the bottom edge. */
 .phone .auth--low .auth-head { margin-top: auto; }
 .phone .auth--low { padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 0px) + 32px)); }
-.phone .provider-note { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; color: var(--text-2); background: color-mix(in srgb, var(--text) 5%, transparent); }
+.phone .provider-note { margin: 0; padding: 9px 12px; border-radius: 10px; font-size: 13px; line-height: 1.4; color: var(--text-2); background: color-mix(in srgb, var(--text) 5%, transparent); }
 .phone .provider-row { min-height: 60px; }
 .phone .provider-row:disabled { opacity: 0.6; }
 .phone .provider-row .spinner { margin-left: auto; }
@@ -81,8 +81,8 @@
 /* ---- Before you join: three labelled groups, one level of grouping, no nested cards. */
 .phone .consent-lede { margin: -4px 0 4px; font-size: 15px; line-height: 1.4; color: var(--text-2); }
 .phone .consent-group { display: flex; flex-direction: column; gap: 4px; }
-.phone .consent-h { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--text); }
-.phone .consent-tag { padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--action, var(--text)) 14%, transparent); color: var(--action-ink, var(--text)); }
+.phone .consent-h { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; font-size: 13px; font-weight: 600; color: var(--text); }
+.phone .consent-tag { padding: 2px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; background: color-mix(in srgb, var(--action, var(--text)) 14%, transparent); color: var(--action-ink, var(--text)); }
 .phone .consent-tag--quiet { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text-2); }
 .phone .know-list { background: none; border-radius: 0; }
 .phone .know-row { padding: 12px 0; min-height: 56px; }
@@ -107,10 +107,10 @@
 /* 3. A resumed sign-up says where it picked up. */
 .phone .ob-note { margin: 2px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 550; background: color-mix(in srgb, var(--action, var(--text)) 10%, transparent); color: var(--text); }
 /* 5. Optional steps: labelled, and drawn as an open segment. */
-.phone .ob-opt { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text-2); }
+.phone .ob-opt { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text-2); }
 .phone .ob-progress span.is-opt { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 22%, transparent); }
 .phone .ob-progress span.is-opt.is-on { background: var(--action, var(--text)); box-shadow: none; }
 /* 7. The mark in the hero's dark top corner, white, so the blended edge carries only the headline. */
 .phone .entry-hero-logo { position: absolute; z-index: 2; top: calc(var(--status-bar, 12px) + 14px); left: 22px; pointer-events: none; }
 .phone .entry-hero-logo .logo img { height: 30px; filter: brightness(0) invert(1) drop-shadow(0 1px 6px rgba(0, 0, 0, 0.35)); }
-.phone .entry-hero-logo .wordmark { color: #fff; font-weight: 700; }
+.phone .entry-hero-logo .wordmark { color: #fff; font-weight: 600; }

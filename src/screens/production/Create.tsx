@@ -1015,7 +1015,7 @@ export function AssociationScreen({ id }: { id: string }) {
               </button>
             ) : (
               <div className="pending-credit-actions">
-                <Button size="s" loading={creditBusy === pending.id} onClick={() => acceptCredit(pending.id)}>
+                <Button size="s" variant="signature" loading={creditBusy === pending.id} onClick={() => acceptCredit(pending.id)}>
                   {revision ? 'Accept revision' : 'Accept'}
                 </Button>
                 {revision ? (

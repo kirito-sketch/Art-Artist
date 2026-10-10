@@ -1,6 +1,8 @@
 import { MEDIA_PRESETS } from './domain/mediaPresentation';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/inter';
+import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource/instrument-serif';
 import '@fontsource/noto-sans-telugu/400.css';
 import '@fontsource/noto-sans-telugu/600.css';
 import '@fontsource/noto-sans-telugu/700.css';
