@@ -1040,3 +1040,15 @@ Both were marked Partial in the Sunday brief. What was missing, and what was bui
 - Still not built: the owner's own add and remove members screens (the prototype persona is a member, not an owner).
 
 Checks: new flow suite 15/0 (inbox identity filter, switch gate, new message, options, mute, phone change, devices, leaving a house); auth 56/0, views 22/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, unit tests, wt suites, fields and focusflow pass; typecheck clean. Screenshot: `docs/ux-refinement/messaging-settings.jpg`.
+
+## Premium feel: motion, haptics and materials
+
+The flows were right but the feel wasn't. Audited by frequency (the 15 most repeated interactions) and by material (shadows, glass, radii, type); everything is in `docs/premium/`.
+
+- Taps: fixed three causes of dropped frames (PressCard re-reading its text every render, every grid tile and Follow button tracked for layout, the post stream laying out every post). Worst frame opening a post went from about 390 to 200 ms on a 4× slowed CPU.
+- Added edge swipe back, sheet drag from the content, haptics (`src/ui/haptics.ts`), a calmer Save spring, image fade-in, and a material family (`src/styles/materials.css`) applied to sheets, toasts and controls on photos.
+- For native: `docs/premium/NATIVE_MOTION_SPEC.md` (per interaction, springs in SwiftUI and Compose terms, haptics per platform) and recordings in `docs/premium/recordings/`.
+- Not done: replacing the remaining 90-odd one-off shadows, 15 blur recipes, 30 radii and 62 type sizes across the CSS (listed in `VISUAL_MATERIALS.md`); the whole-app re-render on navigation (prototype architecture).
+
+Checks: typecheck clean, unit tests, wt suites (13/14/34/24), fields 20/0, launch 43/0, test-a11y 127/0, test-flow mobile 39/0, focusflow 18/0, auth 56/0, views 22/0; gesture checks for swipe back (cancel and commit), Back button, and sheet pull-to-close.
+
