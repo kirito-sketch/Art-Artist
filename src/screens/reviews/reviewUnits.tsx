@@ -236,10 +236,10 @@ export function FilmReviewsSection({ w }: { w: Work }) {
 }
 
 /** Write or edit: stars are required, words are optional. */
-export function ReviewSheet({ projectId, title }: { projectId: string; title: string }) {
+export function ReviewSheet({ projectId, title, initial }: { projectId: string; title: string; initial?: number }) {
   const { viewer, saveReview, deleteReview, closeSheet, showToast } = useStore();
   const mine = reviewsOf(projectId).find((r) => r.personId === viewer.id);
-  const [stars, setStars] = useState(mine?.stars ?? 0);
+  const [stars, setStars] = useState(mine?.stars ?? initial ?? 0);
   const [text, setText] = useState(mine?.text ?? '');
   const [spoiler, setSpoiler] = useState(!!mine?.spoiler);
   const left = MAX_TEXT - text.length;

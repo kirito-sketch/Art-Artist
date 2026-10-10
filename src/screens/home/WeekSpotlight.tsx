@@ -1,4 +1,3 @@
-import { Pause, Play } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from '../../state/store';
@@ -19,10 +18,10 @@ import type { WeekCard } from './districtFeed';
  * The timer is the progress bar's CSS animation. Its end advances the rail; pausing it pauses the timer exactly, and it
  * runs on the compositor. It runs only while the rail is on screen, the page is visible, Home is uncovered, nothing in
  * the rail has focus, and nobody is touching it; never with Reduced Motion or on a low-power device. A touch or swipe
- * restarts the count after a few quiet seconds. A Pause button stops it for good (WCAG 2.2.2).
+ * stops it for good: the cards advance on their own until someone touches the rail, then they move only when swiped
+ * or tapped (WCAG 2.2.2 without a Pause button, as District does it).
  */
 export const WEEK_INTERVAL = 5200;
-const RESUME_AFTER = 5000;
 
 export function WeekSpotlight({ cards, active }: { cards: WeekCard[]; active: boolean }) {
   const { push } = useStore();
@@ -120,13 +119,11 @@ export function WeekSpotlight({ cards, active }: { cards: WeekCard[]; active: bo
   const hold = () => {
     window.clearTimeout(idle.current);
     setTouching(true);
+    setStopped(true);
   };
   const release = () => {
     window.clearTimeout(idle.current);
-    idle.current = window.setTimeout(() => {
-      setTouching(false);
-      setCycle((c) => c + 1);
-    }, RESUME_AFTER);
+    setTouching(false);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -209,6 +206,7 @@ export function WeekSpotlight({ cards, active }: { cards: WeekCard[]; active: bo
                 onClick={() => {
                   go(k);
                   setIndex(k);
+                  setStopped(true);
                   setCycle((x) => x + 1);
                 }}
               >
@@ -216,11 +214,6 @@ export function WeekSpotlight({ cards, active }: { cards: WeekCard[]; active: bo
               </button>
             ))}
           </div>
-          {!reduce && !low && (
-            <button type="button" className="wk-pause" aria-label={stopped ? 'Play This week' : 'Pause This week'} onClick={() => setStopped((s) => !s)}>
-              {stopped ? <Play size={13} fill="currentColor" strokeWidth={0} /> : <Pause size={13} fill="currentColor" strokeWidth={0} />}
-            </button>
-          )}
         </div>
       )}
     </div>

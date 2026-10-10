@@ -92,7 +92,7 @@ export type Sheet =
   | { name: 'share'; label: string; url?: string }
   | { name: 'more'; id: string }
   | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event' | 'Review'; id: string } }
-  | { name: 'review'; projectId: string }
+  | { name: 'review'; projectId: string; stars?: number }
   | { name: 'postMore'; id: string }
   | { name: 'block'; id: string }
   | { name: 'editRole'; id: string }

@@ -29,6 +29,7 @@ import { spotCard, spotlightFor, thisWeekFor, weekCard, type SpotCard, type Week
 import { WeekSpotlight } from './WeekSpotlight';
 import { NetworkCollections } from './NetworkActivity';
 import { PersonCard } from '../../ui/PersonCard';
+import { FilmTalk } from './FilmTalk';
 import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
 import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
 import { Sheet } from '../../ui/Sheet';
@@ -172,7 +173,7 @@ export function DistrictHome({ go }: { go: Go }) {
   if (HOME_PREVIEW) {
     const chips = [tiles.find((t) => t.key === 'roles'), tiles.find((t) => t.key === 'people'), tiles.find((t) => t.key === 'projects'), tiles.find((t) => t.key === 'events'), tiles.find((t) => t.key === 'reviews')].filter(Boolean) as typeof tiles;
     const net = networkFor(viewer, scenario).slice(0, 10);
-    const reviewable = [...thisWeekReleases].find((w) => mayReview(w.id) && !reviewsOf(w.id).some((r) => r.personId === viewer.id));
+    const filmTalk = [...friday, ...thisWeekReleases.filter((w) => !friday.some((f) => f.id === w.id) && mayReview(w.id) && !reviewsOf(w.id).some((r) => r.personId === viewer.id))].slice(0, 5);
     const peopleRail = near.length >= 2 && (
       <section className="dh-sec" aria-label="People near you">
         <SectionHeader title="People near you" action={near.length > 6 ? 'See all' : undefined} onAction={() => go.discover('people')} className="dh-pad" />
@@ -245,22 +246,10 @@ export function DistrictHome({ go }: { go: Go }) {
           </section>
         )}
 
-        {(friday.length > 0 || reviewable) && (
+        {filmTalk.length > 0 && (
           <section className="dh-sec" aria-label="Film talk">
             <SectionHeader title="Film talk" className="dh-pad" action="See all" onAction={() => go.discover('reviews')} />
-            {friday.length > 0 && (
-              <div className={friday.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
-                {friday.map((w) => <Quote key={w.id} w={w} onOpen={() => push({ name: 'work', id: w.id })} />)}
-              </div>
-            )}
-            {reviewable && (
-              <div className="dh-pad">
-                <PressCard className="dh-rate" onPress={() => openSheet({ name: 'review', projectId: reviewable.id })} scale={0.985} aria-label={`Seen ${reviewable.title}? Rate and review`}>
-                  <Photo surface="search-thumbnail" media={reviewable.media} showPlay={false} />
-                  <span><b>Seen {reviewable.title}?</b><span>Rate and review</span></span>
-                </PressCard>
-              </div>
-            )}
+            <FilmTalk films={filmTalk} />
           </section>
         )}
 

@@ -65,7 +65,7 @@ export function SheetHost() {
         {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
       </Sheet>
       <Sheet open={is('review')} onClose={closeSheet} title="Your review">
-        {sheet?.name === 'review' && <ReviewSheet projectId={sheet.projectId} title={work(sheet.projectId)?.title ?? ''} />}
+        {sheet?.name === 'review' && <ReviewSheet projectId={sheet.projectId} title={work(sheet.projectId)?.title ?? ''} initial={sheet.stars} />}
       </Sheet>
       <Sheet open={is('report')} onClose={closeSheet} title="Report">
         {sheet?.name === 'report' && <ReportSheet subject={sheet.subject} partyId={sheet.partyId} target={sheet.target} />}

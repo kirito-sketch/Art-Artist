@@ -170,9 +170,6 @@ html[data-theme='dark'] .dh--next .dh-dtile { box-shadow: inset 0 0 0 1px rgba(2
 .wk.is-running .wk-fill { animation-play-state: running; }
 @keyframes wk-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .wk-step:focus-visible { outline: 2px solid var(--focus-color, var(--accent)); outline-offset: -4px; border-radius: 6px; }
-.wk-pause { appearance: none; border: 0; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text-2); cursor: pointer; position: relative; }
-.wk-pause::before { content: ''; position: absolute; inset: -6px; }
-.wk-pause:focus-visible { outline: 2px solid var(--focus-color, var(--accent)); outline-offset: 2px; }
 
 /* ---------------------------------------------------------------- From your network */
 .dh--next .dh-net { display: grid; gap: 2px; }
