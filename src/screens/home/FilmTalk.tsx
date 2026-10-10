@@ -20,7 +20,7 @@ function FilmCard({ w, wide }: { w: Work; wide: boolean }) {
   return (
     <article className={`fcard ${wide ? 'fcard--wide' : ''}`}>
       <PressCard className="fcard-main" onPress={() => push({ name: 'work', id: w.id })} scale={0.985} aria-label={w.title}>
-        <span className="fcard-poster">
+        <span className="fcard-bg">
           <Photo surface="spotlight" media={w.media} showPlay={false} />
         </span>
         <span className="fcard-t">
@@ -30,7 +30,7 @@ function FilmCard({ w, wide }: { w: Work; wide: boolean }) {
             <>
               <span className="fcard-q">“{f.text}”</span>
               <span className="fcard-by">
-                <Avatar party={p} size={22} />
+                <Avatar party={p} size={20} />
                 <span>
                   {p.name}
                 </span>
@@ -41,7 +41,7 @@ function FilmCard({ w, wide }: { w: Work; wide: boolean }) {
       </PressCard>
       {mine && (
         <button type="button" className="fcard-mine" onClick={() => openSheet({ name: 'review', projectId: w.id })} aria-label={`You rated ${w.title} ${mine.stars} out of 5. Edit your review`}>
-          <Stars value={mine.stars} size={14} />
+          <Stars value={mine.stars} size={15} />
           <span>You rated it {mine.stars}</span>
         </button>
       )}
