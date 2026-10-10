@@ -83,3 +83,22 @@ The small labels set in capitals with wide letter spacing above titles, such as 
 - **Buttons:** in the references buttons aren't one flat brand colour (Atlys: pastel gradient; Airbnb: pink to magenta gradient; Wabi: black and white). Explore that route.
 - **Client palettes** (`ref-client-palettes.png`, a suggestion to consider, not a decision): a cool slate scale `#06141B #11212D #253745 #4A5C6A #9BA8AB #CCD0CF`, and a warm earth scale `#2A0800 #775144 #C09891 #BEA8A7 #F4DBD8`.
 - **Profile monotony:** use District and Airbnb as references. Airbnb's listing detail (`ref-airbnb-listing-1.jpg`, `-2.jpg`) stays rich all the way down: a centred rating moment with laurels, a raised host card with a stats column, facts as icon rows, long text cut at four lines with "Show more", review cards in a sideways rail, thin dividers, and a sticky bar with the price and a gradient Reserve button.
+
+## Fourth round: answers and the chosen colours
+
+- **Film Talk quote:** from anyone. People you follow come first when they have reviewed the film.
+- **Accent and gradient:** Arun asked us to choose. Chosen (to be confirmed once seen on real screens):
+
+| Role | Value | Contrast |
+|---|---|---|
+| Ground | `#F2F2F4` cool light grey (Atlys-like), deepening to `#DEDDE0` in gradient sections | |
+| Cards | `#F8F8F9` with a hairline edge and soft shadow | |
+| Text and primary buttons | `#06141B` ink (client palette 1) | 16.7:1 on the ground |
+| Secondary text | `#4A5C6A` (client palette 1) | 6.2:1 |
+| Accent, as text and icons (links, selected tab, small marks) | `#9A5800` deep amber | 5.0:1 on the ground |
+| Accent, as a fill (strips like "Closes in 2 days", badges, the + button) | `#F0B24A` amber with ink text | 9.9:1 |
+| Signature gradient (Continue, Show interest, Accept credit, Publish) | `#F4DBD8` blush to `#F6E7CF` warm cream, ink text | 14 to 15:1 |
+| Dark mode grounds | `#06141B`, `#11212D`, `#253745` (client palette 1); amber fill stays `#F0B24A` | 8.7:1 on `#11212D` |
+| Errors | `#D83A2E` red, kept apart from amber | |
+
+Why amber: cool slate shadows with warm amber highlights is the classic "teal and orange" film grade, so the palette itself says cinema. It sits far from the error red, reads as golden-hour light, and the blush-to-cream gradient comes from the client's warm palette.
