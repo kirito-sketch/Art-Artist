@@ -7,7 +7,7 @@ The flows were right but the app didn't feel premium. This folder is the work on
 | [Frequency audit](FREQUENCY_AUDIT.md) | The 15 interactions people repeat most, graded before and after on instant, continuous, interruptible, smooth |
 | [Visual materials](VISUAL_MATERIALS.md) | Shadows, glass, radii, elevation and type: what's in use, what it does to the feel, the one family to use |
 | [Native motion spec](NATIVE_MOTION_SPEC.md) | Per-interaction spec for the native developers: springs (with SwiftUI and Compose values), haptics, gestures, reduced motion |
-| `recordings/` | Screen recordings of the polished moments from the prototype |
+| `recordings/` | Screen recordings from the prototype: `post-to-viewer`, `swipe-back` (abandoned, then completed), `sheet-drag-close` (springs back, then closes), `save-and-follow`, `credit-accept` |
 | `../MOTION_MICROINTERACTION_SYSTEM.md` | The motion system, now with haptics (§9) and the performance findings (§10) |
 
 ## What changed in the prototype

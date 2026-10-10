@@ -37,6 +37,7 @@ The worst grades on the most frequent rows were 6 (open a post: worst frame abou
 
 - **Smooth on 5, 6, 7, 11:** the first frame of a new screen still takes 150 to 200 ms on a 4× slowed CPU. Profiling shows the rest is React re-rendering the whole app on every navigation, because tab, stack and data share one store. That is a prototype architecture limit, not a motion one; the native app should keep navigation state apart from data (noted in the native spec).
 - **Interruptible on 15:** toasts can't be swiped away in the PWA; specified for native.
+- **Toasts cover the primary action.** A toast with Undo or View stays 10 s above the tab bar, which on a profile is exactly where Follow and Message sit; taps there land on the toast. Found while recording. For native: keep toasts clear of a screen's main action (lift them above it, or shorten their time on screens with one).
 
 ## How it was measured
 
