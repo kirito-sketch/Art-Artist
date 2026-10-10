@@ -102,3 +102,9 @@ The small labels set in capitals with wide letter spacing above titles, such as 
 | Errors | `#D83A2E` red, kept apart from amber | |
 
 Why amber: cool slate shadows with warm amber highlights is the classic "teal and orange" film grade, so the palette itself says cinema. It sits far from the error red, reads as golden-hour light, and the blush-to-cream gradient comes from the client's warm palette.
+
+## Client liked: Airbnb Explore (for Discover)
+
+`ref-airbnb-explore-tabs.webp`, with the category tabs highlighted. What it is: a large white pill search bar; category tabs as raised pills, each with a small 3D icon (All, Homes, Experiences, Services), the selected one pressed in (inset, slightly darker); below, sections with a title, a grey subtitle and a round arrow button instead of "See all", each a rail of large rounded image cards with a small badge pill ("Original"), a save heart, a two-line title, place and one detail line.
+
+Proposed for Discover: the same structure. Search pill on top; raised 3D-icon tabs for All, Posts, People, Opportunities, Projects, Events, Reviews (adds **All**, a new curated overview, as the default instead of Posts); under All, titled rails per type with a subtitle and arrow ("Verified productions hiring · Roles from houses Ana has checked", "Crew in Hyderabad", "Releasing this month"); choosing a tab shows that type's full results as today. Cards follow the Airbnb card: rounded image, a badge pill ("Verified", "Open role", "Premiere"), save, two-line title, place, one detail.
