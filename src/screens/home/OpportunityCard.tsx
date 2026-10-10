@@ -28,7 +28,7 @@ export function SaveButton({ id, kind = 'role', floating, name }: { id: string; 
         toggleSave(id, kind);
       }}
     >
-      <motion.span key={String(on)} initial={{ scale: on ? 0.5 : 1 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 700, damping: 14 }} style={{ display: 'inline-flex' }}>
+      <motion.span key={String(on)} initial={{ scale: on ? 0.5 : 1 }} animate={{ scale: 1 }} transition={spring.mark} style={{ display: 'inline-flex' }}>
         <Bookmark size={18} strokeWidth={2.2} fill={on ? 'currentColor' : 'none'} aria-hidden />
       </motion.span>
     </motion.button>

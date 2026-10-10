@@ -1,5 +1,6 @@
 import { eventEndsAt } from './eventAttendance';
 import type { EventType, IndustryEvent } from '../data/types';
+import { formatDate } from './dateFormat';
 
 /*
  * Event rules (docs/EVENTS.md). Pure functions, unit-tested, shared by listing and creation.
@@ -131,29 +132,25 @@ export function validateDraft(
 
 /** "Sat 11 Oct · 6:30 pm" in Indian time. */
 export function whenLabel(ms: number): string {
-  const d = new Date(ms);
-  const day = d.toLocaleDateString('en-IN', {
+  const day = formatDate(ms, 'en-IN', {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
     timeZone: 'Asia/Kolkata',
   });
-  const time = d
-    .toLocaleTimeString('en-IN', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: 'Asia/Kolkata',
-    })
-    .replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
+  const time = formatDate(ms, 'en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Asia/Kolkata',
+  }).replace(/\s?(am|pm)/i, (x) => ` ${x.trim().toLowerCase()}`);
   return `${day} · ${time}`;
 }
 export function stubLabel(ms: number): { day: string; month: string } {
-  const d = new Date(ms);
   return {
-    day: d.toLocaleDateString('en-IN', {
+    day: formatDate(ms, 'en-IN', {
       day: 'numeric',
       timeZone: 'Asia/Kolkata',
     }),
-    month: d.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase(),
+    month: formatDate(ms, 'en-IN', { month: 'short', timeZone: 'Asia/Kolkata' }).toUpperCase(),
   };
 }

@@ -9,6 +9,7 @@ import { shared, spring } from '../ui/motion';
 import { focusables, inertProps } from '../ui/a11y';
 import { TabIcon } from './TabIcon';
 import { NAV_LENS } from '../ui/preview';
+import { haptic } from '../ui/haptics';
 
 const ITEMS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -68,6 +69,7 @@ export function TabBar() {
         whileTap={{ scale: 0.94 }}
         transition={spring.press}
         onClick={() => {
+          if (!active) haptic('select');
           if (active) document.querySelector(`[data-scroll="${it.id}"]`)?.scrollTo({ top: 0, behavior: 'smooth' });
           flushSync(() => setShown(it.id));
           startTransition(() => setTab(it.id));

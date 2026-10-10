@@ -6,6 +6,7 @@
  *   An average is shown only once a film has MIN_RATINGS ratings.
  *   Release weeks run Friday to Thursday, India time, because films release on Fridays.
  */
+import { formatDate } from './dateFormat';
 
 export interface Review {
   id: string;
@@ -55,7 +56,7 @@ export const opensLater = (w: Reviewable, now: number) => !!w.releaseDate && rel
 export const isOutThisWeek = (w: Reviewable, now: number) => reviewsOpen(w, now) && releaseAt(w.releaseDate!) >= releaseWeekStart(now);
 
 /** "Fri, 9 Oct" */
-export const releaseLabel = (iso: string) => new Date(releaseAt(iso)).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+export const releaseLabel = (iso: string) => formatDate(releaseAt(iso), 'en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
 
 export const validStars = (s: number) => s >= 0.5 && s <= 5 && Number.isInteger(s * 2);
 

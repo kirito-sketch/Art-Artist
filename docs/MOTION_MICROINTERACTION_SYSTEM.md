@@ -41,6 +41,7 @@ Principles taken from the 60fps.design references (morphing, shared elements, ta
 | `push` | 360 / 40 / 1 | Screen pushes and shared elements |
 | `settle` | 260 / 26 / 0.9 | Objects and marks settling (craft object, seal, identity slate) |
 | `gentle` | 220 / 28 | Slow reveals |
+| `mark` | 620 / 22 / 0.7 | A mark confirming itself (Save fill): one small overshoot, then still |
 
 Press scales: controls 0.86–0.96, cards 0.97–0.985, save 0.8. Only transform and opacity animate (plus one colour on the Create surface); layout animations use framer-motion's transform-based projection.
 
@@ -55,7 +56,7 @@ Press scales: controls 0.86–0.96, cards 0.97–0.985, save 0.8. Only transform
 | 5 | **Role → Detail** | 2 | The artwork anchors the role | Card artwork becomes the hero; the sheet rises 48 px after 60 ms. Only from Home cards (`from: 'card'`); other entries push as before | Fade |
 | 6 | **Project → Detail** | 2 | Project stays one object | Poster still becomes the project hero (Home "Projects to watch") | Fade |
 | 7 | **Follow** | 1 | Compact state morph | Label slides, check appears, fill turns tonal, width follows | Instant swap |
-| 8 | **Save** | 1 | Self-confirming control | Compress 0.8, bookmark fills green and springs 0.5 → 1; same on Posts, Roles and Projects; no toast (except a short "Saved to your account" while acting for a house) | Fill only |
+| 8 | **Save** | 1 | Self-confirming control | Compress 0.8, bookmark fills green and springs 0.5 → 1 (`mark`, one small overshoot; it used to wobble); `toggle` haptic; same on Posts, Roles and Projects; no toast (except a short "Saved to your account" while acting for a house) | Fill only |
 | 9 | **Show interest** | 2 | Completion shown by the control | "Sending…" with spinner; the bar becomes "Interest sent ✓" in place; the generic toast was removed. Withdraw → "No longer interested" (Undo stays in the toast) | Short fades |
 | 10 | **Identity switch** | 3 | You must know whose voice you use | Home fades up anew (0.985 → 1); profile-tab avatar morphs; a graphite slate rises above the tab bar naming who you act as, then leaves (1.6 s) | Fade, no travel |
 | 11 | **Craft object** | 2 | Tactility; works with raster assets | Whole asset: lift 5–8 px, tilt −3 to −5°, scale 1.02–1.04, shadow thins, on hover/press/focus (260 ms). No idle loop, no spin, no scroll parallax on scrolling pages | Pinned at rest |
@@ -66,14 +67,16 @@ Press scales: controls 0.86–0.96, cards 0.97–0.985, save 0.8. Only transform
 
 - **Header scroll:** primary headers are part of the page and scroll away; the bottom nav persists. Headers are sticky only where persistent controls are needed (Discover search and modes, the post stream's back bar).
 - **Search and filters:** mode underline slides; chips press to 0.95; results fade and rise 6 px.
-- **Sheets:** rise with the sheet spring and drag to dismiss. Create is connected to its control; simple confirmations stay plain.
+- **Sheets:** rise with the sheet spring and drag to dismiss, from the handle or from anywhere on the content once it is scrolled to the top; release past 110 px or a flick closes (`snap` haptic), otherwise it springs back. Create is connected to its control; simple confirmations stay plain.
+- **Back:** pushed screens that slide in from the right also go back with a swipe from the left edge (24 px). The screen follows the finger, can be abandoned midway, and completes past a third of the width or on a flick (`snap` haptic); the revealed screen gets a soft edge shadow (`RouteLayer` in `src/App.tsx`).
+- **Images:** fade in from the placeholder ground over 240 ms when they arrive; images already cached show at once (`Photo`, `materials.css`).
 - **Portrait card → Profile:** pushes from the right. No shared element, because the card's still is credited work, not the profile hero.
 - **Added to project (defined, not yet built):** the new row should fade and rise 8 px into "Projects you're on"; lighter than a credit, no mark.
 - **Loading:** skeletons with one slow shimmer; expressive loading only for rare moments; no loops on empty states.
 
 ## 6. Shared elements
 
-One owner per id at a time (`shared` in `motion.ts`). The destination claims the id only when it was opened from that source (`from: 'card'`, or the tapped post), so a hidden tab's copy of the same artwork can never fly in. Scroll containers that hold shared elements set `layoutScroll`. The route layer fades instead of sliding when the artwork is the thing that moves.
+One owner per id at a time (`shared` in `motion.ts`). A grid tile claims its post's id only when pressed or focused, and keeps it so Back returns into it; no other tile carries one. The destination claims the id only when it was opened from that source (`from: 'card'`, or the tapped post), so a hidden tab's copy of the same artwork can never fly in. Scroll containers that hold shared elements set `layoutScroll`. The route layer fades instead of sliding when the artwork is the thing that moves.
 
 ## 7. Accessibility and reduced motion
 
@@ -83,7 +86,32 @@ One owner per id at a time (`shared` in `motion.ts`). The destination claims the
 
 Transform and opacity only; no animated layout properties except through projection. No continuous effects on scrolling pages (the existing hero parallax is a single transform). Craft object motion is CSS on a single transparent raster or SVG, so a supplied WebP animates with no extra cost. Nothing loops while idle.
 
-## 9. Not done in this pass
+## 9. Haptics
+
+One map, `src/ui/haptics.ts`. On the web only Android vibrates; iOS Safari has no vibration API, so the PWA is silent there and the native app maps each name to the platform engine (`docs/premium/NATIVE_MOTION_SPEC.md`).
+
+| Name | Fires on |
+|---|---|
+| `toggle` | Save, Follow, Like |
+| `select` | Changing tab |
+| `snap` | A sheet dismissed by dragging; a screen swiped back |
+| `success` | Interest sent; any success toast (credit accepted) |
+| `error` | Any error toast (a failed action) |
+| `lift` | Long-press picking up a photo to reorder |
+
+Haptics confirm what the person did, never what the app did. They are not motion, so reduced motion leaves them on.
+
+## 10. Performance findings (October 2026)
+
+Measured on a production build with the CPU slowed 4× (`docs/premium/README.md`). Three things made taps drop frames, all fixed:
+
+- **Cards re-read themselves on every render.** `PressCard` walked its text and computed styles after every render of anything, forcing a style pass across the app on each tap. It now does so only when its text changes.
+- **Too many shared-element owners.** Every Discover tile and every Follow button was a framer-motion layout node, so each tap measured dozens of hidden elements. Tiles now claim their shared id on press; Follow animates its width only around its own toggle.
+- **The post stream laid out every post at once** to scroll to the tapped one. It now renders the tapped post and its neighbours first and the rest after the opening settles, without moving the page.
+
+Also: date labels reuse cached `Intl` formatters (`src/domain/dateFormat.ts`). What remains is architectural: one store context means every navigation re-renders the whole app. The native app should keep navigation state apart from data state.
+
+## 11. Not done in this pass
 
 - Layered, Rive or true 3D craft assets (reserved for specific future signature moments where they demonstrably add value).
 - A shared element for Portrait → Profile (no honest shared object today; see §5).

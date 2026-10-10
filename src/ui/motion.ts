@@ -22,6 +22,8 @@ export const spring = {
   /** Settling objects: craft objects, the record seal. Slightly soft, never bouncy. */
   settle: { type: 'spring', stiffness: 260, damping: 26, mass: 0.9 },
   gentle: { type: 'spring', stiffness: 220, damping: 28 },
+  /** A mark confirming itself (Save fill, Like heart): one small overshoot, then still. */
+  mark: { type: 'spring', stiffness: 620, damping: 22, mass: 0.7 },
 } as const;
 
 export const fadeUp = {

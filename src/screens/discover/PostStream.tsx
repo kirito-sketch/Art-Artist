@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as seed from '../../data/seed';
 import type { Post } from '../../data/types';
 import { useStore } from '../../state/store';
@@ -19,6 +19,12 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
   const { pop, userPosts } = useStore();
   const posts = ids.map((id) => userPosts.find((p) => p.id === id) ?? seed.posts.find((p) => p.id === id) ?? (POST_SAMPLES ? NOTCH_SAMPLES.find((p) => p.id === id) : undefined)).filter(Boolean) as Post[];
   const ref = useRef<HTMLDivElement>(null);
+  // The tapped post and its neighbours render first, so the opening frame lays out a handful of
+  // posts instead of the whole stream; the rest join once the open has settled.
+  const [full, setFull] = useState(posts.length <= 6);
+  const start = full ? 0 : Math.max(0, index - 1);
+  const shown = full ? posts : posts.slice(start, index + 4);
+  const first = useRef<{ id: string; top: number } | null>(null);
 
   // Open at the selected post, not at the top of the stream.
   useLayoutEffect(() => {
@@ -26,6 +32,25 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
     const bar = ref.current?.querySelector<HTMLElement>('.stream-bar');
     if (el && ref.current) ref.current.scrollTop = el.offsetTop - (bar?.offsetHeight ?? 0);
   }, [ids, index]);
+
+  useEffect(() => {
+    if (full) return;
+    const t = window.setTimeout(() => {
+      const el = ref.current?.querySelector<HTMLElement>(`[data-post="${posts[start]?.id}"]`);
+      first.current = el ? { id: posts[start].id, top: el.offsetTop } : null;
+      setFull(true);
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [full]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Posts added above push the page down by their height; scroll by the same amount so nothing moves.
+  useLayoutEffect(() => {
+    const was = first.current;
+    if (!full || !was || !ref.current) return;
+    first.current = null;
+    const el = ref.current.querySelector<HTMLElement>(`[data-post="${was.id}"]`);
+    if (el) ref.current.scrollTop += el.offsetTop - was.top;
+  }, [full]);
 
   return (
     <motion.div className="screen canvas post-stream" ref={ref} layoutScroll>
@@ -36,10 +61,10 @@ export function PostStream({ ids, index }: { ids: string[]; index: number }) {
         <span className="stream-bar-title">Posts</span>
         <span className="stream-bar-spacer" />
       </header>
-      {posts.map((p, i) => (
-        <PostCard key={p.id} post={p} anchor={i === index} />
+      {shown.map((p) => (
+        <PostCard key={p.id} post={p} anchor={p.id === ids[index]} />
       ))}
-      <p className="end">You've seen the latest posts</p>
+      {full && <p className="end">You've seen the latest posts</p>}
     </motion.div>
   );
 }

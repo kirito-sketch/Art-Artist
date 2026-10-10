@@ -1,9 +1,10 @@
 import { AnimatePresence, motion, useDragControls, type PanInfo } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { activation, currentScreen, focusInto, restoreFocus, trapTab, useModalLayer } from './a11y';
 import { spring } from './motion';
+import { haptic } from './haptics';
 
 interface SheetProps {
   open: boolean;
@@ -33,8 +34,47 @@ export function Sheet({ open, onClose, title, label, children, footer, size = 'a
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
   const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 110 || info.velocity.y > 650) onClose();
+    if (info.offset.y > 110 || info.velocity.y > 650) {
+      haptic('snap');
+      onClose();
+    }
   };
+
+  // Pulling down anywhere on the sheet closes it once its content is at the top, as on iOS; until then the
+  // same pull scrolls the content. The drag starts from where the finger went down, so the sheet stays under it.
+  const body = useRef<HTMLDivElement>(null);
+  const pull = useRef<{ down: PointerEvent; started: boolean } | null>(null);
+  const onBodyDown = (e: ReactPointerEvent) => {
+    if (e.button !== 0 || (e.target as Element).closest('input, textarea, select, [contenteditable], [data-no-sheet-drag]')) return;
+    pull.current = (body.current?.scrollTop ?? 0) <= 0 ? { down: e.nativeEvent, started: false } : null;
+  };
+  const onBodyMove = (e: ReactPointerEvent) => {
+    const g = pull.current;
+    if (!g || g.started) return;
+    const dy = e.clientY - g.down.clientY, dx = e.clientX - g.down.clientX;
+    if (dy < -4 || Math.abs(dx) > Math.abs(dy) + 4) pull.current = null; // a scroll up or a sideways swipe
+    else if (dy > 6 && (body.current?.scrollTop ?? 0) <= 0) {
+      g.started = true;
+      controls.start(g.down);
+    }
+  };
+  useEffect(() => {
+    const el = body.current;
+    if (!open || !el) return;
+    // Touch: once the pull has become a drag, the browser must not also scroll or bounce the content.
+    const stop = (e: TouchEvent) => {
+      if (pull.current?.started && e.cancelable) e.preventDefault();
+    };
+    const end = () => (pull.current = null);
+    el.addEventListener('touchmove', stop, { passive: false });
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      el.removeEventListener('touchmove', stop);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  });
 
   useEffect(() => {
     // A replaced District sheet can still be animating out below its successor.
@@ -101,7 +141,9 @@ export function Sheet({ open, onClose, title, label, children, footer, size = 'a
                 </button>
               )}
             </div>
-            <div className="sheet-body">{children}</div>
+            <div className="sheet-body" ref={body} onPointerDown={onBodyDown} onPointerMove={onBodyMove}>
+              {children}
+            </div>
             {footer && <div className="sheet-footer">{footer}</div>}
           </motion.div>
         </div>

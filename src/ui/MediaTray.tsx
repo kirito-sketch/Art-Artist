@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Media } from '../data/types';
 import { moveMedia, removeMedia } from '../domain/mediaSelection';
 import { Photo } from './primitives';
+import { haptic } from './haptics';
 
 /*
  * Selected media as a compact grid (docs/ux-refinement/PLAN.md, Stage 6): order numbers, remove, tap to preview,
@@ -66,7 +67,7 @@ export function MediaTray({ items, onChange, onOpen, add, showOrder = items.leng
                   if (gesture.current === g && !g.moved) {
                     g.armed = true;
                     setDragging(g.id);
-                    navigator.vibrate?.(8);
+                    haptic('lift');
                   }
                 }, PRESS_MS);
               gesture.current = g;

@@ -34,6 +34,7 @@ import { updateWorkPreferences, workPreferencesOf } from './workPreferences';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
 import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
+import { haptic } from '../ui/haptics';
 
 /* ------------------------------------------------------------ navigation */
 
@@ -272,6 +273,8 @@ function useStoreValue() {
   const showToast = useCallback((t: Omit<Toast, 'id'>) => {
     window.clearTimeout(toastTimer.current);
     setToast({ ...t, id: Date.now() });
+    if (t.tone === 'success') haptic('success');
+    else if (t.tone === 'error') haptic('error');
     // A toast with an action (Undo) stays long enough to reach by keyboard, and pauses while hovered
     // or focused (holdToast): WCAG 2.2.1. Information-only toasts are also in a live region.
     toastTimer.current = window.setTimeout(() => setToast(null), t.action ? 10000 : 3500);
@@ -334,6 +337,7 @@ function useStoreValue() {
   const toggleSave = useCallback(
     (id: string, kind: SavedKind = 'role') => {
       const on = !saved.some((x) => x.kind === kind && x.id === id);
+      haptic('toggle');
       setSaved((s) => (on ? [{ kind, id, at: Date.now() }, ...s] : s.filter((x) => !(x.kind === kind && x.id === id))));
       // The bookmark confirms itself. While acting for a house we say whose list it went to; the very
       // first save says once where Saved lives, with a way straight there.
@@ -352,6 +356,7 @@ function useStoreValue() {
   const toggleFollow = useCallback(
     (id: string) => {
       const on = !following.includes(id);
+      haptic('toggle');
       setFollowing((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
       // Following is personal even while acting for a house; say so only then.
       if (on && acting !== 'self') showToast({ text: 'Following from your personal account' });
@@ -363,6 +368,7 @@ function useStoreValue() {
     (id: string, note: string) => {
       setInterestsSent((s) => ({ ...s, [id]: note }));
       setSheet(null);
+      haptic('success');
       // No toast: the role's action bar itself turns into "Interest sent" (see the motion system).
     },
     [showToast],

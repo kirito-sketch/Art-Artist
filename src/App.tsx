@@ -1,5 +1,5 @@
 import { isPlayableVideo } from './domain/mediaPresentation';
-import { AnimatePresence, LayoutGroup, MotionConfig, motion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, MotionConfig, animate, motion, useDragControls, useMotionValue, type PanInfo } from 'framer-motion';
 import { ChevronLeft, X } from 'lucide-react';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Media } from './data/types';
@@ -9,6 +9,7 @@ import { PostComposer } from './screens/create/PostComposer';
 import { DiscoverScreen, type Scope } from './screens/discover/DiscoverScreen';
 import { DISCOVER_CHIP_DEFAULT, type DiscoverChip } from './domain/contentTypes';
 import { DIRECTION } from './ui/designDirection';
+import { haptic } from './ui/haptics';
 import { NAV_GLASS, POST_ACTIONS } from './ui/preview';
 import { HomeScreen } from './screens/home/HomeScreen';
 import { HomeNext } from './screens/home/HomeNext';
@@ -80,6 +81,86 @@ function transitionFor(r: Route) {
   if (r.name === 'media' || r.name === 'postVideo') return { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 } };
   if (r.name === 'opportunity') return { initial: { opacity: 0, scale: 0.94, y: 24 }, animate: { opacity: 1, scale: 1, y: 0 }, exit: { opacity: 0, x: 60 } };
   return { initial: { x: '100%' }, animate: { x: 0 }, exit: { x: '100%' } };
+}
+
+/**
+ * A pushed screen. Screens that slide in from the right also go back the way iOS does: a swipe from the left
+ * edge drags the screen with the finger, can be abandoned midway, and goes back past a third of the width or on
+ * a flick. Taps near the edge still reach what is there (the Back button); only a sideways pull becomes the swipe.
+ */
+const EDGE = 24;
+function RouteLayer({ r, z, isTop, inert, onBack }: { r: Route; z: number; isTop: boolean; inert: boolean; onBack: () => void }) {
+  const tr = transitionFor(r);
+  const swipeable = isTop && 'x' in tr.initial;
+  const controls = useDragControls();
+  const x = useMotionValue<number | string>(tr.initial && 'x' in tr.initial ? (tr.initial as { x: string }).x : 0);
+  const el = useRef<HTMLElement>(null);
+  const edge = useRef<{ down: PointerEvent; started: boolean } | null>(null);
+  const [swiping, setSwiping] = useState(false);
+
+  useEffect(() => {
+    const node = el.current;
+    if (!swipeable || !node) return;
+    const stop = (e: TouchEvent) => {
+      if (edge.current?.started && e.cancelable) e.preventDefault();
+    };
+    const end = () => (edge.current = null);
+    node.addEventListener('touchmove', stop, { passive: false });
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      node.removeEventListener('touchmove', stop);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [swipeable]);
+
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    setSwiping(false);
+    const width = el.current?.offsetWidth ?? 390;
+    if (info.offset.x > width / 3 || info.velocity.x > 500) {
+      haptic('snap');
+      onBack();
+    } else animate(x, 0, spring.push);
+  };
+
+  return (
+    <motion.section
+      ref={el}
+      className={`route-layer route-layer--${r.name}${swiping ? ' is-swiping' : ''}`}
+      style={{ zIndex: z, ...(swipeable || 'x' in tr.initial ? { x } : null) }}
+      initial={tr.initial}
+      animate={tr.animate}
+      exit={tr.exit}
+      transition={spring.push}
+      drag={swipeable ? 'x' : false}
+      dragControls={controls}
+      dragListener={false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={{ left: 0, right: 1 }}
+      dragMomentum={false}
+      onDragStart={() => setSwiping(true)}
+      onDragEnd={onDragEnd}
+      onPointerDownCapture={(e) => {
+        const left = el.current?.getBoundingClientRect().left ?? 0;
+        edge.current = swipeable && e.button === 0 && e.clientX - left < EDGE ? { down: e.nativeEvent, started: false } : null;
+      }}
+      onPointerMoveCapture={(e) => {
+        const g = edge.current;
+        if (!g || g.started) return;
+        const dx = e.clientX - g.down.clientX, dy = e.clientY - g.down.clientY;
+        if (Math.abs(dy) > Math.abs(dx) + 4 || dx < -4) edge.current = null;
+        else if (dx > 8) {
+          g.started = true;
+          controls.start(g.down);
+        }
+      }}
+      role={isTop ? 'main' : undefined}
+      {...inertProps(inert)}
+    >
+      <RouteView r={r} />
+    </motion.section>
+  );
 }
 
 function RouteView({ r }: { r: Route }) {
@@ -387,23 +468,8 @@ function Phone({ app = false }: { app?: boolean }) {
 
         <AnimatePresence>
           {stack.map((r, i) => {
-            const tr = transitionFor(r);
             const isTop = i === stack.length - 1;
-            return (
-              <motion.section
-                key={`${r.name}-${'id' in r ? r.id : ''}-${i}`}
-                className={`route-layer route-layer--${r.name}`}
-                style={{ zIndex: 20 + i }}
-                initial={tr.initial}
-                animate={tr.animate}
-                exit={tr.exit}
-                transition={spring.push}
-                role={isTop ? 'main' : undefined}
-                {...inertProps(!isTop || covered)}
-              >
-                <RouteView r={r} />
-              </motion.section>
-            );
+            return <RouteLayer key={`${r.name}-${'id' in r ? r.id : ''}-${i}`} r={r} z={20 + i} isTop={isTop} inert={!isTop || covered} onBack={store.pop} />;
           })}
         </AnimatePresence>
 

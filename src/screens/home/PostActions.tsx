@@ -7,6 +7,7 @@ import { party } from '../../state/selectors';
 import { spring } from '../../ui/motion';
 import { IconButton } from '../../ui/primitives';
 import { usePostLike } from '../../state/postLikes';
+import { haptic } from '../../ui/haptics';
 
 /**
  * One set of post actions for every placement, always Like, Share, Save, on one Like state (state/postLikes.ts).
@@ -41,7 +42,7 @@ export function PostActions({ post, variant = 'row' }: { post: Post; variant?: '
   };
   const size = quiet ? 22 : 20, stroke = quiet || variant === 'row' ? 1.85 : 2;
   return <div className={`ana-post-actions ana-post-actions--${variant}`}>
-    <motion.button whileTap={{ scale: quiet ? .9 : 1.06 }} transition={spring.press} onClick={toggleLike} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}${counted && likes > 0 ? `, ${likes} ${likes === 1 ? 'like' : 'likes'}` : ''}`}>
+    <motion.button whileTap={{ scale: quiet ? .9 : 1.06 }} transition={spring.press} onClick={() => { haptic('toggle'); toggleLike(); }} aria-pressed={liked} aria-label={`${liked ? 'Unlike' : 'Like'} post by ${author?.name ?? 'someone'}${counted && likes > 0 ? `, ${likes} ${likes === 1 ? 'like' : 'likes'}` : ''}`}>
       <motion.span className="ana-post-icon" animate={variant !== 'pill' && liked ? { scale: [1, 1.18, 1] } : { scale: 1 }} transition={{ duration: .28, ease: 'easeOut' }}>
         <Heart size={size} strokeWidth={stroke} fill={liked ? 'currentColor' : 'none'} />
       </motion.span>

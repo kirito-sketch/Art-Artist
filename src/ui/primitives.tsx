@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, type HTMLMotionProps } from 'framer-motion';
-import { forwardRef, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { BadgeCheck, Check, ChevronRight, ImageOff, Play } from 'lucide-react';
 import type { Media, MediaSurface, Party } from '../data/types';
 import { mediaPosition } from '../domain/mediaLayout';
@@ -58,14 +58,21 @@ export function PressCard({ scale = 0.98, className = '', onPress, children, 'ar
   const ref = useRef<HTMLDivElement>(null);
   const descId = useId();
   const [text, setText] = useState<{ name: string; desc: string }>({ name: '', desc: '' });
+  const seen = useRef('');
   useLayoutEffect(() => {
     const root = ref.current;
     if (!root) return;
-    const parts = cardText(root);
-    const name = label || parts[0] || '';
-    const rest = (label ? parts.filter((p) => !label.includes(p)) : parts.slice(1)).join(', ');
-    const desc = rest.length > 180 ? rest.slice(0, 177) + '…' : rest;
-    if (name !== text.name || desc !== text.desc) setText({ name, desc });
+    // Reading the card's words walks its text and computed styles, which forces a style pass. Every
+    // card re-renders on any store change, so it runs only when the card's text has changed.
+    const sig = `${label ?? ''}\u0000${root.textContent}`;
+    if (sig !== seen.current) {
+      seen.current = sig;
+      const parts = cardText(root);
+      const name = label || parts[0] || '';
+      const rest = (label ? parts.filter((p) => !label.includes(p)) : parts.slice(1)).join(', ');
+      const desc = rest.length > 180 ? rest.slice(0, 177) + '…' : rest;
+      if (name !== text.name || desc !== text.desc) setText({ name, desc });
+    }
     // The open button already says what the card says: hide text-only parts from screen readers.
     for (const child of Array.from(root.children) as HTMLElement[]) {
       if (child.classList.contains('pc-hit') || child.classList.contains('pc-desc')) continue;
@@ -123,11 +130,23 @@ export function Button({ variant = 'primary', size = 'm', icon, block, loading, 
  */
 /** Follow ↔ Following. `primary` makes Follow the dominant green action (another person's profile, V30); Following keeps a clear, quieter state. */
 export function FollowButton({ on, onToggle, size = 's', block, name, primary }: { on: boolean; onToggle: () => void; size?: 'm' | 's'; block?: boolean; name?: string; primary?: boolean }) {
+  // Width follows the label, but only around a toggle: an always-on layout node in every Follow
+  // button made any tap anywhere measure all of them.
+  const [moving, setMoving] = useState(false);
+  const release = useRef(0);
+  const arm = () => {
+    window.clearTimeout(release.current);
+    setMoving(true);
+    release.current = window.setTimeout(() => setMoving(false), 700);
+  };
+  useEffect(() => () => window.clearTimeout(release.current), []);
   return (
     <Button
       size={size}
       block={block}
-      layout={!block}
+      layout={!block && moving}
+      onPointerDown={arm}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && arm()}
       transition={spring.snappy}
       variant={on ? 'selected' : primary ? 'primary' : 'secondary'}
       aria-pressed={on}
@@ -170,9 +189,14 @@ export function Photo({ media, className = '', alt, showPlay = true, onImageLoad
   const policy = asset ? mediaPresentation(asset, surface, frameRatio) : undefined;
   const deliveredOriginal = surface !== 'original' && media?.kind !== 'video' && url === media?.src;
   return <div className={`photo ${className}`} data-media-surface={surface} data-media-fit={imageFit ?? policy?.fit}>
-    {url ? <img src={url} srcSet={deliveredOriginal && media?.variants?.length ? media.variants.map(v => `${v.src} ${v.width}w`).join(', ') : undefined} sizes={policy?.sizes} alt={alt ?? media?.alt ?? ''} loading={priority ? 'eager' : 'lazy'} decoding="async" fetchPriority={priority ? 'high' : 'auto'} draggable={false} style={{ objectFit: imageFit ?? policy?.fit, objectPosition: focal ? mediaPosition(asset ?? undefined, focal) : policy?.position }} onLoad={e => onImageLoad?.(e.currentTarget)} onError={() => setFailure({ source: media?.src ?? '', stage: stage === 0 && media?.fallback ? 1 : 2 })} /> : <span className="photo-missing" aria-label="Image unavailable"><ImageOff size={18} strokeWidth={1.6} /></span>}
+    {url ? <img key={url} ref={arrived} data-loading="" src={url} srcSet={deliveredOriginal && media?.variants?.length ? media.variants.map(v => `${v.src} ${v.width}w`).join(', ') : undefined} sizes={policy?.sizes} alt={alt ?? media?.alt ?? ''} loading={priority ? 'eager' : 'lazy'} decoding="async" fetchPriority={priority ? 'high' : 'auto'} draggable={false} style={{ objectFit: imageFit ?? policy?.fit, objectPosition: focal ? mediaPosition(asset ?? undefined, focal) : policy?.position }} onLoad={e => { e.currentTarget.removeAttribute('data-loading'); onImageLoad?.(e.currentTarget); }} onError={() => setFailure({ source: media?.src ?? '', stage: stage === 0 && media?.fallback ? 1 : 2 })} /> : <span className="photo-missing" aria-label="Image unavailable"><ImageOff size={18} strokeWidth={1.6} /></span>}
     {media?.kind === 'video' && showPlay && <span className="photo-play"><Play size={12} fill="currentColor" strokeWidth={0} />{media.duration}</span>}
   </div>;
+}
+
+/** An image already in the cache shows at once; only one that is still arriving fades in (materials.css). */
+function arrived(img: HTMLImageElement | null) {
+  if (img?.complete && img.naturalWidth) img.removeAttribute('data-loading');
 }
 
 /* ---------------------------------------------------------------- Avatar */

@@ -8,6 +8,7 @@ import { creditedOn } from '../../domain/home/graph';
 import { org, party, person } from '../../state/selectors';
 import { reviewsOf, work } from '../../state/world';
 import type { SavedKind } from '../../state/store';
+import { formatDate } from '../../domain/dateFormat';
 
 /*
  * District Home's Spotlight, from real data to cards (docs/DISTRICT_FIXES.md). The rules live in
@@ -33,7 +34,7 @@ export interface SpotSources {
 const houseOf = (w: Work) => (w.orgIds[0] ? org(w.orgIds[0]) : undefined);
 const cityOf = (w: Work) => houseOf(w)?.city ?? (w.ownerId ? person(w.ownerId).city : '');
 const langOf = (w: Work) => w.format.split(' · ')[1];
-const day = (ms: number) => new Date(ms).toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' });
+const day = (ms: number) => formatDate(ms, 'en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' });
 
 export function spotItems(s: SpotSources): SpotItem[] {
   const out: SpotItem[] = [];
@@ -118,7 +119,7 @@ export interface WeekCard {
 }
 
 const STAGE_CHIP: Record<string, string> = { Shooting: 'Now shooting', Released: 'Just released', 'Post-production': 'In post', 'Pre-production': 'In pre-production', Development: 'In development' };
-const shortDate = (ms: number) => new Date(ms).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+const shortDate = (ms: number) => formatDate(ms, 'en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
 
 export function weekCard(it: Spotlit, d: { roles: Opportunity[]; events: IndustryEvent[]; me: Person; network: string[]; following: string[]; quote: (id: string) => { text: string; by: string } | undefined }): WeekCard | undefined {
   const known = (id?: string) => !!id && (d.network.includes(id) || d.following.includes(id));
