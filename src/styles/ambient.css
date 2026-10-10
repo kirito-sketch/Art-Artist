@@ -98,7 +98,7 @@
 /* ============================================================ Dark */
 html[data-theme='dark'] .phone[data-look='minimal'] .ambient--b {
   --b-key: rgba(255, 204, 156, 0.18);
-  --b-bounce: rgba(240, 178, 74, 0.22);
+  --b-bounce: rgba(37, 55, 69, 0.18);
   --b-grain: 0.045;
   --b-vignette: rgba(0, 0, 0, 0.6);
 }

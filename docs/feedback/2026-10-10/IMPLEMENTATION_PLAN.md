@@ -6,10 +6,10 @@ Built top-down: each layer only uses what the layers above it produced, and noth
 
 | Decision | Choice |
 |---|---|
-| Ground and cards | `#F2F2F4` ground, `#F8F8F9` cards with hairline and soft shadow; gradient sections to `#DEDDE0` |
+| Ground and cards | `#F3F3F5` for both ground and cards (Arun, round 5: the difference was still too visible); a hairline and a very soft shadow mark the card; gradient sections to `#DEDDE0` |
 | Text | `#06141B` ink, `#4A5C6A` secondary |
-| Accent | `#9A5800` amber for text and icons, `#F0B24A` amber fill with ink text |
-| Buttons | Primary solid ink; signature gradient `#F4DBD8` → `#F6E7CF` (Continue, Show interest, Accept credit, Publish only); secondary light grey fill; tertiary text |
+| Accent | **Slate** `#253745` for fills, text and icons; amber dropped (Arun: "I don't like the yellow"); dark mode uses light slate `#E8ECEC` / `#CDD2D4`. Colour in the app comes from imagery, the pastel tiles and the signature gradient; a single chromatic accent can be reconsidered at Checkpoint B |
+| Buttons | Primary solid ink; signature gradient lavender `#E3DEF5` → blush `#F6DCD9` (Continue, Show interest, Accept credit, Publish only); secondary light grey fill; tertiary text |
 | Dark mode | `#06141B` / `#11212D` / `#253745` grounds, same amber |
 | Errors | `#D83A2E` |
 | Interface font | Plus Jakarta Sans (free; friendly, geometric, close to District and Airbnb) |

@@ -7,8 +7,8 @@
 
 :root {
   /* Surfaces: Level 0 base is warm paper; Level 1 content sits on it unboxed; Level 2 is raised white. */
-  --base: #f2f2f4; /* the ground: a cool light grey, like Atlys */
-  --raised: #f8f8f9; /* cards: one step lighter, defined by a hairline, not by a different colour */
+  --base: #f3f3f5; /* the ground: a cool light grey, like Atlys */
+  --raised: #f3f3f5; /* cards: the same colour as the ground; a hairline and a soft shadow mark the edge */
   --tint: #ebebef; /* quiet section */
   --sand: #e4e4e9; /* the one expressive field per screen, never a page ground */
   --dark: #06141b; /* rare cinematic surface: title cards, media */
@@ -1550,7 +1550,7 @@
   position: absolute;
   inset: 0;
   background: var(--accent);
-  box-shadow: 0 6px 16px rgba(240, 178, 74, 0.38);
+  box-shadow: 0 6px 16px rgba(6, 20, 27, 0.28);
 }
 
 .tab-create-icon {

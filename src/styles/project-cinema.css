@@ -5,7 +5,7 @@
   --base: #030c11; --bg: #06141b; --surface: #0b1b24; --raised: #11212d; --fill: #1a2e3b; --fill-strong: #253745; --surface-2: #1f3240;
   --line: rgba(204, 208, 207, 0.12); --hairline: rgba(204, 208, 207, 0.1);
   --text: #e8ecec; --text-2: #9ba8ab; --text-3: #7e8c91;
-  --action: #3a5266; --action-pressed: #2c4152; --action-ink: #f0b24a; --accent-ink: #f0b24a; --focus-color: #f0b24a;
+  --action: #3a5266; --action-pressed: #2c4152; --action-ink: #cdd2d4; --accent-ink: #cdd2d4; --focus-color: #cdd2d4;
   --verified: #7fa6ff; --warm: #f2b46b;
   color-scheme: dark;
   color: var(--text);

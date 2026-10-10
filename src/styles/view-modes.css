@@ -11,7 +11,7 @@ html.view-app,
 html.view-app body,
 html.view-app #root {
   min-height: 100%;
-  background: #f2f2f4;
+  background: #f3f3f5;
 }
 
 html.view-app body {
@@ -24,7 +24,7 @@ html.view-app body {
   min-height: 100dvh;
   display: flex;
   justify-content: center;
-  background: #f2f2f4;
+  background: #f3f3f5;
 }
 
 .phone.phone--app {

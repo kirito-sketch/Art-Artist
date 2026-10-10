@@ -7,7 +7,7 @@
   color-scheme: light;
 
   /* Grounds */
-  --bg: #f2f2f4;
+  --bg: #f3f3f5;
   --grouped: #eaeaee;
   --fill: #eaeaee;
   --fill-strong: #dedde0;
@@ -24,34 +24,34 @@
   --action: #06141b; /* ink: the fill of checked states and pills; white text sits on it */
   --action-pressed: #000000;
   --action-hover: #11212d;
-  --action-tint: rgba(240, 178, 74, 0.2); /* selected surfaces: Following, filters, saved */
-  --action-tint-strong: rgba(240, 178, 74, 0.34);
+  --action-tint: rgba(37, 55, 69, 0.1); /* selected surfaces: Following, filters, saved */
+  --action-tint-strong: rgba(37, 55, 69, 0.18);
   --action-disabled: rgba(6, 20, 27, 0.32);
   --on-action: #ffffff;
   --focus-ring: rgba(6, 20, 27, 0.6);
   /* Ink: the action colour when it is text or an icon (fills keep --action). Same green in light; lifted in
      dark so links and selected states stay readable (src/styles/theme-dark.css). */
-  --action-ink: #8f5300; /* amber as text and icons: 5.5:1 on the ground */
+  --action-ink: #253745; /* slate as text and icons: 11:1 on the ground */
 
   /* State. Accent is the Art and Artist action colour used as a mark (dots, rules, active tab). Red is not a
      brand colour: it is --danger, for destructive actions and genuine errors only. */
-  --accent: #f0b24a; /* amber fill: strips, badges, the + button; ink text sits on it */
-  --on-accent: #06141b;
+  --accent: #253745; /* slate fill: strips, badges, the + button; white text sits on it */
+  --on-accent: #ffffff;
   --accent-soft: var(--action-tint);
   --verified: #1f5af6;
   --available: #1e9e5a;
   --danger: #d83a2e;
-  --accent-ink: #8f5300;
+  --accent-ink: #253745;
   --danger-ink: var(--danger);
   --surface-2: #e6e6ea; /* quiet placeholder ground (initials, empty posters) */
   --primary: #06141b;
   --on-primary: #ffffff;
 
   /* Surfaces the looks restyle */
-  --surface: #f8f8f9;             /* sheets, footers, page cards */
-  --float-bg: rgba(248, 248, 249, 0.95); /* controls floating on photos */
+  --surface: #f3f3f5;             /* sheets, footers, page cards */
+  --float-bg: rgba(243, 243, 245, 0.95); /* controls floating on photos */
   --float-fg: #06141b;
-  --bar-bg: rgba(248, 248, 249, 0.82);    /* tab bar, solid headers */
+  --bar-bg: rgba(243, 243, 245, 0.82);    /* tab bar, solid headers */
   --display: var(--font);         /* display face for big titles */
   --title-case: none;
 

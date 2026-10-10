@@ -99,7 +99,7 @@ export function installAppHead() {
   add('meta', { name: 'apple-mobile-web-app-title', content: 'Art and Artist' });
   // "default": a light system status bar above the app, so the clock stays legible on the paper ground.
   add('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'default' });
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f2f2f4');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f3f3f5');
 }
 
 /** The two-option switch, as used inside the prototype console. */

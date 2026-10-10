@@ -44,21 +44,21 @@ html[data-theme='dark'] .phone[data-look='minimal'] {
   --primary: #e8ecec;
   --on-primary: #06141b;
 
-  /* Action: a slate fill with white text for checked states and pills; amber for marks and text (8.7:1 on the surface) */
+  /* Action: a slate fill with white text for checked states and pills; light slate for marks and text (10:1 on the surface) */
   --action: #3a5266;
   --action-pressed: #2c4152;
   --action-hover: #33495c;
   --on-action: #ffffff;
-  --action-ink: #f0b24a;
-  --accent: #f0b24a;
-  --accent-ink: #f0b24a;
+  --action-ink: #cdd2d4;
+  --accent: #e8ecec;
+  --accent-ink: #cdd2d4;
   --on-accent: #06141b;
-  --action-tint: rgba(240, 178, 74, 0.16);
-  --action-tint-strong: rgba(240, 178, 74, 0.26);
-  --accent-soft: rgba(240, 178, 74, 0.16);
-  --action-disabled: rgba(240, 178, 74, 0.3);
-  --focus-ring: rgba(240, 178, 74, 0.7);
-  --focus-color: #f0b24a;
+  --action-tint: rgba(204, 208, 207, 0.14);
+  --action-tint-strong: rgba(204, 208, 207, 0.24);
+  --accent-soft: rgba(204, 208, 207, 0.14);
+  --action-disabled: rgba(204, 208, 207, 0.3);
+  --focus-ring: rgba(204, 208, 207, 0.75);
+  --focus-color: #cdd2d4;
 
   /* State */
   --verified: #7fa6ff;

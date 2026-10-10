@@ -9,7 +9,7 @@
 export const APPEARANCE_KEY = 'aa-appearance';
 
 /** The page's own <meta name="theme-color"> per theme (iOS/Android browser chrome). */
-export const THEME_COLOR = { light: '#f2f2f4', dark: '#06141b' } as const;
+export const THEME_COLOR = { light: '#f3f3f5', dark: '#06141b' } as const;
 
 /** Is this page the normal app (the only surface that follows the appearance setting)? */
 export function isThemedSurface(): boolean {
