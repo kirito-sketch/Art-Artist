@@ -5,6 +5,7 @@ import { findOpportunity, person } from '../../state/selectors';
 import { publicProjects } from '../../domain/discovery';
 import { stagger } from '../../ui/motion';
 import { Avatar, PressCard, Photo } from '../../ui/primitives';
+import { CollectionCard, CollectionRail, type CollectionRow } from '../../ui/CollectionCard';
 
 /** One sentence per event. Credits are always production-issued on Art and Artist, so they need no extra label. */
 function sentence(e: NetworkEvent, role?: string, city?: string) {
@@ -64,5 +65,42 @@ export function NetworkRow({ e, index = 0, quiet = false }: { e: NetworkEvent; i
         {thumb && !quiet && <Photo surface="search-thumbnail" media={thumb} className="nrow-thumb" showPlay={false} />}
       </PressCard>
     </motion.div>
+  );
+}
+
+/**
+ * "From your network" as collection cards: what people you know have done, grouped by theme, four to a card.
+ * A new project or portfolio piece leads with its picture; people and availability lead with a face.
+ */
+export function NetworkCollections({ events, onOpenAll }: { events: NetworkEvent[]; onOpenAll: () => void }) {
+  const { push, userCollabs } = useStore();
+  const toRow = (e: NetworkEvent): CollectionRow => {
+    const first = person(e.actorIds[0]);
+    const o = e.opportunityId ? findOpportunity(e.opportunityId, userCollabs) : undefined;
+    const thumb = e.media?.[0];
+    const project = e.kind === 'project' && e.title ? publicProjects().find((w) => w.title.toLowerCase() === e.title!.toLowerCase()) : undefined;
+    const open = () => {
+      if (o) push({ name: 'opportunity', id: o.id });
+      else if (project) push({ name: 'work', id: project.id });
+      else if (thumb && e.kind !== 'credit') push({ name: 'media', items: e.media!, index: 0 });
+      else push({ name: 'profile', id: first.id });
+    };
+    return {
+      key: e.id,
+      lead: thumb && e.kind !== 'credit' ? <Photo surface="search-thumbnail" media={thumb} showPlay={false} /> : <Avatar party={first} size={48} />,
+      round: !(thumb && e.kind !== 'credit'),
+      title: sentence(e, o?.role, o?.city),
+      meta: e.time,
+      tag: e.kind === 'available' ? 'Open to work' : e.kind === 'collab' ? 'Looking for crew' : undefined,
+      onPress: open,
+    };
+  };
+  const work = events.filter((e) => e.kind === 'credit' || e.kind === 'project' || e.kind === 'portfolio' || e.kind === 'reel').slice(0, 4);
+  const crew = events.filter((e) => e.kind === 'collab' || e.kind === 'available').slice(0, 4);
+  return (
+    <CollectionRail label="From your network">
+      {work.length > 0 && <CollectionCard title="New credits and work" subtitle="Added by people you know" onOpen={onOpenAll} openLabel="See all from your network" rows={work.map(toRow)} />}
+      {crew.length > 0 && <CollectionCard title="Hiring and availability" subtitle="Who needs crew, who is free" onOpen={onOpenAll} openLabel="See all from your network" rows={crew.map(toRow)} />}
+    </CollectionRail>
   );
 }

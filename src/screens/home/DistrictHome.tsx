@@ -27,7 +27,8 @@ import { eventArt } from '../../state/eventArt';
 import { FirstStep } from './FirstHome';
 import { spotCard, spotlightFor, thisWeekFor, weekCard, type SpotCard, type WeekCard } from './districtFeed';
 import { WeekSpotlight } from './WeekSpotlight';
-import { NetworkRow } from './NetworkActivity';
+import { NetworkCollections } from './NetworkActivity';
+import { PersonCard } from '../../ui/PersonCard';
 import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
 import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
 import { Sheet } from '../../ui/Sheet';
@@ -170,13 +171,13 @@ export function DistrictHome({ go }: { go: Go }) {
   // Direction A), From your network, Film talk and a compact People near you.
   if (HOME_PREVIEW) {
     const chips = [tiles.find((t) => t.key === 'roles'), tiles.find((t) => t.key === 'people'), tiles.find((t) => t.key === 'projects'), tiles.find((t) => t.key === 'events'), tiles.find((t) => t.key === 'reviews')].filter(Boolean) as typeof tiles;
-    const net = networkFor(viewer, scenario).slice(0, 4);
+    const net = networkFor(viewer, scenario).slice(0, 10);
     const reviewable = [...thisWeekReleases].find((w) => mayReview(w.id) && !reviewsOf(w.id).some((r) => r.personId === viewer.id));
     const peopleRail = near.length >= 2 && (
       <section className="dh-sec" aria-label="People near you">
         <SectionHeader title="People near you" action={near.length > 6 ? 'See all' : undefined} onAction={() => go.discover('people')} className="dh-pad" />
-        <div className="dh-rail dh-prail">
-          {near.slice(0, 8).map((p) => <NearCard key={p.id} p={p} compact />)}
+        <div className="pcards" role="group" aria-label="People near you">
+          {near.slice(0, 8).map((p) => <PersonCard key={p.id} p={p} />)}
         </div>
       </section>
     );
@@ -231,11 +232,9 @@ export function DistrictHome({ go }: { go: Go }) {
         </div>
 
         {net.length > 0 ? (
-          <section className="dh-sec dh-pad" aria-label="From your network">
-            <SectionHeader title="From your network" action="See all" onAction={() => push({ name: 'network' })} />
-            <div className="dh-net">
-              {net.map((e, i) => <NetworkRow key={e.id} e={e} index={i} />)}
-            </div>
+          <section className="dh-sec" aria-label="From your network">
+            <SectionHeader title="From your network" className="dh-pad" action="See all" onAction={() => push({ name: 'network' })} />
+            <NetworkCollections events={net} onOpenAll={() => push({ name: 'network' })} />
           </section>
         ) : peopleRail}
 
