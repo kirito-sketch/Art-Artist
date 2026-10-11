@@ -104,3 +104,21 @@ html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--0 { background: lin
 html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--1 { background: linear-gradient(180deg, #11212d 0%, #25253f 100%); }
 html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--2 { background: linear-gradient(180deg, #11212d 0%, #1a3234 100%); }
 html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--3 { background: linear-gradient(180deg, #11212d 0%, #33252b 100%); }
+
+/* ------------------------------------------------------------ Coming soon: dark cards, the centred one plays its trailer */
+.csoon { display: flex; gap: 12px; overflow-x: auto; padding: 2px var(--gutter) 6px; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; }
+.csoon::-webkit-scrollbar { display: none; }
+.csoon-card { position: relative; flex: 0 0 min(76%, 300px); aspect-ratio: 3 / 4.1; scroll-snap-align: center; border-radius: 22px; overflow: hidden; background: #06141b; color: #fff; box-shadow: 0 14px 28px -16px rgba(var(--ink-shadow), .5); transform: scale(.94); transition: transform .3s cubic-bezier(.22, 1, .36, 1); isolation: isolate; }
+.csoon-card.is-centred { transform: none; }
+@media (prefers-reduced-motion: reduce) { .csoon-card { transition: none; transform: none; } }
+.csoon-main { position: absolute; inset: 0; display: block; border-radius: inherit; color: inherit; text-align: left; }
+.csoon-media { position: absolute; inset: 0; z-index: -1; }
+.csoon-media .photo, .csoon-media > :first-child { width: 100%; height: 100%; }
+.csoon-media img, .csoon-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.csoon-media video { position: absolute; inset: 0; opacity: 0; transition: opacity .4s; }
+.csoon-media video.is-ready { opacity: 1; }
+.csoon-main::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,20,27,0) 45%, rgba(6,20,27,.9) 100%); pointer-events: none; }
+.csoon-text { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; display: grid; gap: 2px; }
+.csoon-text b { font-size: 20px; font-weight: 600; line-height: 1.2; }
+.csoon-text i { font-style: normal; font-size: 13px; color: rgba(255,255,255,.82); }
+.csoon-sound { position: absolute; top: 12px; right: 12px; z-index: 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,.22); background: rgba(18,18,20,.45); color: #fff; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); cursor: pointer; }

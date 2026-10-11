@@ -13,7 +13,7 @@ import type { DiscoverChip } from '../../domain/contentTypes';
 import { discoverPosts, networkFor, org, party, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { visibleEvents } from '../../state/events';
-import { reviewsOf, work, world } from '../../state/world';
+import { publicWorks, reviewsOf, work, world } from '../../state/world';
 import { typeLabel, whenLabel } from '../../domain/events';
 import { eventsTitle, rankHomeEvents } from '../../domain/eventRank';
 import { markOpened, markShown, readSeen } from '../../state/eventSeen';
@@ -30,6 +30,7 @@ import { WeekSpotlight } from './WeekSpotlight';
 import { NetworkCollections } from './NetworkActivity';
 import { PersonCard } from '../../ui/PersonCard';
 import { FilmTalk } from './FilmTalk';
+import { ComingSoon } from './ComingSoon';
 import { ExploreCrafts } from './ExploreCrafts';
 import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
 import { useSpotlightCarousel } from '../../ui/useSpotlightCarousel';
@@ -178,6 +179,7 @@ export function DistrictHome({ go }: { go: Go }) {
   if (HOME_PREVIEW) {
     const chips = [tiles.find((t) => t.key === 'roles'), tiles.find((t) => t.key === 'people'), tiles.find((t) => t.key === 'projects'), tiles.find((t) => t.key === 'events'), tiles.find((t) => t.key === 'reviews')].filter(Boolean) as typeof tiles;
     const net = networkFor(viewer, scenario).slice(0, 10);
+    const comingSoon = publicWorks().filter((w) => w.stage !== 'Released').slice(0, 5);
     const filmTalk = [...friday, ...thisWeekReleases.filter((w) => !friday.some((f) => f.id === w.id) && mayReview(w.id) && !reviewsOf(w.id).some((r) => r.personId === viewer.id))].slice(0, 5);
     const peopleRail = near.length >= 2 && (
       <section className="dh-sec" aria-label="People near you">
@@ -248,6 +250,13 @@ export function DistrictHome({ go }: { go: Go }) {
             <NetworkCollections events={net} posts={posts} onOpenAll={() => push({ name: 'network' })} onOpenPosts={() => go.discover('posts')} />
           </section>
         ) : peopleRail}
+
+        {comingSoon.length > 0 && (
+          <section className="dh-sec" aria-label="Coming soon">
+            <SectionHeader title="Coming soon" className="dh-pad" />
+            <ComingSoon films={comingSoon} />
+          </section>
+        )}
 
         {upcoming.length > 0 && (
           <section className="dh-sec" aria-label={eventsTitle(upcoming, me.city)}>
