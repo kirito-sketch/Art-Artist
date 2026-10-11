@@ -4,7 +4,6 @@ import type { Work } from '../../data/works';
 import { useStore } from '../../state/store';
 import { creditedOn } from '../../state/world';
 import { Photo, PressCard } from '../../ui/primitives';
-import { useTabTint } from '../../ui/tabTint';
 
 /**
  * Coming soon: dark cards for films not released yet. The card nearest the middle of the rail plays its trailer,
@@ -68,8 +67,6 @@ function Card({ w, centred }: { w: Work; centred: boolean }) {
 export function ComingSoon({ films }: { films: Work[] }) {
   const rail = useRef<HTMLDivElement>(null);
   const [centre, setCentre] = useState(0);
-  const [onScreen, setOnScreen] = useState(false);
-  useTabTint(films[centre]?.media.src, onScreen);
   useEffect(() => {
     const el = rail.current;
     if (!el) return;
@@ -85,9 +82,7 @@ export function ComingSoon({ films }: { films: Work[] }) {
     };
     update();
     el.addEventListener('scroll', update, { passive: true });
-    const io = new IntersectionObserver(([e]) => setOnScreen(e.intersectionRatio > 0.5), { threshold: [0, 0.5, 1] });
-    io.observe(el);
-    return () => { el.removeEventListener('scroll', update); io.disconnect(); };
+    return () => el.removeEventListener('scroll', update);
   }, [films.length]);
   return (
     <div className="csoon" ref={rail} role="group" aria-label="Coming soon">
