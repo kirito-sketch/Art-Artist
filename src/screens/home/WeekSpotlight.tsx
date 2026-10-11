@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useTabTint } from '../../ui/tabTint';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from '../../state/store';
 import { Photo } from '../../ui/primitives';
@@ -39,6 +40,15 @@ export function WeekSpotlight({ cards, active }: { cards: WeekCard[]; active: bo
   const low = useLowPower();
   const auto = loop && !reduce && !low && !stopped;
   const running = auto && active && onScreen && pageVisible && !touching && !focused;
+  // The tab bar takes the colour of the picture actually showing on the centred card.
+  const [tintSrc, setTintSrc] = useState<string>();
+  useEffect(() => {
+    const read = () => setTintSrc(track.current?.querySelectorAll<HTMLElement>(':scope > .wk-card')[index]?.querySelector('img')?.currentSrc || undefined);
+    read();
+    const t = window.setTimeout(read, 600); // pictures load lazily: read again once they have started
+    return () => window.clearTimeout(t);
+  }, [index, cards, onScreen]);
+  useTabTint(tintSrc, active && onScreen);
   const idle = useRef<number>();
   const downAt = useRef(0);
 
