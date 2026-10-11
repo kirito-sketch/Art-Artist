@@ -130,9 +130,8 @@ html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--3 { background: lin
 
 /* Out this Friday: full-bleed film cards (the Coming soon shape), a rail on Home and a stack on Discover. */
 .fri-card { transform: none; }
-.fri-list { display: grid; gap: 14px; }
-.fri-list .fri-card { aspect-ratio: 4 / 4.9; }
-.dh-pad > .fri-card { aspect-ratio: 4 / 4.9; }
+.fri-list { margin: 0 calc(-1 * var(--gutter)); }
+.dh-pad > .fri-card { aspect-ratio: 3 / 4.1; }
 .fri-card .csoon-main::after { background: linear-gradient(180deg, rgba(6,20,27,0) 30%, rgba(6,20,27,.92) 100%); }
 .fri-text { gap: 3px; }
 .fri-card .fri-score, .fri-card .fri-score * { color: #fff !important; }

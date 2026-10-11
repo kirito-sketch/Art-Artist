@@ -19,7 +19,19 @@
 /* Launch splash (installed app): the whole viewport, above everything. The index.html copy (#aa-boot)
    is shown only when its boot script marks a Home Screen launch. */
 .launch-splash { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: #fff; transition: opacity 300ms ease-out; will-change: opacity; }
-.launch-splash.is-leaving { opacity: 0; pointer-events: none; }
+/* Leaving: the mark swells and a round opening grows from its centre until the app fills the screen (an iris, on a
+   long ease-in-out). Browsers that cannot animate the radius (@property) simply fade at the end of the same time. */
+@property --splash-r { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.launch-splash.is-leaving {
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--splash-r), #000 calc(var(--splash-r) + 36px));
+  mask-image: radial-gradient(circle at 50% 50%, transparent var(--splash-r), #000 calc(var(--splash-r) + 36px));
+  animation: splash-iris 760ms cubic-bezier(.65, 0, .2, 1) forwards;
+}
+.launch-splash.is-leaving .splash-mark { animation: splash-swell 520ms cubic-bezier(.5, 0, .2, 1) forwards; }
+@keyframes splash-iris { 0% { --splash-r: 0px; opacity: 1; } 82% { opacity: 1; } 100% { --splash-r: 95vmax; opacity: 0; } }
+@keyframes splash-swell { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(2.6); } }
+@keyframes splash-out { to { opacity: 0; } }
 /* The app under the launch splash: laid out and loading, but not painted until the mark has finished. */
 .app-shell--covered { visibility: hidden; }
 #aa-boot { display: none; }
@@ -48,6 +60,8 @@ html.aa-launch #aa-boot { display: flex; }
 @keyframes splash-reduced { 0% { opacity: 0; } 33% { opacity: 1; } 100% { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
+  .launch-splash.is-leaving { -webkit-mask-image: none; mask-image: none; animation: splash-out 200ms linear forwards; }
+  .launch-splash.is-leaving .splash-mark { animation: none; }
   .splash-mark { animation: splash-reduced 600ms linear both; transform: none; }
   .splash-mark-draw, .splash-mark-lead, .splash-mark-fill, .splash-mark-brush, .splash-mark-drop { animation: none; }
   .splash-mark-fill { opacity: 1; }

@@ -20,8 +20,8 @@ import { SplashMark } from './SplashMark';
 
 /** Longest the splash waits for the screen underneath after it starts (slow network: reveal anyway). */
 const READY_CAP_MS = 4000;
-/** Safety net if transitionend never arrives (a hidden page, Reduce Motion): longer than the 300ms fade. */
-const FADE_SAFETY_MS = 700;
+/** Safety net if animationend never arrives (a hidden page, Reduce Motion): longer than the 760ms iris. */
+const FADE_SAFETY_MS = 1100;
 
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
@@ -70,14 +70,14 @@ function revealApp(el: HTMLElement, markDone: Promise<void>, onReveal: () => voi
     window.clearTimeout(safety);
     onGone();
   };
-  const onEnd = (e: TransitionEvent) => e.target === el && e.propertyName === 'opacity' && gone();
+  const onEnd = (e: AnimationEvent) => e.target === el && e.animationName.startsWith('splash-') && gone();
   Promise.all([markDone, ready]).then(async () => {
     if (over) return;
     onReveal();
     await frame();
     await frame();
     if (over) return;
-    el.addEventListener('transitionend', onEnd);
+    el.addEventListener('animationend', onEnd);
     el.setAttribute('aria-hidden', 'true');
     el.classList.add('is-leaving');
     safety = window.setTimeout(gone, FADE_SAFETY_MS);
@@ -85,7 +85,7 @@ function revealApp(el: HTMLElement, markDone: Promise<void>, onReveal: () => voi
   return () => {
     over = true;
     window.clearTimeout(safety);
-    el.removeEventListener('transitionend', onEnd);
+    el.removeEventListener('animationend', onEnd);
   };
 }
 

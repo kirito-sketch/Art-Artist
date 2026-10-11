@@ -74,7 +74,7 @@ export function ReviewsBody({ q = '' }: { q?: string }) {
         {week.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Out this Friday" />
-            <div className="fri-list">
+            <div className="csoon fri-list">
               {week.map((w) => (
                 <FridayCard key={w.id} w={w} />
               ))}
