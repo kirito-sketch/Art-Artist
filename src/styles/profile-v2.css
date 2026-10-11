@@ -61,10 +61,10 @@
 .panel-1 { background: linear-gradient(160deg, #f6e3df, #f5ece8); }
 .panel-2 { background: linear-gradient(160deg, #dfe8ea, #ecf1f2); }
 .panel-3 { background: linear-gradient(160deg, #e9e9ed, #f3f3f5); }
-html[data-theme='dark'] .panel-0 { background: linear-gradient(160deg, #26283f, #1b2133); }
-html[data-theme='dark'] .panel-1 { background: linear-gradient(160deg, #3a2a2e, #251f26); }
-html[data-theme='dark'] .panel-2 { background: linear-gradient(160deg, #1f3440, #172630); }
-html[data-theme='dark'] .panel-3 { background: linear-gradient(160deg, #22313c, #182632); }
+html[data-theme='dark'] .panel-0 { background: linear-gradient(160deg, #242428, #1b1b1f); }
+html[data-theme='dark'] .panel-1 { background: linear-gradient(160deg, #2a2526, #1f1c1d); }
+html[data-theme='dark'] .panel-2 { background: linear-gradient(160deg, #232628, #1a1c1d); }
+html[data-theme='dark'] .panel-3 { background: linear-gradient(160deg, #262629, #1c1c1e); }
 
 /* A shared thing inside a message: a small card you can tap to open. */
 .share-card { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; width: min(280px, 78vw); padding: 8px 12px 8px 8px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hairline), 0 6px 14px -10px rgba(var(--ink-shadow), .3); color: var(--text); text-align: left; }

@@ -10,7 +10,7 @@ Built top-down: each layer only uses what the layers above it produced, and noth
 | Text | `#06141B` ink, `#4A5C6A` secondary |
 | Accent | **Slate** `#253745` for fills, text and icons; amber dropped (Arun: "I don't like the yellow"); dark mode uses light slate `#E8ECEC` / `#CDD2D4`. Colour in the app comes from imagery, the pastel tiles and the signature gradient; a single chromatic accent can be reconsidered at Checkpoint B |
 | Buttons | Primary solid ink; signature gradient lavender `#E3DEF5` → blush `#F6DCD9` (Continue, Show interest, Accept credit, Publish only); secondary light grey fill; tertiary text |
-| Dark mode | `#06141B` / `#11212D` / `#253745` grounds, same amber |
+| Dark mode | Neutral graphite, no blue: ground `#0F0F11`, cards `#17171A`, fills `#212125` to `#2B2B30`, type `#F2F2F3` / `#A4A4AA` (changed 11 Oct 2026; the client's navy dark grounds were dropped) |
 | Errors | `#D83A2E` |
 | Interface font | Plus Jakarta Sans (free; friendly, geometric, close to District and Airbnb) |
 | Editorial font | Instrument Serif (free), editorial moments only: text-post tiles, celebration headline, guide cards, first-run lines |

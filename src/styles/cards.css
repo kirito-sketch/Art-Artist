@@ -100,10 +100,10 @@
 .xcraft--3 { background: linear-gradient(180deg, #f3f3f5 0%, #efe3e1 100%); }
 .xcraft-name { font-size: 14px; font-weight: 600; line-height: 1.25; }
 .xcraft-obj { position: absolute; left: 0; right: 0; bottom: 6px; display: grid; place-items: center; }
-html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--0 { background: linear-gradient(180deg, #11212d 0%, #1b3140 100%); }
-html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--1 { background: linear-gradient(180deg, #11212d 0%, #25253f 100%); }
-html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--2 { background: linear-gradient(180deg, #11212d 0%, #1a3234 100%); }
-html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--3 { background: linear-gradient(180deg, #11212d 0%, #33252b 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--0 { background: linear-gradient(180deg, #17171a 0%, #232328 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--1 { background: linear-gradient(180deg, #17171a 0%, #26252c 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--2 { background: linear-gradient(180deg, #17171a 0%, #222628 100%); }
+html[data-theme='dark'] .phone[data-look='minimal'] .xcraft--3 { background: linear-gradient(180deg, #17171a 0%, #2a2426 100%); }
 
 /* ------------------------------------------------------------ Coming soon: dark cards, the centred one plays its trailer */
 .csoon { display: flex; gap: 12px; overflow-x: auto; padding: 2px var(--gutter) 6px; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; }

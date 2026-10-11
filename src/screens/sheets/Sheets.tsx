@@ -9,7 +9,7 @@ import { useStore, type Sheet as SheetRoute } from '../../state/store';
 import { useTheme } from '../../ui/theme';
 
 /** Create surface colours (framer-motion interpolates hex, not tokens): the action green and the raised surface. */
-const CREATE_COLOURS = { light: { from: '#253745', to: '#f3f3f5' }, dark: { from: '#e8ecec', to: '#11212d' } } as const;
+const CREATE_COLOURS = { light: { from: '#253745', to: '#f3f3f5' }, dark: { from: '#f2f2f3', to: '#17171a' } } as const;
 import { findOpportunity, firstName, networkFor, org, party, person } from '../../state/selectors';
 import { NetworkRow } from '../home/NetworkActivity';
 import { Avatar, Button, EmptyState, HowItWorks, PressCard, Pressable, Row, Toggle } from '../../ui/primitives';

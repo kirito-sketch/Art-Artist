@@ -27,7 +27,7 @@ html[data-theme='dark'] .phone[data-dir='a'],
 html[data-theme='dark'] .phone[data-dir='b'],
 html[data-theme='dark'] .phone[data-dir='c'],
 html[data-theme='dark'] .phone[data-nav='glass'] {
-  --glass-fill: rgba(17, 33, 45, 0.6);
+  --glass-fill: rgba(28, 28, 31, 0.6);
   --glass-edge: rgba(255, 255, 255, 0.12);
   --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 12px 34px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);

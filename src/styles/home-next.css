@@ -41,7 +41,7 @@
   padding: 6px var(--gutter) 2px;
 }
 html[data-theme='dark'] .dh--next .dh-dtiles {
-  --t-roles: #4a2f25; --t-people: #382f4f; --t-projects: #263450; --t-events: #4a3f1f; --t-reviews: #20402f;
+  --t-roles: #26262a; --t-people: #26262a; --t-projects: #26262a; --t-events: #26262a; --t-reviews: #26262a;
 }
 .dh--next .dh-dtile {
   --tint: var(--surface);
