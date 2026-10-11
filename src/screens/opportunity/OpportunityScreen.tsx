@@ -344,7 +344,7 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
           <ChevronLeft size={24} />
         </IconButton>
         <span className="flex" />
-        <IconButton label={`Share ${o.role} role`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: `${o.role} · ${o.project}` })}>
+        <IconButton label={`Share ${o.role} role`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: `${o.role} · ${o.project}`, card: { title: `${o.role} · ${o.project}`, sub: 'Opportunity', route: { name: 'opportunity', id: o.id } } })}>
           <Share size={18} />
         </IconButton>
         <span className="save-float">

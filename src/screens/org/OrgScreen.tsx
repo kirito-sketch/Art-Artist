@@ -229,7 +229,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
                 </IconButton>
               )}
               <span className="flex" />
-              <IconButton label={`Share ${o.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name })}>
+              <IconButton label={`Share ${o.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name, card: { title: o.name, sub: 'Production house', route: { name: 'org', id: o.id } } })}>
                 <Share size={18} />
               </IconButton>
               {own ? (
@@ -263,7 +263,7 @@ export function OrgScreen({ id, isTab }: { id: string; isTab?: boolean }) {
               </IconButton>
             )}
             <span className="flex" />
-            <IconButton label={`Share ${o.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name })}>
+            <IconButton label={`Share ${o.name}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: o.name, card: { title: o.name, sub: 'Production house', route: { name: 'org', id: o.id } } })}>
               <Share size={18} />
             </IconButton>
             {own ? (

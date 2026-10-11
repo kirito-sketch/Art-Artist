@@ -71,7 +71,7 @@ export function EventScreen({ id }: { id: string }) {
           <IconButton
             label={`Share ${event.title}`}
             className="icon-btn--float"
-            onClick={() => openSheet({ name: 'share', label: event.title })}
+            onClick={() => openSheet({ name: 'share', label: event.title, card: { title: event.title, sub: 'Event', route: { name: 'event', id: event.id } } })}
           >
             <Share size={18} />
           </IconButton>

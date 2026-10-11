@@ -21,7 +21,7 @@ import { world, project as wproject, work } from '../../state/world';
 import { ReviewSheet } from '../reviews/reviewUnits';
 import { INTENTS } from '../../domain/relevance';
 import { reportLevel, sentReports } from '../../state/reports';
-import type { IndustryEvent } from '../../data/types';
+import type { IndustryEvent, ShareCard } from '../../data/types';
 import { stubLabel, whenLabel } from '../../domain/events';
 import { DateField, fmtDay, fmtRange, parseDays, todayIso } from '../../ui/fields';
 
@@ -59,7 +59,7 @@ export function SheetHost() {
         <Identity />
       </Sheet>
       <Sheet open={is('share')} onClose={closeSheet} title="Share">
-        {sheet?.name === 'share' && <ShareSheet label={sheet.label} url={sheet.url} />}
+        {sheet?.name === 'share' && <ShareSheet label={sheet.label} url={sheet.url} card={sheet.card} />}
       </Sheet>
       <Sheet open={is('more')} onClose={closeSheet} title="" label="More options">
         {sheet?.name === 'more' && <MoreSheet id={sheet.id} />}
@@ -769,32 +769,30 @@ function Identity() {
 
 /* ------------------------------------------------------------------- Share */
 
-function ShareSheet({ label, url }: { label: string; url?: string }) {
-  const { closeSheet, showToast, conversations } = useStore();
-  const recent = conversations.slice(0, 3);
+function ShareSheet({ label, url, card }: { label: string; url?: string; card?: ShareCard }) {
+  const { closeSheet, showToast, conversations, following, startConversation, sendMessage, blocked } = useStore();
+  // People on Ana: the ones you talk to, then the ones you follow. Sending makes a real message with a preview card.
+  const ids = [...conversations.map((c) => c.withId), ...following].filter((id, i, all) => all.indexOf(id) === i && !blocked.includes(id));
+  const people = ids.map((id) => party(id)).filter((p): p is NonNullable<typeof p> => !!p && p.kind === 'person').slice(0, 8);
+  const shared: ShareCard = card ?? { title: label };
+  const sendTo = (p: (typeof people)[number]) => {
+    const cid = startConversation(p.id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+    if (!cid) return;
+    sendMessage(cid, shared.title, shared);
+    closeSheet();
+    showToast({ text: `Sent to ${firstName(p)}`, tone: 'success' });
+  };
   return (
     <div className="stack">
       <p className="meta">{label}</p>
-      {recent.length > 0 && !url && (
-        <div className="share-people">
-          {recent.map((c) => {
-            const p = party(c.withId);
-            if (!p) return null;
-            return (
-              <Pressable
-                key={c.id}
-                className="org-person"
-                onClick={() => {
-                  closeSheet();
-                  showToast({ text: `Sent to ${firstName(p)}`, tone: 'success' });
-                }}
-                scale={0.95}
-              >
-                <Avatar party={p} size={52} />
-                <span className="org-person-name">{firstName(p)}</span>
-              </Pressable>
-            );
-          })}
+      {people.length > 0 && (
+        <div className="share-people" role="group" aria-label="Send on Art and Artist">
+          {people.map((p) => (
+            <Pressable key={p.id} className="org-person" onClick={() => sendTo(p)} scale={0.95} aria-label={`Send to ${p.name}`}>
+              <Avatar party={p} size={52} />
+              <span className="org-person-name">{firstName(p)}</span>
+            </Pressable>
+          ))}
         </div>
       )}
       <div className="group">

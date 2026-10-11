@@ -33,7 +33,7 @@ import { phoneTaken, profileOf, type ProfileExtra } from './profile';
 import { updateWorkPreferences, workPreferencesOf } from './workPreferences';
 import { world, publicName, project as wproject, type Association, type Format, type HouseProject, type Thread } from './world';
 import type { Craft, Person } from '../data/types';
-import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, Viewer } from '../data/types';
+import type { Conversation, IndustryEvent, Interest, Media, Notification, Opportunity, Post, ShareCard, Viewer } from '../data/types';
 import { haptic } from '../ui/haptics';
 
 /* ------------------------------------------------------------ navigation */
@@ -89,7 +89,7 @@ export type Sheet =
   | { name: 'reportCredit'; title: string; creditId?: string }
   | { name: 'activity' }
   | { name: 'identity' }
-  | { name: 'share'; label: string; url?: string }
+  | { name: 'share'; label: string; url?: string; card?: ShareCard }
   | { name: 'more'; id: string }
   | { name: 'report'; subject: string; partyId?: string; target?: { kind: 'Post' | 'Event' | 'Review'; id: string } }
   | { name: 'review'; projectId: string; stars?: number }
@@ -440,9 +440,9 @@ function useStoreValue() {
     [attempt, setMessageStatus],
   );
   const sendMessage = useCallback(
-    (convId: string, text: string) => {
+    (convId: string, text: string, card?: ShareCard) => {
       if (world.threads.some((t) => t.id === convId)) {
-        if (!act.sendThreadMessage(actorRef.current, convId, text, nowTime())) showToast({ text: "Couldn't send. You can't message each other.", tone: 'error' });
+        if (!act.sendThreadMessage(actorRef.current, convId, text, nowTime(), card)) showToast({ text: "Couldn't send. You can't message each other.", tone: 'error' });
         bump();
         return;
       }
@@ -967,7 +967,7 @@ function threadAs(t: Thread, own: string, viewerId: string): Conversation {
     action: t.action?.side === own ? { label: t.action.label, reply: t.action.reply } : undefined,
     unread: t.unreadFor.includes(own) ? 1 : 0,
     updated: t.updated,
-    messages: t.messages.map((m) => ({ id: m.id, from: m.from === own ? ('me' as const) : ('them' as const), text: m.text, time: m.time })),
+    messages: t.messages.map((m) => ({ id: m.id, from: m.from === own ? ('me' as const) : ('them' as const), text: m.text, time: m.time, ...(m.card ? { card: m.card } : {}) })),
   };
 }
 

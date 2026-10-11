@@ -1,5 +1,5 @@
 import * as seed from '../data/seed';
-import type { Opportunity } from '../data/types';
+import type { Opportunity, ShareCard } from '../data/types';
 import { party, person } from '../state/selectors';
 import { normalisePhone, phoneTaken, profileOf, validPhone } from '../state/profile';
 import { canReview, MAX_TEXT, reviewsOpen, validStars, type Review } from './reviews';
@@ -284,14 +284,14 @@ export function startThread(actor: Actor, withId: string, context: Thread['conte
   return t.id;
 }
 
-export function sendThreadMessage(actor: Actor, threadId: string, text: string, time: string) {
+export function sendThreadMessage(actor: Actor, threadId: string, text: string, time: string, card?: ShareCard) {
   const t = world.threads.find((x) => x.id === threadId);
   if (!t) return false;
   const me = t.sides.includes(speakingAs(actor)) ? speakingAs(actor) : t.sides.find((s) => s === actor.viewerId || actor.memberships.includes(s))!;
   const other = t.sides.find((s) => s !== me)!;
   if (!mayContact(actor, other, me)) return false;
   const first = !t.messages.some((m) => m.from === me);
-  t.messages.push({ id: wid('m'), from: me, by: actor.viewerId, text, time });
+  t.messages.push({ id: wid('m'), from: me, by: actor.viewerId, text, time, ...(card ? { card } : {}) });
   t.unreadFor = [other];
   t.updated = 'now';
   if (t.action?.side === me) t.action = undefined;

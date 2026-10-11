@@ -90,7 +90,7 @@ export function WorkScreen({ id, fromCard }: { id: string; fromCard?: boolean })
             <ChevronLeft size={24} />
           </IconButton>
           <span className="flex" />
-          <IconButton label={`Share ${w.title}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: w.title })}>
+          <IconButton label={`Share ${w.title}`} className="icon-btn--float" onClick={() => openSheet({ name: 'share', label: w.title, card: { title: w.title, sub: 'Project', image: w.media, route: { name: 'work', id: w.id } } })}>
             <Share size={18} />
           </IconButton>
           <span className="save-float">

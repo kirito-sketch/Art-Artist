@@ -166,8 +166,18 @@ export interface Project {
 
 export type ContextKind = 'crew' | 'casting' | 'collab' | 'project' | 'credit';
 
+/** A shared thing, shown inside a message as a small tappable card. */
+export interface ShareCard {
+  title: string;
+  sub?: string;
+  image?: Media;
+  /** Where tapping it goes (a route of the app). */
+  route?: { name: string; [k: string]: unknown };
+}
+
 export interface Message {
   id: string;
+  card?: ShareCard;
   from: 'me' | 'them';
   text: string;
   time: string;

@@ -33,12 +33,8 @@ export function PostActions({ post, variant = 'row' }: { post: Post; variant?: '
     url.searchParams.set('post', post.id);
     // Uploaded prototype posts are session-only; don't offer a link that cannot reopen them.
     const persistent = seed.posts.some(p => p.id === post.id);
-    if (navigator.share && persistent) {
-      try { await navigator.share({ title: label, text: post.text, url: url.href }); return; }
-      catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
-    }
     if (!persistent) { showToast({ text: 'This prototype post is only available in this session.' }); return; }
-    openSheet({ name: 'share', label, url: url.href });
+    openSheet({ name: 'share', label, url: url.href, card: { title: label, sub: 'Post', image: post.media[0], route: { name: 'posts', ids: [post.id], index: 0 } } });
   };
   const size = quiet ? 22 : 20, stroke = quiet || variant === 'row' ? 1.85 : 2;
   return <div className={`ana-post-actions ana-post-actions--${variant}`}>

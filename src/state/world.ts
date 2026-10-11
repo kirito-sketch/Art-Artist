@@ -1,6 +1,6 @@
 import * as seed from '../data/seed';
 import { SEED_WORKS, type Work, type WorkStage } from '../data/works';
-import type { Interest, Media, Notification, Opportunity } from '../data/types';
+import type { Interest, Media, Notification, Opportunity, ShareCard } from '../data/types';
 import { SEED_REVIEWS } from '../data/reviews';
 import { releaseAt, type Review } from '../domain/reviews';
 
@@ -150,7 +150,7 @@ export interface Thread {
   context: { kind: 'crew' | 'casting' | 'collab' | 'project'; label: string; detail: string; refId?: string };
   media?: Media;
   /** `from` is the identity (person or house). `by` is the human who sent it: kept internally, never shown to the other side. */
-  messages: { id: string; from: string; by?: string; text: string; time: string }[];
+  messages: { id: string; from: string; by?: string; text: string; time: string; card?: ShareCard }[];
   /** Sides with something unread. */
   unreadFor: string[];
   updated: string;

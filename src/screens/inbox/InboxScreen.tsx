@@ -298,7 +298,12 @@ export function ConversationScreen({ id }: { id: string }) {
                 {!mine && <span className="bubble-head" aria-hidden="true">{head && <Avatar party={p} size={28} />}</span>}
                 <div className="bubble-body">
                   {m.senderName && !mine && head && <p className="meta bubble-sender">{m.senderName.split(' · ')[0]}</p>}
-                  <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`} lang={scriptLang(m.text)}>{m.text}</div>
+                  {m.card ? (
+                    <PressCard className="share-card" onPress={() => m.card!.route && push(m.card!.route as never)} scale={0.98} aria-label={`${m.card.sub ? m.card.sub + ': ' : ''}${m.card.title}`}>
+                      {m.card.image && <Photo media={m.card.image} surface="search-thumbnail" showPlay={false} className="share-card-img" />}
+                      <span className="share-card-text"><b>{m.card.title}</b>{m.card.sub && <i>{m.card.sub}</i>}</span>
+                    </PressCard>
+                  ) : <div className={`bubble ${m.status === 'failed' ? 'bubble--failed' : ''}`} lang={scriptLang(m.text)}>{m.text}</div>}
                   {m.status === 'sending' && <p className="meta bubble-status">Sending…</p>}
                   {m.status === 'failed' && (
                     <button className="bubble-status bubble-retry" onClick={() => retryMessage(c.id, m.id)}>

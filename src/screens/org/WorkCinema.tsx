@@ -114,7 +114,7 @@ export function WorkCinema({ w }: { w: Work }) {
     </IconButton>
   );
 
-  const share = () => openSheet({ name: 'share', label: w.title });
+  const share = () => openSheet({ name: 'share', label: w.title, card: { title: w.title, sub: 'Project', image: w.media, route: { name: 'work', id: w.id } } });
   const depth = Math.min(1, Math.max(0, scrollY) / heroH);
 
   return (

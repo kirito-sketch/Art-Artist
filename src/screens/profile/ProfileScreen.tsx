@@ -199,11 +199,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const shareProfile = async () => {
     if (id.startsWith('you-')) { showToast({ text: 'This prototype profile is only available in this session.' }); return; }
     const url = new URL(location.pathname, location.origin); url.searchParams.set('profile', id);
-    if (navigator.share) {
-      try { await navigator.share({ title: p.name, url: url.href }); return; }
-      catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
-    }
-    openSheet({ name: 'share', label: p.name, url: url.href });
+    openSheet({ name: 'share', label: p.name, url: url.href, card: { title: p.name, sub: p.role, image: selectedCover.media ?? undefined, route: { name: 'profile', id } } });
   };
 
   return (
