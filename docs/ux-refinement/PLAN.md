@@ -743,7 +743,7 @@ Regression passes: unit, tsc, build, wt12 13/0, wt5 14/0, wt346 34/0, wth 24/0, 
   - Drafts, early stages and seeded projects (no `trailerRule`) are exempt; existing projects keep their still or poster fallback.
   - Wired into Share on Art and Artist, the Details stage change, and the trailer manager.
 - **Project page, redesigned on review feedback** (`screens/org/WorkCinema.tsx`, `styles/project-cinema.css`). It follows District's movie-page structure in Ana's design, replacing the first 16:9 version.
-  - **Always dark** (a cinema), whatever the app theme.
+  - **Follows the app theme** (changed 11 Oct 2026: it was always dark). Only the pinned trailer and the controls over it stay dark.
   - **Pinned hero.** The trailer fills about 64% of the screen and stays put while the details sheet (with a handle) slides up over it. The trailer eases in, dims and pauses once covered.
   - **Hero overlays:**
     - back, a language pill (it opens a version picker when there are several versions; switching keeps your place), and share

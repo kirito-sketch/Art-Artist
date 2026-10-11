@@ -1,17 +1,15 @@
 /* ===================================================== Project page (src/screens/org/WorkCinema.tsx)
  * District's movie-page structure in Ana's design: a pinned trailer, a sheet that slides over it, one fixed action.
- * Always dark, whatever the app theme: the page is a cinema. */
+ * Follows the app theme; only the pinned trailer and the controls over it stay dark. */
 .wp {
-  --base: #030c11; --bg: #06141b; --surface: #0b1b24; --raised: #11212d; --fill: #1a2e3b; --fill-strong: #253745; --surface-2: #1f3240;
-  --line: rgba(204, 208, 207, 0.12); --hairline: rgba(204, 208, 207, 0.1);
-  --text: #e8ecec; --text-2: #9ba8ab; --text-3: #7e8c91;
-  --action: #3a5266; --action-pressed: #2c4152; --action-ink: #cdd2d4; --accent-ink: #cdd2d4; --focus-color: #cdd2d4;
-  --verified: #7fa6ff; --warm: #f2b46b;
-  color-scheme: dark;
+  /* The page follows the app theme; only the pinned trailer and its overlays stay dark. */
+  --verified: #2f5fd0; --warm: #a8620a;
   color: var(--text);
-  background: #070707;
+  background: var(--bg);
   --wp-hero-h: calc(var(--phone-h, 100dvh) * 0.64);
 }
+html[data-theme='dark'] .wp { --verified: #7fa6ff; --warm: #f2b46b; }
+.wp-card, .wp-pill, .wp-version { box-shadow: inset 0 0 0 1px var(--hairline); }
 .wp .meta, .wp .item-title { color: inherit; }
 
 /* ---------------------------------------------------------------- The pinned hero */
@@ -48,8 +46,8 @@
 @media (prefers-reduced-motion: reduce) { .wp-compact { transition: none; } }
 
 /* ---------------------------------------------------------------- The sheet */
-.wp-sheet { position: relative; z-index: 3; margin-top: -26px; padding: 12px var(--gutter) 0; border-radius: 22px 22px 0 0; background: var(--bg); box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.35); min-height: 60vh; }
-.wp-handle { display: block; width: 44px; height: 4px; margin: 0 auto 18px; border-radius: 2px; background: rgba(255, 255, 255, 0.25); }
+.wp-sheet { position: relative; z-index: 3; margin-top: -26px; padding: 12px var(--gutter) 0; border-radius: 22px 22px 0 0; background: var(--bg); box-shadow: 0 -12px 32px rgba(var(--ink-shadow), 0.22); min-height: 60vh; }
+.wp-handle { display: block; width: 44px; height: 4px; margin: 0 auto 18px; border-radius: 2px; background: var(--hairline); }
 .wp-title { margin: 0; font-size: clamp(26px, 7.6vw, 32px); line-height: 1.1; font-weight: 750; text-wrap: balance; overflow-wrap: break-word; }
 .wp-meta { margin: 6px 0 0; font-size: 15px; color: var(--text-2); font-weight: 500; }
 .wp-when { margin: 2px 0 0; font-size: 14px; color: var(--text-3); }
