@@ -8,7 +8,7 @@ import { Photo, PressCard } from '../../ui/primitives';
 
 /**
  * Posts as a two-column masonry, one tile per kind of post (docs/feedback/2026-10-10/README.md, Discover):
- * image, image with a caption, video, several images, and text on its own set in the serif on a tinted panel.
+ * image, video, several images, and text on its own set in the serif on a tinted panel.
  * Tiles are placed in the shorter column, so the page has no holes.
  */
 type Kind = 'image' | 'video' | 'set' | 'text';
@@ -30,9 +30,9 @@ function ratioOf(p: Post, kind: Kind) {
 }
 
 /** Rough height of a tile in column-width units, to choose the shorter column. */
-function heightOf(p: Post, kind: Kind, caption: boolean) {
+function heightOf(p: Post, kind: Kind) {
   if (kind === 'text') return 0.9 + Math.min(p.text.length, 140) / 140 * 0.7;
-  return 1 / ratioOf(p, kind) + (caption ? 0.28 : 0);
+  return 1 / ratioOf(p, kind);
 }
 
 export function PostMasonry({ posts, onOpen }: { posts: Post[]; onOpen: (index: number) => void }) {
@@ -41,10 +41,9 @@ export function PostMasonry({ posts, onOpen }: { posts: Post[]; onOpen: (index: 
   const heights = [0, 0];
   posts.forEach((post, index) => {
     const kind = kindOf(post);
-    const caption = kind !== 'text' && !!post.text && hash(post.id + 'c') % 2 === 0;
     const c = heights[0] <= heights[1] ? 0 : 1;
     cols[c].push({ post, index });
-    heights[c] += heightOf(post, kind, caption) + 0.06;
+    heights[c] += heightOf(post, kind) + 0.06;
   });
   return (
     <div className="pmason" role="list" aria-label="Posts">
@@ -54,8 +53,7 @@ export function PostMasonry({ posts, onOpen }: { posts: Post[]; onOpen: (index: 
             const kind = kindOf(post);
             const first = post.media[0];
             const author = party(post.authorId);
-            const caption = kind !== 'text' && !!post.text && hash(post.id + 'c') % 2 === 0;
-            const label = `${author?.name ?? 'Post'}${kind === 'video' ? ', video' : kind === 'set' ? `, ${post.media.length} images` : ''}: ${post.text.slice(0, 80)}`;
+                    const label = `${author?.name ?? 'Post'}${kind === 'video' ? ', video' : kind === 'set' ? `, ${post.media.length} images` : ''}: ${post.text.slice(0, 80)}`;
             return (
               <PressCard key={post.id} className={`pm-tile pm-tile--${kind}`} role="listitem" data-post-id={post.id} onPress={() => onOpen(index)} onPointerDown={() => setClaimed(post.id)} onFocus={() => setClaimed(post.id)} scale={0.975} aria-label={label}>
                 {kind === 'text' ? (
@@ -70,7 +68,6 @@ export function PostMasonry({ posts, onOpen }: { posts: Post[]; onOpen: (index: 
                       {kind === 'set' && <span className="pm-mark" aria-hidden><Layers size={14} /></span>}
                       {kind === 'video' && <span className="pm-mark pm-mark--play" aria-hidden><Play size={12} fill="currentColor" /></span>}
                     </motion.span>
-                    {caption && <span className="pm-caption">{post.text}</span>}
                   </>
                 )}
               </PressCard>
