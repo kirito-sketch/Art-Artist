@@ -62,3 +62,21 @@ Typecheck, unit tests, all regression suites (updated where text or structure ch
 - One commit per layer step; the full regression runs at the end of each layer, not after every change.
 - No layer reopens an earlier one; if a later layer exposes a gap, it is fixed inside the component that owns it.
 - Arun reviews at the two checkpoints only, from screenshots.
+
+## Status, 11 October 2026
+
+**Built and pushed**
+- Layer 1: foundation (colour, type, labels, buttons). Dark mode changed to neutral graphite (no blue).
+- Layer 2 and 3, Home: This week, Film talk (immersive cards, follow-first quote), Explore by craft, From your network collection cards, People cards (portrait breaking out of a card, save on its edge), Coming soon (centred card plays its trailer), New work merged into From your network, new end of Home.
+- Layer 3, Profile: one layout for everyone (seeded About, portfolio, skills, showreel for more people), pending credits lead on your own profile, icon fact rows, owner tools in a header sheet, posts grid inside the gutter.
+- Layer 3, Discover: raised object tabs, All overview as the default, posts as a masonry with a tile per post kind. The project page now follows the theme.
+- Layer 4: unified share sheet (people on Ana, real message with a preview card), Film talk quote rule.
+- Layer 5: tab bar picks up the colour of the centred card; trailer in the centred Coming soon card.
+
+**Paused by decision**
+- Celebration post on credit accept: built, then paused because it did not look right. The code is in a git stash named "celebration post (paused)".
+- First-run animated sequence: four review artifacts were made (Atlys copy, three film-set concepts, a second rack-focus pass). None was approved; paused. Direction notes: motion should come from film sets and teach one real thing; Flutter shader (FragmentProgram) for any ripple or beam.
+
+**Not yet run (needs the research stack, which was declined)**: `tst/qa`, `tst/flow`, `launch`, `a11y/views`. Run these before release. The suites that do not need it pass (unit, wt12, wt5, wt346, wth, fields, focusflow).
+
+**Known open items**: more craft objects for Explore by craft (only four exist); tab icons are old green and gold art plus line icons, to be replaced; the network page behind "See all" still uses the old list; narrowest width (320) not rechecked; video and text-only post tiles not seen with real data.
