@@ -8,7 +8,7 @@ import { useId } from 'react';
  * draws its own, exactly as it will for the supplied assets.
  */
 
-export type CraftObjectKind = 'lens' | 'timeline' | 'microphone' | 'swatches';
+export type CraftObjectKind = 'lens' | 'timeline' | 'microphone' | 'swatches' | 'lamp' | 'clapper' | 'hanger';
 
 const INK = '#1d1d1f';
 const GRAPHITE = ['#4a4a4e', '#26262a', '#141416'];
@@ -242,7 +242,91 @@ function Swatches({ id }: { id: string }) {
   );
 }
 
-const DRAW: Record<CraftObjectKind, (p: { id: string }) => JSX.Element> = { lens: Lens, timeline: Timeline, microphone: Microphone, swatches: Swatches };
+/** Lighting: a fresnel lamp on a stand, barn doors open, a warm beam. */
+function Lamp({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-body`} x1="0" x2="1">
+          <stop offset="0" stopColor={GRAPHITE[0]} />
+          <stop offset="0.5" stopColor={GRAPHITE[1]} />
+          <stop offset="1" stopColor={GRAPHITE[2]} />
+        </linearGradient>
+        <radialGradient id={`${id}-beam`} cx="0.5" cy="0.5" r="0.6">
+          <stop offset="0" stopColor="#ffe9b8" />
+          <stop offset="1" stopColor={AMBER} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <Shadow id={id} cx={82} cy={142} rx={36} />
+      <g className="craft-back"><path d="M96 56 L150 30 L150 100 L96 78 Z" fill={`url(#${id}-beam)`} opacity="0.7" /></g>
+      <g className="craft-body">
+        <path d="M80 100 L66 140 M80 100 L94 140 M80 100 L80 142" stroke={GRAPHITE[1]} strokeWidth="4" strokeLinecap="round" />
+        <rect x="76" y="86" width="8" height="18" rx="2" fill={ALU[2]} />
+        <rect x="50" y="36" width="50" height="52" rx="8" fill={`url(#${id}-body)`} />
+        <rect x="46" y="44" width="6" height="36" rx="2" fill={GRAPHITE[2]} />
+        <circle cx="96" cy="62" r="22" fill={ALU[1]} />
+        <circle cx="96" cy="62" r="17" fill="#fff3d2" />
+        <circle cx="96" cy="62" r="9" fill="#ffe3a0" />
+        <path d="M82 52 Q90 44 100 46" fill="none" stroke="#fff" strokeOpacity="0.8" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="62" cy="48" r="2.4" fill={RED} />
+        <path d="M100 38 L120 24 M100 86 L120 100" stroke={GRAPHITE[1]} strokeWidth="5" strokeLinecap="round" />
+      </g>
+    </>
+  );
+}
+
+/** Direction: a clapperboard with the arm lifted, scene and take lines on the slate. */
+function Clapper({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <pattern id={`${id}-stripe`} width="20" height="12" patternUnits="userSpaceOnUse" patternTransform="skewX(-28)">
+          <rect width="10" height="12" fill={INK} />
+          <rect x="10" width="10" height="12" fill={ALU[0]} />
+        </pattern>
+      </defs>
+      <Shadow id={id} cx={82} cy={140} rx={46} />
+      <g className="craft-body">
+        <rect x="34" y="68" width="92" height="64" rx="6" fill={GRAPHITE[1]} />
+        <g stroke="#f4f2ee" strokeOpacity="0.55" strokeWidth="2" strokeLinecap="round">
+          <path d="M44 86 H84 M44 100 H72 M44 114 H96" />
+        </g>
+        <circle cx="108" cy="90" r="4" fill={AMBER} />
+        <g transform="rotate(-22 36 66)">
+          <rect x="34" y="52" width="92" height="16" rx="4" fill={`url(#${id}-stripe)`} />
+          <rect x="34" y="52" width="92" height="16" rx="4" fill="none" stroke="#000" strokeOpacity="0.2" />
+        </g>
+        <rect x="34" y="62" width="92" height="12" rx="3" fill={`url(#${id}-stripe)`} />
+        <circle cx="38" cy="66" r="3.2" fill={ALU[1]} />
+      </g>
+    </>
+  );
+}
+
+/** Costume: a wooden hanger carrying a draped garment. */
+function Hanger({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-cloth`} x1="0" x2="1">
+          <stop offset="0" stopColor={CLAY} />
+          <stop offset="1" stopColor="#8f5642" />
+        </linearGradient>
+      </defs>
+      <Shadow id={id} cx={82} cy={142} rx={42} />
+      <g className="craft-body">
+        <path d="M80 34 Q80 24 88 24 Q96 24 96 32 Q96 38 88 40 L80 46" fill="none" stroke={ALU[2]} strokeWidth="3.4" strokeLinecap="round" />
+        <path d="M80 46 L28 84 Q22 90 30 90 L130 90 Q138 90 132 84 Z" fill="none" stroke="#9c6b43" strokeWidth="5" strokeLinejoin="round" />
+        <path d="M44 74 Q80 66 116 74 L128 134 Q80 144 32 134 Z" fill={`url(#${id}-cloth)`} />
+        <path d="M60 80 Q58 112 54 138 M80 78 Q80 112 80 140 M100 80 Q102 112 106 138" fill="none" stroke="#000" strokeOpacity="0.14" strokeWidth="2" />
+        <circle cx="80" cy="84" r="3" fill="#f1dfb0" />
+        <circle cx="80" cy="100" r="3" fill="#f1dfb0" />
+      </g>
+    </>
+  );
+}
+
+const DRAW: Record<CraftObjectKind, (p: { id: string }) => JSX.Element> = { lens: Lens, timeline: Timeline, microphone: Microphone, swatches: Swatches, lamp: Lamp, clapper: Clapper, hanger: Hanger };
 
 export function CraftObject({ kind, size = 120, className = '' }: { kind: CraftObjectKind; size?: number; className?: string }) {
   const id = `craft-${useId().replace(/:/g, '')}`;
@@ -264,4 +348,7 @@ export const CRAFT_OBJECTS: { kind: CraftObjectKind; label: string; crafts: stri
   { kind: 'timeline', label: 'Editing', crafts: ['editor'] },
   { kind: 'microphone', label: 'Sound', crafts: ['sound'] },
   { kind: 'swatches', label: 'Production design', crafts: ['production-design'] },
+  { kind: 'lamp', label: 'Lighting', crafts: ['lighting'] },
+  { kind: 'clapper', label: 'Direction', crafts: ['director'] },
+  { kind: 'hanger', label: 'Costume', crafts: ['costume'] },
 ];
