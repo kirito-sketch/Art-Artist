@@ -940,13 +940,16 @@
   right: 0;
   bottom: 112px;
   z-index: 70;
-  display: flex;
-  justify-content: center;
+  /* One grid cell: a toast that is leaving and the one replacing it overlap instead of squeezing each other. */
+  display: grid;
+  justify-items: center;
   pointer-events: none;
   padding: 0 20px;
 }
 
 .toast {
+  grid-area: 1 / 1;
+  max-width: 100%;
   pointer-events: auto;
   display: flex;
   align-items: center;
