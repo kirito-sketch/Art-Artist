@@ -16,7 +16,7 @@ import { HomeNext } from './screens/home/HomeNext';
 import { DistrictHome } from './screens/home/DistrictHome';
 import { FilmReviewsScreen, PersonReviewsScreen, ReviewsScreen } from './screens/reviews/ReviewsScreen';
 import { useFeatures } from './ui/features';
-import { NetworkRow } from './screens/home/NetworkActivity';
+import { NetworkCollections } from './screens/home/NetworkActivity';
 import { ConversationScreen, InboxScreen } from './screens/inbox/InboxScreen';
 import { OpportunityScreen } from './screens/opportunity/OpportunityScreen';
 import { ProfileScreen } from './screens/profile/ProfileScreen';
@@ -235,11 +235,7 @@ function NetworkScreen() {
       <div className="title-block">
         <h1 className="large-title">Your network</h1>
       </div>
-      <div className="list">
-        {events.map((e, i) => (
-          <NetworkRow key={e.id} e={e} index={i} />
-        ))}
-      </div>
+      <NetworkCollections events={events} all />
     </div>
   );
 }

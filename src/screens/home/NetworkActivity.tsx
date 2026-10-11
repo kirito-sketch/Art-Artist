@@ -72,7 +72,8 @@ export function NetworkRow({ e, index = 0, quiet = false }: { e: NetworkEvent; i
  * "From your network" as collection cards: what people you know have done, grouped by theme, four to a card.
  * A new project or portfolio piece leads with its picture; people and availability lead with a face.
  */
-export function NetworkCollections({ events, posts = [], onOpenAll, onOpenPosts }: { events: NetworkEvent[]; posts?: Post[]; onOpenAll: () => void; onOpenPosts?: () => void }) {
+/** Home shows a short rail; with `all` the same cards stack down the page with every row (the "See all" page). */
+export function NetworkCollections({ events, posts = [], onOpenAll, onOpenPosts, all = false }: { events: NetworkEvent[]; posts?: Post[]; onOpenAll?: () => void; onOpenPosts?: () => void; all?: boolean }) {
   const { push, userCollabs } = useStore();
   const toRow = (e: NetworkEvent): CollectionRow => {
     const first = person(e.actorIds[0]);
@@ -95,8 +96,8 @@ export function NetworkCollections({ events, posts = [], onOpenAll, onOpenPosts 
       onPress: open,
     };
   };
-  const work = events.filter((e) => e.kind === 'credit' || e.kind === 'project' || e.kind === 'portfolio' || e.kind === 'reel').slice(0, 4);
-  const crew = events.filter((e) => e.kind === 'collab' || e.kind === 'available').slice(0, 4);
+  const work = events.filter((e) => e.kind === 'credit' || e.kind === 'project' || e.kind === 'portfolio' || e.kind === 'reel').slice(0, all ? 40 : 4);
+  const crew = events.filter((e) => e.kind === 'collab' || e.kind === 'available').slice(0, all ? 40 : 4);
   const postRows: CollectionRow[] = posts.map((p, i) => {
     const a = party(p.authorId);
     return {
@@ -108,10 +109,10 @@ export function NetworkCollections({ events, posts = [], onOpenAll, onOpenPosts 
     };
   });
   return (
-    <CollectionRail label="From your network">
-      {postRows.length > 0 && <CollectionCard title="New work" subtitle="Fresh from people you know" onOpen={onOpenPosts} openLabel="See all new work" rows={postRows} />}
-      {work.length > 0 && <CollectionCard title="New credits and work" subtitle="Added by people you know" onOpen={onOpenAll} openLabel="See all from your network" rows={work.map(toRow)} />}
-      {crew.length > 0 && <CollectionCard title="Hiring and availability" subtitle="Who needs crew, who is free" onOpen={onOpenAll} openLabel="See all from your network" rows={crew.map(toRow)} />}
+    <CollectionRail label="From your network" stacked={all}>
+      {postRows.length > 0 && !all && <CollectionCard title="New work" subtitle="Fresh from people you know" onOpen={onOpenPosts} openLabel="See all new work" rows={postRows} />}
+      {work.length > 0 && <CollectionCard title="New credits and work" subtitle="Added by people you know" onOpen={all ? undefined : onOpenAll} openLabel="See all from your network" rows={work.map(toRow)} />}
+      {crew.length > 0 && <CollectionCard title="Hiring and availability" subtitle="Who needs crew, who is free" onOpen={all ? undefined : onOpenAll} openLabel="See all from your network" rows={crew.map(toRow)} />}
     </CollectionRail>
   );
 }

@@ -52,9 +52,9 @@ export function CollectionCard({ title, subtitle, onOpen, openLabel, rows }: { t
 }
 
 /** A sideways, snapping rail of CollectionCards. The next card peeks in so it reads as swipeable. */
-export function CollectionRail({ children, label }: { children: ReactNode; label: string }) {
+export function CollectionRail({ children, label, stacked = false }: { children: ReactNode; label: string; stacked?: boolean }) {
   return (
-    <div className="ccards" role="group" aria-label={label}>
+    <div className={`ccards${stacked ? ' ccards--stacked' : ''}`} role="group" aria-label={label}>
       {children}
     </div>
   );
