@@ -192,3 +192,16 @@ html[data-theme='dark'] .dh--next .dh-dtile { box-shadow: inset 0 0 0 1px rgba(2
 .dh-near--compact .dh-near-t span { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dh-near--compact .dh-follow { top: 8px; right: 8px; width: 32px; height: 32px; }
 .dh-near--compact .dh-follow::before { content: ''; position: absolute; inset: -6px; }
+
+/* ---------------------------------------------------------------- Grey wash behind the top of Home
+ * A soft cool grey that starts at the header and fades into the page ground by the end of This week, so the
+ * shortcuts and the week card sit on a gently shaded ground. Scrolls with the content (attachment: local). */
+.screen.dh--next:not(.has-ambient) {
+  background-image: linear-gradient(180deg, #dcdce0 0%, #e6e6ea 38%, #eeeef1 70%, rgba(243, 243, 245, 0) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 620px;
+  background-attachment: local;
+}
+html[data-theme='dark'] .screen.dh--next:not(.has-ambient) {
+  background-image: linear-gradient(180deg, #232327 0%, #1a1a1d 45%, rgba(15, 15, 17, 0) 100%);
+}
