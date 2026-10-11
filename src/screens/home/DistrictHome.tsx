@@ -6,7 +6,7 @@ import { familyOf, nearCrafts } from '../../data/taxonomy';
 import type { IndustryEvent, Media, Opportunity, Person } from '../../data/types';
 import { type Work } from '../../data/works';
 import { outThisWeek } from '../reviews/ReviewsScreen';
-import { featuredFor, ScoreLine } from '../reviews/reviewUnits';
+import { featuredFor } from '../reviews/reviewUnits';
 import { blockedBy, discoverableProjects, discoverableRoles, searchablePeople } from '../../domain/discovery';
 import { workedWith } from '../../domain/home/graph';
 import type { DiscoverChip } from '../../domain/contentTypes';
@@ -30,6 +30,7 @@ import { WeekSpotlight } from './WeekSpotlight';
 import { NetworkCollections } from './NetworkActivity';
 import { PersonCard } from '../../ui/PersonCard';
 import { FilmTalk } from './FilmTalk';
+import { FridayCard } from '../reviews/FridayCard';
 import { ComingSoon } from './ComingSoon';
 import { ExploreCrafts } from './ExploreCrafts';
 import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
@@ -377,9 +378,9 @@ export function DistrictHome({ go }: { go: Go }) {
       {friday.length > 0 && (
         <section className="dh-sec" aria-label="Out this Friday">
           <SectionHeader title="Out this Friday" className="dh-pad" action="See all" onAction={() => go.discover('reviews')} />
-          <div className={friday.length > 1 ? 'dh-rail dh-quotes' : 'dh-pad'}>
+          <div className={friday.length > 1 ? 'csoon' : 'dh-pad'}>
             {friday.map((w) => (
-              <Quote key={w.id} w={w} onOpen={() => push({ name: 'work', id: w.id })} />
+              <FridayCard key={w.id} w={w} />
             ))}
           </div>
         </section>
@@ -600,34 +601,6 @@ function Clip({ id }: { id: string }) {
       <source src={`/video/${id}.webm`} type="video/webm" />
       <source src={`/video/${id}.mp4`} type="video/mp4" />
     </video>
-  );
-}
-
-function Quote({ w, onOpen }: { w: Work; onOpen: () => void }) {
-  const f = featuredFor(w.id);
-  const p = f && party(f.personId);
-  return (
-    <PressCard className="dh-quote" onPress={onOpen} scale={0.985} aria-label={w.title}>
-      <span className="dh-qfilm dh-qfilm--top">
-        <Photo surface="spotlight" media={w.media} showPlay={false} />
-        <span className="dh-qfilm-t">
-          <b>{w.title}</b>
-          <ScoreLine id={w.id} />
-        </span>
-      </span>
-      {f && p && (
-        <>
-          <p className="dh-qtext">“{f.text}”</p>
-          <span className="dh-qby">
-            <Avatar party={p} size={32} />
-            <span className="dh-qwho">
-              <b>{p.name}</b>
-              <span>{p.kind === 'person' ? (p as Person).role : ''}</span>
-            </span>
-          </span>
-        </>
-      )}
-    </PressCard>
   );
 }
 

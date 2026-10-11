@@ -205,3 +205,16 @@ html[data-theme='dark'] .dh--next .dh-dtile { box-shadow: inset 0 0 0 1px rgba(2
 html[data-theme='dark'] .screen.dh--next:not(.has-ambient) {
   background-image: linear-gradient(180deg, #232327 0%, #1a1a1d 45%, rgba(15, 15, 17, 0) 100%);
 }
+
+/* ---------------------------------------------------------------- This week, immersive
+ * The still fills the card (the Coming soon shape); the label, reason, title and meta sit on a gradient at the foot. */
+.wk-card { aspect-ratio: 4 / 4.7; background: #0b0b0d; color: #fff; isolation: isolate; }
+.wk-card .wk-open { position: relative; height: 100%; color: #fff; }
+.wk-card .wk-media { position: absolute; inset: 0; aspect-ratio: auto; background: #0b0b0d; }
+.wk-card .wk-open::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(6,20,27,0) 38%, rgba(6,20,27,.9) 100%); }
+.wk-card .wk-chip { z-index: 2; }
+.wk-card .wk-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 16px; flex: none; }
+.wk-card .wk-reason { color: rgba(255,255,255,.85); }
+.wk-card .wk-title { font-size: 21px; color: #fff; }
+.wk-card .wk-meta { color: rgba(255,255,255,.8); }
+.wk-card .wk-save { z-index: 3; }

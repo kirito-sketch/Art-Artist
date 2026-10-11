@@ -6,6 +6,7 @@ import { org, person } from '../../state/selectors';
 import { useStore } from '../../state/store';
 import { publicWorks, reviewsBy, reviewsOf, work, world } from '../../state/world';
 import { Button, Chip, EmptyState, IconButton, Photo, PressCard, SectionHeader } from '../../ui/primitives';
+import { FridayCard } from './FridayCard';
 import { featuredFor, FilmReviewTile, RatingSummary, ReviewCard, ScoreLine } from './reviewUnits';
 
 const maker = (w: Work) => (w.orgIds[0] ? org(w.orgIds[0]).name : w.format);
@@ -73,9 +74,9 @@ export function ReviewsBody({ q = '' }: { q?: string }) {
         {week.length > 0 && (
           <section className="section section--flush">
             <SectionHeader title="Out this Friday" />
-            <div className="wk-list">
+            <div className="fri-list">
               {week.map((w) => (
-                <WeekFilm key={w.id} w={w} big />
+                <FridayCard key={w.id} w={w} />
               ))}
             </div>
           </section>

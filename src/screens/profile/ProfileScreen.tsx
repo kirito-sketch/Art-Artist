@@ -14,7 +14,7 @@ import { Sheet } from '../../ui/Sheet';
 import { Play } from 'lucide-react';
 import { useFeatures } from '../../ui/features';
 import { FeaturedWorkSection } from './WorkPortfolio';
-import { SlidersHorizontal, Ban, Bookmark, Camera, Check, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, PenLine, Settings, Share } from 'lucide-react';
+import { Ban, Bookmark, Camera, Check, ChevronDown, ChevronLeft, List, Lock, MoreHorizontal, PenLine, Settings, Share } from 'lucide-react';
 import { mediaName } from '../../ui/a11y';
 import { creditState, world, project as wproject, publicName } from '../../state/world';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
@@ -121,7 +121,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const attachScroll = useCallback((el: HTMLDivElement | null) => { scrollRef.current = el; heroScroll(el); }, [heroScroll]);
   const [reelOpen, setReelOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
   const profileActive = isTab ? active && !stack.length : stack[stack.length - 1]?.name === 'profile' && (stack[stack.length - 1] as { id: string }).id === id;
   useEffect(() => { if (!profileActive) setReelOpen(false); }, [profileActive]);
   const nameRef = useNameFit(p?.name ?? '');
@@ -206,7 +205,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
     <div ref={attachScroll} className={`screen screen--hero canvas v-profile${district ? ' v-profile--immersive' : ''}${district && DIRECTION !== 'current' ? ` v-profile--dir dir-${DIRECTION}` : ''}${!isTab ? ' v-profile--pushed' : ''}`} data-scroll={isTab ? 'profile' : undefined}>
       {district && <div className="profile-compact-slot"><header className="profile-compact" aria-hidden={overHero} {...(overHero ? { inert: '' } as Record<string, string> : {})}>
         {!isTab && <IconButton label="Back" onClick={pop}><ChevronLeft size={24} /></IconButton>}
-        <span>{p.name}</span>{DIRECTION === 'b' && !own && <button className={`cta cta--s ${isFollowing ? 'cta--quiet cta--on' : 'cta--solid'}`} aria-pressed={isFollowing} onClick={() => toggleFollow(id)}>{isFollowing ? 'Following' : 'Follow'}</button>}{own && <IconButton label={`Manage your profile${pendingCredits.length ? `, ${pendingCredits.length} pending` : ''}`} onClick={() => setToolsOpen(true)}><SlidersHorizontal size={19} /></IconButton>}<IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
+        <span>{p.name}</span>{DIRECTION === 'b' && !own && <button className={`cta cta--s ${isFollowing ? 'cta--quiet cta--on' : 'cta--solid'}`} aria-pressed={isFollowing} onClick={() => toggleFollow(id)}>{isFollowing ? 'Following' : 'Follow'}</button>}<IconButton label={own ? 'Settings' : `More options for ${p.name}`} onClick={() => own ? push({ name: 'settings' }) : openSheet({ name: 'more', id })}>{own ? <Settings size={19} /> : <MoreHorizontal size={20} />}</IconButton>
       </header></div>}
       <div className={`phero phero--identity-${identityRegion}`} data-hero>
         <div className="ohero-parallax" data-hero-photo>
@@ -230,7 +229,6 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           <IconButton label={own ? 'Share your profile' : `Share ${p.name}`} className="icon-btn--float" onClick={shareProfile}>
             <Share size={18} />
           </IconButton>
-          {own && <IconButton className="icon-btn--float" label={`Manage your profile${pendingCredits.length ? `, ${pendingCredits.length} pending` : ''}`} onClick={() => setToolsOpen(true)}><SlidersHorizontal size={19} /></IconButton>}
           <IconButton label={own ? 'Settings' : `More options for ${p.name}`} className="icon-btn--float" onClick={() => (own ? push({ name: 'settings' }) : openSheet({ name: 'more', id }))}>
             {own ? <Settings size={19} /> : <MoreHorizontal size={20} />}
           </IconButton>
@@ -555,9 +553,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
           </section>
         )}
         </div>
-        {own && <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Manage your profile"><div className="profile-management-body">
-          <p className="meta">Only you can see these tools.</p>
-          <Button size="s" variant="secondary" onClick={() => push({ name: 'editProfile' })}>Edit profile</Button>
+        {own && <div className="profile-management-body">
           {!credits.length && <p className="meta">Verified credits come from productions. You can accept or dispute a credit issued to you; you cannot create your own.</p>}
         {own && <WaysToBeFound person={p} />}
 
@@ -626,7 +622,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         })()}
 
           <EventsSection title="Events you manage" list={eventsOfHost(events, p.id, Date.now(), viewer.id, 'self').filter(e => !eventsOfHost(events, p.id, Date.now()).some(publicEvent => publicEvent.id === e.id))} />
-        </div></Sheet>}
+        </div>}
 
 
 
