@@ -77,6 +77,8 @@ Typecheck, unit tests, all regression suites (updated where text or structure ch
 - Celebration post on credit accept: built, then paused because it did not look right. The code is in a git stash named "celebration post (paused)".
 - First-run animated sequence: four review artifacts were made (Atlys copy, three film-set concepts, a second rack-focus pass). None was approved; paused. Direction notes: motion should come from film sets and teach one real thing; Flutter shader (FragmentProgram) for any ripple or beam.
 
-**Not yet run (needs the research stack, which was declined)**: `tst/qa`, `tst/flow`, `launch`, `a11y/views`. Run these before release. The suites that do not need it pass (unit, wt12, wt5, wt346, wth, fields, focusflow).
+**Regression (11 Oct, research stack up):** launch 43/0, `tst/qa` 127/0 (one run of it showed 1 failure that did not repeat), `tst/flow` 39/0, `a11y/views` 22/0, unit tests, wt12, wt5, wt346, wth, fields and focusflow all pass.
 
-**Known open items**: more craft objects for Explore by craft (only four exist); tab icons are old green and gold art plus line icons, to be replaced; the network page behind "See all" still uses the old list; narrowest width (320) not rechecked; video and text-only post tiles not seen with real data.
+**Done after that:** seven craft objects (Lighting, Direction, Costume added); tile icons recoloured to slate and stone; the "See all" network page uses the new collection cards; Home, Discover and Profile checked at 320 px with no horizontal overflow, light and dark.
+
+**Known open items**: the "All" and "Posts" tab icons are line icons, not objects; video and text-only post tiles not seen with real data; celebration post and first-run sequence paused.
