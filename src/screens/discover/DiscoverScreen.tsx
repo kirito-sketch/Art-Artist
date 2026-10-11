@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { isOutThisWeek, reviewsOpen, stats, topRated } from '../../domain/reviews';
 import { reviewsOf } from '../../state/world';
 import { ScoreLine } from '../reviews/reviewUnits';
-import { BadgeCheck, Bookmark, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, LayoutGrid, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { BadgeCheck, Bookmark, CalendarDays, Check, ChevronDown, ChevronRight, Clapperboard, Film, IndianRupee, MapPin, Newspaper, Plane, Search, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { research } from '../../research-data/client';
 import { CRAFTS } from '../../data/crafts';
@@ -22,6 +22,7 @@ import { visibleEvents } from '../../state/events';
 import { useFeatures } from '../../ui/features';
 import { DISCOVER_TABS, chipDef, type DiscoverChip } from '../../domain/contentTypes';
 import { PersonCard } from '../../ui/PersonCard';
+import { CraftObject } from '../../ui/craft';
 import { PostMasonry } from './PostMasonry';
 
 const TAB_ART: Record<string, string | undefined> = { people: 'people', roles: 'crews', projects: 'projects', events: 'events', reviews: 'reviews' };
@@ -328,7 +329,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
     if (focus) (document.getElementById('discover-search') as HTMLInputElement | null)?.focus({ preventScroll: true });
   }, [focus]);
   // The grid is a wall of work: posts with a picture or a clip. Searching within Posts still finds text-only ones.
-  const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : p.media.length > 0));
+  const allPosts = discoverPosts(viewer, following, userPosts).filter((p) => (q ? `${p.text} ${p.project ?? ''}`.toLowerCase().includes(q) : true));
   const postCraftOf = (p: Post) => (party(p.authorId)?.kind === 'person' ? (party(p.authorId) as Person).craft : undefined);
   const postCrafts = CRAFTS.filter((c) => c.id === postCraft || allPosts.some((p) => postCraftOf(p) === c.id));
   const posts = postCraft ? allPosts.filter((p) => postCraftOf(p) === postCraft) : allPosts;
@@ -372,7 +373,7 @@ export function DiscoverScreen({ scope, setScope, postFocus, variant, focus, hou
               return (
                 <button key={t.chip} role="tab" aria-selected={on} className={`dtab ${on ? 'is-on' : ''}`} onClick={() => pickChip(t.chip)}>
                   <span className="dtab-obj" aria-hidden>
-                    {TAB_ART[t.chip] ? <img src={`/images/tiles/${TAB_ART[t.chip]}.webp`} alt="" draggable={false} /> : t.chip === 'all' ? <LayoutGrid size={26} strokeWidth={1.75} /> : <Newspaper size={26} strokeWidth={1.75} />}
+                    {TAB_ART[t.chip] ? <img src={`/images/tiles/${TAB_ART[t.chip]}.webp`} alt="" draggable={false} /> : <CraftObject kind={t.chip === 'all' ? 'stack' : 'print'} size={52} />}
                   </span>
                   <span className="dtab-label">{t.label}</span>
                 </button>

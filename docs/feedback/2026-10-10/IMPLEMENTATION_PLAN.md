@@ -81,4 +81,6 @@ Typecheck, unit tests, all regression suites (updated where text or structure ch
 
 **Done after that:** seven craft objects (Lighting, Direction, Costume added); tile icons recoloured to slate and stone; the "See all" network page uses the new collection cards; Home, Discover and Profile checked at 320 px with no horizontal overflow, light and dark.
 
-**Known open items**: the "All" and "Posts" tab icons are line icons, not objects; video and text-only post tiles not seen with real data; celebration post and first-run sequence paused.
+**Also done:** the "All" and "Posts" tabs now have drawn objects (a fan of cards, a photo print); text-only posts now appear in Discover (three seeded notes), and the video, text-only, stacked-image and caption tiles were checked with the seeded posts in light and dark.
+
+**Known open items**: celebration post and first-run sequence paused.

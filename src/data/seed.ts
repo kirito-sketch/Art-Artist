@@ -659,6 +659,21 @@ export const networkEvents: Record<string, NetworkEvent[]> = {
 
 export const posts: Post[] = [
   {
+    id: 'p-kabir-note', authorId: 'kabir', time: '1d', likes: 61, comments: 6,
+    text: 'Write for a location you can actually get permission to shoot in. The best scene I wrote this year is a tea stall, because I could stand in it.',
+    media: [],
+  },
+  {
+    id: 'p-meera-note', authorId: 'meera', time: '3d', likes: 44, comments: 5,
+    text: 'Cut the first assembly in two days. Spent two weeks finding out which three shots we could live without.',
+    media: [],
+  },
+  {
+    id: 'p-devika-note', authorId: 'devika', time: '5d', likes: 38, comments: 3,
+    text: 'Rehearse until the actors forget the camera is there. Then shoot fast.',
+    media: [],
+  },
+  {
     id: 'p1', authorId: 'devika', time: '2d', likes: 124, comments: 12, project: 'Salt Water',
     text: 'Last light on the Rushikonda set. Grateful for a crew that moves this fast when the sun does not wait.',
     media: [m('rushikonda')],

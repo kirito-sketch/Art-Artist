@@ -8,7 +8,7 @@ import { useId } from 'react';
  * draws its own, exactly as it will for the supplied assets.
  */
 
-export type CraftObjectKind = 'lens' | 'timeline' | 'microphone' | 'swatches' | 'lamp' | 'clapper' | 'hanger';
+export type CraftObjectKind = 'lens' | 'timeline' | 'microphone' | 'swatches' | 'lamp' | 'clapper' | 'hanger' | 'stack' | 'print';
 
 const INK = '#1d1d1f';
 const GRAPHITE = ['#4a4a4e', '#26262a', '#141416'];
@@ -326,7 +326,55 @@ function Hanger({ id }: { id: string }) {
   );
 }
 
-const DRAW: Record<CraftObjectKind, (p: { id: string }) => JSX.Element> = { lens: Lens, timeline: Timeline, microphone: Microphone, swatches: Swatches, lamp: Lamp, clapper: Clapper, hanger: Hanger };
+/** All: three cards fanned out, one of each kind of thing in Ana (people, work, roles). */
+function Stack({ id }: { id: string }) {
+  const card = (rot: number, fill: string, k: string, mark: React.ReactNode) => (
+    <g key={k} transform={`rotate(${rot} 80 128)`}>
+      <rect x="46" y="30" width="68" height="96" rx="9" fill="#000" opacity="0.2" transform="translate(3 5)" />
+      <rect x="46" y="30" width="68" height="96" rx="9" fill={fill} />
+      <rect x="46" y="30" width="68" height="96" rx="9" fill="none" stroke="#000" strokeOpacity="0.08" />
+      {mark}
+    </g>
+  );
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-slate`} x1="0" x2="1" y1="0" y2="1"><stop offset="0" stopColor="#4a6275" /><stop offset="1" stopColor="#253745" /></linearGradient>
+      </defs>
+      <Shadow id={id} cx={82} cy={142} rx={46} />
+      <g className="craft-body">
+        {card(-20, '#e7e2d8', 'a', <rect x="56" y="42" width="48" height="12" rx="4" fill="#b8b2a4" opacity="0.8" />)}
+        {card(-2, CLAY, 'b', <circle cx="80" cy="74" r="16" fill="#f1dfb0" opacity="0.9" />)}
+        {card(17, `url(#${id}-slate)`, 'c', <g><circle cx="80" cy="64" r="12" fill="#e9eef1" /><path d="M58 112 Q80 78 102 112 Z" fill="#e9eef1" /></g>)}
+        <circle cx="80" cy="128" r="5" fill="#b3924f" />
+      </g>
+    </>
+  );
+}
+
+/** Posts: a photographic print with a white border and a line of caption underneath. */
+function Print({ id }: { id: string }) {
+  return (
+    <>
+      <defs>
+        <linearGradient id={`${id}-sky`} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#f3d6b8" /><stop offset="1" stopColor="#d6a99a" /></linearGradient>
+      </defs>
+      <Shadow id={id} cx={84} cy={142} rx={44} />
+      <g className="craft-body" transform="rotate(-6 80 84)">
+        <rect x="36" y="22" width="92" height="116" rx="7" fill="#000" opacity="0.2" transform="translate(3 5)" />
+        <rect x="36" y="22" width="92" height="116" rx="7" fill="#faf7f1" />
+        <rect x="44" y="30" width="76" height="72" rx="3" fill={`url(#${id}-sky)`} />
+        <circle cx="98" cy="52" r="9" fill="#fff3d2" />
+        <path d="M44 102 L68 66 L84 88 L98 72 L120 102 Z" fill="#4a6275" />
+        <path d="M44 102 L62 80 L76 102 Z" fill="#253745" />
+        <rect x="46" y="110" width="52" height="5" rx="2.5" fill="#b8b2a4" />
+        <rect x="46" y="121" width="34" height="5" rx="2.5" fill="#d3cec2" />
+      </g>
+    </>
+  );
+}
+
+const DRAW: Record<CraftObjectKind, (p: { id: string }) => JSX.Element> = { lens: Lens, timeline: Timeline, microphone: Microphone, swatches: Swatches, lamp: Lamp, clapper: Clapper, hanger: Hanger, stack: Stack, print: Print };
 
 export function CraftObject({ kind, size = 120, className = '' }: { kind: CraftObjectKind; size?: number; className?: string }) {
   const id = `craft-${useId().replace(/:/g, '')}`;
