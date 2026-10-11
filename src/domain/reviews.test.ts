@@ -61,6 +61,13 @@ test('with nothing marked helpful, the longest well-rated review is featured', (
   assert.equal(featured([r()]), undefined);
 });
 
+test('people you follow are quoted first, otherwise anyone', () => {
+  const list = [r({ id: 'a', personId: 'x', text: 'Popular', helpful: ['1', '2', '3'] }), r({ id: 'b', personId: 'friend', text: 'Mine', helpful: [] })];
+  assert.equal(featured(list)?.id, 'a');
+  assert.equal(featured(list, ['friend'])?.id, 'b');
+  assert.equal(featured(list, ['stranger'])?.id, 'a', 'no one you follow wrote one, so anyone');
+});
+
 test('sorting by most helpful, then newest', () => {
   const list = [r({ id: 'a', at: 1 }), r({ id: 'b', at: 2, helpful: ['x'] }), r({ id: 'c', at: 3 })];
   assert.deepEqual(sortReviews(list, 'helpful').map((x) => x.id), ['b', 'c', 'a']);

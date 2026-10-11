@@ -80,9 +80,14 @@ export function stats(list: Review[]) {
 /** Text that is safe to show to someone who hasn't seen the film. */
 const quotable = (r: Review) => !!r.text?.trim() && !r.spoiler;
 
-/** The one review a film is introduced with: the most helpful quotable one, else the longest well-rated recent one. */
-export function featured(list: Review[]) {
-  const q = list.filter(quotable);
+/**
+ * The one review a film is introduced with: the most helpful quotable one, else the longest well-rated recent one.
+ * With `prefer` (people you follow), their quotable reviews are considered first; if none of them wrote one, anyone's.
+ */
+export function featured(list: Review[], prefer: string[] = []) {
+  const all = list.filter(quotable);
+  const mine = prefer.length ? all.filter((r) => prefer.includes(r.personId)) : [];
+  const q = mine.length ? mine : all;
   if (!q.length) return undefined;
   const top = [...q].sort((a, b) => b.helpful.length - a.helpful.length || b.at - a.at)[0];
   if (top.helpful.length) return top;

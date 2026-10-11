@@ -88,7 +88,7 @@ export function DistrictHome({ go }: { go: Go }) {
         { city: me.city, crafts: myCrafts, languages: me.languages ?? [], network, following, blocked },
         [saved.map((x) => x.id).join(), following.join(), blocked.join()].join('|'),
       )
-        .map((it) => weekCard(it, { roles, events: pool, me, network, following, quote: (id) => { const f = featuredFor(id); return f?.text ? { text: f.text, by: person(f.personId).name } : undefined; } }))
+        .map((it) => weekCard(it, { roles, events: pool, me, network, following, quote: (id) => { const f = featuredFor(id, following); return f?.text ? { text: f.text, by: person(f.personId).name } : undefined; } }))
         .filter((c): c is WeekCard => !!c)
         .map((c) => (c.media || c.type !== 'event' ? c : { ...c, media: eventArt(pool.find((e) => `event:${e.id}` === c.key)!) }))
         .map((c) => (WEEK_TEST === 'noimg' ? { ...c, media: undefined } : c))

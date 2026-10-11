@@ -290,6 +290,6 @@ export function ReviewSheet({ projectId, title, initial }: { projectId: string; 
 }
 
 /** The week's films as Home shows them: poster, score, and one good review. */
-export function featuredFor(id: string) {
-  return featured(reviewsOf(id));
+export function featuredFor(id: string, following: string[] = []) {
+  return featured(reviewsOf(id), following);
 }

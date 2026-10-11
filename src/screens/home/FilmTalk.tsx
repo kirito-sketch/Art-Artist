@@ -12,8 +12,8 @@ import { featuredFor, ScoreLine, Stars } from '../reviews/reviewUnits';
  * have shows your rating. With one film the card is wide; with several they sit in a sideways rail.
  */
 function FilmCard({ w, wide }: { w: Work; wide: boolean }) {
-  const { viewer, push, openSheet, mayReview } = useStore();
-  const f = featuredFor(w.id);
+  const { viewer, push, openSheet, mayReview, following } = useStore();
+  const f = featuredFor(w.id, following);
   const p = f && party(f.personId);
   const mine = reviewsOf(w.id).find((r) => r.personId === viewer.id);
   const canRate = !mine && mayReview(w.id);
