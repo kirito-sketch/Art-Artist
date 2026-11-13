@@ -1,6 +1,6 @@
 import * as seed from '../data/seed';
 import type { Media, Person } from '../data/types';
-import { craftProfile, FIELDS, setsFor, skillCategoriesFor, type Experience, type Visibility } from '../data/profileSchema';
+import { craftProfile, FIELDS, setsFor, skillCategoriesFor, type ArtworkDetails, type Experience, type Visibility } from '../data/profileSchema';
 import { world } from './world';
 import { TEST_MODE } from '../research-data/surface';
 import type { VideoSource } from '../domain/showreel';
@@ -76,6 +76,8 @@ export interface ProfileExtra {
   /** Filled from the city; editable for people the city list doesn't know. */
   state?: string;
   country?: string;
+  /** Fine artists: details per artwork, by portfolio image id (gate 3). */
+  artworks?: Record<string, ArtworkDetails>;
 }
 
 const empty = (): ProfileExtra => ({ skills: [], suggestedSkills: [], details: {}, visibility: {}, workTypes: [], links: [], workLinks: [] });

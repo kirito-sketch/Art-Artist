@@ -14,6 +14,11 @@ import { Button, IconButton, Photo, Row, SectionHeader } from '../../ui/primitiv
 import { Sheet } from '../../ui/Sheet';
 import { MediaPicker } from '../../ui/MediaPicker';
 import { ShowreelManager } from './Showreel';
+import { ArtworkDetailsSheet } from './ArtworkDetails';
+import { isFineArt } from '../../data/crafts';
+import type { ArtworkDetails } from '../../data/profileSchema';
+import { artworkLine, artworkMissing } from '../../domain/profileGates';
+import { askAfterUpload } from './FinishProfile';
 
 const move = <T,>(items: T[], index: number, change: number) => {
   const next = [...items]; const [item] = next.splice(index, 1); next.splice(Math.max(0, Math.min(next.length, index + change)), 0, item); return next;
@@ -49,8 +54,13 @@ export function WorkPortfolioPage() {
   const [workPicker, setWorkPicker] = useState(false);
   const [external, setExternal] = useState<{ id: string; title: string; url: string } | null>(null);
   const [discard, setDiscard] = useState(false);
+  // Fine artists describe each piece (gate 3): new pieces queue up and are asked one sheet at a time.
+  const artist = isFineArt(me.craft);
+  const [arts, setArts] = useState<Record<string, ArtworkDetails>>({ ...(x.artworks ?? {}) });
+  const [artQueue, setArtQueue] = useState<string[]>([]);
+  const artMedia = images.find((m) => m.id === artQueue[0]) ?? null;
   const initialFeatured = featuredWorkOf(viewer.id);
-  const dirty = JSON.stringify([reel, draft, images, featured, profileCover]) !== JSON.stringify([x.reel, x.reelDraft, (seed.portfolio[viewer.id] ?? []), initialFeatured, x.profileCover]);
+  const dirty = JSON.stringify([reel, draft, images, featured, profileCover, arts]) !== JSON.stringify([x.reel, x.reelDraft, (seed.portfolio[viewer.id] ?? []), initialFeatured, x.profileCover, x.artworks ?? {}]);
   const eligible = eligibleFeaturedProjects(viewer.id);
   const featuredSection = <section className="ana-work-section"><h2>Featured work</h2><p className="meta">Selected projects, credits or external work. Featuring a project never creates a credit.</p>
     <div className="ana-featured-work">{featured.map((item, index) => {
@@ -67,25 +77,28 @@ export function WorkPortfolioPage() {
   return <div className="composer ana-work-editor">
     <header className="composer-bar"><button className="link link--muted" onClick={() => dirty ? setDiscard(true) : pop()}>Cancel</button><p className="composer-title">{words.reel ? 'Portfolio & showreel' : 'Your work'}</p><Button size="s" disabled={!dirty} onClick={() => {
       if (x.reelDraft?.url?.startsWith('blob:') && x.reelDraft.url !== draft?.url) URL.revokeObjectURL(x.reelDraft.url);
+      const added = images.length > (seed.portfolio[viewer.id]?.length ?? 0) || (!!reel && reel.url !== x.reel?.url);
       seed.portfolio[viewer.id] = images;
       const ids = new Set(eligible.map((p) => p.id));
-      saveProfile({}, { reel, reelDraft: draft, profileCover, featuredWork: featured.filter((f) => f.kind === 'project' ? ids.has(f.projectId) : !!safeWorkUrl(f.url)) });
-      pop(); showToast({ text: 'Work saved' });
+      saveProfile({}, { reel, reelDraft: draft, profileCover, featuredWork: featured.filter((f) => f.kind === 'project' ? ids.has(f.projectId) : !!safeWorkUrl(f.url)), ...(artist ? { artworks: Object.fromEntries(Object.entries(arts).filter(([k]) => images.some((m) => m.id === k))) } : {}) });
+      pop();
+      if (!(added && askAfterUpload())) showToast({ text: 'Work saved' });
     }}>Save</Button></header>
     <div className="composer-body ep-page">
       <ProfileCoverPicker personId={viewer.id} value={profileCover} onChange={setProfileCover} images={images} reel={reel} />
       {!words.reel && !words.images && featuredSection}
       {words.reel ? <section className="ana-work-section"><h2>Showreel</h2><p className="meta">One primary professional video. Optional.</p><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></section> : <details className="ana-optional-reel"><summary>Showreel (optional)</summary><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></details>}
-      {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo surface="portfolio-thumbnail" media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}
+      {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo surface="portfolio-thumbnail" media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}{artist && <span className={`ep-art-tag${artworkMissing(arts[image.id]).length ? ' is-draft' : ''}`}>{artworkMissing(arts[image.id]).length ? 'Draft · add details' : artworkLine(arts[image.id])}</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}${artist && artworkMissing(arts[image.id]).length ? ', draft' : ''}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}
       {(words.reel || words.images) && featuredSection}
     </div>
-    <Sheet className="ana-work-sheet" open={imagePicker} onClose={() => setImagePicker(false)} title="Add portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { setImages((old) => [...old, ...ms.filter((m) => m.kind === 'image' && !old.some((o) => o.id === m.id))]); setImagePicker(false); }} /></Sheet>
+    <Sheet className="ana-work-sheet" open={imagePicker} onClose={() => setImagePicker(false)} title="Add portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { const fresh = ms.filter((m) => m.kind === 'image' && !images.some((o) => o.id === m.id)); setImages((old) => [...old, ...fresh]); setImagePicker(false); if (artist) setArtQueue(fresh.map((m) => m.id)); }} /></Sheet>
     <Sheet className="ana-work-sheet" open={framingImage !== null} onClose={() => setFramingImage(null)} title="Reposition" size="tall">{framingImage !== null && images[framingImage] && <MediaFramingEditor media={images[framingImage]} surface="portfolio-thumbnail" onChange={next => setImages(old => old.map((m,i) => i === framingImage ? next : m))} />}<Button block onClick={() => setFramingImage(null)}>Done</Button></Sheet>
     <Sheet className="ana-work-sheet" open={imageMenu !== null} onClose={() => setImageMenu(null)} title="Portfolio image"><Button variant="secondary" onClick={() => { setFramingImage(imageMenu); setImageMenu(null); }}>Reposition</Button>
-      {imageMenu !== null && <div className="group">{imageMenu > 0 && <><Row icon={<Check size={18} />} label="Make cover" onPress={() => { setImages((old) => move(old, imageMenu, -imageMenu)); setImageMenu(null); }} /><Row icon={<ArrowUp size={18} />} label="Move earlier" onPress={() => { setImages((old) => move(old, imageMenu, -1)); setImageMenu(null); }} /></>}{imageMenu < images.length - 1 && <Row icon={<ArrowDown size={18} />} label="Move later" onPress={() => { setImages((old) => move(old, imageMenu, 1)); setImageMenu(null); }} />}<Row icon={<Trash2 size={18} />} label="Remove image" onPress={() => { setImages((old) => old.filter((_, i) => i !== imageMenu)); setImageMenu(null); }} /></div>}
+      {imageMenu !== null && <div className="group">{imageMenu > 0 && <><Row icon={<Check size={18} />} label="Make cover" onPress={() => { setImages((old) => move(old, imageMenu, -imageMenu)); setImageMenu(null); }} /><Row icon={<ArrowUp size={18} />} label="Move earlier" onPress={() => { setImages((old) => move(old, imageMenu, -1)); setImageMenu(null); }} /></>}{imageMenu < images.length - 1 && <Row icon={<ArrowDown size={18} />} label="Move later" onPress={() => { setImages((old) => move(old, imageMenu, 1)); setImageMenu(null); }} />}{artist && <Row icon={<Check size={18} />} label="Artwork details" onPress={() => { setArtQueue([images[imageMenu].id]); setImageMenu(null); }} />}<Row icon={<Trash2 size={18} />} label="Remove image" onPress={() => { setImages((old) => old.filter((_, i) => i !== imageMenu)); setImageMenu(null); }} /></div>}
     </Sheet>
     <Sheet className="ana-work-sheet" open={workPicker} onClose={() => setWorkPicker(false)} title="Add featured work" size="tall"><div className="stack"><Button variant="secondary" onClick={() => { setWorkPicker(false); setExternal({ id: crypto.randomUUID(), title: '', url: '' }); }}>Add external work link</Button><p className="field-label">Your public projects and accepted credits</p><div className="group">{eligible.filter((p) => !featured.some((f) => f.kind === 'project' && f.projectId === p.id)).map((p) => <Row key={p.id} label={publicName(p)} onPress={() => { setFeatured((old) => [...old, { id: crypto.randomUUID(), kind: 'project', projectId: p.id }]); setWorkPicker(false); }} />)}</div>{!eligible.length && <p className="meta">Shared independent projects and credits accepted on public projects appear here.</p>}</div></Sheet>
     <Sheet className="ana-work-sheet" open={!!external} onClose={() => setExternal(null)} title="External work"><div className="stack">{external && <><label className="ob-field"><span className="field-label">Work title</span><input className="field" value={external.title} onChange={(e) => setExternal({ ...external, title: e.target.value })} /></label><label className="ob-field"><span className="field-label">Work link</span><input className="field" type="url" value={external.url} onChange={(e) => setExternal({ ...external, url: e.target.value })} /></label><Button block disabled={!external.title.trim() || !safeWorkUrl(external.url)} onClick={() => { const item: FeaturedWork = { ...external, kind: 'external', title: external.title.trim(), url: safeWorkUrl(external.url)! }; setFeatured((old) => old.some((f) => f.id === item.id) ? old.map((f) => f.id === item.id ? item : f) : [...old, item]); setExternal(null); }}>Done</Button></>}</div></Sheet>
+    {artist && <ArtworkDetailsSheet media={artMedia} value={artMedia ? arts[artMedia.id] : undefined} step={artQueue.length > 1 ? `${artQueue.length} pieces to describe` : undefined} onSave={(d) => { setArts((a) => ({ ...a, [artQueue[0]]: d })); setArtQueue((q) => q.slice(1)); }} onLater={() => setArtQueue((q) => q.slice(1))} />}
     <Sheet className="ana-work-sheet" open={discard} onClose={() => setDiscard(false)} title="Discard changes?" close={false}><div className="stack"><Button variant="danger" block onClick={pop}>Discard</Button><Button variant="secondary" block onClick={() => setDiscard(false)}>Keep editing</Button></div></Sheet>
   </div>;
 }

@@ -316,3 +316,18 @@ export const CITY_LANGUAGES: Record<string, string[]> = {
   Kolkata: ['Bengali', 'Hindi', 'English'],
   Visakhapatnam: ['Telugu', 'English'],
 };
+
+/* ------------------------------------------------------------ artworks (gate 3, fine artists) */
+
+/** What the Master Database asks about each artwork (Fine Arts · Artwork, plus Framed). Asked when a piece is added. */
+export const ARTWORK_FIELDS: FieldDef[] = [
+  { id: 'type', label: 'Type', type: 'choice', options: ['Original', 'Limited print', 'Open print'], visibility: 'public' },
+  { id: 'sale', label: 'Availability', type: 'choice', options: ['For sale', 'Sold', 'Commission', 'Not for sale'], visibility: 'public' },
+  { id: 'price', label: 'Price range', type: 'choice', options: ['Under ₹10k', '₹10k–50k', '₹50k–2L', '₹2L+'], visibility: 'public' },
+  { id: 'framed', label: 'Framed', type: 'choice', options: ['Yes', 'No'], visibility: 'public' },
+  { id: 'coa', label: 'Certificate of authenticity', type: 'choice', options: ['Yes', 'No'], visibility: 'public' },
+  { id: 'rights', label: 'Reproduction rights available', type: 'choice', options: ['Yes', 'No'], visibility: 'public' },
+];
+/** A price is only asked when the piece can be bought. */
+export const PRICED = ['For sale', 'Commission'];
+export type ArtworkDetails = Partial<Record<'type' | 'sale' | 'price' | 'framed' | 'coa' | 'rights', string>>;

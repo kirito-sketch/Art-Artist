@@ -1,5 +1,5 @@
 import { isFineArt } from '../data/crafts';
-import { rolesFor, setsFor, type FieldDef } from '../data/profileSchema';
+import { ARTWORK_FIELDS, PRICED, rolesFor, setsFor, type ArtworkDetails, type FieldDef } from '../data/profileSchema';
 import type { Person } from '../data/types';
 import type { DetailValue, ProfileExtra } from '../state/profile';
 
@@ -9,7 +9,7 @@ import type { DetailValue, ProfileExtra } from '../state/profile';
  * Gate 1, the account, is onboarding: name, craft, role, city, languages, industry, availability.
  * Gate 2, this file: everything the Master Database needs for the person's own craft. Until it is met they can
  * browse, follow, save and read, but applying, messaging and posting open the missing items first.
- * Gate 3 is per artwork, for fine artists (not yet built).
+ * Gate 3 is per artwork, for fine artists: artworkMissing below.
  *
  * Only the person's main craft counts: other crafts add their detail sets to Edit profile, but never block.
  * Sensitive fields (height, build…) are never required.
@@ -72,4 +72,21 @@ export function timeLeft(items: GateItem[]): string {
   const s = items.reduce((a, i) => a + i.seconds, 0);
   if (s < 60) return 'Under a minute';
   return `About ${Math.round(s / 60)} min`;
+}
+
+/* ------------------------------------------------------------ gate 3: artworks */
+
+/** The artwork fields still empty. Price is asked only when the piece can be bought. */
+export function artworkMissing(d: ArtworkDetails = {}): FieldDef[] {
+  return ARTWORK_FIELDS.filter((f) => (f.id !== 'price' || PRICED.includes(d.sale ?? '')) && !d[f.id as keyof ArtworkDetails]);
+}
+
+/** Who sees a portfolio piece: everyone once a fine artist has described it; only its owner until then. Other crafts are never held back. */
+export function artworkVisible(fineArtist: boolean, d: ArtworkDetails | undefined, own: boolean) {
+  return own || !fineArtist || artworkMissing(d).length === 0;
+}
+
+/** The one line shown on a published artwork: "Original · For sale · ₹10k–50k"; short leaves out the type (small tiles). */
+export function artworkLine(d: ArtworkDetails = {}, short = false) {
+  return [short ? undefined : d.type, d.sale, PRICED.includes(d.sale ?? '') ? d.price : undefined].filter(Boolean).join(' · ');
 }

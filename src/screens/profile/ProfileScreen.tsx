@@ -22,6 +22,8 @@ import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { GateChecklist, gated } from './FinishProfile';
+import { artworkLine, artworkMissing, artworkVisible } from '../../domain/profileGates';
+import { isFineArt } from '../../data/crafts';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
 import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
@@ -180,7 +182,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
 
   const d = derive(p);
   const credits = d.credits;
-  const work = d.work;
+  // A fine artist's undescribed artworks are drafts: only they see them (gate 3).
+  const artist = isFineArt(p.craft);
+  const arts = profileOf(id).artworks ?? {};
+  const work = d.work.filter((m) => artworkVisible(artist, arts[m.id], own));
   const reel = profileOf(id).reel;
   const stills = work;
   const bento = bentoLayout(stills.length);
@@ -420,6 +425,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
                   const last = k === b.tiles.length - 1 && b.more > 0;
                   return <Pressable key={m.id + t.index} className="work-bento-tile" style={{ gridColumn: `${t.col} / span ${t.colSpan}`, gridRow: `${t.row} / span ${t.rowSpan}` }} onClick={() => push({ name: 'media', items: stills, index: t.index, what: 'Portfolio image', from: `by ${p.name}` })} scale={0.97} aria-label={last ? `${mediaName(m, t.index, stills.length, 'Portfolio image', `by ${p.name}`)}. ${b.more} more` : mediaName(m, t.index, stills.length, 'Portfolio image', `by ${p.name}`)}>
                     <Photo media={m} surface="portfolio-thumbnail" showPlay={m.kind === 'video'} />
+                    {artist && !last && <span className={`work-art-tag${artworkMissing(arts[m.id]).length ? ' is-draft' : ''}`}>{artworkMissing(arts[m.id]).length ? 'Draft · only you' : artworkLine(arts[m.id], true)}</span>}
                     {last && <span className="work-bento-more" aria-hidden>+{b.more}</span>}
                   </Pressable>;
                 })}

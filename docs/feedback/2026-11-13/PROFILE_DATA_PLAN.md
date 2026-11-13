@@ -22,7 +22,7 @@
 |---|---|---|
 | 1. Account | Onboarding | Name, email, main craft, role within the craft, city, languages, industry, availability. State and country are filled from the city. |
 | 2. Be found and act | Before applying, messaging or posting a role | Level, types of work, every non-sensitive detail field of the main craft, Instagram (or "I don't have one"), verified mobile, one piece of work. |
-| 3. Artwork | When a fine artist adds a piece | Type, sale status, price range, framed, certificate, reproduction rights. Not built yet. |
+| 3. Artwork | When a fine artist adds a piece | Type, sale status, price range (only for sale or commission), framed, certificate, reproduction rights. A piece without them is a draft only the artist sees. |
 
 Until gate 2 is met a person can browse, follow, save and read. A blocked action opens only the missing items, one per screen, and then carries on with the action.
 
@@ -46,8 +46,12 @@ Until gate 2 is met a person can browse, follow, save and read. A blocked action
 | Incomplete profiles | Still visible and searchable; only applying, messaging and posting a role are blocked |
 | Camera lists | Models (ARRI Alexa 35…), converted to brands for any export |
 
+## Built in stage 2
+
+- Artwork details (`src/screens/profile/ArtworkDetails.tsx`, rules in `src/domain/profileGates.ts`): when a fine artist adds pieces in Your work, one sheet per piece asks the six artwork fields as chips; "Later" keeps the piece as a draft. Each piece in the editor and on the profile carries a short label ("For sale · ₹10k–50k", or "Draft · only you"). Drafts are left out of the profile, its cover and its viewer for everyone but the artist.
+- Asked after an upload (`askAfterUpload` in `FinishProfile.tsx`): saving a new reel or new images asks the one detail that describes the work in that craft, if it is still empty: camera for camera crafts, software for editors and VFX, tools for sound, medium for artists, and so on. Once per session, in place of the Saved toast.
+
 ## Next
 
-- Stage 2: artwork details for fine artists (gate 3); contextual asks after uploads.
 - Stage 3, needs the client's approval: browse before sign-up (two taps, then a real preview of opportunities, events and films; no individual profiles before sign-in).
 - Export in the sheet's layout; drop-off measurement per step.

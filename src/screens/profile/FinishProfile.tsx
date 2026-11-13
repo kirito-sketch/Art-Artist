@@ -1,6 +1,7 @@
 import { Check, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import * as seed from '../../data/seed';
+import type { Craft } from '../../data/types';
 import { INDUSTRIES, industriesFor, LEVELS, rolesFor, WORK_TYPES, type FieldDef } from '../../data/profileSchema';
 import { gateTotal, missingForGate, timeLeft, type GateItem } from '../../domain/profileGates';
 import { TEST_MODE } from '../../research-data/surface';
@@ -10,7 +11,7 @@ import { useStore } from '../../state/store';
 import { MobileVerify } from '../../ui/MobileVerify';
 import { Button, Chip } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
-import { InstagramField } from './EditProfile';
+import { InstagramField } from './InstagramField';
 
 /*
  * Finish your profile (gate 2, src/domain/profileGates.ts). One question per screen, chips wherever the Master
@@ -38,6 +39,31 @@ export function useGate() {
 /** Open the sheet: from a checklist, or to finish one item. */
 export const openFinish = (o: Open = {}) => opener?.(o);
 
+/** The one detail that describes a piece of work in each craft: asked straight after an upload, while it is fresh. */
+const TOOL_FIELD: Partial<Record<Craft, string>> = {
+  cinematographer: 'cameras', camera: 'cameras', lighting: 'lighting', editor: 'editSoftware', colourist: 'editSoftware', vfx: 'vfxSoftware',
+  sound: 'soundTools', music: 'daws', photography: 'photoCameras', director: 'genres', writing: 'genres', dance: 'danceForms',
+  painting: 'artMedium', sculpture: 'artMedium', 'digital-art': 'artMedium', illustration: 'artMedium', installation: 'artMedium', printmaking: 'artMedium', 'mixed-media': 'artMedium',
+};
+
+/**
+ * After a reel or images are saved: if the craft's "what did you make this with" detail is still empty, ask it now,
+ * one question, in a sheet over the profile. Answered or not, it is never asked twice in one session. Returns whether
+ * it will ask, so the caller can leave out its own "Saved" toast (the question covers it).
+ */
+const askedAfterUpload = new Set<string>();
+export function askAfterUpload(): boolean {
+  const items = check?.() ?? [];
+  const craft = currentCraft?.();
+  const id = craft && TOOL_FIELD[craft];
+  if (!id || askedAfterUpload.has(id) || !items.some((i) => i.id === `field:${id}`)) return false;
+  askedAfterUpload.add(id);
+  // After the editor has closed, so the question opens over the profile.
+  window.setTimeout(() => openFinish({ only: `field:${id}`, reason: 'About the work you just added' }), 650);
+  return true;
+}
+let currentCraft: (() => Craft | undefined) | null = null;
+
 /**
  * Wrap an action that needs a complete profile. Complete: it runs now. Not: the sheet asks what is missing and
  * runs the action once the last item is answered. Acting for a house never asks (the house is the actor).
@@ -59,6 +85,7 @@ export function FinishProfileHost() {
     return () => void (opener = null);
   }, []);
   check = () => items;
+  currentCraft = () => person(viewer.id)?.craft;
 
   const queue = open?.only ? items.filter((i) => i.id === open.only) : items.filter((i) => !skipped.includes(i.id));
   const current = queue[0];
