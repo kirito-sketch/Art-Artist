@@ -5,6 +5,7 @@ import { ArrowUp, BellOff, ChevronLeft, ChevronRight, MoreHorizontal, Search, Sq
 import { useEffect, useRef, useState } from 'react';
 import type { Conversation, Party } from '../../data/types';
 import { useStore } from '../../state/store';
+import { gated } from '../profile/FinishProfile';
 import { findOpportunity, org, party, person } from '../../state/selectors';
 import * as seed from '../../data/seed';
 import { searchablePeople } from '../../domain/discovery';
@@ -186,11 +187,12 @@ function NewMessage({ open, onClose }: { open: boolean; onClose: () => void }) {
     .sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'person' ? -1 : 1))
     .slice(0, 30);
   const start = (id: string) => {
-    const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
-    if (!cid) return;
     onClose();
     setQ('');
-    push({ name: 'conversation', id: cid });
+    gated('Before you message', () => {
+      const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
+      if (cid) push({ name: 'conversation', id: cid });
+    })();
   };
   return (
     <Sheet open={open} onClose={onClose} title={acting === 'self' ? 'New message' : `New message as ${org(acting).name}`} size="tall">

@@ -10,6 +10,7 @@ import { craftProfile, setsFor, skillCategoriesFor, SKILL_CATEGORIES } from '../
 import { engaged, later, nextPrompt, openSteps, pendingForPhone, profileOf, readPacing, writePacing, type Step } from '../../state/profile';
 import { org, person } from '../../state/selectors';
 import { project as wproject } from '../../state/world';
+import { useGate } from '../profile/FinishProfile';
 
 /*
  * First-run Home: the first screen after onboarding. It is built only from what onboarding captured
@@ -55,7 +56,10 @@ export function Resolve({ forming, i, children }: { forming: boolean; i: number;
  * On a first Home it also says hello by name (welcome), in place of a toast over the page.
  */
 export function FirstStep({ welcome }: { welcome?: string } = {}) {
+  const gate = useGate();
   if (TEST_MODE) return <StudyStep welcome={welcome} />;
+  // While the profile has required items left, the checklist (GateChecklist) is the one card; no second prompt.
+  if (gate.items.length) return null;
   return <NextStep welcome={welcome} />;
 }
 

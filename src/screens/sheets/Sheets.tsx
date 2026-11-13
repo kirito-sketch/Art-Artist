@@ -6,6 +6,7 @@ import { currentScreen, focusInto, restoreFocus, trapTab } from '../../ui/a11y';
 import { dur, shared, spring } from '../../ui/motion';
 import * as seed from '../../data/seed';
 import { useStore, type Sheet as SheetRoute } from '../../state/store';
+import { gated } from '../profile/FinishProfile';
 import { useTheme } from '../../ui/theme';
 
 /** Create surface colours (framer-motion interpolates hex, not tokens): the action green and the raised surface. */
@@ -151,7 +152,7 @@ function CreateSurface({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 function CreateMenu() {
-  const { push, acting, openSheet } = useStore();
+  const { push, acting, openSheet, closeSheet } = useStore();
   const events = useFeatures().events;
   const eventRow = events && <Row icon={<CalendarDays size={22} />} label={acting !== 'self' ? `Event by ${org(acting).name}` : 'Event'} onPress={() => push({ name: 'composeEvent' })} />;
   // Acting for a house: it posts updates and opens roles. It is never "available for work".
@@ -167,7 +168,7 @@ function CreateMenu() {
   return (
     <div className="group create-rows">
       <Row icon={<PenLine size={22} />} label="Post" onPress={() => push({ name: 'composePost' })} />
-      <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => push({ name: 'composeCollab', intent: 'looking' })} />
+      <Row icon={<UserSearch size={22} />} label="Looking for someone" onPress={() => (closeSheet(), gated('Before you post a role', () => push({ name: 'composeCollab', intent: 'looking' }))())} />
       <Row icon={<CircleCheck size={22} />} label="Open to work" onPress={() => openSheet({ name: 'availability', from: 'create' })} />
       {eventRow}
       <Row icon={<Plus size={22} />} label="Start an independent project" onPress={() => openSheet({ name: 'newProject' })} />

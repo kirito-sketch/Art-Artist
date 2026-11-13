@@ -11,7 +11,7 @@ const extra = (p: Partial<ProfileExtra> = {}): ProfileExtra => ({ skills: [], su
 const facts = (p: Partial<Person> = {}, x: Partial<ProfileExtra> = {}, images = 1) => ({ person: person(p), extra: extra(x), images, availabilityOpen: true, wantsWork: true });
 
 test('a writer never gets acting fields; an actor who also edits gets both sets', () => {
-  assert.deepEqual(setsFor(['writing']), []);
+  assert.deepEqual(setsFor(['writing']).map((s) => s.id), ['writing']);
   assert.deepEqual(setsFor(['actor', 'editor']).map((s) => s.id), ['acting', 'editing']);
 });
 

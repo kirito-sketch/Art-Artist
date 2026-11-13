@@ -1,7 +1,7 @@
 import { useFeatures } from '../../ui/features';
 import { ShowreelMedia } from './Showreel';
 import { craftDef } from '../../data/crafts';
-import { Aperture, Briefcase, Camera, ExternalLink, Film, Layers, MapPin, Play, Plane, Sparkles, type LucideIcon } from 'lucide-react';
+import { Aperture, Briefcase, Camera, Clapperboard, ExternalLink, Film, Layers, MapPin, Play, Plane, Sparkles, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import * as seed from '../../data/seed';
 import { categoryOf, craftProfile, EXPERIENCE, setsFor, skillDef, VISIBILITY_LABEL, type FieldDef } from '../../data/profileSchema';
@@ -55,7 +55,8 @@ function factIcon(label: string): LucideIcon {
   if (/camera|kit|gear|lens/.test(l)) return Camera;
   if (/format|work$|^work/.test(l)) return Film;
   if (/experience|years/.test(l)) return Briefcase;
-  if (/craft/.test(l)) return Layers;
+  if (/craft|^role/.test(l)) return Layers;
+  if (/industr/.test(l)) return Clapperboard;
   if (/where|location/.test(l)) return MapPin;
   if (/travel/.test(l)) return Plane;
   if (/special/.test(l)) return Sparkles;
@@ -102,12 +103,14 @@ export function ProfileDetails({ person }: { person: Person }) {
           </ul>
         </section>
       )}
-      {(district ? !!person.crafts?.length || !!person.specialisation || rows.length > 0 || !!exp || x.workTypes.length > 0 : crafts.length > 0 || rows.length > 0 || exp || x.workTypes.length > 0) && (
+      {(district ? !!person.crafts?.length || !!person.specialisation || rows.length > 0 || !!exp || x.workTypes.length > 0 || !!x.craftRole || !!x.industries?.length : crafts.length > 0 || rows.length > 0 || exp || x.workTypes.length > 0) && (
         <section className="section section--flush">
           <SectionHeader title="Professional details" />
           <dl className="pf-details">
             {/* The immersive profile already says the craft, languages and years under the name: no repeats here. */}
             {!district && <FactRow label="Primary craft" district={district}>{person.role || craftDef(person.craft)?.label}</FactRow>}
+            {x.craftRole && <FactRow label="Role" district={district}>{[x.craftRole, x.level].filter(Boolean).join(' · ')}</FactRow>}
+            {!!x.industries?.length && <FactRow label="Industries" district={district}>{x.industries.join(', ')}</FactRow>}
             {!!person.crafts?.length && <FactRow label="Other crafts" district={district}>{person.crafts.map(c => craftDef(c)?.label ?? c).join(', ')}</FactRow>}
             {!district && !!person.languages?.length && <FactRow label="Languages" district={district}>{person.languages.join(', ')}</FactRow>}
             {person.specialisation && <FactRow label="Specialisation" district={district}>{person.specialisation}</FactRow>}
@@ -130,7 +133,8 @@ export function ProfileDetails({ person }: { person: Person }) {
 export function WorkLinks({ person }: { person: Person }) {
   const district = useFeatures().home === 'district';
   const x = profileOf(person.id);
-  const links = [...(district ? [] : x.workLinks), ...x.links];
+  const insta = x.instagram ? [{ id: 'instagram', label: `Instagram · @${x.instagram}`, url: `https://www.instagram.com/${x.instagram}/` }] : [];
+  const links = [...insta, ...(district ? [] : x.workLinks), ...x.links.filter((l) => !/instagram\.com/.test(l.url) || !x.instagram)];
   if (!links.length) return null;
   return (
     <section className="section section--flush">

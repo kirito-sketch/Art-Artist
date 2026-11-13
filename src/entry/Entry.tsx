@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Camera, Check, ChevronLeft, ChevronRight, Lock, Mail, Users } from 'lucide-react';
 import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { focusInto, rovingIndex, rovingKeys } from '../ui/a11y';
-import { CRAFTS, headline } from '../data/crafts';
+import { CRAFTS, headline, isFineArt } from '../data/crafts';
 import * as seed from '../data/seed';
 import type { Craft, Media } from '../data/types';
 import { DraftTag, LegalDocView, type DocId } from '../legal/docs';
@@ -25,7 +25,7 @@ import { research } from '../research-data/client';
 import { TEST_MODE } from '../research-data/surface';
 import { INTENTS, type Intent } from '../domain/relevance';
 import { MAX_ONBOARDING_INTENTS, needsAvailability, toggleOnboardingIntent } from '../domain/onboardingIntents';
-import { CITY_LANGUAGES, craftProfile, LANGUAGES } from '../data/profileSchema';
+import { CITY_LANGUAGES, craftProfile, INDUSTRIES, industriesFor, LANGUAGES, placeFor, rolesFor } from '../data/profileSchema';
 import { type ProfileExtra, type Reel } from '../state/profile';
 import { TEST_CODE as MOBILE_TEST_CODE } from '../ui/MobileVerify';
 import { maskedPhone, normalisePhone, validPhone } from '../state/profile';
@@ -84,6 +84,8 @@ interface Snapshot {
   name: string;
   photo?: string;
   primary: Craft | null;
+  craftRole?: string;
+  industries?: string[];
   intent: Intent | null;
   selectedIntents: Intent[];
   city: string;
@@ -136,6 +138,12 @@ export function EntryFlow() {
   // kept when you go Back, and can be changed or cleared.
   const [primary, setPrimary] = useState<Craft | null>(resumed?.primary ?? (invite ? 'production' : null));
   const [intent, setIntent] = useState<Intent | null>(resumed?.intent ?? (invite ? 'hire' : null));
+  // The role inside the craft (Director, Assistant Director…): one tap, asked under the craft it belongs to.
+  const [craftRole, setCraftRole] = useState(resumed?.craftRole ?? '');
+  const roles = primary && !TEST_MODE && !invite ? rolesFor(primary) : [];
+  // Industries: pre-selected from the languages until the person touches them, then theirs.
+  const [industries, setIndustries] = useState<string[]>(resumed?.industries ?? []);
+  const [industriesTouched, setIndustriesTouched] = useState(!!resumed?.industries?.length);
   const district = !TEST_MODE && getFeatures().home === 'district';
   const [selectedIntents, setSelectedIntents] = useState<Intent[]>(resumed?.selectedIntents ?? (invite ? ['hire'] : []));
   const hasIntent = district ? selectedIntents.length > 0 : !!intent;
@@ -143,12 +151,14 @@ export function EntryFlow() {
   const [avail, setAvail] = useState<'now' | 'from'>(resumed?.avail ?? 'now');
   const [availFrom, setAvailFrom] = useState(resumed?.availFrom ?? '');
   const [personId, setPersonId] = useState<string | null>(null);
+  const asksIndustry = !TEST_MODE && !invite && !!primary && !isFineArt(primary);
   const asksAvailability = district ? needsAvailability(selectedIntents) : intent === 'work' || intent === 'collaborate';
   // Approved direction (docs/REVIEW_EVENTS_PROFILE.md §4): the rest is recommended and skippable, and all of it
   // lands in the same profile fields Edit Profile uses.
   const [phone, setPhone] = useState<{ number: string; verified: boolean } | null>(resumed?.phone ?? null);
   const [phoneDraft, setPhoneDraft] = useState(resumed?.phoneDraft ?? '');
   const [langs, setLangs] = useState<string[]>(resumed?.langs ?? []);
+  const chosenIndustries = industriesTouched ? industries : industriesFor(langs);
   const [travel, setTravel] = useState(resumed?.travel ?? false);
   const [reelUrl, setReelUrl] = useState('');
   const [showreel, setShowreel] = useState<Reel | undefined>();
@@ -163,7 +173,7 @@ export function EntryFlow() {
   useEffect(() => {
     if (!SESSION || invite) return;
     if (!['consent', 'notfound', ...ONBOARDING].includes(step)) return;
-    const snap: Snapshot = { mode: entry?.mode ?? 'new', nav: { step, history: nav.history }, authIntent, identity, resuming, email, name, photo: photo?.startsWith('blob:') ? undefined : photo, primary, intent, selectedIntents, city, avail, availFrom, phone, phoneDraft, langs, travel, link, consent };
+    const snap: Snapshot = { mode: entry?.mode ?? 'new', nav: { step, history: nav.history }, authIntent, identity, resuming, email, name, photo: photo?.startsWith('blob:') ? undefined : photo, primary, craftRole, industries: industriesTouched ? industries : undefined, intent, selectedIntents, city, avail, availFrom, phone, phoneDraft, langs, travel, link, consent };
     saveEntry(snap);
   });
   useEffect(() => clearEntry, []);
@@ -283,6 +293,9 @@ export function EntryFlow() {
       reel: district ? showreel : words.reel && validLink(reelUrl) ? { url: reelUrl.trim(), title: words.reel } : undefined,
       ...(district ? { reelDraft: showreelDraft, featuredWork: validLink(link) ? [{ id: 'w-onboard', kind: 'external' as const, title: 'Selected work', url: link.trim() }] : [] } : {}),
       workLinks: validLink(link) ? [{ id: 'w-onboard', label: words.links, url: link.trim() }] : [],
+      ...(craftRole ? { craftRole } : {}),
+      ...(asksIndustry && chosenIndustries.length ? { industries: chosenIndustries } : {}),
+      ...placeFor(city),
     };
     const id = createPerson({ name: name.trim(), photo, avatarFraming, craft: primary!, crafts: [], specialisation: '', role, city: city.trim(), travel, languages: langs, availability, work, email: identity?.provider === 'email' ? identity.subject : email, intent: district ? selectedIntents[0] : intent ?? undefined, extra });
     // The identity now belongs to this account: signing in with it again goes straight to Home, never a second sign-up.
@@ -430,10 +443,10 @@ export function EntryFlow() {
           {step === 'you' && (() => {
             const actions = (
               <>
-                <Button block size="l" disabled={!name.trim() || !primary} aria-describedby="you-missing" onClick={() => go(invite ? 'mobile' : 'now')}>
+                <Button block size="l" disabled={!name.trim() || !primary || (roles.length > 0 && !craftRole)} aria-describedby="you-missing" onClick={() => go(invite ? 'mobile' : 'now')}>
                   Continue
                 </Button>
-                <Missing id="you-missing" items={[!name.trim() && 'your name', !primary && 'your main craft']} />
+                <Missing id="you-missing" items={[!name.trim() && 'your name', !primary && 'your main craft', !!primary && roles.length > 0 && !craftRole && 'your role']} />
               </>
             );
             const crafts = TEST_MODE || allCrafts ? CRAFTS : CRAFTS.filter((c) => COMMON_CRAFTS.includes(c.id) || c.id === primary);
@@ -458,11 +471,23 @@ export function EntryFlow() {
                 <p className="field-label">Your main craft</p>
                 <div className="craft-grid" role="radiogroup" aria-label="Your main craft" onKeyDown={(e) => rovingKeys(e)}>
                   {crafts.map((c, i) => (
-                    <button key={c.id} role="radio" aria-checked={primary === c.id} tabIndex={rovingIndex(primary === c.id, i, !!primary)} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => setPrimary(primary === c.id ? null : c.id)}>
+                    <button key={c.id} role="radio" aria-checked={primary === c.id} tabIndex={rovingIndex(primary === c.id, i, !!primary)} className={`craft-tile ${primary === c.id ? 'is-on' : ''}`} onClick={() => (setPrimary(primary === c.id ? null : c.id), setCraftRole(''))}>
                       {c.label}
                     </button>
                   ))}
                 </div>
+                {roles.length > 0 && (
+                  <>
+                    <p className="field-label" id="ob-role-label">Your role</p>
+                    <div className="chips chips--tight" role="radiogroup" aria-labelledby="ob-role-label">
+                      {roles.map((r) => (
+                        <button key={r} role="radio" aria-checked={craftRole === r} className={`chip ${craftRole === r ? 'is-on' : ''}`} onClick={() => setCraftRole(craftRole === r ? '' : r)}>
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 {!TEST_MODE && (
                   <button className="link ob-more" aria-expanded={allCrafts} onClick={() => setAllCrafts((v) => !v)}>
                     {allCrafts ? 'Fewer crafts' : `More crafts (${CRAFTS.length - crafts.length})`}
@@ -543,10 +568,10 @@ export function EntryFlow() {
           {step === 'where' && (
             <Onboard {...ob} image="valley" title="Where you work" lede="So productions near you, and in your languages, can find you." onBack={goBack} footer={
               <>
-                <Button block size="l" disabled={!city.trim()} aria-describedby="where-missing" onClick={() => (invite ? finishProfile() : go('work'))}>
+                <Button block size="l" disabled={!city.trim() || (asksIndustry && !chosenIndustries.length)} aria-describedby="where-missing" onClick={() => (invite ? finishProfile() : go('work'))}>
                   Continue
                 </Button>
-                <Missing id="where-missing" items={[!city.trim() && 'where you are based']} />
+                <Missing id="where-missing" items={[!city.trim() && 'where you are based', asksIndustry && !chosenIndustries.length && 'an industry']} />
               </>
             }>
               <Field label="Where are you based?">
@@ -577,6 +602,24 @@ export function EntryFlow() {
                   </button>
                 ))}
               </div>
+              {asksIndustry && (
+                <>
+                  <p className="field-label">Industries you work in</p>
+                  <div className="chips chips--tight" role="group" aria-label="Industries you work in">
+                    {INDUSTRIES.map(({ id }) => {
+                      const on = chosenIndustries.includes(id);
+                      return (
+                        <button key={id} className={`chip ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={() => {
+                          setIndustriesTouched(true);
+                          setIndustries(on ? chosenIndustries.filter((y) => y !== id) : [...chosenIndustries, id]);
+                        }}>
+                          {id}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
               <div className="ob-toggle-row">
                 <span id="ob-travel">Open to travel for work</span>
                 <Toggle on={travel} onChange={setTravel} label="Open to travel for work" />

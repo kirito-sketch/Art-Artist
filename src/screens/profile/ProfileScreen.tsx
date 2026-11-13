@@ -21,6 +21,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import * as seed from '../../data/seed';
 import type { Credit, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
+import { GateChecklist, gated } from './FinishProfile';
 import { availableLabel, org, person } from '../../state/selectors';
 import { publicCreditsFor } from '../../domain/discovery';
 import { Avatar, Button, FollowButton, EmptyState, IconButton, Photo, PressCard, Pressable, SectionHeader, Verified } from '../../ui/primitives';
@@ -255,7 +256,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               </button>
             )}
             secondary={own ? undefined : (
-              <button className="cta cta--glass" onClick={() => { const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' }); cid && push({ name: 'conversation', id: cid }); }}>
+              <button className="cta cta--glass" onClick={gated('Before you message', () => { const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' }); cid && push({ name: 'conversation', id: cid }); })}>
                 {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
               </button>
             )}
@@ -307,10 +308,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               <Button
                 block
                 variant="secondary"
-                onClick={() => {
+                onClick={gated('Before you message', () => {
                   const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                   cid && push({ name: 'conversation', id: cid });
-                }}
+                })}
               >
                 {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
               </Button>
@@ -527,10 +528,10 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
               <Button
                 block
                 variant="secondary"
-                onClick={() => {
+                onClick={gated('Before you message', () => {
                   const cid = startConversation(id, { kind: 'project', label: 'Direct', detail: 'Direct message', refId: 'direct' });
                   cid && push({ name: 'conversation', id: cid });
-                }}
+                })}
               >
                 {acting !== 'self' ? `Message as ${org(acting).name}` : 'Message'}
               </Button>
@@ -555,6 +556,7 @@ export function ProfileScreen({ id, isTab, active = true }: { id: string; isTab?
         </div>
         {own && <div className="profile-management-body">
           {!credits.length && <p className="meta">Verified credits come from productions. You can accept or dispute a credit issued to you; you cannot create your own.</p>}
+        {own && <GateChecklist where="profile" />}
         {own && <WaysToBeFound person={p} />}
 
         {/* Private to you, one quiet line: what you saved and what you sent. */}

@@ -40,7 +40,16 @@ export type Craft =
   | 'writing'
   | 'music'
   | 'makeup'
-  | 'vfx';
+  | 'vfx'
+  | 'photography'
+  | 'dance'
+  | 'painting'
+  | 'sculpture'
+  | 'digital-art'
+  | 'illustration'
+  | 'installation'
+  | 'printmaking'
+  | 'mixed-media';
 
 export interface Person {
   id: string;

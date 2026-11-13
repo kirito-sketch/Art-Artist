@@ -30,7 +30,19 @@ export const CRAFTS: CraftDef[] = [
   { id: 'makeup', label: 'Make-up & hair', person: 'Make-up & Hair', domain: 'film' },
   { id: 'vfx', label: 'VFX & animation', person: 'VFX / Animation', domain: 'film' },
   { id: 'production', label: 'Production', person: 'Producer / Production', domain: 'film' },
+  { id: 'photography', label: 'Photography', person: 'Photographer', domain: 'film' },
+  { id: 'dance', label: 'Dance & choreography', person: 'Dancer / Choreographer', domain: 'film' },
+  { id: 'painting', label: 'Painting', person: 'Painter', domain: 'art' },
+  { id: 'sculpture', label: 'Sculpture', person: 'Sculptor', domain: 'art' },
+  { id: 'digital-art', label: 'Digital art', person: 'Digital artist', domain: 'art' },
+  { id: 'illustration', label: 'Illustration', person: 'Illustrator', domain: 'art' },
+  { id: 'installation', label: 'Installation', person: 'Installation artist', domain: 'art' },
+  { id: 'printmaking', label: 'Printmaking', person: 'Printmaker', domain: 'art' },
+  { id: 'mixed-media', label: 'Mixed media', person: 'Mixed media artist', domain: 'art' },
 ];
+
+/** Fine arts disciplines: the main one plus up to three more (Master Database, Fine Arts · Core). */
+export const isFineArt = (c: Craft) => craftDef(c)?.domain === 'art';
 
 export const craftDef = (id: string) => CRAFTS.find((c) => c.id === id);
 

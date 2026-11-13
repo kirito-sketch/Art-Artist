@@ -4,13 +4,14 @@ import { WorkPortfolioPage } from './WorkPortfolio';
 import { ArrowDown, ArrowUp, Camera, Check, ChevronLeft, Eye, Plus, Trash2, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import * as seed from '../../data/seed';
-import { CRAFTS, craftDef, headline } from '../../data/crafts';
-import { categoryOf, craftProfile, EXPERIENCE, findSkills, LANGUAGES, MAX_SKILLS, setsFor, skillCategoriesFor, skillDef, VISIBILITY_LABEL, WORK_TYPES, type DetailSet, type Experience, type FieldDef, type Visibility } from '../../data/profileSchema';
+import { CRAFTS, craftDef, headline, isFineArt } from '../../data/crafts';
+import { categoryOf, craftProfile, EXPERIENCE, INDUSTRIES, LEVELS, placeFor, rolesFor, findSkills, LANGUAGES, MAX_SKILLS, setsFor, skillCategoriesFor, skillDef, VISIBILITY_LABEL, WORK_TYPES, type DetailSet, type Experience, type FieldDef, type Visibility } from '../../data/profileSchema';
 import type { Craft, Media, Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { availableLabel, org, person } from '../../state/selectors';
 import { maskedPhone, pendingForPhone, profileOf, visibilityOf, type DetailValue, type ProfileSkill, type Reel, type WorkLink } from '../../state/profile';
 import { project as wproject } from '../../state/world';
+import { asksLevel } from '../../domain/profileGates';
 import { MobileVerify } from '../../ui/MobileVerify';
 import { Avatar, Button, Chip, IconButton, Photo, Row, Toggle } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
@@ -192,9 +193,19 @@ function IdentityPage() {
   const [photo, setPhoto] = useState(me.photo);
   const [avatarFraming, setAvatarFraming] = useState(me.avatarFraming);
   const [picker, setPicker] = useState(false);
-  const dirty = name !== me.name || role !== me.role || photo !== me.photo || JSON.stringify(avatarFraming) !== JSON.stringify(me.avatarFraming);
+  const x = profileOf(viewer.id);
+  const [city, setCity] = useState(me.city);
+  const [state, setState] = useState(x.state ?? placeFor(me.city).state ?? '');
+  const [country, setCountry] = useState(x.country ?? placeFor(me.city).country ?? '');
+  // A known city fills its state and country; the person can still correct them.
+  const changeCity = (c: string) => {
+    setCity(c);
+    const pl = placeFor(c);
+    if (pl.state) (setState(pl.state), setCountry(pl.country!));
+  };
+  const dirty = name !== me.name || role !== me.role || photo !== me.photo || JSON.stringify(avatarFraming) !== JSON.stringify(me.avatarFraming) || city !== me.city || state !== (x.state ?? placeFor(me.city).state ?? '') || country !== (x.country ?? placeFor(me.city).country ?? '');
   return (
-    <Page title="Photo & name" dirty={dirty && !!name.trim() && !!role.trim()} onSave={() => save({ name: name.trim(), role: role.trim(), photo, avatarFraming })}>
+    <Page title="Photo & name" dirty={dirty && !!name.trim() && !!role.trim() && !!city.trim()} onSave={() => save({ name: name.trim(), role: role.trim(), photo, avatarFraming, city: city.trim() }, { state: state.trim() || undefined, country: country.trim() || undefined })}>
       <div className="edit-photo">
         <Avatar party={{ ...me, name: name || me.name, photo, avatarFraming }} size={96} />
         <button className="link" onClick={() => setPicker(true)}>
@@ -209,6 +220,17 @@ function IdentityPage() {
       <Field label="Headline">
         <input className="field" value={role} onChange={(e) => setRole(e.target.value)} aria-label="Headline" placeholder="e.g. Director of Photography" />
       </Field>
+      <Field label="City">
+        <input className="field" value={city} onChange={(e) => changeCity(e.target.value)} autoComplete="address-level2" aria-label="City" />
+      </Field>
+      <div className="ep-pair">
+        <Field label="State">
+          <input className="field" value={state} onChange={(e) => setState(e.target.value)} autoComplete="address-level1" aria-label="State" />
+        </Field>
+        <Field label="Country">
+          <input className="field" value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country-name" aria-label="Country" />
+        </Field>
+      </div>
       <Sheet open={picker} onClose={() => setPicker(false)} title="Profile photo" size="tall">
         <MediaPicker single kind="image" selected={[]} onDone={(ms: Media[]) => (setPhoto(ms[0]?.src ?? photo), setAvatarFraming(undefined), setPicker(false))} />
       </Sheet>
@@ -223,24 +245,53 @@ function CraftsPage() {
   const [main, setMain] = useState<Craft>(me.craft);
   const [more, setMore] = useState<Craft[]>(me.crafts ?? []);
   const [spec, setSpec] = useState(me.specialisation ?? '');
-  const dirty = main !== me.craft || more.join() !== (me.crafts ?? []).join() || spec !== (me.specialisation ?? '');
+  const x = profileOf(viewer.id);
+  const [craftRole, setCraftRole] = useState(x.craftRole ?? '');
+  const [level, setLevel] = useState(x.level ?? '');
+  const roles = rolesFor(main);
+  const levelled = asksLevel({ ...me, craft: main });
+  // Fine artists name one main discipline and up to three more (Master Database, Fine Arts · Core).
+  const maxMore = isFineArt(main) ? 3 : 4;
+  const dirty = main !== me.craft || more.join() !== (me.crafts ?? []).join() || spec !== (me.specialisation ?? '') || craftRole !== (x.craftRole ?? '') || level !== (x.level ?? '');
   return (
     <Page
       title="Crafts"
       dirty={dirty}
-      onSave={() => save({ craft: main, crafts: more.filter((c) => c !== main), specialisation: spec.trim() || undefined, role: me.role === headline(me.craft, me.specialisation) ? headline(main, spec) : me.role })}
+      onSave={() => save({ craft: main, crafts: more.filter((c) => c !== main).slice(0, maxMore), specialisation: spec.trim() || undefined, role: me.role === headline(me.craft, me.specialisation) ? headline(main, spec) : me.role }, { craftRole: roles.includes(craftRole) ? craftRole : undefined, level: levelled ? level || undefined : undefined })}
     >
       <Field label="Main craft">
         <div className="chips" role="radiogroup" aria-label="Main craft">
           {CRAFTS.map((c) => (
-            <Chip key={c.id} active={main === c.id} onClick={() => (setMain(c.id), setMore((m) => m.filter((x) => x !== c.id)))}>
+            <Chip key={c.id} active={main === c.id} onClick={() => (setMain(c.id), setMore((m) => m.filter((x) => x !== c.id)), !rolesFor(c.id).includes(craftRole) && setCraftRole(''))}>
               {c.label}
             </Chip>
           ))}
         </div>
       </Field>
-      <Field label="Other crafts (up to 4)">
-        <Chips label="Other crafts" options={CRAFTS.filter((c) => c.id !== main).map((c) => c.label)} value={more.map((c) => craftDef(c)!.label)} max={4} onChange={(ls) => setMore(ls.map((l) => CRAFTS.find((c) => c.label === l)!.id))} />
+      {roles.length > 0 && (
+        <Field label="Your role">
+          <div className="chips" role="radiogroup" aria-label="Your role">
+            {roles.map((r) => (
+              <Chip key={r} active={craftRole === r} onClick={() => setCraftRole(craftRole === r ? '' : r)}>
+                {r}
+              </Chip>
+            ))}
+          </div>
+        </Field>
+      )}
+      {levelled && (
+        <Field label="Level">
+          <div className="chips" role="radiogroup" aria-label="Level">
+            {LEVELS.map((l) => (
+              <Chip key={l} active={level === l} onClick={() => setLevel(level === l ? '' : l)}>
+                {l}
+              </Chip>
+            ))}
+          </div>
+        </Field>
+      )}
+      <Field label={`Other crafts (up to ${maxMore})`}>
+        <Chips label="Other crafts" options={CRAFTS.filter((c) => c.id !== main).map((c) => c.label)} value={more.map((c) => craftDef(c)!.label)} max={maxMore} onChange={(ls) => setMore(ls.map((l) => CRAFTS.find((c) => c.label === l)!.id))} />
       </Field>
       <Field label="Specialisation">
         <input className="field" value={spec} onChange={(e) => setSpec(e.target.value)} maxLength={60} placeholder="e.g. Anamorphic, night exteriors" aria-label="Specialisation" />
@@ -633,8 +684,10 @@ function AvailabilityPage() {
   const x = profileOf(viewer.id);
   const [travel, setTravel] = useState(!!me.openToTravel);
   const [types, setTypes] = useState<string[]>(x.workTypes);
+  const [inds, setInds] = useState<string[]>(x.industries ?? []);
+  const film = !isFineArt(me.craft);
   return (
-    <Page title="Availability & travel" dirty={travel !== !!me.openToTravel || types.join() !== x.workTypes.join()} onSave={() => save({ openToTravel: travel }, { workTypes: types })}>
+    <Page title="Availability & travel" dirty={travel !== !!me.openToTravel || types.join() !== x.workTypes.join() || inds.join() !== (x.industries ?? []).join()} onSave={() => save({ openToTravel: travel }, { workTypes: types, industries: inds })}>
       <div className="group">
         <Row label="Availability" value={availability.open ? availableLabel(availability.from) : 'Not taking work'} onPress={() => openSheet({ name: 'availability' })} />
       </div>
@@ -642,10 +695,45 @@ function AvailabilityPage() {
         <span>Open to travel for work</span>
         <Toggle on={travel} onChange={setTravel} label="Open to travel for work" />
       </div>
+      {film && (
+        <Field label="Industries you work in">
+          <Chips label="Industries" options={INDUSTRIES.map((i) => i.id)} value={inds} onChange={setInds} />
+        </Field>
+      )}
       <Field label="Types of work you want">
         <Chips label="Types of work" options={WORK_TYPES} value={types} onChange={setTypes} />
       </Field>
     </Page>
+  );
+}
+
+/** Instagram handle, or "I don't have one" so it is never asked again. Saved as the person types (no page Save). */
+export function InstagramField({ onDone }: { onDone?: () => void }) {
+  const { viewer, saveProfile } = useStore();
+  const x = profileOf(viewer.id);
+  const [handle, setHandle] = useState(x.instagram ?? '');
+  const clean = handle.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, '');
+  const valid = /^[a-zA-Z0-9._]{1,30}$/.test(clean);
+  const changed = clean !== (x.instagram ?? '');
+  return (
+    <section className="stack" aria-label="Instagram">
+      <label className="field-label" htmlFor="ep-instagram">Instagram</label>
+      <div className="ep-insta">
+        <span aria-hidden>@</span>
+        <input id="ep-instagram" className="field" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="yourhandle" autoCapitalize="none" autoCorrect="off" spellCheck={false} inputMode="url" />
+      </div>
+      {handle && !valid && <p className="field-error">Letters, numbers, dots and underscores only.</p>}
+      <div className="ep-insta-actions">
+        <Button size="s" disabled={!valid || !changed} onClick={() => (saveProfile({}, { instagram: clean, noInstagram: false }), onDone?.())}>
+          Save handle
+        </Button>
+        {!x.instagram && (
+          <button className="link link--small" aria-pressed={!!x.noInstagram} onClick={() => (saveProfile({}, { noInstagram: true }), onDone?.())}>
+            {x.noInstagram ? "Marked: I don't have one" : "I don't have Instagram"}
+          </button>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -692,6 +780,7 @@ function ContactPage() {
             </div>
           );
         })}
+        <InstagramField />
         <div className="group">
           <Row label="Email" value="Only you" />
         </div>

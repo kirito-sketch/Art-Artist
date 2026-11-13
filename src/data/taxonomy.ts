@@ -36,6 +36,15 @@ export const TAXONOMY: Domain[] = [
       { id: 'sound', label: 'Sound and music', people: 'Sound and music', crafts: ['sound', 'music'], near: ['post'] },
       { id: 'art', label: 'Art, costume and make-up', people: 'Art department', crafts: ['production-design', 'costume', 'makeup'], near: ['camera'] },
       { id: 'production', label: 'Production', people: 'Producers', crafts: ['production'], near: ['direction'] },
+      { id: 'photo', label: 'Photography', people: 'Photographers', crafts: ['photography'], near: ['camera', 'art'] },
+      { id: 'dance', label: 'Dance and choreography', people: 'Dancers and choreographers', crafts: ['dance'], near: ['acting', 'sound'] },
+    ],
+  },
+  {
+    id: 'art',
+    label: 'Fine arts',
+    families: [
+      { id: 'fine-arts', label: 'Fine arts', people: 'Artists', crafts: ['painting', 'sculpture', 'digital-art', 'illustration', 'installation', 'printmaking', 'mixed-media'], near: ['art', 'photo'] },
     ],
   },
 ];

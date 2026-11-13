@@ -69,6 +69,7 @@ import { EventScreen } from './screens/event/EventScreen';
 import { EventComposer } from './screens/event/EventComposer';
 import { EdgeCaseLab } from './qa/Lab';
 import { ScenarioBar } from './qa/ScenarioBar';
+import { FinishProfileHost } from './screens/profile/FinishProfile';
 
 /*
  * Transition per route type: composers rise like sheets, media zooms, detail pushes from the right.
@@ -471,6 +472,7 @@ function Phone({ app = false }: { app?: boolean }) {
         </AnimatePresence>
 
         <SheetHost />
+        <FinishProfileHost />
         {store.policyUpdate && !store.entry && (
           <div className="overlay-layer" {...inertProps(modals > 0)}>
             <PolicyUpdate />

@@ -5,6 +5,7 @@ import { CalendarDays, Check, ChevronLeft, Clock, IndianRupee, Languages, MapPin
 import { InfoGroup } from '../../ui/InfoGroup';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useStore } from '../../state/store';
+import { gated } from '../profile/FinishProfile';
 import { world } from '../../state/world';
 import { findOpportunity, firstName, kindLabel, org, person } from '../../state/selectors';
 import { Avatar, Button, EmptyState, IconButton, Photo, Pressable } from '../../ui/primitives';
@@ -167,10 +168,10 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
   } else if (o.allowDM) {
     action = (
       <Button
-        onClick={() => {
+        onClick={gated('Before you message', () => {
           const cid = startConversation(author!.id, { kind: 'collab', label: 'Collaboration', detail: `${o.role} · ${o.project}`, refId: o.id });
           cid && push({ name: 'conversation', id: cid });
-        }}
+        })}
       >
         Message
       </Button>
@@ -186,10 +187,10 @@ export function OpportunityScreen({ id, fromCard }: { id: string; fromCard?: boo
     action = (
       <Button
         variant="signature"
-        onClick={() => {
+        onClick={gated('Before you apply', () => {
           setWithdrew(false);
           openSheet({ name: 'showInterest', id: o.id });
-        }}
+        })}
       >
         Show interest
       </Button>

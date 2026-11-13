@@ -31,6 +31,7 @@ import { NetworkCollections } from './NetworkActivity';
 import { PersonCard } from '../../ui/PersonCard';
 import { FilmTalk } from './FilmTalk';
 import { FridayCard } from '../reviews/FridayCard';
+import { GateChecklist } from '../profile/FinishProfile';
 import { ComingSoon } from './ComingSoon';
 import { ExploreCrafts } from './ExploreCrafts';
 import { HOME_PREVIEW, WEEK_TEST } from '../../ui/preview';
@@ -225,6 +226,10 @@ export function DistrictHome({ go }: { go: Go }) {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="dh-pad">
+          <GateChecklist where="home" />
         </div>
 
         {week.length > 0 && (

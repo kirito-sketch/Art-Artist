@@ -64,6 +64,18 @@ export interface ProfileExtra {
   /** Reference to professional work; never grants access or creates a credit. */
   profileCover?: ProfileCover;
   workLinks: WorkLink[];
+  /** The role inside the main craft (Master Database "Role"): Director, Assistant Director, Second AD… */
+  craftRole?: string;
+  /** Career level for crew (Fresher, Assistant, Junior, Senior). */
+  level?: string;
+  /** Film industries (Tollywood, Bollywood…), pre-selected from languages in onboarding. */
+  industries?: string[];
+  /** Instagram handle without the @; `noInstagram` records "I don't have one" so it is never asked again. */
+  instagram?: string;
+  noInstagram?: boolean;
+  /** Filled from the city; editable for people the city list doesn't know. */
+  state?: string;
+  country?: string;
 }
 
 const empty = (): ProfileExtra => ({ skills: [], suggestedSkills: [], details: {}, visibility: {}, workTypes: [], links: [], workLinks: [] });
@@ -74,8 +86,14 @@ export const profiles: Record<string, ProfileExtra> = {
   kiran: {
     ...empty(),
     phone: { number: '9876543210', verified: true },
+    craftRole: 'DOP',
+    level: 'Senior',
+    industries: ['Tollywood', 'Bollywood'],
+    instagram: 'kiranrao.dop',
+    state: 'Telangana',
+    country: 'India',
     skills: [{ id: 'gimbal' }, { id: 'drone', cert: 'DGCA remote pilot' }, { id: 'steadicam' }],
-    details: { cameras: ['ARRI Alexa Mini LF', 'Sony Venice 2', 'RED V-Raptor'], formats: ['Anamorphic', 'Large format'], dopSpecial: ['Night exteriors', 'Available light', 'Handheld'], ownsKit: 'Some' },
+    details: { cameras: ['ARRI Alexa Mini LF', 'Sony Venice 2', 'RED V-Raptor'], formats: ['Anamorphic', 'Large format'], lighting: ['LED', 'HMI'], dopSpecial: ['Night exteriors', 'Available light', 'Handheld'], ownsKit: 'Some' },
     workTypes: ['Feature', 'Series', 'Ad film'],
     experience: '10+',
     links: [{ id: 'l1', label: 'IMDb', url: 'https://www.imdb.com/' }],
@@ -84,8 +102,13 @@ export const profiles: Record<string, ProfileExtra> = {
   },
   tara: {
     ...empty(),
+    phone: { number: '9812345670', verified: true },
+    industries: ['Bollywood', 'Mollywood'],
+    instagram: 'tara.acts',
+    state: 'Maharashtra',
+    country: 'India',
     skills: [{ id: 'kathak', level: 'Trained' }, { id: 'swimming', level: 'Confident' }, { id: 'two-wheeler', level: 'Confident' }, { id: 'stage-combat', level: 'Basic' }],
-    details: { playingAge: [24, 32], height: 165, build: 'Slim', hair: 'Black', eyes: 'Dark brown', accents: ['Bambaiya', 'Malabar'] },
+    details: { roleType: ['Lead', 'Supporting'], actingStyle: ['Method', 'Theatre'], playingAge: [24, 32], height: 165, build: 'Slim', hair: 'Black', eyes: 'Dark brown', accents: ['Bambaiya', 'Malabar'] },
     workTypes: ['Series', 'Feature', 'Theatre'],
     experience: '2-5',
     reel: { url: 'https://vimeo.com/', title: 'Acting reel', cover: media('reel-tara', 'stills/reel-tara', 'covers/paper-boats'), duration: '1:52' },
@@ -148,6 +171,9 @@ export const profiles: Record<string, ProfileExtra> = {
     reel: { url: 'https://vimeo.com/', title: 'Location sound', cover: media('reel-farhan', 'covers/backwaters', 'covers/quiet-hours'), duration: '1:05' },
   },
 };
+
+// Aditi acts for a production house; her own profile is complete so house demos never stop at a checklist.
+profiles.aditi = { ...empty(), phone: { number: '9900011122', verified: true }, craftRole: 'Line producer', level: 'Senior', industries: ['Tollywood', 'Bengali'], instagram: 'aditi.produces', state: 'Telangana', country: 'India', workTypes: ['Feature', 'Series'], experience: '5-10', workLinks: [{ id: 'w1', label: 'Projects', url: 'https://www.imdb.com/' }] };
 
 export const profileOf = (id: string): ProfileExtra => (profiles[id] ??= empty());
 

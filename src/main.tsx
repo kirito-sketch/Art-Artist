@@ -41,6 +41,7 @@ import './styles/messaging-settings.css';
 import './styles/materials.css';
 import './styles/cards.css';
 import './styles/profile-v2.css';
+import './styles/profile-gate.css';
 import '@fontsource/caveat/700.css';
 import '@fontsource-variable/bricolage-grotesque';
 import App from './App';
