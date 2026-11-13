@@ -8,6 +8,7 @@ import { categoryOf, craftProfile, EXPERIENCE, setsFor, skillDef, VISIBILITY_LAB
 import type { Person } from '../../data/types';
 import { useStore } from '../../state/store';
 import { org } from '../../state/selectors';
+import { useGate } from './FinishProfile';
 import { canSee, openSteps, profileOf, visibilityOf, type DetailValue, type Step, type Viewer } from '../../state/profile';
 import { Photo, SectionHeader } from '../../ui/primitives';
 
@@ -163,8 +164,10 @@ export function WaysToBeFound({ person }: { person: Person }) {
     }
   });
   const x = profileOf(person.id);
+  const gate = useGate();
   const steps = openSteps({ person, extra: x, images: (seed.portfolio[person.id] ?? []).length, availabilityOpen: availability.open, wantsWork: intent === 'work' || intent === 'collaborate' });
-  if (hidden || !steps.length) return null;
+  // While required items are left, the Finish your profile checklist is the one prompt here.
+  if (hidden || !steps.length || gate.items.length) return null;
   const set = setsFor([person.craft, ...(person.crafts ?? [])])[0];
   const LABEL: Record<Step, [string, () => void]> = {
     phone: ['Verify your mobile number', () => push({ name: 'editProfile', section: 'contact' })],

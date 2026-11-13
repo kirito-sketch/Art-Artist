@@ -268,7 +268,7 @@ export function GateChecklist({ where }: { where: 'home' | 'profile' }) {
       <div className="gate-top">
         <Ring done={done} total={total} />
         <div className="gate-text">
-          <b>{where === 'profile' ? 'Not visible to productions yet' : 'Finish your profile'}</b>
+          <b>{where === 'profile' ? 'Your profile is not finished' : 'Finish your profile'}</b>
           <span className="meta">
             {items.length} left · {timeLeft(items)}. Then you can apply and message.
           </span>

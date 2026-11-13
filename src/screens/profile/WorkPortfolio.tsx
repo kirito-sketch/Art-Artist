@@ -17,7 +17,7 @@ import { ShowreelManager } from './Showreel';
 import { ArtworkDetailsSheet } from './ArtworkDetails';
 import { isFineArt } from '../../data/crafts';
 import type { ArtworkDetails } from '../../data/profileSchema';
-import { artworkLine, artworkMissing } from '../../domain/profileGates';
+import { artworkMissing } from '../../domain/profileGates';
 import { askAfterUpload } from './FinishProfile';
 
 const move = <T,>(items: T[], index: number, change: number) => {
@@ -88,7 +88,7 @@ export function WorkPortfolioPage() {
       <ProfileCoverPicker personId={viewer.id} value={profileCover} onChange={setProfileCover} images={images} reel={reel} />
       {!words.reel && !words.images && featuredSection}
       {words.reel ? <section className="ana-work-section"><h2>Showreel</h2><p className="meta">One primary professional video. Optional.</p><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></section> : <details className="ana-optional-reel"><summary>Showreel (optional)</summary><ShowreelManager value={reel} draft={draft} onChange={setReel} onDraftChange={setDraft} /></details>}
-      {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo surface="portfolio-thumbnail" media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}{artist && <span className={`ep-art-tag${artworkMissing(arts[image.id]).length ? ' is-draft' : ''}`}>{artworkMissing(arts[image.id]).length ? 'Draft · add details' : artworkLine(arts[image.id])}</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}${artist && artworkMissing(arts[image.id]).length ? ', draft' : ''}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}
+      {words.images && <section className="ana-work-section"><h2>Portfolio</h2><p className="meta">{words.images === 'Portfolio' ? 'Images and visual work' : words.images} · first image is the cover</p><div className="ep-images">{images.map((image, index) => <span key={image.id} className="ep-img"><Photo surface="portfolio-thumbnail" media={image} showPlay={false} />{index === 0 && <span className="ep-img-cover">Cover</span>}{artist && <span className={`ep-art-tag${artworkMissing(arts[image.id]).length ? ' is-draft' : ''}`}>{artworkMissing(arts[image.id]).length ? 'Draft' : arts[image.id]?.sale}</span>}<button className="ep-img-btn" aria-label={`Portfolio image ${index + 1}${artist && artworkMissing(arts[image.id]).length ? ', draft' : ''}. Options`} onClick={() => setImageMenu(index)} /></span>)}<button className="ep-add-tile" aria-label="Add portfolio images" onClick={() => setImagePicker(true)}><Plus size={20} /></button></div></section>}
       {(words.reel || words.images) && featuredSection}
     </div>
     <Sheet className="ana-work-sheet" open={imagePicker} onClose={() => setImagePicker(false)} title="Add portfolio images" size="tall"><MediaPicker kind="image" selected={[]} onDone={(ms) => { const fresh = ms.filter((m) => m.kind === 'image' && !images.some((o) => o.id === m.id)); setImages((old) => [...old, ...fresh]); setImagePicker(false); if (artist) setArtQueue(fresh.map((m) => m.id)); }} /></Sheet>
